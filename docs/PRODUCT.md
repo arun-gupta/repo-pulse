@@ -447,25 +447,25 @@ Run the following loop for each feature in order — **one feature at a time, fu
 
 #### 3a — Specify
 
-> Read `docs/PRODUCT.md`. Run `/speckit.specify` for feature `[P1-F01]` Repo Input. The spec must be traceable to the acceptance criteria and out-of-scope boundaries in `docs/PRODUCT.md`.
+> `/speckit.specify` `[P1-F01]` Repo Input
 
 Review the generated spec. It is a contract — approve it before proceeding. If it drifts from the acceptance criteria in this document, correct it now.
 
 #### 3b — Plan
 
-> Run `/speckit.plan` for the `[P1-F01]` spec. Produce a technical implementation plan that respects the stack (Next.js App Router, Tailwind, Vercel) and the module boundary (analyzer is framework-agnostic).
+> `/speckit.plan` `[P1-F01]`
 
 Review the plan. Verify it does not introduce any dependency that would block Phase 2 or Phase 3.
 
 #### 3c — Tasks
 
-> Run `/speckit.tasks` for the `[P1-F01]` plan. Break the plan into the smallest independently executable tasks. Each task must have a clear done condition.
+> `/speckit.tasks` `[P1-F01]`
 
 Review the task list before implementation begins.
 
 #### 3d — Implement
 
-> Run `/speckit.implement` for each task in the `[P1-F01]` task list in sequence. After each task, verify it satisfies its done condition. Run tests before marking the feature complete. Do not implement anything outside the spec's acceptance criteria.
+> `/speckit.implement` `[P1-F01]`
 
 Once the feature is complete and tests pass, commit, then return to **3a** for the next feature.
 

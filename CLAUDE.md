@@ -7,6 +7,8 @@ Read `.specify/memory/constitution.md` first. It is the authoritative source of 
 - `/speckit.tasks` — generate task list
 - `/speckit.implement` — execute plan
 
+Before running any `/speckit.*` command, always read `docs/PRODUCT.md`. The spec must be traceable to the acceptance criteria and out-of-scope boundaries defined there.
+
 ## On Ambiguity
 If a spec is missing, incomplete, or conflicts with the constitution — 
 stop and ask. Do not infer. Do not proceed.
