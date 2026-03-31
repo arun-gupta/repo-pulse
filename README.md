@@ -39,4 +39,4 @@ npm run build         # production build check
 
 ## Development
 
-Built with SpecKit / Specification-Driven Development. See `docs/PRODUCT.md` for the full feature registry and `.specify/memory/constitution.md` for project rules.
+Built with SpecKit / Specification-Driven Development. See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the feature loop and workflow, [`docs/PRODUCT.md`](docs/PRODUCT.md) for the feature registry, and [`.specify/memory/constitution.md`](.specify/memory/constitution.md) for project rules.
