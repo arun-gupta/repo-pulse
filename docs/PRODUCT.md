@@ -6,7 +6,7 @@
 **Phase 1 Data Layer**: Next.js API Routes  
 **Development Methodology**: SpecKit / Specification-Driven Development (SDD)
 
-This document is the canonical product definition for ForkPrint. It is the source of truth for all features across all phases. `constitution.md` references this document. SpecKit specs are traceable to feature IDs defined here.
+This document is the canonical product definition for ForkPrint. It is the source of truth for all features across all phases. `.specify/memory/constitution.md` references this document. SpecKit specs are traceable to feature IDs defined here.
 
 ---
 
@@ -413,7 +413,7 @@ This section describes how to feed this product definition into SpecKit to initi
 ### Prerequisites
 
 - `arun-gupta/forkprint` repo is cloned locally
-- `CLAUDE.md` already exists — it contains a single line pointing Claude Code to `constitution.md`
+- `CLAUDE.md` already exists — it contains a single line pointing Claude Code to `.specify/memory/constitution.md`
 - Claude Code is running in the repo root
 
 ### Step 1 — Commit this document
@@ -427,28 +427,64 @@ git add docs/PRODUCT.md
 git commit -m "docs: add product definition"
 ```
 
-### Step 2 — Initialize constitution.md
+### Step 2 — Initialize .specify/memory/constitution.md
 
 Open Claude Code and run the following prompt verbatim:
 
-> Read `docs/PRODUCT.md`. Generate `constitution.md` in the repo root as the single authoritative source of all project rules for ForkPrint. It must cover: accuracy policy, data source rules, module boundary (analyzer module is framework-agnostic and shared across all three phases), CHAOSS alignment (four categories, one feature each, one score each), scoring thresholds (all in config, none hardcoded), quadrant classification (median split, never hardcoded), Contribution Dynamics honesty (org affiliation not verifiable via GitHub GraphQL — never fabricate), and operational rules for Claude Code. Do not touch `CLAUDE.md`.
+> Read `docs/PRODUCT.md`. Generate `.specify/memory/constitution.md` as the single authoritative source of all project rules for ForkPrint. It must cover: accuracy policy, data source rules, module boundary (analyzer module is framework-agnostic and shared across all three phases), CHAOSS alignment (four categories, one feature each, one score each), scoring thresholds (all in config, none hardcoded), quadrant classification (median split, never hardcoded), Contribution Dynamics honesty (org affiliation not verifiable via GitHub GraphQL — never fabricate), and operational rules for Claude Code. Do not touch `CLAUDE.md`.
 
-Review `constitution.md` before proceeding. Every rule in this document must be represented there.
+Review `.specify/memory/constitution.md` before proceeding. Every rule in this document must be represented there.
 
-### Step 3 — Initialize specs for Phase 1
+### Step 3 — Feature loop (spec → plan → tasks → implement)
 
-Once `constitution.md` is committed, run the following prompt for each Phase 1 feature in order, one at a time:
+Run the following loop for each feature in order — **one feature at a time, fully through implementation before starting the next**. Do not batch specs across features.
 
-> Read `docs/PRODUCT.md` and `constitution.md`. Create a SpecKit spec for feature `[P1-F01]` Repo Input. The spec must be traceable to the acceptance criteria and out-of-scope boundaries defined in `docs/PRODUCT.md`. All rules in `constitution.md` apply.
+#### 3a — Specify
 
-Repeat for `P1-F02` through `P1-F13`, in order. Review each spec before moving to the next — specs are contracts, not drafts.
+> Read `docs/PRODUCT.md` and `.specify/memory/constitution.md`. Run `/specify` for feature `[P1-F01]` Repo Input. The spec must be traceable to the acceptance criteria and out-of-scope boundaries in `docs/PRODUCT.md`. All rules in `.specify/memory/constitution.md` apply.
 
-### Step 4 — Implement against specs
+Review the generated spec. It is a contract — approve it before proceeding. If it drifts from the acceptance criteria in this document, correct it now.
 
-With all Phase 1 specs in place, begin implementation feature by feature. For each feature:
+#### 3b — Plan
 
-> Read `constitution.md` and the spec for `[P1-F01]`. Implement this feature. Run tests before marking it complete. Do not implement anything outside the spec's acceptance criteria.
+> Run `/plan` for the `[P1-F01]` spec. Produce a technical implementation plan that respects the stack (Next.js App Router, Tailwind, Vercel), the module boundary (analyzer is framework-agnostic), and all rules in `.specify/memory/constitution.md`.
 
-### Step 5 — Phase 2 and Phase 3
+Review the plan. Verify it does not introduce any dependency that would block Phase 2 or Phase 3.
 
-When Phase 1 is complete and deployed, repeat Steps 3–4 for Phase 2 features (`P2-F01`, `P2-F02`), then Phase 3 (`P3-F01`, `P3-F02`). The analyzer module must not be modified to accommodate Phase 2 or 3 — only wrapped.
+#### 3c — Tasks
+
+> Run `/tasks` for the `[P1-F01]` plan. Break the plan into the smallest independently executable tasks. Each task must have a clear done condition.
+
+Review the task list before implementation begins.
+
+#### 3d — Implement
+
+> Run `/implement` for each task in the `[P1-F01]` task list in sequence. After each task, verify it satisfies its done condition. Run tests before marking the feature complete. Do not implement anything outside the spec's acceptance criteria.
+
+Once the feature is complete and tests pass, commit, then return to **3a** for the next feature.
+
+---
+
+**Phase 1 feature order:**
+
+| # | Feature ID | Feature |
+|---|---|---|
+| 1 | P1-F01 | Repo Input |
+| 2 | P1-F02 | Deployment |
+| 3 | P1-F03 | Authentication |
+| 4 | P1-F04 | Data Fetching |
+| 5 | P1-F05 | Ecosystem Map |
+| 6 | P1-F06 | Repo Comparison |
+| 7 | P1-F07 | Metric Cards |
+| 8 | P1-F08 | Evolution |
+| 9 | P1-F09 | Contribution Dynamics |
+| 10 | P1-F10 | Responsiveness |
+| 11 | P1-F11 | Health Ratios |
+| 12 | P1-F12 | Missing Data & Accuracy |
+| 13 | P1-F13 | Export |
+
+### Step 4 — Phase 2 and Phase 3
+
+When Phase 1 is complete and deployed, run the same loop (Steps 3a–3d) for each Phase 2 feature (`P2-F01`, `P2-F02`), then each Phase 3 feature (`P3-F01`, `P3-F02`). The analyzer module must not be modified to accommodate Phase 2 or 3 — only wrapped.
+
+> **Note**: The `.specify/` directory is managed by SpecKit. Do not manually edit files inside it outside of the workflows described above.
