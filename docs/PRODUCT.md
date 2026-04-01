@@ -42,7 +42,7 @@ ForkPrint groups analysis into four CHAOSS-aligned reporting dimensions. These d
 |---|---|---|---|
 | Ecosystem | ForkPrint repo-profile layer informed by CHAOSS-style ecosystem signals | Ecosystem Map (P1-F05) | Ecosystem profile: Reach / Builder Engagement / Attention |
 | Evolution | CHAOSS Evolution metrics and focus areas | Evolution (P1-F08) | Evolution score: High / Medium / Low |
-| Sustainability | Contribution and organizational resilience metrics aligned with CHAOSS contributor/community health work | Contribution Dynamics (P1-F09) | Resilience score: High / Medium / Low |
+| Contributors | Contributor metrics with a dedicated Sustainability pane for resilience and organizational-risk signals | Contributors (P1-F09) | Core contributor metrics + Sustainability score |
 | Responsiveness | CHAOSS-aligned time-to-response and time-to-resolution metrics | Responsiveness (P1-F10) | Responsiveness score: High / Medium / Low |
 
 Scores are assigned only when sufficient verified data exists. Otherwise: `"Insufficient verified public data"`.
@@ -161,7 +161,7 @@ The analyzer fetches exact, verified metric data from GitHub for each repo.
   - **Repo metadata**: name, description, created date, primary language
   - **Ecosystem signals**: stars, forks, watchers
   - **Evolution**: commits (last 30d, last 90d), releases (last 12mo), PRs opened (last 90d), PRs merged (last 90d), issues open, issues closed (last 90d)
-  - **Contribution Dynamics**: unique commit authors (last 90d), total contributors, commit counts per author
+  - **Contributors**: unique commit authors (last 90d), total contributors, commit counts per author
   - **Responsiveness**: issue first-response timestamps, issue close timestamps, PR merge timestamps
 
 **Out of scope**
@@ -198,7 +198,7 @@ ForkPrint presents analysis in a stable app shell so users can submit repos once
 - A top header/banner shows the ForkPrint brand and a visible GitHub repo link
 - Repo input and Analyze action live in a stable analysis panel that remains visible above the result views
 - Successful analyses populate a tabbed result area rather than stacking every future view vertically
-- The shell organizes result views in a stable order with `Overview` first and domain views such as `Metrics`, `Responsiveness`, `Sustainability`, and `Comparison` available as tabs
+- The shell organizes result views in a stable order with `Overview` first and domain views such as `Contributors`, `Metrics`, `Responsiveness`, and `Comparison` available as tabs
 - The `Overview` tab is the first populated results tab and can absorb cross-feature summary content until later tabs deliver distinct value
 - Switching tabs does not re-submit the analysis request or trigger extra API calls
 - The shell works for single-repo and multi-repo analyses on desktop and mobile layouts
@@ -268,19 +268,38 @@ The analyzer measures how a repo's activity has changed over time.
 
 ---
 
-#### `[P1-F09]` Contribution Dynamics *(ForkPrint Sustainability Dimension)*
+#### `[P1-F09]` Contributors
 
-The analyzer measures the depth, distribution, and sustainability of contributor activity.
+The Contributors workspace measures the depth and distribution of contributor activity, with a dedicated Sustainability pane for broader resilience and organizational-risk signals.
 
 **Acceptance criteria**
-- Metrics computed: active contributors in last 90d (unique commit authors), total contributors, new contributors (first commit in last 90d), repeat contributors, contribution concentration (% of commits from top 20% of authors)
-- Organizational diversity surfaced using two explicit measures when public data allows it: verified organization count and largest-organization share among verifiable active contributors
-- If contributor organization cannot be verified publicly with enough confidence, the UI surfaces `Could not verify contributor organization publicly` rather than approximating
+- Top-level results navigation places `Contributors` immediately after `Overview`
+- The `Contributors` tab is organized into two panes:
+  - `Core`
+  - `Sustainability`
+- The initial `Core` pane in `P1-F09` includes:
+  - total contributors
+  - active contributors in last 90d (unique commit authors)
+  - contribution concentration (% of commits from top 20% of authors; may later be strengthened with Lorenz/Gini-based distribution analysis without changing the user-facing metric slot)
+  - repeat contributors
+  - new contributors (first commit in last 90d)
+- The `Sustainability` pane includes the Sustainability score and related explanation surfaces
 - Resilience score — High / Medium / Low — derived from contribution dynamics data; assigned only when concentration data is verifiable
-- Scoring logic: high concentration + dominant org share = fragile; high concentration + multiple orgs = moderate; distributed contributors + distributed org share = strong; unknown org data lowers confidence and may block scoring
+- Scoring logic: high contribution concentration = fragile; moderate concentration = moderate; distributed contributors = strong, with insufficient verified public data blocking the score when contributor-distribution evidence is incomplete
 - All thresholds defined in config, not hardcoded in logic
 - CHAOSS category label displayed alongside the score in the UI
 - Missing data explicitly listed in the per-repo callout panel
+- The `Sustainability` pane also reserves a clearly labeled placeholder area for later sustainability signals that are part of `P1-F09` but not required in the first implementation slice:
+  - maintainer count from a supported `MAINTAINERS` file
+  - inactive contributors
+  - occasional contributors
+  - no contributions in the last 6 months
+  - types of contributions
+  - new vs. returning contributor ratio per release cycle
+  - organizational diversity
+  - unique employer/org count among contributors
+  - single-vendor dependency ratio (% of commits from one org)
+  - Elephant Factor ([CHAOSS metric reference](https://chaoss.community/kb/metric-elephant-factor/))
 
 **Out of scope**
 - Manually overriding org affiliation
@@ -313,7 +332,7 @@ Computed diagnostic ratios provide a quick cross-repo comparison surface, drawn 
 **Acceptance criteria**
 - Ecosystem ratios: forks/stars, watches/stars
 - Evolution ratios: merged PRs/opened PRs, stale issues/total open issues
-- Contribution Dynamics ratios: repeat contributors/total contributors, new contributors/total contributors
+- Contributors ratios: repeat contributors/total contributors, new contributors/total contributors
 - Unavailable ratios displayed as `—`, never estimated
 - Ratios grouped by CHAOSS category in the UI
 - Table is sortable by ratio value across repos

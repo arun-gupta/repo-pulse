@@ -121,13 +121,17 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
     <ResultsShell
       analysisPanel={analysisPanel}
       overview={overviewContent}
+      contributors={
+        <p className="text-sm text-slate-600">
+          Contributors will become the home for core contributor metrics, with separate Core and Sustainability panes.
+        </p>
+      }
       metrics={
         <p className="text-sm text-slate-600">
           Metrics will become the primary workspace for Evolution scoring and detailed repo metrics.
         </p>
       }
       responsiveness={<p className="text-sm text-slate-600">Responsiveness metrics are coming soon.</p>}
-      sustainability={<p className="text-sm text-slate-600">Sustainability metrics are coming soon.</p>}
       comparison={<p className="text-sm text-slate-600">Comparison view is planned for a later Phase 1 step.</p>}
     />
   )

@@ -275,7 +275,7 @@ describe('RepoInputClient', () => {
     await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
 
     await screen.findByRole('tab', { name: 'Overview' })
-    await userEvent.click(screen.getByRole('tab', { name: 'Metrics' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Contributors' }))
 
     expect(onAnalyze).toHaveBeenCalledTimes(1)
   })

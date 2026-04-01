@@ -8,6 +8,12 @@ export const resultTabs: ResultTabDefinition[] = [
     description: 'Current analysis summary, ecosystem profile, and shared status',
   },
   {
+    id: 'contributors',
+    label: 'Contributors',
+    status: 'placeholder',
+    description: 'Core contributor metrics and sustainability signals are coming soon.',
+  },
+  {
     id: 'metrics',
     label: 'Metrics',
     status: 'placeholder',
@@ -18,12 +24,6 @@ export const resultTabs: ResultTabDefinition[] = [
     label: 'Responsiveness',
     status: 'placeholder',
     description: 'Responsiveness metrics are coming soon.',
-  },
-  {
-    id: 'sustainability',
-    label: 'Sustainability',
-    status: 'placeholder',
-    description: 'Sustainability metrics are coming soon.',
   },
   {
     id: 'comparison',
