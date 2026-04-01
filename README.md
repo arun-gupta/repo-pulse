@@ -1,16 +1,14 @@
 # ForkPrint
 
-ForkPrint is a CHAOSS-aligned GitHub repository health analyzer being built in phases. The long-term goal is to accept one or more `owner/repo` inputs, fetch real public data via the GitHub GraphQL API, and produce an interactive dashboard and raw JSON output.
+ForkPrint is a CHAOSS-aligned GitHub repository health analyzer. The current Phase 1 app accepts one or more `owner/repo` inputs, fetches verified public data from GitHub, and presents summary cards and ecosystem signals in a web dashboard, with broader comparison and scoring features still on the roadmap.
 
 Production: [forkprint-arun-gupta.vercel.app](https://forkprint-arun-gupta.vercel.app)
 
 ## Roadmap
 
-| Phase | Platform | Status |
-|-------|----------|--------|
-| 1 | Next.js web app (Vercel) | In progress |
-| 2 | GitHub Action (scheduled analysis + alerting) | Planned |
-| 3 | MCP Server (callable by Claude, Cursor, etc.) | Planned |
+- Phase 1: Next.js web app on Vercel for interactive repository analysis
+- Phase 2: GitHub Action for scheduled analysis and alerting
+- Phase 3: MCP server callable by tools such as Claude and Cursor
 
 ## Setup
 
@@ -29,16 +27,15 @@ Optional local env:
 GITHUB_TOKEN=
 ```
 
-## Planned Product Capabilities
+## Product Scope
 
-- Analyze GitHub repos across four CHAOSS categories: **Ecosystem**, **Evolution**, **Sustainability**, and **Responsiveness**
-- Visualize repos with an interactive ecosystem view and profile summaries
-- Compare multiple repos side by side across all health metrics
-- Export results as JSON or Markdown
+The complete product feature set is defined in [`docs/PRODUCT.md`](docs/PRODUCT.md).
+
+The current implementation order is tracked in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#phase-1-feature-order).
 
 ## Docs
 
-- Develop: [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)
-- Deploy: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
-- Product: [`docs/PRODUCT.md`](docs/PRODUCT.md)
-- Rules: [`.specify/memory/constitution.md`](.specify/memory/constitution.md)
+- Use [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the feature workflow, implementation order, current completion status, and verification commands.
+- Use [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) when running or updating the Phase 1 Vercel deployment.
+- Use [`docs/PRODUCT.md`](docs/PRODUCT.md) for the complete product feature set and feature definitions.
+- Use [`.specify/memory/constitution.md`](.specify/memory/constitution.md) for project rules and Definition of Done requirements.
