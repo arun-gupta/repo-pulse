@@ -5,7 +5,7 @@
 
 ## Summary
 
-Introduce the `Contributors` tab as the first detailed contributor-health workspace after `Overview`. The initial `P1-F09` slice delivers a `Core` pane with verified contributor metrics, a `Sustainability` pane with the first real Sustainability score and supporting explanation surfaces, and a clearly labeled placeholder area for later resilience and organizational-risk signals, all without triggering new analysis requests.
+Introduce the `Contributors` tab as the first detailed contributor-health workspace after `Overview`. The initial `P1-F09` slice delivers a `Core` pane with verified contributor metrics plus a person-level contribution heatmap, a `Sustainability` pane with the first real Sustainability score and supporting explanation surfaces, and a clearly labeled placeholder area for later resilience and organizational-risk signals, all without triggering new analysis requests.
 
 ## Technical Context
 
@@ -16,15 +16,15 @@ Introduce the `Contributors` tab as the first detailed contributor-health worksp
 **Target Platform**: Vercel-hosted Next.js web app, modern desktop/mobile browsers  
 **Project Type**: Web application with server-side API routes and client-side analysis UI  
 **Performance Goals**: Switching into `Contributors` and between `Core` / `Sustainability` panes must be local UI only and must not trigger additional analysis requests  
-**Constraints**: Reuse the shared `AnalysisResult[]` contract; keep unavailable values explicit; scoring thresholds must remain config-driven; do not overbuild for later sustainability signals in the first slice; preserve the current Overview-card badge contract  
-**Scale/Scope**: Contributors-tab shell content, first-slice contributor metrics, Sustainability score contract, placeholder reserve area, tests/manual checklist/docs
+**Constraints**: Reuse the shared `AnalysisResult[]` contract; keep unavailable values explicit; scoring thresholds must remain config-driven; do not overbuild for later sustainability signals in the first slice; preserve the current Overview-card badge contract; use a supported public GitHub contributor-count surface for total contributors if GraphQL alone is insufficient  
+**Scale/Scope**: Contributors-tab shell content, first-slice contributor metrics, person-level heatmap, Sustainability score contract, placeholder reserve area, tests/manual checklist/docs
 
 ## Constitution Check
 
 | Rule | Status | Notes |
 |------|--------|-------|
 | I / Phase 1 stack | PASS | Remains within the existing Next.js / React / Tailwind stack |
-| II / Honest data only | PASS | Contributors content must show exact values or explicit unavailable states only |
+| II / Honest data only | PASS | Contributors content, heatmap cells, and counts must show exact values or explicit unavailable states only |
 | III / Shared analyzer outputs | PASS | Reuses and extends `AnalysisResult` rather than introducing a second contributor data path |
 | V / CHAOSS alignment | PASS | Core contributor metrics and later sustainability signals stay aligned with CHAOSS contributor/community health concepts |
 | VIII / Config-driven thresholds | PASS | Sustainability scoring remains centralized in shared config rather than embedded in components |
@@ -64,7 +64,7 @@ components/
 │   └── contributors/
 │       ├── ContributorsView.tsx             ← NEW: top-level `Contributors` tab content
 │       ├── ContributorsView.test.tsx        ← NEW: `Core` / `Sustainability` pane behavior
-│       ├── CoreContributorsPane.tsx         ← NEW: first-slice contributor metrics
+│       ├── CoreContributorsPane.tsx         ← NEW: first-slice contributor metrics and person-level heatmap
 │       ├── SustainabilityPane.tsx           ← NEW: score, help, missing-data panel, placeholder signals
 │       └── *.test.tsx                       ← NEW: focused pane-level tests
 ├── metric-cards/
@@ -97,14 +97,14 @@ e2e/
 
 ### Phase 1 — Design
 
-4. Define the contributor data model for the first slice: total contributors, active contributors, contribution concentration, repeat contributors, new contributors, score inputs, and missing-data callout fields
-5. Define the `Contributors` tab UI contract, including pane switching, per-repo sections, score help, and placeholder behavior for later sustainability signals
+4. Define the contributor data model for the first slice: total contributors, active contributors, contribution concentration, repeat contributors, person-level heatmap inputs, score inputs, and missing-data callout fields
+5. Define the `Contributors` tab UI contract, including pane switching, per-repo sections, person-level heatmap rendering, score help, and placeholder behavior for later sustainability signals
 6. Define config-driven Sustainability scoring thresholds and the exact explanation copy exposed by the help surface
 7. Create the manual testing checklist for one-repo, multi-repo, unavailable-data, insufficient-score-data, and pane-switching scenarios
 
 ### Phase 2 — Implementation Preview
 
-8. Extend the analyzer contract only for the first-slice contributor inputs needed by `Core` and the initial Sustainability score
+8. Extend the analyzer contract only for the first-slice contributor inputs needed by `Core`, the person-level heatmap, total contributor count, and the initial Sustainability score
 9. Add shared contributor view-model and score-config helpers so UI logic stays thin and reusable
 10. Implement the `Contributors` top-level tab with `Core` and `Sustainability` panes using the existing `AnalysisResult[]`
 11. Replace the current Sustainability placeholder badge state on overview cards with the first real score output

@@ -134,7 +134,8 @@ describe('RepoInputClient', () => {
     expect(within(metricCardsOverview).getByTestId('metric-card-facebook/react')).toBeInTheDocument()
     expect(within(metricCardsOverview).getByText('244,295')).toBeInTheDocument()
     expect(within(metricCardsOverview).getByText(/ecosystem profile/i)).toBeInTheDocument()
-    expect(within(results).getAllByText('Not scored yet')).toHaveLength(3)
+    expect(within(results).getByText('Insufficient verified public data')).toBeInTheDocument()
+    expect(within(results).getAllByText('Not scored yet')).toHaveLength(2)
 
     const ecosystemMap = within(results).getByRole('region', { name: /ecosystem map/i })
     expect(within(ecosystemMap).getByText(/ecosystem spectrum/i)).toBeInTheDocument()
@@ -278,6 +279,56 @@ describe('RepoInputClient', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Contributors' }))
 
     expect(onAnalyze).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders contributors content after a successful analysis', async () => {
+    const onAnalyze = vi.fn().mockResolvedValue({
+      results: [
+        {
+          repo: 'facebook/react',
+          name: 'react',
+          description: 'A UI library',
+          createdAt: '2013-05-24T16:15:54Z',
+          primaryLanguage: 'TypeScript',
+          stars: 244295,
+          forks: 25,
+          watchers: 10,
+          commits30d: 7,
+          commits90d: 18,
+          releases12mo: 'unavailable',
+          prsOpened90d: 4,
+          prsMerged90d: 3,
+          issuesOpen: 5,
+          issuesClosed90d: 6,
+          uniqueCommitAuthors90d: 2,
+          totalContributors: 'unavailable',
+          commitCountsByAuthor: { 'login:alice': 2, 'login:bob': 1 },
+          issueFirstResponseTimestamps: 'unavailable',
+          issueCloseTimestamps: 'unavailable',
+          prMergeTimestamps: 'unavailable',
+          missingFields: ['totalContributors'],
+        },
+      ],
+      failures: [],
+      rateLimit: null,
+    })
+
+    render(<RepoInputClient hasServerToken={false} onAnalyze={onAnalyze} />)
+
+    await userEvent.type(screen.getByLabelText(/github personal access token/i), 'ghp_saved')
+    await userEvent.type(screen.getByRole('textbox', { name: /repository list/i }), 'facebook/react')
+    await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
+
+    await screen.findByRole('tab', { name: 'Contributors' })
+    await userEvent.click(screen.getByRole('tab', { name: 'Contributors' }))
+
+    const contributorsView = screen.getByRole('region', { name: /contributors view/i })
+    const corePane = within(contributorsView).getByRole('region', { name: /core contributors pane/i })
+
+    expect(contributorsView).toBeInTheDocument()
+    expect(screen.getByText(/top 20% contributor share/i)).toBeInTheDocument()
+    expect(within(corePane).getByText(/^Contribution heatmap$/i)).toBeInTheDocument()
+    expect(screen.getByText(/later sustainability signals/i)).toBeInTheDocument()
   })
 
   it('keeps overview cards summary-only after analysis succeeds', async () => {

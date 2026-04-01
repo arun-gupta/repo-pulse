@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ResultsShell } from '@/components/app-shell/ResultsShell'
+import { ContributorsView } from '@/components/contributors/ContributorsView'
 import { EcosystemMap } from '@/components/ecosystem-map/EcosystemMap'
 import { MetricCardsOverview } from '@/components/metric-cards/MetricCardsOverview'
 import { TokenInput } from '@/components/token-input/TokenInput'
@@ -122,9 +123,13 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
       analysisPanel={analysisPanel}
       overview={overviewContent}
       contributors={
-        <p className="text-sm text-slate-600">
-          Contributors will become the home for core contributor metrics, with separate Core and Sustainability panes.
-        </p>
+        analysisResponse ? (
+          <ContributorsView results={analysisResponse.results} />
+        ) : (
+          <p className="text-sm text-slate-600">
+            Contributors will become the home for core contributor metrics, with separate Core and Sustainability panes.
+          </p>
+        )
       }
       metrics={
         <p className="text-sm text-slate-600">

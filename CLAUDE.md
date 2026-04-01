@@ -1,6 +1,17 @@
 ## Claude's Role
 Read `.specify/memory/constitution.md` first. It is the authoritative source of truth for this project. Everything in it is non-negotiable.
 
+## Feature Selection Order
+When starting new feature work, follow this order exactly:
+
+1. Read `docs/DEVELOPMENT.md` first to identify the next feature to implement from the current implementation order.
+2. Read `docs/PRODUCT.md` next to find the canonical product definition, acceptance criteria, and out-of-scope boundaries for that feature.
+3. Then run the SpecKit lifecycle in order:
+   - `/speckit.specify`
+   - `/speckit.plan`
+   - `/speckit.tasks`
+   - `/speckit.implement`
+
 ## SpecKit Commands
 Command definitions are available in `.claude/commands/`.
 
@@ -10,9 +21,6 @@ Command definitions are available in `.claude/commands/`.
 - `/speckit.implement` — execute plan
 
 These command definitions live in `.claude/commands/`.
-
-Before running any `/speckit.*` command, always read `docs/PRODUCT.md`. The spec must be traceable to the acceptance criteria and out-of-scope boundaries defined there.
-Before choosing the next feature to implement, always read `docs/DEVELOPMENT.md` for the current implementation order.
 
 ## On Ambiguity
 If a spec is missing, incomplete, or conflicts with the constitution — 

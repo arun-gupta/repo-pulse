@@ -13,11 +13,11 @@ A user can open the `Contributors` tab after analysis and see a dedicated contri
 
 **Why this priority**: This is the most natural next detail surface after the Overview card, and it gives the `Contributors` tab a concrete purpose instead of leaving contributor detail scattered across the product.
 
-**Independent Test**: Can be fully tested by supplying one or more successful `AnalysisResult` objects and confirming the `Contributors` tab renders contribution metrics for each successful repository without triggering another analysis request.
+**Independent Test**: Can be fully tested by supplying one or more successful `AnalysisResult` objects and confirming the `Contributors` tab renders the core contributor metrics and a person-level contribution heatmap for each successful repository without triggering another analysis request.
 
 **Acceptance Scenarios**:
 
-1. **Given** one successful repository has been analyzed, **When** the user opens the `Contributors` tab, **Then** the tab shows a `Core` pane for that repository with the core contributor metrics.
+1. **Given** one successful repository has been analyzed, **When** the user opens the `Contributors` tab, **Then** the tab shows a `Core` pane for that repository with the core contributor metrics and person-level contribution heatmap.
 2. **Given** multiple successful repositories have been analyzed, **When** the user opens the `Contributors` tab, **Then** each successful repository appears with its own contributor content and failed repositories do not create fabricated views.
 3. **Given** the user switches between `Overview` and `Contributors`, **When** they view the contributor content, **Then** no new analysis request or extra API call is triggered.
 
@@ -36,7 +36,7 @@ A user can see a real Sustainability score for each successful repository and un
 1. **Given** a repository has sufficient verified contribution data, **When** the user views its card or the `Sustainability` pane inside `Contributors`, **Then** the Sustainability badge shows `High`, `Medium`, or `Low`.
 2. **Given** a repository does not have sufficient verified contribution data, **When** the score is computed, **Then** the UI shows `Insufficient verified public data` instead of a guessed score.
 3. **Given** a Sustainability score is visible, **When** the user asks how it was scored, **Then** the UI exposes a tooltip or equivalent help surface describing the thresholds from shared config.
-4. **Given** contributor-distribution data is available, **When** the user views the `Core` and `Sustainability` panes inside `Contributors`, **Then** the UI shows the implemented core contributor metrics and does not imply that the placeholder sustainability signals have already been computed.
+4. **Given** contributor-distribution data is available, **When** the user views the `Core` and `Sustainability` panes inside `Contributors`, **Then** the UI shows the implemented core contributor metrics and person-level heatmap and does not imply that the placeholder sustainability signals have already been computed.
 
 ---
 
@@ -52,7 +52,7 @@ A user can see that broader sustainability signals are planned for this tab with
 
 1. **Given** the user opens the `Contributors` tab, **When** broader sustainability signals are not yet implemented, **Then** the `Sustainability` pane shows a clearly labeled placeholder for later signals rather than invented values.
 2. **Given** a repository lacks data for those later sustainability signals, **When** the user views the placeholder area, **Then** the UI does not imply that maintainer, organization, or contribution-type values have already been computed.
-3. **Given** future sustainability signals such as maintainer count, organizational diversity, Elephant Factor, occasional contributors, inactive contributors, or types of contributions are planned, **When** the user views the placeholder area, **Then** the UI makes clear that those signals will land later in `P1-F09`.
+3. **Given** future sustainability signals such as maintainer count, organizational diversity, Elephant Factor, occasional contributors, inactive contributors, new contributors, or organization-level heatmaps are planned, **When** the user views the placeholder area, **Then** the UI makes clear that those signals will land later in `P1-F09`.
 
 ### Edge Cases
 
@@ -66,7 +66,7 @@ A user can see that broader sustainability signals are planned for this tab with
 ### Functional Requirements
 
 - **FR-001**: The system MUST populate the `Contributors` tab with contributor-health content for successful repositories.
-- **FR-002**: The `Contributors` tab MUST expose a `Core` pane that surfaces the following exact core metrics per successful repository when publicly verifiable: total contributors, active contributors in last 90d, contribution concentration, repeat contributors, and new contributors in last 90d.
+- **FR-002**: The `Contributors` tab MUST expose a `Core` pane that surfaces the following exact core metrics per successful repository when publicly verifiable: total contributors, active contributors in last 90d, repeat contributors, and a person-level contribution heatmap for recent verified commit activity.
 - **FR-003**: The `Core` pane MAY frame active contributors as committers when that framing is derived from the same verified public data, but it MUST NOT introduce a second incompatible contributor definition in the initial implementation.
 - **FR-003a**: The `Contributors` tab MUST expose a `Sustainability` pane for the Sustainability score, scoring explanation, missing-data callouts, and later sustainability signals.
 - **FR-004**: Contribution concentration MUST be computed as the share of commits attributable to the top 20% of contributors only when the required verified author-distribution data exists, with room for a later Lorenz/Gini-based implementation that preserves the same user-facing metric slot.
@@ -77,14 +77,15 @@ A user can see that broader sustainability signals are planned for this tab with
 - **FR-008**: The UI MUST expose a "how is this scored?" help surface for Sustainability thresholds without requiring another analysis request.
 - **FR-009**: Unavailable contribution metrics and unavailable derived values MUST remain explicit in the `Contributors` tab and MUST NOT be hidden, zeroed, or guessed.
 - **FR-009a**: The `Sustainability` pane MUST provide a per-repository missing-data callout panel that lists unavailable contribution fields affecting the rendered pane content or Sustainability score.
-- **FR-010**: The `Sustainability` pane MUST include a clearly labeled placeholder area for later sustainability signals such as maintainer count, inactive contributors, occasional contributors, no contributions in the last 6 months, types of contributions, new vs. returning contributor ratio per release cycle, organizational diversity, unique employer/org count among contributors, single-vendor dependency ratio, and Elephant Factor.
+- **FR-010**: The `Sustainability` pane MUST include a clearly labeled placeholder area for later sustainability signals such as maintainer count, inactive contributors, occasional contributors, no contributions in the last 6 months, types of contributions, new contributors in last 90d, new vs. returning contributor ratio per release cycle, organizational diversity, organization-level contribution heatmaps, unique employer/org count among contributors, single-vendor dependency ratio, and Elephant Factor.
 - **FR-011**: The placeholder area MUST NOT display fabricated or provisional values for those later sustainability signals.
 - **FR-012**: The feature MUST reuse the existing `AnalysisResult[]` analysis payload for rendering and MUST NOT introduce a second fetch path for sustainability detail.
 
 ### Key Entities
 
 - **Contributors View**: The `Contributors` tab surface that renders one repository’s `Core` and `Sustainability` panes.
-- **Core Contributor Metrics**: The initial `P1-F09` metric set consisting of total contributors, active contributors, contribution concentration, repeat contributors, and new contributors, with contribution concentration retaining a stable user-facing slot even if the underlying distribution method becomes more rigorous later.
+- **Core Contributor Metrics**: The initial `P1-F09` metric set consisting of total contributors, active contributors, repeat contributors, and a person-level contribution heatmap.
+- **Contribution Concentration**: The sustainability-oriented contributor-distribution metric currently computed as the share of commits attributable to the top 20% of contributors, with room for a later Lorenz/Gini-based implementation that preserves the same user-facing meaning.
 - **Sustainability Pane**: The pane inside `Contributors` that renders the config-driven Sustainability score, related explanation surfaces, missing-data callout, and placeholder area for later sustainability signals.
 - **Sustainability Signals Placeholder**: A clearly labeled UI area inside the `Sustainability` pane reserving space for later maintainership, organization, and contribution-pattern signals such as release-cycle contributor ratios and organization-concentration measures that are planned but not yet implemented in the first `P1-F09` slice.
 

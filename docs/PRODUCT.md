@@ -278,12 +278,12 @@ The Contributors workspace measures the depth and distribution of contributor ac
   - `Core`
   - `Sustainability`
 - The initial `Core` pane in `P1-F09` includes:
-  - total contributors
+  - total contributors (from a supported public GitHub contributor-count surface)
   - active contributors in last 90d (unique commit authors)
-  - contribution concentration (% of commits from top 20% of authors; may later be strengthened with Lorenz/Gini-based distribution analysis without changing the user-facing metric slot)
   - repeat contributors
-  - new contributors (first commit in last 90d)
+  - person-level contribution heatmap for recent verified commit activity
 - The `Sustainability` pane includes the Sustainability score and related explanation surfaces
+- The `Sustainability` pane owns contribution concentration and related top-20%-share explanation surfaces
 - Resilience score — High / Medium / Low — derived from contribution dynamics data; assigned only when concentration data is verifiable
 - Scoring logic: high contribution concentration = fragile; moderate concentration = moderate; distributed contributors = strong, with insufficient verified public data blocking the score when contributor-distribution evidence is incomplete
 - All thresholds defined in config, not hardcoded in logic
@@ -295,8 +295,10 @@ The Contributors workspace measures the depth and distribution of contributor ac
   - occasional contributors
   - no contributions in the last 6 months
   - types of contributions
+  - new contributors (first verified contribution in last 90d)
   - new vs. returning contributor ratio per release cycle
   - organizational diversity
+  - organization-level contribution heatmap
   - unique employer/org count among contributors
   - single-vendor dependency ratio (% of commits from one org)
   - Elephant Factor ([CHAOSS metric reference](https://chaoss.community/kb/metric-elephant-factor/))

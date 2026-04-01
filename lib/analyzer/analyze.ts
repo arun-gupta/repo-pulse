@@ -7,7 +7,8 @@ import type {
   Unavailable,
 } from './analysis-result'
 import { queryGitHubGraphQL } from './github-graphql'
-import { REPO_ACTIVITY_QUERY, REPO_OVERVIEW_QUERY } from './queries'
+import { fetchContributorCount } from './github-rest'
+import { REPO_ACTIVITY_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_OVERVIEW_QUERY } from './queries'
 
 interface RepoOverviewResponse {
   repository: {
@@ -28,12 +29,42 @@ interface RepoActivityResponse {
       target: {
         recent30: { totalCount: number }
         recent90: { totalCount: number }
+        recent90Commits: CommitHistoryConnection | null
       } | null
     } | null
   } | null
   prsOpened: { issueCount: number }
   prsMerged: { issueCount: number }
   issuesClosed: { issueCount: number }
+}
+
+interface RepoCommitHistoryPageResponse {
+  repository: {
+    defaultBranchRef: {
+      target: {
+        recent90Commits: CommitHistoryConnection | null
+      } | null
+    } | null
+  } | null
+}
+
+interface CommitHistoryConnection {
+  pageInfo: {
+    hasNextPage: boolean
+    endCursor: string | null
+  }
+  nodes: CommitNode[]
+}
+
+interface CommitNode {
+  authoredDate: string
+  author: {
+    name: string | null
+    email: string | null
+    user: {
+      login: string
+    } | null
+  } | null
 }
 
 const UNAVAILABLE_FIELDS: Array<keyof AnalysisResult> = [
@@ -88,7 +119,19 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       })
       latestRateLimit = activity.rateLimit ?? latestRateLimit
 
-      results.push(buildAnalysisResult(repo, overview.data, activity.data))
+      const contributorCount = await fetchContributorCount(input.token, owner, name)
+      latestRateLimit = contributorCount.rateLimit ?? latestRateLimit
+
+      const commitHistory = await collectRecentCommitHistory({
+        token: input.token,
+        owner,
+        name,
+        since90: since90.toISOString(),
+        initialConnection: activity.data.repository?.defaultBranchRef?.target?.recent90Commits ?? null,
+      })
+      latestRateLimit = commitHistory.rateLimit ?? latestRateLimit
+
+      results.push(buildAnalysisResult(repo, overview.data, activity.data, commitHistory.nodes, contributorCount.data))
     } catch (error) {
       latestRateLimit = latestRateLimit ?? extractRateLimitFromError(error)
       failures.push(buildFailure(repo, error))
@@ -120,9 +163,26 @@ function buildAnalysisResult(
   repo: string,
   overview: RepoOverviewResponse,
   activity: RepoActivityResponse,
+  recentCommitNodes: CommitNode[],
+  totalContributorCount: number | Unavailable,
 ): AnalysisResult {
   const defaultBranchTarget = activity.repository?.defaultBranchRef?.target
-  const missingFields = [...UNAVAILABLE_FIELDS]
+  const contributorMetrics = buildContributorMetrics(recentCommitNodes)
+  const missingFields = [...UNAVAILABLE_FIELDS].filter((field) => {
+    if (field === 'uniqueCommitAuthors90d') {
+      return contributorMetrics.uniqueCommitAuthors90d === 'unavailable'
+    }
+
+    if (field === 'commitCountsByAuthor') {
+      return contributorMetrics.commitCountsByAuthor === 'unavailable'
+    }
+
+    if (field === 'totalContributors') {
+      return totalContributorCount === 'unavailable'
+    }
+
+    return true
+  })
 
   return {
     repo,
@@ -140,14 +200,110 @@ function buildAnalysisResult(
     prsMerged90d: activity.prsMerged.issueCount,
     issuesOpen: overview.repository?.issues.totalCount ?? 'unavailable',
     issuesClosed90d: activity.issuesClosed.issueCount,
-    uniqueCommitAuthors90d: 'unavailable',
-    totalContributors: 'unavailable',
-    commitCountsByAuthor: 'unavailable',
+    uniqueCommitAuthors90d: contributorMetrics.uniqueCommitAuthors90d,
+    totalContributors: totalContributorCount,
+    commitCountsByAuthor: contributorMetrics.commitCountsByAuthor,
     issueFirstResponseTimestamps: 'unavailable',
     issueCloseTimestamps: 'unavailable',
     prMergeTimestamps: 'unavailable',
     missingFields,
   }
+}
+
+async function collectRecentCommitHistory({
+  token,
+  owner,
+  name,
+  since90,
+  initialConnection,
+}: {
+  token: string
+  owner: string
+  name: string
+  since90: string
+  initialConnection: CommitHistoryConnection | null
+}): Promise<{ nodes: CommitNode[]; rateLimit: RateLimitState | null }> {
+  if (!initialConnection) {
+    return { nodes: [], rateLimit: null }
+  }
+
+  const nodes = [...initialConnection.nodes]
+  let rateLimit: RateLimitState | null = null
+  let hasNextPage = initialConnection.pageInfo.hasNextPage
+  let cursor = initialConnection.pageInfo.endCursor
+
+  while (hasNextPage && cursor) {
+    const response = await queryGitHubGraphQL<RepoCommitHistoryPageResponse>(token, REPO_COMMIT_HISTORY_PAGE_QUERY, {
+      owner,
+      name,
+      since90,
+      after: cursor,
+    })
+
+    rateLimit = response.rateLimit ?? rateLimit
+
+    const connection = response.data.repository?.defaultBranchRef?.target?.recent90Commits
+    if (!connection) {
+      break
+    }
+
+    nodes.push(...connection.nodes)
+    hasNextPage = connection.pageInfo.hasNextPage
+    cursor = connection.pageInfo.endCursor
+  }
+
+  return { nodes, rateLimit }
+}
+
+function buildContributorMetrics(recentCommitNodes: CommitNode[]): {
+  uniqueCommitAuthors90d: number | Unavailable
+  commitCountsByAuthor: Record<string, number> | Unavailable
+} {
+  if (recentCommitNodes.length === 0) {
+    return {
+      uniqueCommitAuthors90d: 'unavailable',
+      commitCountsByAuthor: 'unavailable',
+    }
+  }
+
+  const commitCountsByAuthor = new Map<string, number>()
+
+  for (const node of recentCommitNodes) {
+    const actorKey = getCommitActorKey(node)
+
+    if (!actorKey) {
+      return {
+        uniqueCommitAuthors90d: 'unavailable',
+        commitCountsByAuthor: 'unavailable',
+      }
+    }
+
+    commitCountsByAuthor.set(actorKey, (commitCountsByAuthor.get(actorKey) ?? 0) + 1)
+  }
+
+  return {
+    uniqueCommitAuthors90d: commitCountsByAuthor.size,
+    commitCountsByAuthor: Object.fromEntries(commitCountsByAuthor.entries()),
+  }
+}
+
+function getCommitActorKey(node: CommitNode): string | null {
+  const login = node.author?.user?.login?.trim()
+  if (login) {
+    return `login:${login}`
+  }
+
+  const email = node.author?.email?.trim()
+  if (email) {
+    return `email:${email.toLowerCase()}`
+  }
+
+  const name = node.author?.name?.trim()
+  if (name) {
+    return `name:${name.toLowerCase()}`
+  }
+
+  return null
 }
 
 function buildFailure(repo: string, error: unknown): RepositoryFetchFailure {

@@ -36,7 +36,7 @@
 
 - [ ] T004 Create `/Users/arungupta/workspaces/forkprint/lib/contributors/view-model.ts` with helpers for formatting core contributor metrics, unavailable states, missing-data callouts, and placeholder signal labels
 - [ ] T005 [P] Create `/Users/arungupta/workspaces/forkprint/lib/contributors/score-config.ts` with config-driven Sustainability thresholds, badge semantics, and "how is this scored?" copy
-- [ ] T006 [P] Update `/Users/arungupta/workspaces/forkprint/lib/analyzer/analysis-result.ts` with the first-slice contributor inputs required for total contributors, active contributors, repeat contributors, new contributors, contribution concentration, Sustainability score readiness, and missing-data reporting
+- [ ] T006 [P] Update `/Users/arungupta/workspaces/forkprint/lib/analyzer/analysis-result.ts` with the first-slice contributor inputs required for total contributors, active contributors, repeat contributors, person-level heatmap data, contribution concentration, Sustainability score readiness, and missing-data reporting
 - [ ] T007 [P] Add focused tests for `/Users/arungupta/workspaces/forkprint/lib/contributors/view-model.ts` and `/Users/arungupta/workspaces/forkprint/lib/contributors/score-config.ts`
 
 **Checkpoint**: Contributor data shaping and Sustainability scoring semantics are centralized and test-covered.
@@ -47,7 +47,7 @@
 
 **Goal**: A user can open `Contributors` and see the implemented `Core` pane with verified contributor metrics for each successful repository.
 
-**Independent Test**: Supply one or more successful `AnalysisResult` objects and confirm the `Contributors` tab renders a `Core` pane per successful repository with total contributors, active contributors, contribution concentration, repeat contributors, and new contributors, without rerunning analysis.
+**Independent Test**: Supply one or more successful `AnalysisResult` objects and confirm the `Contributors` tab renders a `Core` pane per successful repository with total contributors, active contributors, contribution concentration, repeat contributors, and a person-level contribution heatmap, without rerunning analysis.
 
 ### Tests for User Story 1 ⚠️
 
@@ -57,7 +57,7 @@
 - [ ] T009 [P] [US1] Add Contributors-shell integration tests in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.test.tsx` for rendering the `Contributors` content area
 - [ ] T010 [P] [US1] Extend `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.test.tsx` to verify switching to `Contributors` does not call `onAnalyze` again
 - [ ] T011 [P] [US1] Create `/Users/arungupta/workspaces/forkprint/components/contributors/ContributorsView.test.tsx` for one-section-per-successful-repo behavior and failure exclusion
-- [ ] T012 [P] [US1] Create `/Users/arungupta/workspaces/forkprint/components/contributors/CoreContributorsPane.test.tsx` for exact rendering of the five core contributor metrics and explicit unavailable values
+- [ ] T012 [P] [US1] Create `/Users/arungupta/workspaces/forkprint/components/contributors/CoreContributorsPane.test.tsx` for exact rendering of the core contributor metrics, person-level heatmap, and explicit unavailable values
 
 ### Implementation for User Story 1
 
@@ -66,7 +66,7 @@
 - [ ] T015 [US1] Create `/Users/arungupta/workspaces/forkprint/components/contributors/ContributorsView.tsx` to render one repository section with a `Core` pane for each successful result
 - [ ] T016 [US1] Update `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.tsx` and `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.tsx` to route analyzed results into `/Users/arungupta/workspaces/forkprint/components/contributors/ContributorsView.tsx`
 
-**Checkpoint**: The `Contributors` tab renders the first-slice `Core` metrics for each successful repository.
+**Checkpoint**: The `Contributors` tab renders the first-slice `Core` metrics and person-level heatmap for each successful repository.
 
 ---
 
@@ -80,14 +80,14 @@
 
 > **Write these tests first, and verify they fail before implementing the story.**
 
-- [ ] T017 [P] [US2] Add analyzer tests in `/Users/arungupta/workspaces/forkprint/lib/analyzer/analyzer.test.ts` for first-slice contributor inputs and explicit unavailable behavior
+- [ ] T017 [P] [US2] Add analyzer tests in `/Users/arungupta/workspaces/forkprint/lib/analyzer/analyzer.test.ts` for first-slice contributor inputs, total contributor count support, and explicit unavailable behavior
 - [ ] T018 [P] [US2] Create `/Users/arungupta/workspaces/forkprint/components/contributors/SustainabilityPane.test.tsx` for High/Medium/Low/Insufficient score rendering, help copy, and missing-data callout behavior
 - [ ] T019 [P] [US2] Extend `/Users/arungupta/workspaces/forkprint/components/metric-cards/MetricCard.test.tsx` or related score-badge tests to verify the Overview Sustainability badge can render a real score instead of only `Not scored yet`
 - [ ] T020 [P] [US2] Extend `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.test.tsx` to verify the `Contributors` tab exposes both `Core` and `Sustainability` panes without extra requests
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Update `/Users/arungupta/workspaces/forkprint/lib/analyzer/analyze.ts` to populate the first-slice contributor inputs required by `/Users/arungupta/workspaces/forkprint/lib/analyzer/analysis-result.ts`
+- [ ] T021 [US2] Update `/Users/arungupta/workspaces/forkprint/lib/analyzer/analyze.ts` to populate the first-slice contributor inputs required by `/Users/arungupta/workspaces/forkprint/lib/analyzer/analysis-result.ts`, including total contributor count from a supported public GitHub contributor-count surface when available
 - [ ] T022 [US2] Create `/Users/arungupta/workspaces/forkprint/components/contributors/SustainabilityPane.tsx` with score rendering, threshold help, and per-repo missing-data callout panel using `/Users/arungupta/workspaces/forkprint/lib/contributors/score-config.ts`
 - [ ] T023 [US2] Update `/Users/arungupta/workspaces/forkprint/components/contributors/ContributorsView.tsx` to expose both `Core` and `Sustainability` panes for each successful repository
 - [ ] T024 [US2] Update `/Users/arungupta/workspaces/forkprint/lib/metric-cards/score-config.ts`, `/Users/arungupta/workspaces/forkprint/lib/metric-cards/view-model.ts`, and `/Users/arungupta/workspaces/forkprint/components/metric-cards/MetricCard.tsx` so the Overview Sustainability badge consumes the first real score output
@@ -106,7 +106,7 @@
 
 > **Write these tests first, and verify they fail before implementing the story.**
 
-- [ ] T025 [P] [US3] Extend `/Users/arungupta/workspaces/forkprint/components/contributors/SustainabilityPane.test.tsx` to verify the placeholder area lists the reserved later signals and does not show fabricated values
+- [ ] T025 [P] [US3] Extend `/Users/arungupta/workspaces/forkprint/components/contributors/SustainabilityPane.test.tsx` to verify the placeholder area lists the reserved later signals, including `new contributors` and the future org-level heatmap, and does not show fabricated values
 - [ ] T026 [P] [US3] Add Playwright coverage in `/Users/arungupta/workspaces/forkprint/e2e/contributors.spec.ts` for tab navigation, pane switching, and placeholder-state visibility
 - [ ] T027 [P] [US3] Extend `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.test.tsx` to verify placeholder sustainability signals remain distinct from implemented core metrics
 
@@ -170,7 +170,7 @@
 
 ### Incremental Delivery
 
-1. Establish the Contributors workspace and render the five core contributor metrics
+1. Establish the Contributors workspace and render the first-slice core contributor metrics plus the person-level heatmap
 2. Add first-slice Sustainability scoring, help, and missing-data callouts
 3. Add the clearly labeled placeholder area for later sustainability signals
 4. Finish with verification, manual checklist completion, and README alignment

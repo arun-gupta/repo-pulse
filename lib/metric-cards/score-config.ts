@@ -1,4 +1,6 @@
 import type { ScoreBadgeProps, ScoreCategory, ScoreTone, ScoreValue } from '@/specs/008-metric-cards/contracts/metric-card-props'
+import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+import { getSustainabilityScore } from '@/lib/contributors/score-config'
 
 export interface ScoreBadgeDefinition extends ScoreBadgeProps {
   description: string
@@ -32,6 +34,26 @@ export const DEFAULT_SCORE_BADGES: ScoreBadgeDefinition[] = [
 
 export function getDefaultScoreBadges(): ScoreBadgeDefinition[] {
   return DEFAULT_SCORE_BADGES.map((badge) => ({ ...badge }))
+}
+
+export function getScoreBadges(result?: AnalysisResult): ScoreBadgeDefinition[] {
+  const badges = getDefaultScoreBadges()
+
+  if (!result) {
+    return badges
+  }
+
+  const sustainabilityScore = getSustainabilityScore(result)
+  return badges.map((badge) =>
+    badge.category === 'Sustainability'
+      ? {
+          ...badge,
+          value: sustainabilityScore.value,
+          tone: sustainabilityScore.tone,
+          description: sustainabilityScore.description,
+        }
+      : badge,
+  )
 }
 
 export function scoreToneClass(tone: ScoreTone) {
