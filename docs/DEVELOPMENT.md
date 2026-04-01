@@ -69,7 +69,7 @@ This is the planned implementation order for Phase 1. It may differ from the fea
 | 4 | P1-F15 | Results Shell | ✅ Done |
 | 5 | P1-F05 | Ecosystem Map | ✅ Done |
 | 6 | P1-F03 | Deployment | ✅ Done |
-| 7 | P1-F07 | Metric Cards | — |
+| 7 | P1-F07 | Metric Cards | ✅ Done |
 | 8 | P1-F14 | GitHub OAuth Authentication | — |
 | 9 | P1-F08 | Evolution | — |
 | 10 | P1-F09 | Contribution Dynamics | — |
@@ -78,6 +78,19 @@ This is the planned implementation order for Phase 1. It may differ from the fea
 | 13 | P1-F06 | Repo Comparison | — |
 | 14 | P1-F12 | Missing Data & Accuracy | — |
 | 15 | P1-F13 | Export | — |
+
+---
+
+## Testing
+
+Run these checks before opening a PR:
+
+```bash
+npm test
+npm run test:e2e
+npm run lint
+npm run build
+```
 
 ---
 
@@ -94,3 +107,4 @@ When Phase 1 is complete and deployed, run the same loop for each Phase 2 featur
 - Every feature must have `specs/NNN-feature-name/checklists/manual-testing.md`.
 - Constitution: `.specify/memory/constitution.md`
 - Product definition: `docs/PRODUCT.md`
+- Deployment guide: `docs/DEPLOYMENT.md`
