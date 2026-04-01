@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ResultsShell } from '@/components/app-shell/ResultsShell'
+import { EcosystemMap } from '@/components/ecosystem-map/EcosystemMap'
 import { TokenInput } from '@/components/token-input/TokenInput'
 import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import { readToken, writeToken } from '@/lib/token-storage'
@@ -89,7 +90,7 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
         <section aria-label="Analysis results" className="space-y-4">
           {analysisResponse.results.map((result) => (
             <article key={result.repo} className="rounded border border-gray-200 p-4">
-              <h2 className="font-semibold">{result.repo}</h2>
+              <h2 className="font-semibold text-slate-900">{result.repo}</h2>
               <p className="text-sm text-gray-600">Stars: {formatDisplayValue(result.stars)}</p>
             </article>
           ))}
@@ -123,7 +124,13 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
     <ResultsShell
       analysisPanel={analysisPanel}
       overview={overviewContent}
-      ecosystemMap={<p className="text-sm text-slate-600">Ecosystem map view is coming soon.</p>}
+      ecosystemMap={
+        analysisResponse ? (
+          <EcosystemMap results={analysisResponse.results} />
+        ) : (
+          <p className="text-sm text-slate-600">Run an analysis to populate the ecosystem map view.</p>
+        )
+      }
       comparison={<p className="text-sm text-slate-600">Comparison view is coming soon.</p>}
       metrics={<p className="text-sm text-slate-600">Metrics view is coming soon.</p>}
     />
