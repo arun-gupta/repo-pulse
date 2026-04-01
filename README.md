@@ -2,7 +2,7 @@
 
 ForkPrint is a CHAOSS-aligned GitHub repository health analyzer. The current Phase 1 app accepts one or more `owner/repo` inputs, fetches verified public data from GitHub, and presents summary cards and ecosystem signals in a web dashboard, with broader comparison and scoring features still on the roadmap.
 
-Production: [forkprint-arun-gupta.vercel.app](https://forkprint-arun-gupta.vercel.app)
+Live in action: [forkprint-arun-gupta.vercel.app](https://forkprint-arun-gupta.vercel.app)
 
 ## Roadmap
 
@@ -10,7 +10,7 @@ Production: [forkprint-arun-gupta.vercel.app](https://forkprint-arun-gupta.verce
 - Phase 2: GitHub Action for scheduled analysis and alerting
 - Phase 3: MCP server callable by tools such as Claude and Cursor
 
-## Setup
+## Getting Started
 
 ForkPrint currently supports a GitHub Personal Access Token with `public_repo` read-only scope. For local development, you can optionally set `GITHUB_TOKEN` in `.env.local`.
 
@@ -27,7 +27,7 @@ Optional local env:
 GITHUB_TOKEN=
 ```
 
-## Product Scope
+## Product
 
 The complete product feature set is defined in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
