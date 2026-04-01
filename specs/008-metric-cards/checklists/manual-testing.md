@@ -17,7 +17,7 @@
 
 ## US2 — CHAOSS score badges
 
-- [x] Confirm each overview card shows one placeholder badge for Evolution, Contribution Dynamics, and Responsiveness
+- [x] Confirm each overview card shows one placeholder badge for Evolution, Sustainability, and Responsiveness
 - [x] Confirm each placeholder badge shows the CHAOSS category label along with the interim value `Not scored yet`
 - [x] Confirm placeholder badge styling stays consistent across the three CHAOSS categories
 

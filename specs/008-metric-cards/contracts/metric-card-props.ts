@@ -3,7 +3,7 @@ import type { AttentionTier, EngagementTier, ReachTier } from '@/lib/ecosystem-m
 
 export type ScoreValue = 'High' | 'Medium' | 'Low' | 'Not scored yet'
 export type ScoreTone = 'success' | 'warning' | 'danger' | 'neutral'
-export type ScoreCategory = 'Evolution' | 'Contribution Dynamics' | 'Responsiveness'
+export type ScoreCategory = 'Evolution' | 'Sustainability' | 'Responsiveness'
 
 export interface ScoreBadgeProps {
   category: ScoreCategory
@@ -23,8 +23,6 @@ export interface MetricCardProps {
   result: AnalysisResult
   profile: MetricCardProfile
   scoreBadges: ScoreBadgeProps[]
-  expanded: boolean
-  onToggle: () => void
 }
 
 export interface MetricCardsOverviewProps {

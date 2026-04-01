@@ -90,7 +90,7 @@ When ForkPrint is deployed with a server-side `GITHUB_TOKEN`, the token input fi
 
 ## Assumptions
 
-- This spec covers PAT-only authentication. GitHub OAuth is a separate Phase 1 feature (P1-F14), implemented after P1-F07.
+- This spec covers PAT-only authentication. GitHub OAuth is a separate Phase 1 feature (P1-F14).
 - The token field is on the home page (`/`) alongside the repo input form — not on a separate settings page.
 - Token validation at entry time is limited to empty/whitespace detection. No format regex or authenticity check is performed — errors from invalid tokens surface at analysis time.
 - `localStorage` is the only required persistence mechanism. No cookie or session storage fallback is required.

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import { MetricCardsOverview } from './MetricCardsOverview'
@@ -10,14 +9,7 @@ describe('MetricCardsOverview', () => {
 
     expect(screen.getByTestId('metric-card-facebook/react')).toBeInTheDocument()
     expect(screen.getByTestId('metric-card-kubernetes/kubernetes')).toBeInTheDocument()
-  })
-
-  it('manages expansion state locally', async () => {
-    render(<MetricCardsOverview results={[buildResult()]} />)
-
-    expect(screen.queryByText(/full metric detail/i)).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /show details/i }))
-    expect(screen.getByText(/full metric detail/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /missing data/i })).not.toBeInTheDocument()
   })
 })
 

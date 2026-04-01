@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { EcosystemMap } from './EcosystemMap'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
@@ -20,7 +21,8 @@ describe('EcosystemMap', () => {
 
     const region = screen.getByRole('region', { name: /ecosystem map/i })
     expect(within(region).getByText(/ecosystem spectrum/i)).toBeInTheDocument()
-    expect(within(region).getByText(/^Reach bands$/)).toBeInTheDocument()
+    expect(within(region).getByRole('button', { name: /show legend/i })).toBeInTheDocument()
+    expect(within(region).queryByText(/^Reach$/)).not.toBeInTheDocument()
   })
 
   it('does not duplicate per-repo spectrum profile content', () => {
@@ -67,7 +69,7 @@ describe('EcosystemMap', () => {
     expect(screen.getByText(/ecosystem spectrum/i)).toBeInTheDocument()
   })
 
-  it('renders the ecosystem spectrum legend from config', () => {
+  it('renders the ecosystem spectrum legend from config when expanded', async () => {
     render(
       <EcosystemMap
         results={[
@@ -78,14 +80,15 @@ describe('EcosystemMap', () => {
     )
 
     const region = screen.getByRole('region', { name: /ecosystem map/i })
+    await userEvent.click(within(region).getByRole('button', { name: /show legend/i }))
 
     expect(within(region).getByText(/ecosystem spectrum/i)).toBeInTheDocument()
-    expect(within(region).getByText(/^Reach bands$/)).toBeInTheDocument()
+    expect(within(region).getByText(/^Reach$/)).toBeInTheDocument()
     expect(within(region).getAllByText(/^Builder engagement$/).length).toBeGreaterThan(0)
     expect(within(region).getAllByText(/^Attention$/).length).toBeGreaterThan(0)
   })
 
-  it('shows band guidance without per-repo rate pills for a single repo', () => {
+  it('shows band guidance without per-repo rate pills for a single repo', async () => {
     render(
       <EcosystemMap
         results={[
@@ -100,13 +103,15 @@ describe('EcosystemMap', () => {
     )
 
     const region = screen.getByRole('region', { name: /ecosystem map/i })
+    await userEvent.click(within(region).getByRole('button', { name: /show legend/i }))
 
     expect(within(region).queryByText(/20.8% fork rate/i)).not.toBeInTheDocument()
     expect(within(region).queryByText(/2.7% watcher rate/i)).not.toBeInTheDocument()
     expect(within(region).getByText(/^Builder engagement$/)).toBeInTheDocument()
+    expect(within(region).getByText(/^fork rate$/i)).toBeInTheDocument()
   })
 
-  it('shows band tiers in the legend', () => {
+  it('shows band tiers in the legend', async () => {
     render(
       <EcosystemMap
         results={[
@@ -116,10 +121,28 @@ describe('EcosystemMap', () => {
     )
 
     const region = screen.getByRole('region', { name: /ecosystem map/i })
+    await userEvent.click(within(region).getByRole('button', { name: /show legend/i }))
 
     expect(within(region).getByText(/Exceptional 100k\+/i)).toBeInTheDocument()
     expect(within(region).getByText(/Exceptional 25%\+/i)).toBeInTheDocument()
     expect(within(region).getByText(/Exceptional 2.5%\+/i)).toBeInTheDocument()
+  })
+
+  it('hides the legend rows again after collapsing', async () => {
+    render(
+      <EcosystemMap
+        results={[
+          buildResult({ repo: 'kubernetes/kubernetes', stars: 121419, forks: 42757, watchers: 3181 }),
+        ]}
+      />,
+    )
+
+    const region = screen.getByRole('region', { name: /ecosystem map/i })
+    await userEvent.click(within(region).getByRole('button', { name: /show legend/i }))
+    expect(within(region).getByText(/^Reach$/)).toBeInTheDocument()
+
+    await userEvent.click(within(region).getByRole('button', { name: /hide legend/i }))
+    expect(within(region).queryByText(/^Reach$/)).not.toBeInTheDocument()
   })
 })
 

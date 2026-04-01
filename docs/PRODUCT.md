@@ -36,14 +36,14 @@ The core analysis logic is shared across all three phases via a framework-agnost
 
 ## CHAOSS Alignment
 
-All analysis is structured around four CHAOSS categories. Each maps to exactly one feature and one derived score.
+ForkPrint groups analysis into four CHAOSS-aligned reporting dimensions. These dimensions are product-level buckets, not a claim that they are the official top-level CHAOSS metric taxonomy.
 
-| CHAOSS Category | Feature | Derived Score |
-|---|---|---|
-| Ecosystem | Ecosystem Map (P1-F05) | Ecosystem profile: Reach / Builder Engagement / Attention |
-| Evolution | Evolution (P1-F08) | Evolution score: High / Medium / Low |
-| Sustainability | Contribution Dynamics (P1-F09) | Resilience score: High / Medium / Low |
-| Responsiveness | Responsiveness (P1-F10) | Responsiveness score: High / Medium / Low |
+| ForkPrint Dimension | CHAOSS Basis | Feature | Derived Score |
+|---|---|---|---|
+| Ecosystem | ForkPrint repo-profile layer informed by CHAOSS-style ecosystem signals | Ecosystem Map (P1-F05) | Ecosystem profile: Reach / Builder Engagement / Attention |
+| Evolution | CHAOSS Evolution metrics and focus areas | Evolution (P1-F08) | Evolution score: High / Medium / Low |
+| Sustainability | Contribution and organizational resilience metrics aligned with CHAOSS contributor/community health work | Contribution Dynamics (P1-F09) | Resilience score: High / Medium / Low |
+| Responsiveness | CHAOSS-aligned time-to-response and time-to-resolution metrics | Responsiveness (P1-F10) | Responsiveness score: High / Medium / Low |
 
 Scores are assigned only when sufficient verified data exists. Otherwise: `"Insufficient verified public data"`.
 
@@ -125,7 +125,7 @@ User can authenticate with GitHub to enable data fetching.
 
 **Out of scope**
 - Multi-account or org-level token management
-- OAuth flow is handled by P1-F14 (implemented after P1-F07)
+- OAuth flow is handled by P1-F14
 
 ---
 
@@ -198,7 +198,7 @@ ForkPrint presents analysis in a stable app shell so users can submit repos once
 - A top header/banner shows the ForkPrint brand and a visible GitHub repo link
 - Repo input and Analyze action live in a stable analysis panel that remains visible above the result views
 - Successful analyses populate a tabbed result area rather than stacking every future view vertically
-- The initial tabs provide a shell that can host at least: Overview, Comparison, and Metrics
+- The shell organizes result views in a stable order with `Overview` first and domain views such as `Metrics`, `Responsiveness`, `Sustainability`, and `Comparison` available as tabs
 - The `Overview` tab is the first populated results tab and can absorb cross-feature summary content until later tabs deliver distinct value
 - Switching tabs does not re-submit the analysis request or trigger extra API calls
 - The shell works for single-repo and multi-repo analyses on desktop and mobile layouts
@@ -239,11 +239,11 @@ Users can compare two or more repos side by side across all health metrics.
 Each repo is summarized in a scannable card showing key health signals.
 
 **Acceptance criteria**
-- One card per repo displaying: stars, forks, watches, created date, ecosystem profile summary (Reach / Builder Engagement / Attention), and one score badge per CHAOSS category (Evolution, Contribution Dynamics, Responsiveness)
+- One card per repo displaying: stars, forks, watches, created date, ecosystem profile summary (Reach / Builder Engagement / Attention), and one score badge per CHAOSS-aligned dimension (Evolution, Sustainability, Responsiveness)
 - Ecosystem profile badges use consistent visual treatment across Reach / Builder Engagement / Attention tiers
 - Score badge colors: High = green, Medium = amber, Low = red, Insufficient = gray — consistent across all three CHAOSS score badges
 - CHAOSS category label shown beneath each score badge so the framing is always visible
-- Card click or expand reveals full metric detail for that repo
+- Card click or expand reveals missing-data detail for that repo without duplicating the deeper metric views hosted in later tabs
 
 **Out of scope**
 - Pinning or reordering cards
@@ -268,15 +268,16 @@ The analyzer measures how a repo's activity has changed over time.
 
 ---
 
-#### `[P1-F09]` Contribution Dynamics *(CHAOSS: Sustainability)*
+#### `[P1-F09]` Contribution Dynamics *(ForkPrint Sustainability Dimension)*
 
 The analyzer measures the depth, distribution, and sustainability of contributor activity.
 
 **Acceptance criteria**
 - Metrics computed: active contributors in last 90d (unique commit authors), total contributors, new contributors (first commit in last 90d), repeat contributors, contribution concentration (% of commits from top 20% of authors)
-- Organizational diversity surfaced as `Could not verify contributor organization publicly` when not inferable — never fabricated
+- Organizational diversity surfaced using two explicit measures when public data allows it: verified organization count and largest-organization share among verifiable active contributors
+- If contributor organization cannot be verified publicly with enough confidence, the UI surfaces `Could not verify contributor organization publicly` rather than approximating
 - Resilience score — High / Medium / Low — derived from contribution dynamics data; assigned only when concentration data is verifiable
-- Scoring logic: high concentration + single org = fragile; high concentration + multiple orgs = moderate; distributed + multiple orgs = strong; distributed + unknown orgs = moderate confidence
+- Scoring logic: high concentration + dominant org share = fragile; high concentration + multiple orgs = moderate; distributed contributors + distributed org share = strong; unknown org data lowers confidence and may block scoring
 - All thresholds defined in config, not hardcoded in logic
 - CHAOSS category label displayed alongside the score in the UI
 - Missing data explicitly listed in the per-repo callout panel

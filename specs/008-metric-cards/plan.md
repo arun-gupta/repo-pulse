@@ -5,7 +5,7 @@
 
 ## Summary
 
-Turn the current lightweight `Overview` tab into a true repo-card summary layer. Each successful repository will render as a scannable card that reuses the existing ecosystem spectrum profile, shows exact repo metadata and key counters, and introduces consistent CHAOSS score-badge slots for Evolution, Contribution Dynamics, and Responsiveness without rerunning analysis.
+Turn the current lightweight `Overview` tab into a true repo-card summary layer. Each successful repository will render as a scannable card that reuses the existing ecosystem spectrum profile, shows exact repo metadata and key counters, and introduces consistent CHAOSS score-badge slots for Evolution, Sustainability, and Responsiveness without rerunning analysis.
 
 ## Technical Context
 
@@ -91,7 +91,7 @@ e2e/
 ### Phase 1 — Design
 
 4. Define the repo-card view model, including exact summary fields, derived ecosystem profile tiers, and expanded-detail content
-5. Define the score-badge contract for Evolution, Contribution Dynamics, and Responsiveness with explicit interim semantics
+5. Define the score-badge contract for Evolution, Sustainability, and Responsiveness with explicit interim semantics
 6. Define the overview-tab UI contract for collapsed vs expanded cards and failure handling
 7. Create the manual testing checklist for one-repo, multi-repo, unavailable-data, and card-expansion scenarios
 

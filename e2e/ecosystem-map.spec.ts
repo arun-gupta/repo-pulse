@@ -25,11 +25,12 @@ test.describe('P1-F05 Ecosystem Map', () => {
 
     const ecosystemMap = page.getByRole('region', { name: /ecosystem map/i })
     await expect(ecosystemMap).toContainText('Ecosystem spectrum')
-    await expect(ecosystemMap).toContainText('Reach bands')
+    await expect(ecosystemMap.getByRole('button', { name: /show legend/i })).toBeVisible()
+    await expect(ecosystemMap).not.toContainText('Exceptional 100k+')
     await expect(ecosystemMap).not.toContainText('facebook/react')
   })
 
-  test('renders the ecosystem spectrum and legend for multiple repos', async ({ page }) => {
+  test('renders the ecosystem spectrum and legend for multiple repos when expanded', async ({ page }) => {
     await mockAnalyze(page, [
       buildResult({ repo: 'facebook/react', stars: 244295, forks: 50872, watchers: 6660 }),
       buildResult({ repo: 'kubernetes/kubernetes', stars: 121419, forks: 42757, watchers: 3181 }),
@@ -40,9 +41,7 @@ test.describe('P1-F05 Ecosystem Map', () => {
 
     const ecosystemMap = page.getByRole('region', { name: /ecosystem map/i })
     await expect(ecosystemMap).toContainText('Ecosystem spectrum')
-    await expect(ecosystemMap).toContainText('Reach bands')
-    await expect(ecosystemMap).toContainText('Builder engagement')
-    await expect(ecosystemMap).toContainText('Attention')
+    await ecosystemMap.getByRole('button', { name: /show legend/i }).click()
     await expect(ecosystemMap).toContainText('Reach')
     await expect(ecosystemMap).toContainText('Builder engagement')
     await expect(ecosystemMap).toContainText('Attention')
@@ -57,6 +56,7 @@ test.describe('P1-F05 Ecosystem Map', () => {
     await page.getByRole('button', { name: /analyze/i }).click()
 
     const ecosystemMap = page.getByRole('region', { name: /ecosystem map/i })
+    await ecosystemMap.getByRole('button', { name: /show legend/i }).click()
     await expect(ecosystemMap).toContainText('Exceptional 25%+')
     await expect(ecosystemMap).toContainText('Exceptional 2.5%+')
     await expect(ecosystemMap).not.toContainText('kubernetes/kubernetes')

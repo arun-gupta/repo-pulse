@@ -17,12 +17,13 @@
 
 - Required tabs:
   - `Overview`
-  - `Ecosystem Map`
-  - `Comparison`
   - `Metrics`
+  - `Responsiveness`
+  - `Sustainability`
+  - `Comparison`
 - `Overview` is implemented in this feature
-- `Ecosystem Map` may host current or resumed feature work
-- `Comparison` and `Metrics` can show placeholder states until those features land
+- `Metrics` is the primary destination for detailed repo metrics as scoring features land
+- `Responsiveness`, `Sustainability`, and `Comparison` can show placeholder states until those features land
 
 ## Interaction Rules
 

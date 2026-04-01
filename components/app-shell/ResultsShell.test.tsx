@@ -9,18 +9,20 @@ describe('ResultsShell', () => {
       <ResultsShell
         analysisPanel={<div>Analysis panel</div>}
         overview={<div>Overview content</div>}
-        comparison={<div>Comparison coming soon</div>}
         metrics={<div>Metrics coming soon</div>}
+        responsiveness={<div>Responsiveness coming soon</div>}
+        sustainability={<div>Sustainability coming soon</div>}
+        comparison={<div>Comparison coming soon</div>}
       />,
     )
 
     expect(screen.getByText('Analysis panel')).toBeInTheDocument()
     expect(screen.getByText('Overview content')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Comparison' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Metrics' }))
 
     expect(screen.getByText('Analysis panel')).toBeInTheDocument()
-    expect(screen.getByText('Comparison coming soon')).toBeInTheDocument()
+    expect(screen.getByText('Metrics coming soon')).toBeInTheDocument()
   })
 
   it('renders the GitHub repo link in the header', () => {
@@ -28,8 +30,10 @@ describe('ResultsShell', () => {
       <ResultsShell
         analysisPanel={<div>Analysis panel</div>}
         overview={<div>Overview content</div>}
-        comparison={<div>Comparison coming soon</div>}
         metrics={<div>Metrics coming soon</div>}
+        responsiveness={<div>Responsiveness coming soon</div>}
+        sustainability={<div>Sustainability coming soon</div>}
+        comparison={<div>Comparison coming soon</div>}
       />,
     )
 

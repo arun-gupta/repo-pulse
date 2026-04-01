@@ -36,7 +36,7 @@ The compact display contract for one CHAOSS-aligned summary badge on a card.
 
 - `category`: one of:
   - `Evolution`
-  - `Contribution Dynamics`
+  - `Sustainability`
   - `Responsiveness`
 - `value`: one of:
   - `High`

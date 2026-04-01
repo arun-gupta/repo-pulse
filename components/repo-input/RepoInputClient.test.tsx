@@ -133,12 +133,13 @@ describe('RepoInputClient', () => {
     const metricCardsOverview = within(results).getByRole('region', { name: /metric cards overview/i })
     expect(within(metricCardsOverview).getByTestId('metric-card-facebook/react')).toBeInTheDocument()
     expect(within(metricCardsOverview).getByText('244,295')).toBeInTheDocument()
-    expect(within(metricCardsOverview).getByText(/ecosystem profile summary/i)).toBeInTheDocument()
+    expect(within(metricCardsOverview).getByText(/ecosystem profile/i)).toBeInTheDocument()
     expect(within(results).getAllByText('Not scored yet')).toHaveLength(3)
 
     const ecosystemMap = within(results).getByRole('region', { name: /ecosystem map/i })
     expect(within(ecosystemMap).getByText(/ecosystem spectrum/i)).toBeInTheDocument()
-    expect(within(ecosystemMap).getByText(/^Reach bands$/)).toBeInTheDocument()
+    expect(within(ecosystemMap).getByRole('button', { name: /show legend/i })).toBeInTheDocument()
+    expect(within(ecosystemMap).queryByText(/^Reach$/)).not.toBeInTheDocument()
     expect(within(ecosystemMap).queryByText('facebook/react')).not.toBeInTheDocument()
   })
 
@@ -274,12 +275,12 @@ describe('RepoInputClient', () => {
     await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
 
     await screen.findByRole('tab', { name: 'Overview' })
-    await userEvent.click(screen.getByRole('tab', { name: 'Comparison' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Metrics' }))
 
     expect(onAnalyze).toHaveBeenCalledTimes(1)
   })
 
-  it('expands a metric card without rerunning analysis', async () => {
+  it('keeps overview cards summary-only after analysis succeeds', async () => {
     const onAnalyze = vi.fn().mockResolvedValue({
       results: [
         {
@@ -318,9 +319,8 @@ describe('RepoInputClient', () => {
     await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
 
     await screen.findByTestId('metric-card-facebook/react')
-    await userEvent.click(screen.getByRole('button', { name: /show details/i }))
 
-    expect(screen.getByText(/full metric detail/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /missing data/i })).not.toBeInTheDocument()
     expect(onAnalyze).toHaveBeenCalledTimes(1)
   })
 })

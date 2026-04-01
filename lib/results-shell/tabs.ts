@@ -8,15 +8,27 @@ export const resultTabs: ResultTabDefinition[] = [
     description: 'Current analysis summary, ecosystem profile, and shared status',
   },
   {
-    id: 'comparison',
-    label: 'Comparison',
-    status: 'placeholder',
-    description: 'Comparison view is coming soon.',
-  },
-  {
     id: 'metrics',
     label: 'Metrics',
     status: 'placeholder',
-    description: 'Metrics view is coming soon.',
+    description: 'Evolution metrics and scoring are coming soon.',
+  },
+  {
+    id: 'responsiveness',
+    label: 'Responsiveness',
+    status: 'placeholder',
+    description: 'Responsiveness metrics are coming soon.',
+  },
+  {
+    id: 'sustainability',
+    label: 'Sustainability',
+    status: 'placeholder',
+    description: 'Sustainability metrics are coming soon.',
+  },
+  {
+    id: 'comparison',
+    label: 'Comparison',
+    status: 'placeholder',
+    description: 'Comparison view is coming later in Phase 1.',
   },
 ]

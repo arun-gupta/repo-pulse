@@ -29,27 +29,27 @@ A user can see one score badge per CHAOSS category on each repo card so the repo
 
 **Why this priority**: The metric cards become much more useful when they summarize the cross-category health framing, but they still depend on the earlier card shell being present first.
 
-**Independent Test**: Can be fully tested by rendering repo cards with score values for Evolution, Contribution Dynamics, and Responsiveness and confirming the badges show the expected labels and color semantics, including the interim `Not scored yet` state before later scoring features land.
+**Independent Test**: Can be fully tested by rendering repo cards with score values for Evolution, Sustainability, and Responsiveness and confirming the badges show the expected labels and color semantics, including the interim `Not scored yet` state before later scoring features land.
 
 **Acceptance Scenarios**:
 
-1. **Given** a repo card is rendered with Evolution, Contribution Dynamics, and Responsiveness scores, **When** the user views the card, **Then** one badge appears for each CHAOSS category.
+1. **Given** a repo card is rendered with Evolution, Sustainability, and Responsiveness scores, **When** the user views the card, **Then** one badge appears for each CHAOSS-aligned dimension.
 2. **Given** a score badge is shown, **When** the user inspects it, **Then** the CHAOSS category label is displayed alongside or beneath the score so the framing is explicit.
 3. **Given** score values of High, Medium, Low, or Not scored yet exist, **When** badges are rendered, **Then** they use a consistent visual treatment that matches the score semantics.
 
 ---
 
-### User Story 3 - Expand a card to inspect repo detail (Priority: P3)
+### User Story 3 - Expand a card to inspect missing-data detail (Priority: P3)
 
-A user can click or expand a repo card to reveal fuller metric detail for that repository without leaving the current analysis workspace.
+A user can click or expand a repo card to reveal missing-data detail for that repository without duplicating the deeper metric views that belong in later tabs.
 
-**Why this priority**: Expansion makes the cards more useful as a gateway into deeper repo detail, but it depends on the summary-card structure and badge framing already existing.
+**Why this priority**: Expansion is still useful for transparency around unavailable data, but it should not compete with the dedicated metrics views that follow.
 
-**Independent Test**: Can be fully tested by rendering a repo card, expanding it, and confirming fuller repo-specific detail becomes visible while the rest of the analysis workspace remains intact.
+**Independent Test**: Can be fully tested by rendering a repo card with missing fields, expanding it, and confirming the missing-data detail becomes visible while the rest of the analysis workspace remains intact.
 
 **Acceptance Scenarios**:
 
-1. **Given** a repo summary card is shown, **When** the user clicks or expands the card, **Then** fuller metric detail for that repo becomes visible in place.
+1. **Given** a repo summary card has unavailable fields, **When** the user expands the card, **Then** a missing-data detail panel becomes visible in place.
 2. **Given** a repo card is expanded, **When** the user returns it to its collapsed state, **Then** the summary card remains intact and no analysis request is rerun.
 3. **Given** a repo has unavailable metrics, **When** the expanded detail is shown, **Then** unavailable values remain explicitly marked rather than hidden or guessed.
 
@@ -67,10 +67,10 @@ A user can click or expand a repo card to reveal fuller metric detail for that r
 - **FR-001**: The system MUST render one summary card per successful repository in the current analysis.
 - **FR-002**: Each summary card MUST show exact stars, forks, watches, created date, and ecosystem profile summary for that repository.
 - **FR-003**: Ecosystem profile badges on the card MUST use consistent visual treatment across Reach, Builder Engagement, and Attention tiers.
-- **FR-004**: Each summary card MUST surface one badge for each CHAOSS category represented by later scoring features: Evolution, Contribution Dynamics, and Responsiveness.
+- **FR-004**: Each summary card MUST surface one badge for each CHAOSS-aligned dimension represented by later scoring features: Evolution, Sustainability, and Responsiveness.
 - **FR-005**: Score badge colors MUST map consistently to High, Medium, Low, and Not scored yet.
 - **FR-006**: Each score badge MUST display the associated CHAOSS category label so the framing is always visible.
-- **FR-007**: Users MUST be able to click or expand a repo card to reveal fuller metric detail for that repository.
+- **FR-007**: Users MUST be able to click or expand a repo card to reveal missing-data detail for that repository when unavailable fields exist.
 - **FR-008**: Expanding or collapsing a repo card MUST NOT rerun the analysis request or trigger extra API calls.
 - **FR-009**: Failed repositories MUST NOT render summary cards.
 - **FR-010**: Unavailable metrics shown in the card or expanded detail MUST remain explicit and MUST NOT be hidden, zeroed, or guessed.
@@ -79,7 +79,7 @@ A user can click or expand a repo card to reveal fuller metric detail for that r
 
 - **Repo Summary Card**: The overview-level UI representation of one successful repository with key metrics, ecosystem profile badges, and CHAOSS score badges.
 - **Score Badge**: A compact, color-coded UI element representing one CHAOSS category score and label.
-- **Expanded Repo Detail**: The additional in-place card content that appears when a repo card is expanded.
+- **Expanded Repo Detail**: The additional in-place card content that appears when a repo card is expanded to explain missing or unavailable fields.
 
 ## Success Criteria *(mandatory)*
 
@@ -87,12 +87,12 @@ A user can click or expand a repo card to reveal fuller metric detail for that r
 
 - **SC-001**: For analyses with one or more successful repositories, 100% of successful repositories render exactly one summary card in the overview.
 - **SC-002**: For rendered score badges, 100% of badges show both the score value and CHAOSS category label with consistent color semantics.
-- **SC-003**: Users can expand a repo card and view fuller metric detail without triggering additional analysis requests.
+- **SC-003**: Users can expand a repo card and view missing-data detail without triggering additional analysis requests.
 - **SC-004**: Unavailable values shown in cards or expanded details remain explicit in 100% of tested missing-data scenarios.
 
 ## Assumptions
 
 - `P1-F05 Ecosystem Map` already provides the ecosystem profile summary values that metric cards can reuse.
-- Full score computation for Evolution, Contribution Dynamics, and Responsiveness may be implemented incrementally, but the card contract should be ready to host those badges consistently.
+- Full score computation for Evolution, Sustainability, and Responsiveness may be implemented incrementally, but the card contract should be ready to host those badges consistently.
 - The cards live within the existing `P1-F15` results shell rather than introducing a new page layout.
 - Comparison-table behavior remains out of scope for this feature and will still be handled later by `P1-F06`.

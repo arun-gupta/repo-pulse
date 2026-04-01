@@ -68,9 +68,9 @@
 
 ## Phase 4: User Story 2 - Understand CHAOSS-aligned score badges per repo (Priority: P2)
 
-**Goal**: Each metric card surfaces one consistent score badge for Evolution, Contribution Dynamics, and Responsiveness.
+**Goal**: Each metric card surfaces one consistent score badge for Evolution, Sustainability, and Responsiveness.
 
-**Independent Test**: Render repo cards with score values for Evolution, Contribution Dynamics, and Responsiveness and confirm the badges show the expected labels and color semantics.
+**Independent Test**: Render repo cards with score values for Evolution, Sustainability, and Responsiveness and confirm the badges show the expected labels and color semantics.
 
 ### Tests for User Story 2 ⚠️
 
@@ -83,7 +83,7 @@
 ### Implementation for User Story 2
 
 - [x] T016 [US2] Create `/Users/arungupta/workspaces/forkprint/components/metric-cards/ScoreBadge.tsx` using `/Users/arungupta/workspaces/forkprint/lib/metric-cards/score-config.ts`
-- [x] T017 [US2] Update `/Users/arungupta/workspaces/forkprint/components/metric-cards/MetricCard.tsx` to render Evolution, Contribution Dynamics, and Responsiveness badges with explicit category labels
+- [x] T017 [US2] Update `/Users/arungupta/workspaces/forkprint/components/metric-cards/MetricCard.tsx` to render Evolution, Sustainability, and Responsiveness badges with explicit category labels
 
 **Checkpoint**: Each metric card clearly frames repo health with consistent CHAOSS-aligned score badges.
 

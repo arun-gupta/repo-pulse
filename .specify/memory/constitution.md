@@ -134,6 +134,9 @@ Rules:
 3. Out-of-scope items listed in `docs/PRODUCT.md` are hard boundaries — do not implement them under any feature.
 4. Future/backlog items (FUT-F01 through FUT-F05) must not influence Phase 1–3 architecture unless the constitution is amended.
 5. `AnalysisResult` schema must be flat and consistent enough to diff across repos without transformation — design this from the start (P1-F06 constraint that applies to all upstream features).
+6. **YAGNI applies by default**: do not add code, configuration, abstractions, UI states, or extensibility points unless they are required by the current accepted feature contract.
+7. **Keep It Simple**: prefer the smallest, clearest implementation that satisfies the feature spec and constitution over cleverness, premature generalization, or speculative reuse.
+8. Do not over-engineer for hypothetical future needs. When a simpler implementation satisfies the current feature safely, the simpler implementation is required.
 
 ---
 
