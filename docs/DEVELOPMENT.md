@@ -65,8 +65,8 @@ This is the planned implementation order for Phase 1. It may differ from the fea
 | 1 | P1-F01 | Repo Input | ✅ Done |
 | 2 | P1-F02 | Authentication | ✅ Done |
 | 3 | P1-F04 | Data Fetching | ✅ Done |
-| 4 | P1-F15 | Results Shell | — |
-| 5 | P1-F05 | Ecosystem Map | — |
+| 4 | P1-F15 | Results Shell | ✅ Done |
+| 5 | P1-F05 | Ecosystem Map | ✅ Done |
 | 6 | P1-F03 | Deployment | — |
 | 7 | P1-F06 | Repo Comparison | — |
 | 8 | P1-F07 | Metric Cards | — |
