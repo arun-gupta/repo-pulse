@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ResultsShell } from '@/components/app-shell/ResultsShell'
 import { TokenInput } from '@/components/token-input/TokenInput'
 import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import { readToken, writeToken } from '@/lib/token-storage'
@@ -51,7 +52,7 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
     }
   }
 
-  return (
+  const analysisPanel = (
     <div className="space-y-6">
       {!hasServerToken ? (
         <TokenInput
@@ -64,6 +65,11 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
         />
       ) : null}
       <RepoInputForm onSubmit={handleSubmit} />
+    </div>
+  )
+
+  const overviewContent = (
+    <div className="space-y-4">
       {submissionError ? (
         <p role="alert" data-testid="analysis-error" className="text-sm text-red-600">
           {submissionError}
@@ -77,8 +83,8 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
               <li key={repo}>{repo}</li>
             ))}
           </ul>
-        </section>
-      ) : null}
+          </section>
+        ) : null}
       {analysisResponse ? (
         <section aria-label="Analysis results" className="space-y-4">
           {analysisResponse.results.map((result) => (
@@ -111,6 +117,16 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
         </section>
       ) : null}
     </div>
+  )
+
+  return (
+    <ResultsShell
+      analysisPanel={analysisPanel}
+      overview={overviewContent}
+      ecosystemMap={<p className="text-sm text-slate-600">Ecosystem map view is coming soon.</p>}
+      comparison={<p className="text-sm text-slate-600">Comparison view is coming soon.</p>}
+      metrics={<p className="text-sm text-slate-600">Metrics view is coming soon.</p>}
+    />
   )
 }
 
