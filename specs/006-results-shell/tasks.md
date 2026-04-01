@@ -20,9 +20,9 @@
 
 **Purpose**: Create the shell component structure and tab metadata utilities.
 
-- [ ] T001 Create `/Users/arungupta/workspaces/forkprint/components/app-shell/` with `ResultsShell.tsx`, `ResultsShell.test.tsx`, `ResultsTabs.tsx`, and `ResultsTabs.test.tsx`
-- [ ] T002 [P] Create `/Users/arungupta/workspaces/forkprint/lib/results-shell/tabs.ts` for shared tab definitions
-- [ ] T003 [P] Create `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts` with a placeholder spec file
+- [x] T001 Create `/Users/arungupta/workspaces/forkprint/components/app-shell/` with `ResultsShell.tsx`, `ResultsShell.test.tsx`, `ResultsTabs.tsx`, and `ResultsTabs.test.tsx`
+- [x] T002 [P] Create `/Users/arungupta/workspaces/forkprint/lib/results-shell/tabs.ts` for shared tab definitions
+- [x] T003 [P] Create `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts` with a placeholder spec file
 
 **Checkpoint**: The repo contains the planned shell file structure for components, tab metadata, and E2E coverage.
 
@@ -34,9 +34,9 @@
 
 **⚠️ CRITICAL**: No user story implementation should start until this phase is complete.
 
-- [ ] T004 Implement shared tab definitions in `/Users/arungupta/workspaces/forkprint/lib/results-shell/tabs.ts`
-- [ ] T005 [P] Refactor `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.tsx` so shell state can render analysis panel and active result views without changing the API contract
-- [ ] T006 [P] Update `/Users/arungupta/workspaces/forkprint/app/page.tsx` to host a reusable shell container rather than a bare page stack
+- [x] T004 Implement shared tab definitions in `/Users/arungupta/workspaces/forkprint/lib/results-shell/tabs.ts`
+- [x] T005 [P] Refactor `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.tsx` so shell state can render analysis panel and active result views without changing the API contract
+- [x] T006 [P] Update `/Users/arungupta/workspaces/forkprint/app/page.tsx` to host a reusable shell container rather than a bare page stack
 
 **Checkpoint**: The shell has stable tab metadata and a clear integration point with the existing analysis flow.
 
@@ -52,16 +52,16 @@
 
 > **Write these tests first, and verify they fail before implementing the story.**
 
-- [ ] T007 [P] [US1] Add tab-state tests for active view switching in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsTabs.test.tsx`
-- [ ] T008 [P] [US1] Add shell integration tests for preserving the analysis panel while switching tabs in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.test.tsx`
-- [ ] T009 [P] [US1] Extend `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.test.tsx` to verify tab switching does not call `onAnalyze` again
-- [ ] T010 [US1] Add Playwright coverage for analyze-once tab switching in `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
+- [x] T007 [P] [US1] Add tab-state tests for active view switching in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsTabs.test.tsx`
+- [x] T008 [P] [US1] Add shell integration tests for preserving the analysis panel while switching tabs in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.test.tsx`
+- [x] T009 [P] [US1] Extend `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.test.tsx` to verify tab switching does not call `onAnalyze` again
+- [x] T010 [US1] Add Playwright coverage for analyze-once tab switching in `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsTabs.tsx` with controlled tab switching
-- [ ] T012 [US1] Implement `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.tsx` to keep the analysis panel stable above the tab workspace
-- [ ] T013 [US1] Update `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.tsx` to render active tab content without re-submitting analysis
+- [x] T011 [US1] Implement `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsTabs.tsx` with controlled tab switching
+- [x] T012 [US1] Implement `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.tsx` to keep the analysis panel stable above the tab workspace
+- [x] T013 [US1] Update `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.tsx` to render active tab content without re-submitting analysis
 
 **Checkpoint**: Analysis runs once and users can switch result tabs without triggering another request.
 
@@ -77,14 +77,14 @@
 
 > **Write these tests first, and verify they fail before implementing the story.**
 
-- [ ] T014 [P] [US2] Add header/banner rendering tests in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.test.tsx`
-- [ ] T015 [P] [US2] Extend `/Users/arungupta/workspaces/forkprint/app/page.tsx` coverage or shell integration tests to verify the GitHub link is visible and correctly addressed
-- [ ] T016 [US2] Add Playwright coverage for header and GitHub link layout in `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
+- [x] T014 [P] [US2] Add header/banner rendering tests in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.test.tsx`
+- [x] T015 [P] [US2] Extend `/Users/arungupta/workspaces/forkprint/app/page.tsx` coverage or shell integration tests to verify the GitHub link is visible and correctly addressed
+- [x] T016 [US2] Add Playwright coverage for header and GitHub link layout in `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Implement the branded header/banner and top-right GitHub repo link in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.tsx`
-- [ ] T018 [US2] Update `/Users/arungupta/workspaces/forkprint/app/page.tsx` layout/container styling so the shell feels intentional on desktop and mobile
+- [x] T017 [US2] Implement the branded header/banner and top-right GitHub repo link in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.tsx`
+- [x] T018 [US2] Update `/Users/arungupta/workspaces/forkprint/app/page.tsx` layout/container styling so the shell feels intentional on desktop and mobile
 
 **Checkpoint**: The app has a stable product frame with a clear GitHub repo link and persistent analysis workspace.
 
@@ -100,15 +100,15 @@
 
 > **Write these tests first, and verify they fail before implementing the story.**
 
-- [ ] T019 [P] [US3] Add tab-definition tests for implemented vs placeholder tabs in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsTabs.test.tsx`
-- [ ] T020 [P] [US3] Add shell tests for placeholder rendering in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.test.tsx`
-- [ ] T021 [US3] Add Playwright coverage for placeholder tabs and tab labels in `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
+- [x] T019 [P] [US3] Add tab-definition tests for implemented vs placeholder tabs in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsTabs.test.tsx`
+- [x] T020 [P] [US3] Add shell tests for placeholder rendering in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.test.tsx`
+- [x] T021 [US3] Add Playwright coverage for placeholder tabs and tab labels in `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Populate `/Users/arungupta/workspaces/forkprint/lib/results-shell/tabs.ts` with `Overview`, `Ecosystem Map`, `Comparison`, and `Metrics` metadata
-- [ ] T023 [US3] Implement placeholder tab content in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.tsx`
-- [ ] T024 [US3] Update `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.tsx` to route current implemented content into `Overview` and reserve the `Ecosystem Map` tab for resumed work
+- [x] T022 [US3] Populate `/Users/arungupta/workspaces/forkprint/lib/results-shell/tabs.ts` with `Overview`, `Ecosystem Map`, `Comparison`, and `Metrics` metadata
+- [x] T023 [US3] Implement placeholder tab content in `/Users/arungupta/workspaces/forkprint/components/app-shell/ResultsShell.tsx`
+- [x] T024 [US3] Update `/Users/arungupta/workspaces/forkprint/components/repo-input/RepoInputClient.tsx` to route current implemented content into `Overview` and reserve the `Ecosystem Map` tab for resumed work
 
 **Checkpoint**: The shell hosts both current and future views intentionally, without empty or broken result areas.
 
@@ -118,12 +118,12 @@
 
 **Purpose**: Final verification, docs alignment, and manual-checklist readiness for the feature PR.
 
-- [ ] T025 [P] Run unit/integration tests with `npm test` and confirm results-shell coverage passes
-- [ ] T026 [P] Run lint with `npm run lint` and remove any dead code, TODOs, or temporary logging
-- [ ] T027 [P] Run end-to-end coverage with `npm run test:e2e` including `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
+- [x] T025 [P] Run unit/integration tests with `npm test` and confirm results-shell coverage passes
+- [x] T026 [P] Run lint with `npm run lint` and remove any dead code, TODOs, or temporary logging
+- [x] T027 [P] Run end-to-end coverage with `npm run test:e2e` including `/Users/arungupta/workspaces/forkprint/e2e/results-shell.spec.ts`
 - [ ] T028 Run `npm run build` and verify shell changes do not introduce production build regressions
-- [ ] T029 Update `/Users/arungupta/workspaces/forkprint/specs/006-results-shell/checklists/manual-testing.md` as the feature is manually verified
-- [ ] T030 Update `/Users/arungupta/workspaces/forkprint/README.md` if the shell changes the user-facing app structure or setup expectations
+- [x] T029 Update `/Users/arungupta/workspaces/forkprint/specs/006-results-shell/checklists/manual-testing.md` as the feature is manually verified
+- [x] T030 Update `/Users/arungupta/workspaces/forkprint/README.md` if the shell changes the user-facing app structure or setup expectations
 
 ---
 

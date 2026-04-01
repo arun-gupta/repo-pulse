@@ -47,12 +47,15 @@ Implemented today:
 - `POST /api/analyze` data-fetching flow backed by the GitHub GraphQL API
 - Per-repo result and failure handling with explicit `"unavailable"` placeholders
 - Loading and rate-limit visibility on the home page
+- Results shell with a full-width header, stable analysis panel, and tabbed result workspace
+- `Overview`, `Ecosystem Map`, `Comparison`, and `Metrics` tabs, with placeholder states for future views
 - Automated coverage with Vitest, React Testing Library, and Playwright
 
 Not implemented yet:
 
-- Dashboard and ecosystem map
-- Repo comparison view
+- Ecosystem map visualization inside the `Ecosystem Map` tab
+- Repo comparison content inside the `Comparison` tab
+- Expanded metrics content inside the `Metrics` tab
 - JSON/Markdown export
 - GitHub OAuth authentication flow
 
