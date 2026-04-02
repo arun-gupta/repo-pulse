@@ -321,9 +321,61 @@ describe('RepoInputClient', () => {
     await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
 
     await screen.findByRole('tab', { name: 'Overview' })
-    await userEvent.click(screen.getByRole('tab', { name: 'Contributors' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Activity' }))
 
     expect(onAnalyze).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders activity content after a successful analysis', async () => {
+    const onAnalyze = vi.fn().mockResolvedValue({
+      results: [
+        {
+          repo: 'facebook/react',
+          name: 'react',
+          description: 'A UI library',
+          createdAt: '2013-05-24T16:15:54Z',
+          primaryLanguage: 'TypeScript',
+          stars: 244295,
+          forks: 25,
+          watchers: 10,
+          commits30d: 7,
+          commits90d: 18,
+          releases12mo: 'unavailable',
+          prsOpened90d: 4,
+          prsMerged90d: 3,
+          issuesOpen: 5,
+          issuesClosed90d: 6,
+          uniqueCommitAuthors90d: 'unavailable',
+          totalContributors: 'unavailable',
+          maintainerCount: 'unavailable',
+          commitCountsByAuthor: 'unavailable',
+          commitCountsByExperimentalOrg: 'unavailable',
+          experimentalAttributedAuthors90d: 'unavailable',
+          experimentalUnattributedAuthors90d: 'unavailable',
+          issueFirstResponseTimestamps: 'unavailable',
+          issueCloseTimestamps: 'unavailable',
+          prMergeTimestamps: 'unavailable',
+          missingFields: [],
+        },
+      ],
+      failures: [],
+      rateLimit: null,
+    })
+
+    render(<RepoInputClient hasServerToken={false} onAnalyze={onAnalyze} />)
+
+    await userEvent.type(screen.getByLabelText(/github personal access token/i), 'ghp_saved')
+    await userEvent.type(screen.getByRole('textbox', { name: /repository list/i }), 'facebook/react')
+    await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
+
+    await screen.findByRole('tab', { name: 'Activity' })
+    await userEvent.click(screen.getByRole('tab', { name: 'Activity' }))
+
+    const activityView = screen.getByRole('region', { name: /activity view/i })
+    expect(activityView).toBeInTheDocument()
+    expect(within(activityView).getByText('facebook/react')).toBeInTheDocument()
+    expect(within(activityView).getByText(/commits \(30d\)/i)).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Metrics' })).not.toBeInTheDocument()
   })
 
   it('renders contributors content after a successful analysis', async () => {

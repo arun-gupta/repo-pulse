@@ -14,8 +14,8 @@ export const resultTabs: ResultTabDefinition[] = [
     description: 'Core contributor metrics and sustainability signals are coming soon.',
   },
   {
-    id: 'metrics',
-    label: 'Metrics',
+    id: 'activity',
+    label: 'Activity',
     status: 'placeholder',
     description: 'Evolution metrics and scoring are coming soon.',
   },
