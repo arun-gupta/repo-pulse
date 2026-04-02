@@ -46,6 +46,15 @@ export interface RepositoryFetchFailure {
   code: string
 }
 
+export interface AnalysisDiagnostic {
+  level: 'warn' | 'error'
+  repo: string
+  source: string
+  message: string
+  status?: number
+  retryAfter?: number | Unavailable
+}
+
 export interface RateLimitState {
   remaining: number | Unavailable
   resetAt: string | Unavailable
@@ -56,6 +65,7 @@ export interface AnalyzeResponse {
   results: AnalysisResult[]
   failures: RepositoryFetchFailure[]
   rateLimit: RateLimitState | null
+  diagnostics?: AnalysisDiagnostic[]
 }
 
 export interface AnalyzeInput {

@@ -13,10 +13,23 @@ Phase 1 deployment targets **Vercel**.
 Use `.env.local` only for local development:
 
 ```bash
+# Fine-grained PAT for all repositories with read-only:
+# Contents, Metadata, Issues, Pull requests
 GITHUB_TOKEN=
 ```
 
 If `GITHUB_TOKEN` is not set locally, ForkPrint uses the browser PAT flow.
+
+Recommended GitHub token:
+
+- Type: fine-grained personal access token
+- Repository access: `All repositories`
+- Repository permissions:
+  - `Contents: Read-only`
+  - `Metadata: Read-only`
+  - `Issues: Read-only`
+  - `Pull requests: Read-only`
+- Create it at: `https://github.com/settings/personal-access-tokens/new`
 
 ## Vercel
 
@@ -24,7 +37,7 @@ If `GITHUB_TOKEN` is not set locally, ForkPrint uses the browser PAT flow.
 2. Keep the default Next.js framework/build settings
 3. In the Vercel project, open `Settings -> Environment Variables`
 4. Add a variable named `GITHUB_TOKEN`
-5. Paste the GitHub token value
+5. Paste the GitHub fine-grained PAT value
 6. Save it for the environments you want to support:
    - `Production`
    - optionally `Preview`

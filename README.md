@@ -12,7 +12,7 @@ Live in action: [forkprint-arun-gupta.vercel.app](https://forkprint-arun-gupta.v
 
 ## Getting Started
 
-ForkPrint currently supports a GitHub Personal Access Token with `public_repo` read-only scope. For local development, you can optionally set `GITHUB_TOKEN` in `.env.local`.
+ForkPrint supports a server-side `GITHUB_TOKEN` or the browser PAT flow. For local development, you can optionally set `GITHUB_TOKEN` in `.env.local`.
 
 ```bash
 npm install
@@ -26,6 +26,8 @@ Optional local env:
 ```bash
 GITHUB_TOKEN=
 ```
+
+For recommended token type and permissions, use the `GITHUB_TOKEN` setup guidance in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#local).
 
 ## Product
 

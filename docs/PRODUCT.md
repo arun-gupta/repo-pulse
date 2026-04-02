@@ -28,7 +28,7 @@ The core analysis logic is shared across all three phases via a framework-agnost
 
 - Fetches all required metrics in 1–3 requests per repo vs. 10–15 REST calls
 - Precise field selection — no over-fetching
-- Single auth mechanism: Personal Access Token (classic), minimum `public_repo` read-only scope
+- Single auth mechanism: GitHub Personal Access Token with repository read access sufficient for the required GraphQL and REST calls
 - REST API may supplement only where GraphQL cannot reach a specific metric
 - `GITHUB_TOKEN` is always read from environment — never hardcoded
 
@@ -120,7 +120,7 @@ User can authenticate with GitHub to enable data fetching.
 **Acceptance criteria**
 - Token input field accepts a GitHub Personal Access Token
 - Token is stored in `localStorage` — never transmitted anywhere except the GitHub GraphQL API
-- UI displays the minimum required scope: `public_repo` read-only
+- UI displays the required token guidance for supported GitHub auth
 - Missing token with no server-side fallback blocks submission with a clear error
 
 **Out of scope**
@@ -410,7 +410,7 @@ User can authenticate with GitHub via OAuth instead of manually entering a PAT.
 **Acceptance criteria**
 - "Sign in with GitHub" button initiates the OAuth flow using a registered GitHub OAuth App
 - OAuth access token is stored in `localStorage` — same storage contract as PAT
-- OAuth token has the same minimum required scope: `public_repo` read-only
+- OAuth token grants the same repository read access expected by the analyzer
 - After successful OAuth login, the token input field is replaced with a signed-in indicator showing the GitHub username
 - User can sign out, which clears the stored OAuth token from `localStorage`
 - If a server-side `GITHUB_TOKEN` is configured, the OAuth flow is hidden (same behavior as P1-F02)

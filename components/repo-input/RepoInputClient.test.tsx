@@ -245,6 +245,39 @@ describe('RepoInputClient', () => {
     expect(await screen.findByText(/retry after: 60s/i)).toBeInTheDocument()
   })
 
+  it('logs diagnostics to the browser console when analysis returns debug details', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const onAnalyze = vi.fn().mockResolvedValue({
+      results: [],
+      failures: [],
+      rateLimit: null,
+      diagnostics: [
+        {
+          level: 'warn',
+          repo: 'facebook/react',
+          source: 'github-rest:contributors',
+          message: 'GitHub REST request failed with status 403',
+          status: 403,
+          retryAfter: 'unavailable',
+        },
+      ],
+    })
+
+    render(<RepoInputClient hasServerToken={false} onAnalyze={onAnalyze} />)
+
+    await userEvent.type(screen.getByLabelText(/github personal access token/i), 'ghp_saved')
+    await userEvent.type(screen.getByRole('textbox', { name: /repository list/i }), 'facebook/react')
+    await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
+
+    expect(warnSpy).toHaveBeenCalledWith('[ForkPrint GitHub diagnostic]', {
+      repo: 'facebook/react',
+      source: 'github-rest:contributors',
+      message: 'GitHub REST request failed with status 403',
+      status: 403,
+      retryAfter: 'unavailable',
+    })
+  })
+
   it('does not call onAnalyze again when switching tabs after a successful analysis', async () => {
     const onAnalyze = vi.fn().mockResolvedValue({
       results: [

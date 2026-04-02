@@ -1,4 +1,5 @@
 import type {
+  AnalysisDiagnostic,
   AnalysisResult,
   AnalyzeInput,
   AnalyzeResponse,
@@ -87,6 +88,7 @@ const UNAVAILABLE_FIELDS: Array<keyof AnalysisResult> = [
 export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
   const results: AnalysisResult[] = []
   const failures: RepositoryFetchFailure[] = []
+  const diagnostics: AnalysisDiagnostic[] = []
   let latestRateLimit: RateLimitState | null = null
 
   for (const repo of input.repos) {
@@ -131,6 +133,7 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
 
       const contributorCount = await fetchContributorCount(input.token, owner, name).catch((error) => {
         latestRateLimit = extractRateLimitFromError(error) ?? latestRateLimit
+        diagnostics.push(buildDiagnostic(repo, 'github-rest:contributors', error))
 
         return {
           data: 'unavailable' as const,
@@ -141,6 +144,7 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
 
       const maintainerCount = await fetchMaintainerCount(input.token, owner, name).catch((error) => {
         latestRateLimit = extractRateLimitFromError(error) ?? latestRateLimit
+        diagnostics.push(buildDiagnostic(repo, 'github-rest:maintainers', error))
 
         return {
           data: 'unavailable' as const,
@@ -175,6 +179,7 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       )
     } catch (error) {
       latestRateLimit = latestRateLimit ?? extractRateLimitFromError(error)
+      diagnostics.push(buildDiagnostic(repo, 'analyze', error, 'error'))
       failures.push(buildFailure(repo, error))
     }
   }
@@ -183,6 +188,7 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
     results,
     failures,
     rateLimit: latestRateLimit,
+    diagnostics,
   }
 }
 
@@ -560,4 +566,22 @@ function buildFailure(repo: string, error: unknown): RepositoryFetchFailure {
   }
 
   return { repo, reason: 'Repository could not be analyzed.', code: 'FETCH_FAILED' }
+}
+
+function buildDiagnostic(
+  repo: string,
+  source: string,
+  error: unknown,
+  level: AnalysisDiagnostic['level'] = 'warn',
+): AnalysisDiagnostic {
+  const maybeError = error as Error & { status?: number; retryAfter?: number | Unavailable }
+
+  return {
+    level,
+    repo,
+    source,
+    message: maybeError?.message ?? 'Unknown analysis error',
+    status: maybeError.status,
+    retryAfter: maybeError.retryAfter,
+  }
 }

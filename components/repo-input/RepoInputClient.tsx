@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ResultsShell } from '@/components/app-shell/ResultsShell'
 import { ContributorsView } from '@/components/contributors/ContributorsView'
 import { EcosystemMap } from '@/components/ecosystem-map/EcosystemMap'
@@ -21,6 +21,23 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
   const [analysisResponse, setAnalysisResponse] = useState<AnalyzeResponse | null>(null)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [loadingRepos, setLoadingRepos] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!analysisResponse?.diagnostics?.length) {
+      return
+    }
+
+    for (const diagnostic of analysisResponse.diagnostics) {
+      const log = diagnostic.level === 'error' ? console.error : console.warn
+      log('[ForkPrint GitHub diagnostic]', {
+        repo: diagnostic.repo,
+        source: diagnostic.source,
+        message: diagnostic.message,
+        status: diagnostic.status,
+        retryAfter: diagnostic.retryAfter,
+      })
+    }
+  }, [analysisResponse])
 
   async function handleSubmit(repos: string[]) {
     const trimmedToken = token.trim()
