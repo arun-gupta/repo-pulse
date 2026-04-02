@@ -6,7 +6,7 @@ import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/re
 
 const tabs: ResultTabDefinition[] = [
   { id: 'overview', label: 'Overview', status: 'implemented', description: 'Overview content' },
-  { id: 'metrics', label: 'Metrics', status: 'placeholder', description: 'Metrics content' },
+  { id: 'contributors', label: 'Contributors', status: 'placeholder', description: 'Contributors content' },
 ]
 
 describe('ResultsTabs', () => {
@@ -17,8 +17,8 @@ describe('ResultsTabs', () => {
 
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Metrics' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Contributors' }))
 
-    expect(onChange).toHaveBeenCalledWith('metrics')
+    expect(onChange).toHaveBeenCalledWith('contributors')
   })
 })

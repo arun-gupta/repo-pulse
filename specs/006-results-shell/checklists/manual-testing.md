@@ -22,7 +22,7 @@
 
 ## US3 — Tabs and placeholders
 
-- [ ] Confirm tabs exist for `Overview`, `Metrics`, `Responsiveness`, `Sustainability`, and `Comparison`
+- [ ] Confirm tabs exist for `Overview`, `Contributors`, `Metrics`, `Responsiveness`, and `Comparison`
 - [ ] Confirm implemented tabs show meaningful content
 - [ ] Confirm placeholder tabs show intentional placeholder or coming-soon content rather than empty space
 

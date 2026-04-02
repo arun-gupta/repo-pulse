@@ -17,13 +17,14 @@
 
 - Required tabs:
   - `Overview`
+  - `Contributors`
   - `Metrics`
   - `Responsiveness`
-  - `Sustainability`
   - `Comparison`
 - `Overview` is implemented in this feature
+- `Contributors` sits immediately after `Overview` and becomes the home for contributor detail, with `Core` and `Sustainability` panes inside it
 - `Metrics` is the primary destination for detailed repo metrics as scoring features land
-- `Responsiveness`, `Sustainability`, and `Comparison` can show placeholder states until those features land
+- `Responsiveness` and `Comparison` can show placeholder states until those features land
 
 ## Interaction Rules
 

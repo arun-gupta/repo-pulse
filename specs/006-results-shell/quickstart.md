@@ -26,7 +26,7 @@ Verify that the app now has a stable shell with header, GitHub link, analysis pa
 
 ### 3. Placeholder tabs
 
-1. Open placeholder tabs such as `Metrics`, `Responsiveness`, `Sustainability`, or `Comparison`
+1. Open placeholder tabs such as `Contributors`, `Metrics`, `Responsiveness`, or `Comparison`
 2. Confirm:
    - they show intentional placeholder or coming-soon content
    - the shell remains usable

@@ -20,7 +20,8 @@ describe('MetricCard', () => {
     expect(screen.getByText('244,295')).toBeInTheDocument()
     expect(screen.getByText('50,872')).toBeInTheDocument()
     expect(screen.getByText('6,660')).toBeInTheDocument()
-    expect(screen.getAllByText('Not scored yet')).toHaveLength(3)
+    expect(screen.getByText('Insufficient verified public data')).toBeInTheDocument()
+    expect(screen.getAllByText('Not scored yet')).toHaveLength(2)
     expect(screen.queryByRole('button', { name: /missing data/i })).not.toBeInTheDocument()
   })
 })
@@ -44,7 +45,11 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
     issuesClosed90d: 6,
     uniqueCommitAuthors90d: 'unavailable',
     totalContributors: 'unavailable',
+    maintainerCount: 'unavailable',
     commitCountsByAuthor: 'unavailable',
+    commitCountsByExperimentalOrg: 'unavailable',
+    experimentalAttributedAuthors90d: 'unavailable',
+    experimentalUnattributedAuthors90d: 'unavailable',
     issueFirstResponseTimestamps: 'unavailable',
     issueCloseTimestamps: 'unavailable',
     prMergeTimestamps: 'unavailable',

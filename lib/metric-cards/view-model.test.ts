@@ -22,6 +22,7 @@ describe('buildMetricCardViewModels', () => {
     expect(card.primaryLanguage).toBe('unavailable')
     expect(card.profile?.reachTier).toBe('Exceptional')
     expect(card.scoreBadges).toHaveLength(3)
+    expect(card.scoreBadges.find((badge) => badge.category === 'Sustainability')?.value).toBe('Insufficient verified public data')
     expect(card.details.find((detail) => detail.label === 'Releases (12mo)')?.value).toBe('unavailable')
   })
 })
@@ -45,7 +46,11 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
     issuesClosed90d: 6,
     uniqueCommitAuthors90d: 'unavailable',
     totalContributors: 'unavailable',
+    maintainerCount: 'unavailable',
     commitCountsByAuthor: 'unavailable',
+    commitCountsByExperimentalOrg: 'unavailable',
+    experimentalAttributedAuthors90d: 'unavailable',
+    experimentalUnattributedAuthors90d: 'unavailable',
     issueFirstResponseTimestamps: 'unavailable',
     issueCloseTimestamps: 'unavailable',
     prMergeTimestamps: 'unavailable',

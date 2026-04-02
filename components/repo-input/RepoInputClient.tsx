@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ResultsShell } from '@/components/app-shell/ResultsShell'
+import { ContributorsView } from '@/components/contributors/ContributorsView'
 import { EcosystemMap } from '@/components/ecosystem-map/EcosystemMap'
 import { MetricCardsOverview } from '@/components/metric-cards/MetricCardsOverview'
 import { TokenInput } from '@/components/token-input/TokenInput'
@@ -121,13 +122,21 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
     <ResultsShell
       analysisPanel={analysisPanel}
       overview={overviewContent}
+      contributors={
+        analysisResponse ? (
+          <ContributorsView results={analysisResponse.results} />
+        ) : (
+          <p className="text-sm text-slate-600">
+            Contributors will become the home for core contributor metrics, with separate Core and Sustainability panes.
+          </p>
+        )
+      }
       metrics={
         <p className="text-sm text-slate-600">
           Metrics will become the primary workspace for Evolution scoring and detailed repo metrics.
         </p>
       }
       responsiveness={<p className="text-sm text-slate-600">Responsiveness metrics are coming soon.</p>}
-      sustainability={<p className="text-sm text-slate-600">Sustainability metrics are coming soon.</p>}
       comparison={<p className="text-sm text-slate-600">Comparison view is planned for a later Phase 1 step.</p>}
     />
   )

@@ -70,8 +70,8 @@ This is the planned implementation order for Phase 1. It may differ from the fea
 | 5 | P1-F05 | Ecosystem Map | ✅ Done |
 | 6 | P1-F03 | Deployment | ✅ Done |
 | 7 | P1-F07 | Metric Cards | ✅ Done |
-| 8 | P1-F08 | Evolution | — |
-| 9 | P1-F09 | Contribution Dynamics | — |
+| 8 | P1-F09 | Contributors | — |
+| 9 | P1-F08 | Evolution | — |
 | 10 | P1-F10 | Responsiveness | — |
 | 11 | P1-F14 | GitHub OAuth Authentication | — |
 | 12 | P1-F11 | Health Ratios | — |

@@ -29,6 +29,7 @@ export const REPO_ACTIVITY_QUERY = `
     $name: String!
     $since30: GitTimestamp!
     $since90: GitTimestamp!
+    $since365: GitTimestamp!
     $prsOpenedQuery: String!
     $prsMergedQuery: String!
     $issuesClosedQuery: String!
@@ -43,6 +44,22 @@ export const REPO_ACTIVITY_QUERY = `
             recent90: history(since: $since90) {
               totalCount
             }
+            recent365Commits: history(first: 100, since: $since365) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                authoredDate
+                author {
+                  name
+                  email
+                  user {
+                    login
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -55,6 +72,44 @@ export const REPO_ACTIVITY_QUERY = `
     }
     issuesClosed: search(query: $issuesClosedQuery, type: ISSUE) {
       issueCount
+    }
+    rateLimit {
+      remaining
+      resetAt
+    }
+  }
+`
+
+export const REPO_COMMIT_HISTORY_PAGE_QUERY = `
+  query RepoCommitHistoryPage(
+    $owner: String!
+    $name: String!
+    $since365: GitTimestamp!
+    $after: String!
+  ) {
+    repository(owner: $owner, name: $name) {
+      defaultBranchRef {
+        target {
+          ... on Commit {
+            recent365Commits: history(first: 100, since: $since365, after: $after) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                authoredDate
+                author {
+                  name
+                  email
+                  user {
+                    login
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
     rateLimit {
       remaining

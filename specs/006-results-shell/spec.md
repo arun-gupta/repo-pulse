@@ -49,7 +49,7 @@ A user can use tabs as a stable navigation model for current and upcoming result
 
 **Acceptance Scenarios**:
 
-1. **Given** the shell is rendered, **When** the user looks at the result navigation, **Then** tabs exist for at least `Overview`, `Metrics`, `Responsiveness`, `Sustainability`, and `Comparison`.
+1. **Given** the shell is rendered, **When** the user looks at the result navigation, **Then** tabs exist for at least `Overview`, `Contributors`, `Metrics`, `Responsiveness`, and `Comparison`.
 2. **Given** only some tabs are implemented, **When** the user opens an unimplemented tab, **Then** it shows an intentional placeholder or “coming soon” state rather than empty space or broken UI.
 3. **Given** only some tabs are fully implemented, **When** the user opens later domain tabs, **Then** their placeholders still establish a stable information architecture for future repo-health views.
 
@@ -72,7 +72,8 @@ A user can use tabs as a stable navigation model for current and upcoming result
 - **FR-003**: The shell MUST include a visible GitHub repository link in the header.
 - **FR-004**: The shell MUST keep the repo input and Analyze controls in a stable analysis panel that remains available while browsing result views.
 - **FR-005**: The shell MUST provide tabs for navigating between result views after analysis.
-- **FR-006**: The shell MUST support at least `Overview`, `Metrics`, `Responsiveness`, `Sustainability`, and `Comparison` tabs.
+- **FR-006**: The shell MUST support at least `Overview`, `Contributors`, `Metrics`, `Responsiveness`, and `Comparison` tabs.
+- **FR-006a**: The shell MUST place `Contributors` immediately after `Overview` in the top-level result navigation.
 - **FR-007**: Switching tabs MUST NOT trigger a new analysis request or additional API calls by itself.
 - **FR-008**: The shell MUST allow currently implemented views to render meaningful content while unimplemented views show intentional placeholder states.
 - **FR-009**: The `Overview` tab MUST remain a summary surface and MUST NOT become the long-term home for all detailed repo metrics.
@@ -85,7 +86,7 @@ A user can use tabs as a stable navigation model for current and upcoming result
 - **Results Shell**: The stable page frame containing the header, analysis panel, and tabbed result area.
 - **Header Banner**: The top application region containing ForkPrint branding and the GitHub repo link.
 - **Analysis Panel**: The stable control area containing repo input, auth controls, and the Analyze action.
-- **Result Tab**: A named navigation target for a result view such as `Overview`, `Metrics`, `Responsiveness`, `Sustainability`, or `Comparison`.
+- **Result Tab**: A named navigation target for a result view such as `Overview`, `Contributors`, `Metrics`, `Responsiveness`, or `Comparison`.
 - **Placeholder View**: An intentional temporary state for a future tab that is not fully implemented yet.
 
 ## Success Criteria *(mandatory)*
