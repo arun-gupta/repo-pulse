@@ -48,7 +48,7 @@ Before opening a PR, verify the Definition of Done (constitution Section XII):
 - [ ] Tests pass and linting is clean
 - [ ] No TODOs, dead code, `console.log`, or untyped values remain
 - [ ] All spec documents for the feature are current
-- [ ] `docs/DEVELOPMENT.md` reflects the feature's completed status in the implementation order
+- [ ] `docs/DEVELOPMENT.md` reflects the feature's completed status in the implementation order table (`✅ Done`)
 - [ ] Manual testing checklist completed and signed off
 - [ ] README updated for any user-facing or setup changes
 - [ ] Constitution compliance verified — no rule violated
@@ -70,8 +70,8 @@ This is the planned implementation order for Phase 1. It may differ from the fea
 | 5 | P1-F05 | Ecosystem Map | ✅ Done |
 | 6 | P1-F03 | Deployment | ✅ Done |
 | 7 | P1-F07 | Metric Cards | ✅ Done |
-| 8 | P1-F09 | Contributors | — |
-| 9 | P1-F08 | Evolution | — |
+| 8 | P1-F09 | Contributors | ✅ Done |
+| 9 | P1-F08 | Activity | — |
 | 10 | P1-F10 | Responsiveness | — |
 | 11 | P1-F14 | GitHub OAuth Authentication | — |
 | 12 | P1-F11 | Health Ratios | — |

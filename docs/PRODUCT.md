@@ -41,7 +41,7 @@ ForkPrint groups analysis into four CHAOSS-aligned reporting dimensions. These d
 | ForkPrint Dimension | CHAOSS Basis | Feature | Derived Score |
 |---|---|---|---|
 | Ecosystem | ForkPrint repo-profile layer informed by CHAOSS-style ecosystem signals | Ecosystem Map (P1-F05) | Ecosystem profile: Reach / Builder Engagement / Attention |
-| Evolution | CHAOSS Evolution metrics and focus areas | Evolution (P1-F08) | Evolution score: High / Medium / Low |
+| Activity | CHAOSS Evolution metrics and adjacent activity-flow signals | Activity (P1-F08) | Activity score: High / Medium / Low |
 | Contributors | Contributor metrics with a dedicated Sustainability pane for resilience and organizational-risk signals | Contributors (P1-F09) | Core contributor metrics + Sustainability score |
 | Responsiveness | CHAOSS-aligned time-to-response and time-to-resolution metrics | Responsiveness (P1-F10) | Responsiveness score: High / Medium / Low |
 
@@ -160,7 +160,7 @@ The analyzer fetches exact, verified metric data from GitHub for each repo.
 - Data fetched per repo covers the following placeholders:
   - **Repo metadata**: name, description, created date, primary language
   - **Ecosystem signals**: stars, forks, watchers
-  - **Evolution**: commits (last 30d, last 90d), releases (last 12mo), PRs opened (last 90d), PRs merged (last 90d), issues open, issues closed (last 90d)
+  - **Activity**: commits (last 30d, last 90d, last 180d), releases (last 12mo), PRs opened / merged / closed, issues opened / closed, and contributor-activity flow timing where specified
   - **Contributors**: unique commit authors (last 90d), total contributors, commit counts per author
   - **Responsiveness**: issue first-response timestamps, issue close timestamps, PR merge timestamps
 
@@ -219,7 +219,7 @@ Users can compare two or more repos side by side across all health metrics.
 - Comparison table shows all metrics in rows, repos in columns — delta values highlighted where meaningful
 - Metrics unavailable for one repo are shown as `—` in that column, never omitted from the row
 - Comparison is driven entirely from the already-fetched `AnalysisResult[]` — no additional API calls
-- All metric categories represented: ecosystem signals, evolution, contribution dynamics, responsiveness, health ratios
+- All metric categories represented: ecosystem signals, activity, contribution dynamics, responsiveness, health ratios
 - Comparison view is exportable as JSON and Markdown alongside individual repo exports
 
 **Design constraints** *(inform all upstream features)*
@@ -239,7 +239,7 @@ Users can compare two or more repos side by side across all health metrics.
 Each repo is summarized in a scannable card showing key health signals.
 
 **Acceptance criteria**
-- One card per repo displaying: stars, forks, watches, created date, ecosystem profile summary (Reach / Builder Engagement / Attention), and one score badge per CHAOSS-aligned dimension (Evolution, Sustainability, Responsiveness)
+- One card per repo displaying: stars, forks, watches, created date, ecosystem profile summary (Reach / Builder Engagement / Attention), and one score badge per CHAOSS-aligned dimension (Activity, Sustainability, Responsiveness)
 - Ecosystem profile badges use consistent visual treatment across Reach / Builder Engagement / Attention tiers
 - Score badge colors: High = green, Medium = amber, Low = red, Insufficient = gray — consistent across all three CHAOSS score badges
 - CHAOSS category label shown beneath each score badge so the framing is always visible
@@ -251,13 +251,48 @@ Each repo is summarized in a scannable card showing key health signals.
 
 ---
 
-#### `[P1-F08]` Evolution *(CHAOSS: Evolution)*
+#### `[P1-F08]` Activity *(CHAOSS-aligned: Evolution / activity flow)*
 
 The analyzer measures how a repo's activity has changed over time.
 
 **Acceptance criteria**
-- Metrics computed: commits in last 30d, commits in last 90d, releases in last 12 months, PRs opened in last 90d, PRs merged in last 90d, PR merge rate (merged / opened), open issues, closed issues in last 90d, stale issue ratio (open > 90d / total open)
-- Evolution score — High / Medium / Low — assigned only when sufficient verified data exists; otherwise surfaces `Insufficient verified public data`
+- Metrics computed:
+  - commits over time in `30d`, `90d`, and `180d` windows
+  - PR throughput: opened, merged, closed
+  - issue flow: opened, closed
+  - release cadence and version frequency
+  - PR merge rate (`merged / opened`)
+  - stale issue ratio (`open > 90d / total open`)
+  - median time to merge PRs
+  - median time to close issues
+- Activity score — High / Medium / Low — assigned only when sufficient verified data exists; otherwise surfaces `Insufficient verified public data`
+- Activity score is based on a weighted combination of:
+  - recent volume: commits, PRs, and issues across `30d`, `90d`, and `180d`
+  - flow: PRs merged vs. opened and issues closed vs. opened
+  - cadence: release cadence and version frequency
+  - completion speed: median time to merge PRs and median time to close issues
+- Activity scoring proposal for the first implementation:
+  - `20%` PR flow
+    - PRs opened vs. merged vs. closed
+    - PR merge rate
+  - `20%` issue flow
+    - issues opened vs. closed
+    - stale issue ratio
+  - `20%` completion speed
+    - median time to merge PRs
+    - median time to close issues
+  - `20%` sustained activity
+    - commits across `30d`, `90d`, and `180d`
+  - `20%` release cadence
+    - release frequency
+    - version movement
+- Score interpretation proposal:
+  - `High`: sustained recent activity, healthy PR/issue flow, meaningful release cadence, and relatively fast merge/close medians
+  - `Medium`: meaningful activity is present, but cadence, throughput, or completion speed is uneven
+  - `Low`: weak recent activity, weak flow, stale completion times, or little meaningful release motion
+  - `Insufficient verified public data`: minimum required activity and flow inputs are not available
+- Activity score should balance absolute volume with ratios and medians, so larger repositories do not automatically outrank smaller but healthy ones
+- `Activity` owns throughput, cadence, and time-to-completion signals, while `Responsiveness` remains focused on first-response and maintainer-engagement latency
 - All thresholds defined in config, not hardcoded in logic
 - UI exposes thresholds via a "how is this scored?" tooltip
 - CHAOSS category label displayed alongside the score in the UI
@@ -342,7 +377,7 @@ Computed diagnostic ratios provide a quick cross-repo comparison surface, drawn 
 
 **Acceptance criteria**
 - Ecosystem ratios: forks/stars, watches/stars
-- Evolution ratios: merged PRs/opened PRs, stale issues/total open issues
+- Activity ratios: merged PRs/opened PRs, stale issues/total open issues
 - Contributors ratios: repeat contributors/total contributors, new contributors/total contributors
 - Unavailable ratios displayed as `—`, never estimated
 - Ratios grouped by CHAOSS category in the UI
