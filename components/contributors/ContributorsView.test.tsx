@@ -54,6 +54,16 @@ describe('ContributorsView', () => {
     expect(screen.getByText(/over the last 30 days/i)).toBeInTheDocument()
     expect(screen.getByText(/contributor metrics from verified public data for the last 30 days/i)).toBeInTheDocument()
   })
+
+  it('uses a mobile-friendly heatmap layout when names are shown', async () => {
+    render(<ContributorsView results={[buildResult()]} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /show names/i }))
+
+    const heatmap = screen.getByRole('list', { name: /contribution heatmap tiles/i })
+    expect(heatmap.className).toContain('grid-cols-2')
+    expect(screen.getByText('alice')).toHaveClass('break-words')
+  })
 })
 
 function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {

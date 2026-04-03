@@ -77,8 +77,8 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
         ))}
       </dl>
       <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 sm:max-w-md">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Contribution heatmap</p>
             <p className="mt-1 text-xs text-slate-500">
               {`Darker bubbles indicate contributor activity in the last ${windowDays} days. Detected bot accounts like `}
@@ -88,11 +88,11 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
               {' can be included here when needed.'}
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-wrap sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
               onClick={onToggleIncludeBots}
-              className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900 sm:w-auto"
               aria-pressed={includeBots}
             >
               {includeBots ? 'Exclude bots from heatmap' : 'Include bots in heatmap'}
@@ -100,7 +100,7 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
             <button
               type="button"
               onClick={() => setShowNames((current) => !current)}
-              className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900 sm:w-auto"
               aria-pressed={showNames}
             >
               {showNames ? 'Hide names' : 'Show names'}
@@ -108,7 +108,7 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
             <button
               type="button"
               onClick={() => setShowNumbers((current) => !current)}
-              className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900 sm:w-auto"
               aria-pressed={showNumbers}
             >
               {showNumbers ? 'Hide numbers' : 'Show numbers'}
@@ -120,7 +120,7 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
             className={
               compactMode
                 ? 'mt-3 flex flex-wrap gap-1'
-                : 'mt-3 grid grid-cols-5 gap-x-1.5 gap-y-2 sm:grid-cols-7 lg:grid-cols-9 xl:grid-cols-11'
+                : 'mt-3 grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8'
             }
             role="list"
             aria-label="Contribution heatmap tiles"
@@ -129,7 +129,7 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
               <div
                 key={`${cell.contributor}-${cell.commitsLabel}`}
                 role="listitem"
-                className={compactMode ? '' : 'flex flex-col items-center gap-1'}
+                className={compactMode ? '' : 'flex min-w-0 flex-col items-center gap-1 text-center'}
                 title={`${cell.contributor}: ${cell.commitsLabel}`}
               >
                 <div
@@ -151,9 +151,9 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
                   }`}
                 />
                 {showNames ? (
-                  <p className="max-w-16 text-center text-[10px] font-medium leading-tight text-slate-700">{cell.contributor}</p>
+                  <p className="max-w-full break-words text-[10px] font-medium leading-tight text-slate-700">{cell.contributor}</p>
                 ) : null}
-                {showNumbers ? <p className="text-[10px] leading-tight text-slate-500">{cell.commitsLabel}</p> : null}
+                {showNumbers ? <p className="max-w-full break-words text-[10px] leading-tight text-slate-500">{cell.commitsLabel}</p> : null}
               </div>
             ))}
           </div>
