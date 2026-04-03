@@ -23,6 +23,53 @@ describe('contributors/view-model', () => {
         experimentalAttributedAuthors90d: 4,
         experimentalUnattributedAuthors90d: 1,
         uniqueCommitAuthors90d: 5,
+        contributorMetricsByWindow: {
+          30: {
+            uniqueCommitAuthors: 5,
+            commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+            repeatContributors: 3,
+            newContributors: 1,
+            commitCountsByExperimentalOrg: { meta: 7, openai: 3, vercel: 1 },
+            experimentalAttributedAuthors: 4,
+            experimentalUnattributedAuthors: 1,
+          },
+          60: {
+            uniqueCommitAuthors: 5,
+            commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+            repeatContributors: 3,
+            newContributors: 2,
+            commitCountsByExperimentalOrg: { meta: 7, openai: 3, vercel: 1 },
+            experimentalAttributedAuthors: 4,
+            experimentalUnattributedAuthors: 1,
+          },
+          90: {
+            uniqueCommitAuthors: 5,
+            commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+            repeatContributors: 3,
+            newContributors: 2,
+            commitCountsByExperimentalOrg: { meta: 7, openai: 3, vercel: 1 },
+            experimentalAttributedAuthors: 4,
+            experimentalUnattributedAuthors: 1,
+          },
+          180: {
+            uniqueCommitAuthors: 5,
+            commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+            repeatContributors: 3,
+            newContributors: 2,
+            commitCountsByExperimentalOrg: { meta: 7, openai: 3, vercel: 1 },
+            experimentalAttributedAuthors: 4,
+            experimentalUnattributedAuthors: 1,
+          },
+          365: {
+            uniqueCommitAuthors: 5,
+            commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+            repeatContributors: 3,
+            newContributors: 2,
+            commitCountsByExperimentalOrg: { meta: 7, openai: 3, vercel: 1 },
+            experimentalAttributedAuthors: 4,
+            experimentalUnattributedAuthors: 1,
+          },
+        },
       }),
     ])[0]!
 
@@ -38,6 +85,8 @@ describe('contributors/view-model', () => {
     expect(section.coreMetrics.find((metric) => metric.label === 'Contributor composition')?.supportingText).toBe(
       '3 repeat, 2 one-time, 7 inactive',
     )
+    expect(section.coreMetrics.find((metric) => metric.label === 'Repeat contributor ratio')?.value).toBe('25.0%')
+    expect(section.coreMetrics.find((metric) => metric.label === 'New contributor ratio')?.value).toBe('16.7%')
     expect(section.coreMetrics.find((metric) => metric.label === 'Contributor composition')?.breakdown).toEqual({
       segments: [
         { label: 'Repeat', value: 3, tone: 'strong' },
@@ -73,6 +122,8 @@ describe('contributors/view-model', () => {
     expect(section.sustainabilityScore.value).toBe('Insufficient verified public data')
     expect(section.missingData).toContain('Contribution concentration')
     expect(section.missingData).toContain('Maintainer count')
+    expect(section.missingData).toContain('Repeat contributor ratio')
+    expect(section.missingData).toContain('New contributor ratio')
     expect(section.missingData).not.toContain('Inactive contributors')
     expect(section.missingData).not.toContain('Occasional contributors')
   })
@@ -127,6 +178,8 @@ describe('contributors/view-model', () => {
             30: {
               uniqueCommitAuthors: 2,
               commitCountsByAuthor: { 'login:alice': 3, 'login:bob': 1 },
+              repeatContributors: 1,
+              newContributors: 1,
               commitCountsByExperimentalOrg: 'unavailable',
               experimentalAttributedAuthors: 'unavailable',
               experimentalUnattributedAuthors: 'unavailable',
@@ -134,6 +187,8 @@ describe('contributors/view-model', () => {
             60: {
               uniqueCommitAuthors: 3,
               commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 2, 'login:carol': 1 },
+              repeatContributors: 2,
+              newContributors: 1,
               commitCountsByExperimentalOrg: 'unavailable',
               experimentalAttributedAuthors: 'unavailable',
               experimentalUnattributedAuthors: 'unavailable',
@@ -141,6 +196,8 @@ describe('contributors/view-model', () => {
             90: {
               uniqueCommitAuthors: 5,
               commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+              repeatContributors: 3,
+              newContributors: 2,
               commitCountsByExperimentalOrg: 'unavailable',
               experimentalAttributedAuthors: 'unavailable',
               experimentalUnattributedAuthors: 'unavailable',
@@ -148,6 +205,8 @@ describe('contributors/view-model', () => {
             180: {
               uniqueCommitAuthors: 5,
               commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+              repeatContributors: 3,
+              newContributors: 2,
               commitCountsByExperimentalOrg: 'unavailable',
               experimentalAttributedAuthors: 'unavailable',
               experimentalUnattributedAuthors: 'unavailable',
@@ -155,6 +214,8 @@ describe('contributors/view-model', () => {
             365: {
               uniqueCommitAuthors: 5,
               commitCountsByAuthor: { 'login:alice': 4, 'login:bob': 3, 'login:carol': 2, 'login:dave': 1, 'login:erin': 1 },
+              repeatContributors: 3,
+              newContributors: 2,
               commitCountsByExperimentalOrg: 'unavailable',
               experimentalAttributedAuthors: 'unavailable',
               experimentalUnattributedAuthors: 'unavailable',

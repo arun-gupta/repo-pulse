@@ -15,6 +15,8 @@ describe('ContributorsView', () => {
     expect(within(region).getByText('facebook/react')).toBeInTheDocument()
     expect(within(region).getByRole('heading', { name: /core/i })).toBeInTheDocument()
     expect(within(region).getByRole('heading', { name: /sustainability/i })).toBeInTheDocument()
+    expect(within(corePane).getByText('Repeat contributor ratio')).toBeInTheDocument()
+    expect(within(corePane).getByText('New contributor ratio')).toBeInTheDocument()
     expect(within(corePane).getByText(/^Contribution heatmap$/i)).toBeInTheDocument()
     expect(within(region).queryByText(/later sustainability signals/i)).not.toBeInTheDocument()
   })

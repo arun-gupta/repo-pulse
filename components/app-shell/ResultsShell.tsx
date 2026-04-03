@@ -11,6 +11,7 @@ interface ResultsShellProps {
   contributors: React.ReactNode
   activity: React.ReactNode
   responsiveness: React.ReactNode
+  healthRatios: React.ReactNode
   comparison: React.ReactNode
 }
 
@@ -20,6 +21,7 @@ export function ResultsShell({
   contributors,
   activity,
   responsiveness,
+  healthRatios,
   comparison,
 }: ResultsShellProps) {
   const [activeTab, setActiveTab] = useState<ResultTabId>('overview')
@@ -61,6 +63,7 @@ export function ResultsShell({
               {activeTab === 'contributors' ? contributors : null}
               {activeTab === 'activity' ? activity : null}
               {activeTab === 'responsiveness' ? responsiveness : null}
+              {activeTab === 'health-ratios' ? healthRatios : null}
               {activeTab === 'comparison' ? comparison : null}
             </div>
           </section>
