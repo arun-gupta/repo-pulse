@@ -5,6 +5,7 @@ import { ResultsShell } from '@/components/app-shell/ResultsShell'
 import { ActivityView } from '@/components/activity/ActivityView'
 import { ContributorsView } from '@/components/contributors/ContributorsView'
 import { EcosystemMap } from '@/components/ecosystem-map/EcosystemMap'
+import { HealthRatiosView } from '@/components/health-ratios/HealthRatiosView'
 import { MetricCardsOverview } from '@/components/metric-cards/MetricCardsOverview'
 import { ResponsivenessView } from '@/components/responsiveness/ResponsivenessView'
 import { TokenInput } from '@/components/token-input/TokenInput'
@@ -169,6 +170,15 @@ export function RepoInputClient({ hasServerToken, onAnalyze }: RepoInputClientPr
         ) : (
           <p className="text-sm text-slate-600">
             Responsiveness will become the home for issue and pull-request response-time, backlog, and engagement signals.
+          </p>
+        )
+      }
+      healthRatios={
+        analysisResponse ? (
+          <HealthRatiosView results={analysisResponse.results} />
+        ) : (
+          <p className="text-sm text-slate-600">
+            Health Ratios will compare verified ecosystem, activity, and contributor ratios across analyzed repositories.
           </p>
         )
       }

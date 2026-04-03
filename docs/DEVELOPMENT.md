@@ -73,7 +73,7 @@ This is the planned implementation order for Phase 1. It may differ from the fea
 | 8 | P1-F09 | Contributors | ✅ Done |
 | 9 | P1-F08 | Activity | ✅ Done |
 | 10 | P1-F10 | Responsiveness | ✅ Done |
-| 11 | P1-F11 | Health Ratios | — |
+| 11 | P1-F11 | Health Ratios | ✅ Done |
 | 12 | P1-F16 | Org-Level Repo Inventory | — |
 | 13 | P1-F06 | Repo Comparison | — |
 | 14 | P1-F14 | GitHub OAuth Authentication | — |

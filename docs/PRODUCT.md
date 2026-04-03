@@ -229,7 +229,7 @@ ForkPrint presents analysis in a stable app shell so users can submit repos once
 - A top header/banner shows the ForkPrint brand and a visible GitHub repo link
 - Repo input and Analyze action live in a stable analysis panel that remains visible above the result views
 - Successful analyses populate a tabbed result area rather than stacking every future view vertically
-- The shell organizes result views in a stable order with `Overview` first and domain views such as `Contributors`, `Activity`, `Responsiveness`, and `Comparison` available as tabs
+- The shell organizes result views in a stable order with `Overview` first and domain views such as `Contributors`, `Activity`, `Responsiveness`, `Health Ratios`, and `Comparison` available as tabs
 - The `Overview` tab is the first populated results tab and can absorb cross-feature summary content until later tabs deliver distinct value
 - Switching tabs does not re-submit the analysis request or trigger extra API calls
 - The shell works for single-repo and multi-repo analyses on desktop and mobile layouts
@@ -298,6 +298,7 @@ The analyzer measures how a repo's recent activity and delivery flow change acro
   - median time to merge PRs
   - median time to close issues
 - The `Activity` tab shows selected-window raw counts and throughput ratios together so users can interpret percentages in context
+- The `Activity` tab is the primary home for activity-flow ratios such as PR merge rate, issue closure rate, and stale issue ratio; these ratios are explained in context here before they are reused in any later cross-repo ratio rollup
 - The `Activity` score in the `Activity` tab follows the selected recent-activity window, while the overview badge may continue to use the canonical default score window
 - The first implementation focuses on ratios and fixed-window comparisons; full time-series trend charts for commits, PRs, and issues are a follow-up once bucketed trend data is carried in the shared analysis payload
 - Activity score — High / Medium / Low — assigned only when sufficient verified data exists; otherwise surfaces `Insufficient verified public data`
@@ -359,6 +360,7 @@ The Contributors workspace measures the depth and distribution of contributor ac
   - a `Contributor composition` summary card
   - `GitHub API contributors` as the top-level contributor-count source
   - active / repeat / one-time / inactive contributor composition for the selected recent-activity window
+  - contributor-composition ratios such as repeat contributors / total contributors and new contributors / total contributors when those ratios are publicly verifiable from the shared analysis payload
   - person-level contribution heatmap for the selected recent-activity window
 - The `Sustainability` pane includes the Sustainability score and related explanation surfaces
 - The `Sustainability` pane owns contribution concentration and related top-20%-share explanation surfaces
@@ -449,6 +451,12 @@ Computed diagnostic ratios provide a quick cross-repo comparison surface, drawn 
 - Ecosystem ratios: forks/stars, watches/stars
 - Activity ratios: merged PRs/opened PRs, stale issues/total open issues
 - Contributors ratios: repeat contributors/total contributors, new contributors/total contributors
+- Ratios continue to appear first in their domain-specific home views where they are easiest to interpret:
+  - ecosystem ratios remain in ecosystem and overview surfaces
+  - activity-flow ratios remain in the `Activity` tab
+  - contributor-composition ratios remain in the `Contributors` tab
+- The `Health Ratios` tab aggregates those verified ratios into a dedicated cross-repo comparison table rather than becoming the first or only place the user sees them
+- The `Health Ratios` tab groups those rollups into `Overview`, `Contributors`, and `Activity` sections so the comparison view mirrors the main workspace navigation
 - Unavailable ratios displayed as `—`, never estimated
 - Ratios grouped by CHAOSS category in the UI
 - Table is sortable by ratio value across repos

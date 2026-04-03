@@ -1,4 +1,5 @@
 import type { AnalysisResult, ContributorWindowDays, ContributorWindowMetrics, Unavailable } from '@/lib/analyzer/analysis-result'
+import { buildContributorRatioMetricRows } from '@/lib/health-ratios/view-model'
 import { computeContributionConcentration, formatPercentage, getSustainabilityScoreFromCommitCounts } from './score-config'
 
 export interface ContributorMetricRow {
@@ -70,6 +71,10 @@ export function buildContributorsViewModels(
           supportingText: getContributorCompositionText(result.totalContributors, activeContributors, repeatContributors),
           breakdown: getContributorCompositionBreakdown(result.totalContributors, activeContributors, repeatContributors),
         },
+        ...buildContributorRatioMetricRows(result, {
+          repeatContributors: windowMetrics.repeatContributors,
+          newContributors: windowMetrics.newContributors,
+        }),
       ],
       heatmap: buildHeatmap(filteredCommitCountsByAuthor),
       experimentalHeatmap: buildHeatmap(experimentalCommitCounts, 'organization'),
@@ -142,6 +147,14 @@ function buildMissingDataList(
     fields.push('Active contributors')
   }
 
+  if (windowMetrics.repeatContributors === 'unavailable') {
+    fields.push('Repeat contributor ratio')
+  }
+
+  if (windowMetrics.newContributors === 'unavailable') {
+    fields.push('New contributor ratio')
+  }
+
   if (concentration === 'unavailable') {
     fields.push('Contribution concentration')
   }
@@ -174,6 +187,8 @@ function getContributorWindowMetrics(
   return {
     uniqueCommitAuthors: result.uniqueCommitAuthors90d,
     commitCountsByAuthor: result.commitCountsByAuthor,
+    repeatContributors: 'unavailable',
+    newContributors: 'unavailable',
     commitCountsByExperimentalOrg: result.commitCountsByExperimentalOrg,
     experimentalAttributedAuthors: result.experimentalAttributedAuthors90d,
     experimentalUnattributedAuthors: result.experimentalUnattributedAuthors90d,

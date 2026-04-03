@@ -7,6 +7,8 @@ export type ActivityWindowDays = (typeof ACTIVITY_WINDOW_DAYS)[number]
 export interface ContributorWindowMetrics {
   uniqueCommitAuthors: number | Unavailable
   commitCountsByAuthor: Record<string, number> | Unavailable
+  repeatContributors: number | Unavailable
+  newContributors: number | Unavailable
   commitCountsByExperimentalOrg: Record<string, number> | Unavailable
   experimentalAttributedAuthors: number | Unavailable
   experimentalUnattributedAuthors: number | Unavailable

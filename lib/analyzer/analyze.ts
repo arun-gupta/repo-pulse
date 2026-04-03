@@ -1132,10 +1132,12 @@ function buildContributorMetricsByWindow(
   recentCommitNodes: CommitNode[],
   now: Date,
 ): Record<ContributorWindowDays, ContributorWindowMetrics> {
+  const earliestContributionByAuthor = buildEarliestContributionByAuthor(recentCommitNodes)
+
   return Object.fromEntries(
     CONTRIBUTOR_WINDOW_DAYS.map((windowDays) => {
       const windowNodes = filterCommitNodesByWindow(recentCommitNodes, now, windowDays)
-      const metrics = buildContributorMetrics(windowNodes)
+      const metrics = buildContributorMetrics(windowNodes, earliestContributionByAuthor, now, windowDays)
 
       return [
         windowDays,
@@ -1150,11 +1152,18 @@ function buildContributorMetricsByWindow(
   ) as Record<ContributorWindowDays, ContributorWindowMetrics>
 }
 
-function buildContributorMetrics(recentCommitNodes: CommitNode[]): Pick<ContributorWindowMetrics, 'uniqueCommitAuthors' | 'commitCountsByAuthor'> {
+function buildContributorMetrics(
+  recentCommitNodes: CommitNode[],
+  earliestContributionByAuthor: Map<string, number> | Unavailable,
+  now: Date,
+  windowDays: ContributorWindowDays,
+): Pick<ContributorWindowMetrics, 'uniqueCommitAuthors' | 'commitCountsByAuthor' | 'repeatContributors' | 'newContributors'> {
   if (recentCommitNodes.length === 0) {
     return {
       uniqueCommitAuthors: 'unavailable',
       commitCountsByAuthor: 'unavailable',
+      repeatContributors: 'unavailable',
+      newContributors: 'unavailable',
     }
   }
 
@@ -1167,15 +1176,31 @@ function buildContributorMetrics(recentCommitNodes: CommitNode[]): Pick<Contribu
       return {
         uniqueCommitAuthors: 'unavailable',
         commitCountsByAuthor: 'unavailable',
+        repeatContributors: 'unavailable',
+        newContributors: 'unavailable',
       }
     }
 
     commitCountsByAuthor.set(actorKey, (commitCountsByAuthor.get(actorKey) ?? 0) + 1)
   }
 
+  const repeatContributors = Array.from(commitCountsByAuthor.values()).filter((count) => count > 1).length
+  const newContributorCutoff = new Date(now)
+  newContributorCutoff.setDate(now.getDate() - windowDays)
+
+  const newContributors =
+    earliestContributionByAuthor === 'unavailable'
+      ? 'unavailable'
+      : Array.from(commitCountsByAuthor.keys()).filter((actorKey) => {
+          const firstSeenAt = earliestContributionByAuthor.get(actorKey)
+          return typeof firstSeenAt === 'number' && firstSeenAt >= newContributorCutoff.getTime()
+        }).length
+
   return {
     uniqueCommitAuthors: commitCountsByAuthor.size,
     commitCountsByAuthor: Object.fromEntries(commitCountsByAuthor.entries()),
+    repeatContributors,
+    newContributors,
   }
 }
 
@@ -1186,6 +1211,8 @@ function createUnavailableContributorWindowMetrics(): Record<ContributorWindowDa
       {
         uniqueCommitAuthors: 'unavailable',
         commitCountsByAuthor: 'unavailable',
+        repeatContributors: 'unavailable',
+        newContributors: 'unavailable',
         commitCountsByExperimentalOrg: 'unavailable',
         experimentalAttributedAuthors: 'unavailable',
         experimentalUnattributedAuthors: 'unavailable',
@@ -1208,6 +1235,8 @@ function buildExperimentalMetricsByWindow(
           {
             uniqueCommitAuthors: 'unavailable',
             commitCountsByAuthor: 'unavailable',
+            repeatContributors: 'unavailable',
+            newContributors: 'unavailable',
             commitCountsByExperimentalOrg: 'unavailable',
             experimentalAttributedAuthors: 'unavailable',
             experimentalUnattributedAuthors: 'unavailable',
@@ -1248,6 +1277,8 @@ function buildExperimentalMetricsByWindow(
         {
           uniqueCommitAuthors: 'unavailable',
           commitCountsByAuthor: 'unavailable',
+          repeatContributors: 'unavailable',
+          newContributors: 'unavailable',
           commitCountsByExperimentalOrg:
             sawResolvableAuthor && commitCountsByExperimentalOrg.size > 0
               ? Object.fromEntries(commitCountsByExperimentalOrg.entries())
@@ -1272,6 +1303,30 @@ function filterCommitNodesByWindow(recentCommitNodes: CommitNode[], now: Date, w
 
     return authoredDate >= cutoff.getTime()
   })
+}
+
+function buildEarliestContributionByAuthor(recentCommitNodes: CommitNode[]): Map<string, number> | Unavailable {
+  if (recentCommitNodes.length === 0) {
+    return 'unavailable'
+  }
+
+  const earliestContributionByAuthor = new Map<string, number>()
+
+  for (const node of recentCommitNodes) {
+    const actorKey = getCommitActorKey(node)
+    const authoredAt = Date.parse(node.authoredDate)
+
+    if (!actorKey || Number.isNaN(authoredAt)) {
+      return 'unavailable'
+    }
+
+    const currentEarliest = earliestContributionByAuthor.get(actorKey)
+    if (currentEarliest == null || authoredAt < currentEarliest) {
+      earliestContributionByAuthor.set(actorKey, authoredAt)
+    }
+  }
+
+  return earliestContributionByAuthor
 }
 
 function getCommitActorKey(node: CommitNode): string | null {
