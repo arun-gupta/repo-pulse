@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { resultTabs } from '@/lib/results-shell/tabs'
 import type { ResultTabId } from '@/specs/006-results-shell/contracts/results-shell-props'
+import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/results-shell-props'
 import { ResultsTabs } from './ResultsTabs'
 
 interface ResultsShellProps {
@@ -13,6 +14,7 @@ interface ResultsShellProps {
   responsiveness: React.ReactNode
   healthRatios: React.ReactNode
   comparison: React.ReactNode
+  tabs?: ResultTabDefinition[]
 }
 
 export function ResultsShell({
@@ -23,6 +25,7 @@ export function ResultsShell({
   responsiveness,
   healthRatios,
   comparison,
+  tabs = resultTabs,
 }: ResultsShellProps) {
   const [activeTab, setActiveTab] = useState<ResultTabId>('overview')
 
@@ -57,7 +60,7 @@ export function ResultsShell({
           </section>
 
           <section aria-label="Result workspace" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <ResultsTabs tabs={resultTabs} activeTab={activeTab} onChange={setActiveTab} />
+            <ResultsTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
             <div className="mt-6">
               {activeTab === 'overview' ? overview : null}
               {activeTab === 'contributors' ? contributors : null}

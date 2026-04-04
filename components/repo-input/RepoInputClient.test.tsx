@@ -158,6 +158,69 @@ describe('RepoInputClient', () => {
     expect(within(ecosystemMap).queryByText('facebook/react')).not.toBeInTheDocument()
   })
 
+  it('renders org inventory results after a successful org submission', async () => {
+    const onAnalyzeOrg = vi.fn().mockResolvedValue({
+      org: 'facebook',
+      summary: {
+        totalPublicRepos: 2,
+        totalStars: 180,
+        mostStarredRepos: [{ repo: 'facebook/react', stars: 100 }],
+        mostRecentlyActiveRepos: [{ repo: 'facebook/react', pushedAt: '2026-04-02T00:00:00Z' }],
+        languageDistribution: [
+          { language: 'TypeScript', repoCount: 1 },
+          { language: 'JavaScript', repoCount: 1 },
+        ],
+        archivedRepoCount: 0,
+        activeRepoCount: 2,
+      },
+      results: [
+        {
+          repo: 'facebook/react',
+          name: 'react',
+          description: 'A UI library',
+          primaryLanguage: 'TypeScript',
+          stars: 100,
+          forks: 25,
+          watchers: 10,
+          openIssues: 5,
+          pushedAt: '2026-04-02T00:00:00Z',
+          archived: false,
+          url: 'https://github.com/facebook/react',
+        },
+        {
+          repo: 'facebook/jest',
+          name: 'jest',
+          description: 'A testing framework',
+          primaryLanguage: 'JavaScript',
+          stars: 80,
+          forks: 10,
+          watchers: 7,
+          openIssues: 3,
+          pushedAt: '2026-04-01T00:00:00Z',
+          archived: false,
+          url: 'https://github.com/facebook/jest',
+        },
+      ],
+      rateLimit: null,
+      failure: null,
+    })
+
+    render(<RepoInputClient hasServerToken={false} onAnalyzeOrg={onAnalyzeOrg} />)
+
+    await userEvent.type(screen.getByLabelText(/github personal access token/i), 'ghp_saved')
+    await userEvent.click(screen.getByRole('button', { name: /organization/i }))
+    await userEvent.type(screen.getByRole('textbox', { name: /organization input/i }), 'facebook')
+    await userEvent.click(screen.getByRole('button', { name: /browse org/i }))
+
+    const orgInventory = await screen.findByRole('region', { name: /org inventory view/i })
+    expect(within(orgInventory).getByText('facebook')).toBeInTheDocument()
+    expect(within(orgInventory).getAllByText('facebook/react').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Organization' })).toHaveClass('bg-slate-900')
+    expect(screen.getByRole('tab', { name: 'Organization' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('tab', { name: 'Contributors' })).not.toBeInTheDocument()
+    expect(onAnalyzeOrg).toHaveBeenCalledWith('facebook', 'ghp_saved')
+  })
+
   it('renders repository-specific failures alongside successful results', async () => {
     const onAnalyze = vi.fn().mockResolvedValue({
       results: [

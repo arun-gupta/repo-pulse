@@ -25,11 +25,11 @@ A user can enter a GitHub organization and immediately see a lightweight invento
 
 ### User Story 2 - Narrow and sort the inventory (Priority: P1)
 
-A user can quickly find relevant repositories within a larger organization by sorting and filtering the inventory table.
+A user can quickly find relevant repositories within a larger organization by sorting, filtering, and choosing which columns are visible in the inventory table.
 
-**Why this priority**: Org inventory becomes hard to use without filtering and sorting, especially for organizations with many repositories.
+**Why this priority**: Org inventory becomes hard to use without filtering, sorting, and column control, especially for organizations with many repositories or on smaller screens.
 
-**Independent Test**: Render an org with multiple repositories and confirm the user can filter by repo name, language, and archived status, and sort the table without triggering a new inventory fetch.
+**Independent Test**: Render an org with multiple repositories and confirm the user can filter by repo name, language, and archived status, sort the table, and toggle visible columns locally without triggering a new inventory fetch.
 
 **Acceptance Scenarios**:
 
@@ -38,6 +38,7 @@ A user can quickly find relevant repositories within a larger organization by so
 3. **Given** a mix of archived and active repositories, **When** the user toggles archived-status filtering, **Then** the table updates locally to show the selected subset.
 4. **Given** a populated table, **When** the user clicks any visible column header, **Then** the rows reorder locally without rerunning the org inventory request.
 5. **Given** a sorted column, **When** the user activates that same column again, **Then** the sort direction toggles between ascending and descending.
+6. **Given** a populated table, **When** the user changes the visible-column selection, **Then** the table rerenders locally with only the selected columns while preserving required pinned columns.
 
 ---
 
@@ -84,6 +85,8 @@ A user can distinguish between an empty organization, an invalid organization, a
 - How does the app handle organizations whose public repo count exceeds the first page of GitHub results?
 - What happens when the user lowers the slider below the number of repos already selected?
 - What happens when the user tries to select more repositories for bulk analysis than the current slider limit or the configured Phase 1 maximum?
+- What happens when the user hides a currently sorted column?
+- What happens when the user reduces the visible-column set on mobile so only a few columns remain?
 
 ## Requirements *(mandatory)*
 
@@ -97,16 +100,19 @@ A user can distinguish between an empty organization, an invalid organization, a
 - **FR-006**: The inventory table MUST support local filtering by repository name, primary language, and archived status without rerunning the org inventory request.
 - **FR-007**: The inventory table MUST support local sorting on every visible column without rerunning the org inventory request.
 - **FR-008**: Every sortable column MUST support both ascending and descending order.
-- **FR-009**: The system MUST provide a repo-level drill-in action from each row that connects into the existing repo analysis flow for that repository.
-- **FR-010**: The system MUST allow selecting multiple repositories from the org inventory table for bulk analysis using the existing repo-analysis flow.
-- **FR-011**: The system MUST expose a slider control that lets the user set the current bulk-selection limit locally before choosing repositories to analyze.
-- **FR-012**: The maximum number of repositories allowed by the slider in Phase 1 MUST be driven by shared configuration rather than hardcoded in the component layer, with a default cap of `5`.
-- **FR-013**: The system MUST prevent extra selections or bulk analysis submissions that exceed the current slider limit and explain the limit clearly in the UI.
-- **FR-014**: The system MUST define deterministic behavior when the slider is lowered below the current selected count, such as trimming selection or blocking the new limit until the selection is reduced.
-- **FR-015**: The system MUST show clear invalid-org, empty-org, loading, and rate-limit states without fabricating results.
-- **FR-016**: Missing per-row fields MUST render explicitly as unavailable or empty values appropriate to the field type rather than substituted metrics.
-- **FR-017**: The Phase 1 implementation MUST avoid running full repo-level CHAOSS analysis automatically for every repository in the org inventory view.
-- **FR-018**: The org inventory layout MUST remain usable on desktop and mobile, with pagination or virtualization available if needed for larger orgs.
+- **FR-009**: The inventory UI MUST allow the user to choose which optional table columns are visible and rerender the table locally based on that selection.
+- **FR-010**: The repository column MUST remain visible and pinned; other columns may be user-configurable.
+- **FR-011**: If the currently sorted column is hidden, the table MUST fall back to a deterministic visible-column sort or a default sort state.
+- **FR-012**: The system MUST provide a repo-level drill-in action from each row that connects into the existing repo analysis flow for that repository.
+- **FR-013**: The system MUST allow selecting multiple repositories from the org inventory table for bulk analysis using the existing repo-analysis flow.
+- **FR-014**: The system MUST expose a slider control that lets the user set the current bulk-selection limit locally before choosing repositories to analyze.
+- **FR-015**: The maximum number of repositories allowed by the slider in Phase 1 MUST be driven by shared configuration rather than hardcoded in the component layer, with a default cap of `5`.
+- **FR-016**: The system MUST prevent extra selections or bulk analysis submissions that exceed the current slider limit and explain the limit clearly in the UI.
+- **FR-017**: The system MUST define deterministic behavior when the slider is lowered below the current selected count, such as trimming selection or blocking the new limit until the selection is reduced.
+- **FR-018**: The system MUST show clear invalid-org, empty-org, loading, and rate-limit states without fabricating results.
+- **FR-019**: Missing per-row fields MUST render explicitly as unavailable or empty values appropriate to the field type rather than substituted metrics.
+- **FR-020**: The Phase 1 implementation MUST avoid running full repo-level CHAOSS analysis automatically for every repository in the org inventory view.
+- **FR-021**: The org inventory layout MUST remain usable on desktop and mobile, with pagination or virtualization available if needed for larger orgs.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -114,6 +120,7 @@ A user can distinguish between an empty organization, an invalid organization, a
 - **OrgInventoryResponse**: The org-level payload containing rollup summary data, repository rows, and any rate-limit or failure metadata needed by the UI.
 - **OrgRepoSummary**: A single repository row containing lightweight public metadata such as name, description, language, popularity signals, issue count, archived status, last pushed date, and URL.
 - **OrgInventoryFilters**: Local UI state for repo-name search, language selection, archived-status filtering, and table sort preferences.
+- **OrgInventoryColumns**: Local UI state tracking which optional inventory columns are currently visible and which visible column is currently sorted.
 - **OrgInventorySelection**: Local UI state tracking the selected repositories for bulk analysis, the current slider-controlled selection limit, and selection-cap validation.
 
 ## Success Criteria *(mandatory)*
@@ -122,10 +129,11 @@ A user can distinguish between an empty organization, an invalid organization, a
 
 - **SC-001**: A user can submit a valid org slug or URL and see an org inventory summary plus table without manually formatting the org identifier first.
 - **SC-002**: A user can narrow a multi-repo inventory using local filters and sort controls without triggering an additional org inventory fetch.
-- **SC-003**: A user can identify a repository of interest and begin the existing repo-level analysis flow from the inventory without manually retyping the repo slug.
-- **SC-004**: A user can select up to the configured repository cap and start a multi-repo analysis directly from the org inventory without manually retyping repo slugs.
-- **SC-005**: A user can adjust the current bulk-selection limit with a slider and immediately see the selection rules enforced in the inventory UI.
-- **SC-006**: Invalid, empty, and rate-limited org scenarios are visually distinguishable and do not fabricate repository rows or summary values.
+- **SC-003**: A user can choose a smaller or larger visible-column set and see the table rerender locally without triggering an additional org inventory fetch.
+- **SC-004**: A user can identify a repository of interest and begin the existing repo-level analysis flow from the inventory without manually retyping the repo slug.
+- **SC-005**: A user can select up to the configured repository cap and start a multi-repo analysis directly from the org inventory without manually retyping repo slugs.
+- **SC-006**: A user can adjust the current bulk-selection limit with a slider and immediately see the selection rules enforced in the inventory UI.
+- **SC-007**: Invalid, empty, and rate-limited org scenarios are visually distinguishable and do not fabricate repository rows or summary values.
 
 ## Assumptions
 
@@ -133,4 +141,5 @@ A user can distinguish between an empty organization, an invalid organization, a
 - GitHub token handling follows the existing app rules: a server-side token takes precedence, and the browser PAT flow remains available when no server token exists.
 - Existing repo input and analysis flows can be reused for drill-in behavior rather than creating a second repo-analysis implementation path.
 - The default Phase 1 bulk-analysis cap is `5`, but the specific limit is configurable through a shared config module.
+- `Repository` remains a pinned visible column even when the user customizes the rest of the table.
 - Phase 1 mobile support means the inventory remains usable and readable, not necessarily that every table column is visible without horizontal scrolling.
