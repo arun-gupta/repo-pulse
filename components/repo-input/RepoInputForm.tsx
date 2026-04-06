@@ -1,38 +1,103 @@
 'use client'
 
 import { useState } from 'react'
+import { normalizeOrgInput } from '@/lib/analyzer/org-inventory'
 import { parseRepos } from '@/lib/parse-repos'
 
 interface RepoInputFormProps {
-  onSubmit: (repos: string[]) => void
+  onSubmitRepos: (repos: string[]) => void
+  onSubmitOrg: (org: string) => void
+  mode?: 'repos' | 'org'
+  onModeChange?: (mode: 'repos' | 'org') => void
 }
 
-export function RepoInputForm({ onSubmit }: RepoInputFormProps) {
-  const [value, setValue] = useState('')
+export function RepoInputForm({ onSubmitRepos, onSubmitOrg, mode: controlledMode, onModeChange }: RepoInputFormProps) {
+  const [uncontrolledMode, setUncontrolledMode] = useState<'repos' | 'org'>('repos')
+  const [repoValue, setRepoValue] = useState('')
+  const [orgValue, setOrgValue] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const mode = controlledMode ?? uncontrolledMode
+
+  function updateMode(nextMode: 'repos' | 'org') {
+    onModeChange?.(nextMode)
+    if (controlledMode === undefined) {
+      setUncontrolledMode(nextMode)
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const result = parseRepos(value)
+
+    if (mode === 'repos') {
+      const result = parseRepos(repoValue)
+      if (!result.valid) {
+        setError(result.error)
+        return
+      }
+
+      setError(null)
+      onSubmitRepos(result.repos)
+      return
+    }
+
+    const result = normalizeOrgInput(orgValue)
     if (!result.valid) {
       setError(result.error)
       return
     }
+
     setError(null)
-    onSubmit(result.repos)
+    onSubmitOrg(result.org)
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={'facebook/react\ntorvalds/linux\nhttps://github.com/microsoft/typescript'}
-        rows={5}
-        className="w-full rounded border border-slate-300 bg-white p-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        aria-label="Repository list"
-        aria-describedby={error ? 'repo-input-error' : undefined}
-      />
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+            mode === 'repos' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700'
+          }`}
+          onClick={() => {
+            updateMode('repos')
+            setError(null)
+          }}
+        >
+          Repositories
+        </button>
+        <button
+          type="button"
+          className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+            mode === 'org' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700'
+          }`}
+          onClick={() => {
+            updateMode('org')
+            setError(null)
+          }}
+        >
+          Organization
+        </button>
+      </div>
+      {mode === 'repos' ? (
+        <textarea
+          value={repoValue}
+          onChange={(e) => setRepoValue(e.target.value)}
+          placeholder={'facebook/react\ntorvalds/linux\nhttps://github.com/microsoft/typescript'}
+          rows={5}
+          className="w-full rounded border border-slate-300 bg-white p-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Repository list"
+          aria-describedby={error ? 'repo-input-error' : undefined}
+        />
+      ) : (
+        <input
+          value={orgValue}
+          onChange={(e) => setOrgValue(e.target.value)}
+          placeholder="facebook, github.com/facebook, or https://github.com/facebook"
+          className="w-full rounded border border-slate-300 bg-white p-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Organization input"
+          aria-describedby={error ? 'repo-input-error' : undefined}
+        />
+      )}
       {error && (
         <p id="repo-input-error" role="alert" data-testid="repo-error" className="mt-1 text-sm text-red-600">
           {error}
