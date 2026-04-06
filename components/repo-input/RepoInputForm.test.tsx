@@ -10,6 +10,15 @@ describe('RepoInputForm — US1 (valid input)', () => {
     expect(screen.getByRole('button', { name: /analyze/i })).toBeInTheDocument()
   })
 
+  it('shows seeded examples for the accepted repository input styles', () => {
+    render(<RepoInputForm onSubmitRepos={vi.fn()} onSubmitOrg={vi.fn()} />)
+
+    expect(screen.getByRole('textbox')).toHaveAttribute(
+      'placeholder',
+      'facebook/react\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch',
+    )
+  })
+
   it('calls onSubmit with parsed slugs on valid input', async () => {
     const onSubmit = vi.fn()
     render(<RepoInputForm onSubmitRepos={onSubmit} onSubmitOrg={vi.fn()} />)
