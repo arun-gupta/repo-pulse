@@ -20,6 +20,11 @@ describe('parseRepos — valid input (US1)', () => {
     expect(result).toEqual({ valid: true, repos: ['facebook/react', 'torvalds/linux'] })
   })
 
+  it('parses space-separated slugs on one line', () => {
+    const result = parseRepos('facebook/react torvalds/linux')
+    expect(result).toEqual({ valid: true, repos: ['facebook/react', 'torvalds/linux'] })
+  })
+
   it('extracts slug from a GitHub URL', () => {
     const result = parseRepos('https://github.com/facebook/react')
     expect(result).toEqual({ valid: true, repos: ['facebook/react'] })
@@ -27,6 +32,14 @@ describe('parseRepos — valid input (US1)', () => {
 
   it('handles mixed: slugs, URLs, and comma-separated', () => {
     const result = parseRepos('torvalds/linux\nhttps://github.com/facebook/react, microsoft/typescript')
+    expect(result).toEqual({
+      valid: true,
+      repos: ['torvalds/linux', 'facebook/react', 'microsoft/typescript'],
+    })
+  })
+
+  it('handles mixed whitespace, commas, newlines, and URLs', () => {
+    const result = parseRepos('torvalds/linux https://github.com/facebook/react,\nmicrosoft/typescript')
     expect(result).toEqual({
       valid: true,
       repos: ['torvalds/linux', 'facebook/react', 'microsoft/typescript'],

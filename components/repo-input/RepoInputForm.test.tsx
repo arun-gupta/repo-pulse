@@ -15,7 +15,7 @@ describe('RepoInputForm — US1 (valid input)', () => {
 
     expect(screen.getByRole('textbox')).toHaveAttribute(
       'placeholder',
-      'facebook/react\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch',
+      'facebook/react nvidia/topograph\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch',
     )
   })
 
