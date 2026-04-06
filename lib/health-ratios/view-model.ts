@@ -12,6 +12,7 @@ import {
   HEALTH_RATIO_DEFINITIONS,
   type HealthRatioCategory,
 } from './ratio-definitions'
+import { getMergeRateGuidance } from '@/lib/activity/merge-rate-guidance'
 
 export interface HealthRatioCell {
   repo: string
@@ -58,10 +59,14 @@ export function buildHealthRatioRows(
     description: definition.description,
     cells: results.map((result) => {
       const value = getRatioValueForDefinition(result, definition.id, contributorWindowDays, activityWindowDays)
+      const windowMetrics = result.activityMetricsByWindow?.[activityWindowDays]
       return {
         repo: result.repo,
         value,
-        displayValue: formatHealthRatio(value),
+        displayValue:
+          definition.id === 'pr-merge-rate'
+            ? getMergeRateGuidance(windowMetrics?.prsMerged ?? 'unavailable', windowMetrics?.prsOpened ?? 'unavailable').tableDisplayValue
+            : formatHealthRatio(value),
       }
     }),
   }))
