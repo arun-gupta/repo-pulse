@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement `P1-F06 Repo Comparison` as the first real replacement for the current placeholder `Comparison` tab. This slice adds a dedicated comparison workspace for 2–4 successfully analyzed repositories, introduces an anchor-based comparison model with the first successful repo selected by default, and emphasizes meaningful differences more strongly than raw spreadsheet values. The view supports clearly labeled metric sections, section-level and attribute-level visibility controls, a median column that is enabled by default, local sorting on every visible comparison column, and explicit unavailable states — all derived from the already-fetched `AnalysisResult[]` payload with no additional API calls.
+Implement `P1-F06 Repo Comparison` as the first real replacement for the current placeholder `Comparison` tab. This slice adds a dedicated comparison workspace for 2–4 successfully analyzed repositories, introduces `Compare` as a first-class entry action from repo input, uses an anchor-based comparison model with the first successful repo selected by default, and emphasizes meaningful differences more strongly than raw spreadsheet values. The view supports clearly labeled metric sections, section-level and attribute-level visibility controls, a median column that is enabled by default, local sorting on every visible comparison column, and explicit unavailable states — all derived from the already-fetched `AnalysisResult[]` payload with no additional API calls.
 
 ## Technical Context
 
@@ -17,7 +17,7 @@ Implement `P1-F06 Repo Comparison` as the first real replacement for the current
 **Project Type**: Web application with server-side API routes and client-side analysis UI  
 **Performance Goals**: Opening `Comparison`, changing the anchor repo, toggling sections or attributes, sorting any visible column, and enabling/disabling the median column must remain local UI work with no additional analysis request or API calls  
 **Constraints**: Reuse the shared `AnalysisResult[]` contract; preserve exact unavailable states as `—`; respect the 4-repo comparison cap and communicate it clearly; keep comparison semantics deterministic for metrics where lower is better; do not fork metric definitions away from Overview / Contributors / Activity / Responsiveness / Health Ratios; prepare the comparison data model for later `Export` reuse  
-**Scale/Scope**: comparison view-model design, `Comparison` tab implementation, anchor selection, section and attribute controls, median-column support, column sorting, 4-repo cap behavior, tests/manual checklist/docs
+**Scale/Scope**: comparison view-model design, repo-input `Compare` intent, `Comparison` tab implementation, anchor selection, section and attribute controls, median-column support, column sorting, 4-repo cap behavior, tests/manual checklist/docs
 
 ## Constitution Check
 
@@ -103,10 +103,11 @@ e2e/
 
 9. Add shared comparison section and attribute definitions so the comparison feature stays aligned with existing metric families
 10. Build the comparison view-model from `AnalysisResult[]`, including default anchor selection, median computation, section filtering, attribute filtering, and local sorting
-11. Implement the `Comparison` tab UI with grouped sections and controls that make comparison-focused deltas more prominent than raw values
-12. Replace the current placeholder `Comparison` tab content and update results-shell behavior for single-repo vs multi-repo analysis
-13. Add clear 4-repo cap messaging in the relevant input/comparison workflows
-14. Add unit/integration/E2E coverage for anchor behavior, visible sections/attributes, median column toggling, sorting, unavailable states, and no-extra-fetch behavior
+11. Implement `Compare` as a first-class repo-input action that reuses the existing analysis path and lands on `Comparison` by intent
+12. Implement the `Comparison` tab UI with grouped sections and controls that make comparison-focused deltas more prominent than raw values
+13. Replace the current placeholder `Comparison` tab content and update results-shell behavior for single-repo vs multi-repo analysis
+14. Add clear 4-repo cap messaging in the relevant input/comparison workflows
+15. Add unit/integration/E2E coverage for anchor behavior, `Analyze` vs `Compare` intent, visible sections/attributes, median column toggling, sorting, unavailable states, and no-extra-fetch behavior
 
 ## Complexity Tracking
 

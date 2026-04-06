@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ResultsShell } from '@/components/app-shell/ResultsShell'
 import { ActivityView } from '@/components/activity/ActivityView'
 import { ContributorsView } from '@/components/contributors/ContributorsView'
+import { ComparisonView } from '@/components/comparison/ComparisonView'
 import { EcosystemMap } from '@/components/ecosystem-map/EcosystemMap'
 import { HealthRatiosView } from '@/components/health-ratios/HealthRatiosView'
 import { MetricCardsOverview } from '@/components/metric-cards/MetricCardsOverview'
@@ -161,9 +162,53 @@ export function RepoInputClient({ hasServerToken, onAnalyze, onAnalyzeOrg }: Rep
   ]
 
   const showOrgWorkspace = inputMode === 'org' && !analysisResponse
+  const successfulRepoCount = analysisResponse?.results.length ?? 0
+  const repoTabs: ResultTabDefinition[] = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      status: 'implemented',
+      description: 'Current analysis summary, ecosystem profile, and shared status',
+    },
+    {
+      id: 'contributors',
+      label: 'Contributors',
+      status: 'implemented',
+      description: 'Core contributor metrics and sustainability signals.',
+    },
+    {
+      id: 'activity',
+      label: 'Activity',
+      status: 'implemented',
+      description: 'Activity metrics, scoring, and detailed repo flow signals.',
+    },
+    {
+      id: 'responsiveness',
+      label: 'Responsiveness',
+      status: 'implemented',
+      description: 'Response-time, backlog-health, and engagement signals from public issue and PR activity.',
+    },
+    {
+      id: 'health-ratios',
+      label: 'Health Ratios',
+      status: 'implemented',
+      description: 'Cross-repo comparison of verified ecosystem, activity, and contributor ratios.',
+    },
+    {
+      id: 'comparison' as const,
+      label: 'Comparison',
+      status: 'implemented' as const,
+      description: 'Side-by-side comparison across analyzed repositories.',
+    },
+  ]
 
   const overviewContent = (
     <div className="space-y-4">
+      {!submissionError && !loadingRepos.length && !loadingOrg && !analysisResponse && !orgInventoryResponse ? (
+        <p className="text-sm text-slate-500">
+          Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
+        </p>
+      ) : null}
       {submissionError ? (
         <p role="alert" data-testid="analysis-error" className="text-sm text-red-600">
           {submissionError}
@@ -247,16 +292,17 @@ export function RepoInputClient({ hasServerToken, onAnalyze, onAnalyzeOrg }: Rep
 
   return (
     <ResultsShell
-      key={resultsResetKey}
+      resetKey={resultsResetKey}
+      initialActiveTab="overview"
       analysisPanel={analysisPanel}
-      tabs={showOrgWorkspace ? orgInventoryTabs : undefined}
+      tabs={showOrgWorkspace ? orgInventoryTabs : repoTabs}
       overview={overviewContent}
       contributors={
         analysisResponse ? (
           <ContributorsView results={analysisResponse.results} />
         ) : (
-          <p className="text-sm text-slate-600">
-            Contributors will become the home for core contributor metrics, with separate Core and Sustainability panes.
+          <p className="text-sm text-slate-500">
+            Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
           </p>
         )
       }
@@ -264,8 +310,8 @@ export function RepoInputClient({ hasServerToken, onAnalyze, onAnalyzeOrg }: Rep
         analysisResponse ? (
           <ActivityView results={analysisResponse.results} />
         ) : (
-          <p className="text-sm text-slate-600">
-            Activity will become the primary workspace for activity scoring and detailed repo metrics.
+          <p className="text-sm text-slate-500">
+            Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
           </p>
         )
       }
@@ -273,8 +319,8 @@ export function RepoInputClient({ hasServerToken, onAnalyze, onAnalyzeOrg }: Rep
         analysisResponse ? (
           <ResponsivenessView results={analysisResponse.results} />
         ) : (
-          <p className="text-sm text-slate-600">
-            Responsiveness will become the home for issue and pull-request response-time, backlog, and engagement signals.
+          <p className="text-sm text-slate-500">
+            Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
           </p>
         )
       }
@@ -282,12 +328,33 @@ export function RepoInputClient({ hasServerToken, onAnalyze, onAnalyzeOrg }: Rep
         analysisResponse ? (
           <HealthRatiosView results={analysisResponse.results} />
         ) : (
-          <p className="text-sm text-slate-600">
-            Health Ratios will compare verified ecosystem, activity, and contributor ratios across analyzed repositories.
+          <p className="text-sm text-slate-500">
+            Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
           </p>
         )
       }
-      comparison={<p className="text-sm text-slate-600">Comparison view is planned for a later Phase 1 step.</p>}
+      comparison={
+        analysisResponse && successfulRepoCount >= 2 ? (
+          <ComparisonView results={analysisResponse.results} rateLimit={analysisResponse.rateLimit} />
+        ) : loadingRepos.length >= 2 ? (
+          <p className="text-sm text-slate-600">
+            {loadingRepos.length > 4
+              ? <>Preparing comparison for the first 4 of {loadingRepos.length}:{' '}</>
+              : <>Preparing comparison for{' '}</>}
+            {loadingRepos.slice(0, 4).map((repo, i, arr) => (
+              <span key={repo}>
+                <span className="font-medium text-slate-800">{repo}</span>
+                {i < arr.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+            …
+          </p>
+        ) : (
+          <p className="text-sm text-slate-500">
+            Enter 2 or more repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
+          </p>
+        )
+      }
     />
   )
 }

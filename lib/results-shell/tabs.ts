@@ -34,7 +34,7 @@ export const resultTabs: ResultTabDefinition[] = [
   {
     id: 'comparison',
     label: 'Comparison',
-    status: 'placeholder',
-    description: 'Comparison view is coming later in Phase 1.',
+    status: 'implemented',
+    description: 'Side-by-side comparison across analyzed repositories.',
   },
 ]

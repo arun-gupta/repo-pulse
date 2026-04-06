@@ -250,7 +250,10 @@ RepoPulse presents analysis in a stable app shell so users can submit repos once
 Users can compare two or more repos side by side across all health metrics.
 
 **Acceptance criteria**
+- Repository input exposes both `Analyze` and `Compare` actions in repo mode, both backed by the same analysis request
+- `Compare` is available only when at least two valid repos are entered and no more than four repos are eligible for comparison
 - Any analysis of 2+ repos surfaces a comparison view alongside the individual repo cards
+- Choosing `Compare` opens the results workspace directly on `Comparison` after analysis completes
 - Comparison table shows selected metrics in rows, repos in columns, with comparison-focused delta messaging highlighted more prominently than raw values
 - Comparison view uses a user-selectable anchor repo as the baseline for delta interpretation; the first mentioned successful repo is the default anchor
 - Comparison table is organized into clearly labeled sections such as Overview, Contributors, Activity, Responsiveness, and Health Ratios

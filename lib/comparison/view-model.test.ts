@@ -5,6 +5,7 @@ import {
   getComparisonLimitMessage,
   getDefaultAnchorRepo,
   limitComparedResults,
+  sortComparisonRows,
   sortComparedResults,
 } from './view-model'
 
@@ -52,7 +53,7 @@ describe('comparison/view-model', () => {
 
     const row = sections[0]?.rows[0]
     expect(row?.cells[0]).toMatchObject({ repo: 'facebook/react', status: 'neutral' })
-    expect(row?.cells[1]?.deltaDisplay).toBe('-40.0 pts vs anchor')
+    expect(row?.cells[1]?.deltaDisplay).toBe('-40.0 pts vs anchor (-50%)')
     expect(row?.cells[1]?.status).toBe('worse')
   })
 
@@ -85,7 +86,30 @@ describe('comparison/view-model', () => {
 
   it('returns clear cap messaging', () => {
     expect(getComparisonLimitMessage(3)).toMatch(/up to 4 repositories/i)
-    expect(getComparisonLimitMessage(5)).toMatch(/supports up to 4 repositories/i)
+    expect(getComparisonLimitMessage(5)).toMatch(/showing the first 4 of 5/i)
+  })
+
+  it('sorts comparison rows by a repo column with unavailable values last', () => {
+    const sections = buildComparisonSections([buildResult('facebook/react'), buildResult('vercel/next.js')], {
+      enabledSections: ['overview'],
+      enabledAttributes: ['stars', 'fork-rate'],
+    })
+
+    const sortedRows = sortComparisonRows(sections[0]!.rows, { type: 'repo', repo: 'facebook/react' }, 'desc')
+    expect(sortedRows.map((row) => row.attributeId)).toEqual(['stars', 'fork-rate'])
+  })
+
+  it('sorts comparison rows by median value', () => {
+    const sections = buildComparisonSections([
+      buildResult('facebook/react', { stars: 100, forks: 50 }),
+      buildResult('vercel/next.js', { stars: 200, forks: 60 }),
+    ], {
+      enabledSections: ['overview'],
+      enabledAttributes: ['stars', 'forks'],
+    })
+
+    const sortedRows = sortComparisonRows(sections[0]!.rows, { type: 'median' }, 'asc')
+    expect(sortedRows.map((row) => row.attributeId)).toEqual(['forks', 'stars'])
   })
 })
 

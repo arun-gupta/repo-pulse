@@ -34,6 +34,10 @@ export interface ComparisonSectionViewModel {
   rows: ComparisonRowViewModel[]
 }
 
+export type ComparisonSortColumn =
+  | { type: 'repo'; repo: string }
+  | { type: 'median' }
+
 export function getDefaultAnchorRepo(results: AnalysisResult[]) {
   return results[0]?.repo ?? ''
 }
@@ -47,7 +51,7 @@ export function getComparisonLimitMessage(selectedCount: number, maxRepos = COMP
     return `Compare up to ${maxRepos} repositories side by side.`
   }
 
-  return `Comparison supports up to ${maxRepos} repositories. Reduce the selection to continue.`
+  return `Showing the first ${maxRepos} of ${selectedCount} analyzed repositories.`
 }
 
 export function buildComparisonSections(
@@ -101,6 +105,29 @@ export function sortComparedResults(
     const difference = direction === 'asc' ? leftValue - rightValue : rightValue - leftValue
     if (difference !== 0) return difference
     return left.repo.localeCompare(right.repo)
+  })
+}
+
+export function sortComparisonRows(
+  rows: ComparisonRowViewModel[],
+  column: ComparisonSortColumn,
+  direction: 'asc' | 'desc' = 'desc',
+) {
+  return [...rows].sort((left, right) => {
+    const leftValue = getComparableValue(left, column)
+    const rightValue = getComparableValue(right, column)
+
+    if (leftValue === 'unavailable' && rightValue === 'unavailable') {
+      return left.label.localeCompare(right.label)
+    }
+
+    if (leftValue === 'unavailable') return 1
+    if (rightValue === 'unavailable') return -1
+
+    const difference = direction === 'asc' ? leftValue - rightValue : rightValue - leftValue
+    if (difference !== 0) return difference
+
+    return left.label.localeCompare(right.label)
   })
 }
 
@@ -166,23 +193,27 @@ function formatDelta(
   }
 
   const absoluteDifference = Math.abs(difference)
+  const sign = difference > 0 ? '+' : '-'
+  const pct = anchorValue !== 0
+    ? ` (${sign}${new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(Math.abs(difference / anchorValue) * 100)}%)`
+    : ''
 
   if (attribute.valueType === 'percentage') {
     const points = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(
       absoluteDifference * 100,
     )
-    return `${difference > 0 ? '+' : '-'}${points} pts vs anchor`
+    return `${sign}${points} pts vs anchor${pct}`
   }
 
   if (attribute.valueType === 'duration') {
     const display = absoluteDifference >= 24
       ? `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(absoluteDifference / 24)}d`
       : `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(absoluteDifference)}h`
-    return `${difference > 0 ? '+' : '-'}${display} vs anchor`
+    return `${sign}${display} vs anchor${pct}`
   }
 
   const display = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(absoluteDifference)
-  return `${difference > 0 ? '+' : '-'}${display} vs anchor`
+  return `${sign}${display} vs anchor${pct}`
 }
 
 function getComparisonStatus(
@@ -215,4 +246,12 @@ function getMedian(values: number[]): number | Unavailable {
   }
 
   return (sorted[middle - 1]! + sorted[middle]!) / 2
+}
+
+function getComparableValue(row: ComparisonRowViewModel, column: ComparisonSortColumn): number | Unavailable {
+  if (column.type === 'median') {
+    return row.medianValue
+  }
+
+  return row.cells.find((cell) => cell.repo === column.repo)?.rawValue ?? 'unavailable'
 }

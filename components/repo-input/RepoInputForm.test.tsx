@@ -15,7 +15,7 @@ describe('RepoInputForm — US1 (valid input)', () => {
 
     expect(screen.getByRole('textbox')).toHaveAttribute(
       'placeholder',
-      'facebook/react nvidia/topograph\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch',
+      'facebook/react ollama/ollama\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch',
     )
   })
 
@@ -32,6 +32,12 @@ describe('RepoInputForm — US1 (valid input)', () => {
     render(<RepoInputForm onSubmitRepos={onSubmit} onSubmitOrg={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: /analyze/i }))
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('shows the Analyze button with a descriptive title', () => {
+    render(<RepoInputForm onSubmitRepos={vi.fn()} onSubmitOrg={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: /^analyze$/i })).toHaveAttribute('title', expect.stringContaining('health dashboard'))
   })
 })
 
