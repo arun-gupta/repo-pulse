@@ -82,7 +82,7 @@ export function RepoInputForm({ onSubmitRepos, onSubmitOrg, mode: controlledMode
         <textarea
           value={repoValue}
           onChange={(e) => setRepoValue(e.target.value)}
-          placeholder={'facebook/react\ntorvalds/linux\nhttps://github.com/microsoft/typescript'}
+          placeholder={'facebook/react\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch'}
           rows={5}
           className="w-full rounded border border-slate-300 bg-white p-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-label="Repository list"
