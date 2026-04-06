@@ -16,7 +16,7 @@ export function parseRepos(input: string): ParseResult {
   }
 
   const tokens = input
-    .split(/[\n,]/)
+    .split(/[\s,]+/)
     .map((t) => t.trim())
     .filter(Boolean)
     .map(extractSlug)

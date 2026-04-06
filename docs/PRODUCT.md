@@ -250,8 +250,18 @@ RepoPulse presents analysis in a stable app shell so users can submit repos once
 Users can compare two or more repos side by side across all health metrics.
 
 **Acceptance criteria**
+- Repository input exposes both `Analyze` and `Compare` actions in repo mode, both backed by the same analysis request
+- `Compare` is available only when at least two valid repos are entered and no more than four repos are eligible for comparison
 - Any analysis of 2+ repos surfaces a comparison view alongside the individual repo cards
-- Comparison table shows all metrics in rows, repos in columns — delta values highlighted where meaningful
+- Choosing `Compare` opens the results workspace directly on `Comparison` after analysis completes
+- Comparison table shows selected metrics in rows, repos in columns, with comparison-focused delta messaging highlighted more prominently than raw values
+- Comparison view uses a user-selectable anchor repo as the baseline for delta interpretation; the first mentioned successful repo is the default anchor
+- Comparison table is organized into clearly labeled sections such as Overview, Contributors, Activity, Responsiveness, and Health Ratios
+- Users can enable or disable entire comparison sections, with all sections enabled by default
+- Users can choose which comparison attributes are shown; all supported attributes are selected by default
+- Comparison view includes a user-selectable median column across the chosen repos; it is visible by default
+- Every visible comparison column is sortable in ascending or descending order within the current section context
+- The UI clearly communicates the maximum of 4 compared repositories before and during analysis input
 - Metrics unavailable for one repo are shown as `—` in that column, never omitted from the row
 - Comparison is driven entirely from the already-fetched `AnalysisResult[]` — no additional API calls
 - All metric categories represented: ecosystem signals, activity, contribution dynamics, responsiveness, health ratios
@@ -260,12 +270,13 @@ Users can compare two or more repos side by side across all health metrics.
 **Design constraints** *(inform all upstream features)*
 - `AnalysisResult` schema must be flat and consistent enough to diff across repos without transformation — design this from the start
 - Ecosystem profile summaries are the visual entry point into comparison; the comparison table is the detail layer
-- UI layout must accommodate 2–6 repos in comparison without horizontal scroll on desktop viewports
+- UI layout must accommodate 2–4 repos in comparison without horizontal scroll on desktop viewports
+- The anchor model should make "better or worse than the baseline" easier to understand than a neutral spreadsheet alone
 
 **Out of scope**
 - Saving or naming a comparison set
 - Diffing snapshots across time (Future — `FUT-F01`)
-- More than 6 repos in a single comparison
+- More than 4 repos in a single comparison
 
 ---
 

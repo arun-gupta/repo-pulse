@@ -11,7 +11,12 @@ interface RepoInputFormProps {
   onModeChange?: (mode: 'repos' | 'org') => void
 }
 
-export function RepoInputForm({ onSubmitRepos, onSubmitOrg, mode: controlledMode, onModeChange }: RepoInputFormProps) {
+export function RepoInputForm({
+  onSubmitRepos,
+  onSubmitOrg,
+  mode: controlledMode,
+  onModeChange,
+}: RepoInputFormProps) {
   const [uncontrolledMode, setUncontrolledMode] = useState<'repos' | 'org'>('repos')
   const [repoValue, setRepoValue] = useState('')
   const [orgValue, setOrgValue] = useState('')
@@ -82,7 +87,7 @@ export function RepoInputForm({ onSubmitRepos, onSubmitOrg, mode: controlledMode
         <textarea
           value={repoValue}
           onChange={(e) => setRepoValue(e.target.value)}
-          placeholder={'facebook/react\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch'}
+          placeholder={'facebook/react ollama/ollama\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch'}
           rows={5}
           className="w-full rounded border border-slate-300 bg-white p-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-label="Repository list"
@@ -105,6 +110,7 @@ export function RepoInputForm({ onSubmitRepos, onSubmitOrg, mode: controlledMode
       )}
       <button
         type="submit"
+        title="Run the full repo health dashboard for any valid set of repositories."
         className="mt-3 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         Analyze

@@ -115,4 +115,22 @@ describe('ResultsShell', () => {
     expect(screen.getByText('Organization content')).toBeInTheDocument()
     expect(screen.queryByText('Comparison content')).not.toBeInTheDocument()
   })
+
+  it('supports opening on an initial active tab', () => {
+    render(
+      <ResultsShell
+        initialActiveTab="comparison"
+        analysisPanel={<div>Analysis panel</div>}
+        overview={<div>Overview content</div>}
+        contributors={<div>Contributors content</div>}
+        activity={<div>Activity content</div>}
+        responsiveness={<div>Responsiveness content</div>}
+        healthRatios={<div>Health ratios content</div>}
+        comparison={<div>Comparison content</div>}
+      />,
+    )
+
+    expect(screen.getByRole('tab', { name: 'Comparison' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('Comparison content')).toBeInTheDocument()
+  })
 })

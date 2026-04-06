@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { resultTabs } from '@/lib/results-shell/tabs'
 import type { ResultTabId } from '@/specs/006-results-shell/contracts/results-shell-props'
 import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/results-shell-props'
@@ -15,6 +15,8 @@ interface ResultsShellProps {
   healthRatios: React.ReactNode
   comparison: React.ReactNode
   tabs?: ResultTabDefinition[]
+  initialActiveTab?: ResultTabId
+  resetKey?: number
 }
 
 export function ResultsShell({
@@ -26,8 +28,16 @@ export function ResultsShell({
   healthRatios,
   comparison,
   tabs = resultTabs,
+  initialActiveTab = 'overview',
+  resetKey,
 }: ResultsShellProps) {
-  const [activeTab, setActiveTab] = useState<ResultTabId>('overview')
+  const [activeTab, setActiveTab] = useState<ResultTabId>(initialActiveTab)
+
+  useEffect(() => {
+    setActiveTab(initialActiveTab)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey])
+
   const currentActiveTab = useMemo(
     () => (tabs.some((tab) => tab.id === activeTab) ? activeTab : tabs[0]?.id ?? 'overview'),
     [activeTab, tabs],
