@@ -108,6 +108,7 @@ export function ActivityView({ results }: ActivityViewProps) {
                           ) : null}
                         </dl>
                       ) : null}
+                      {card.detail ? <p className="mt-3 text-sm text-slate-600">{card.detail}</p> : null}
                     </div>
                   ))}
                 </div>

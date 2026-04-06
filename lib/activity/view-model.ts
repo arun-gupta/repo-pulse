@@ -1,4 +1,5 @@
 import { type ActivityWindowDays, ACTIVITY_WINDOW_DAYS, type AnalysisResult, type Unavailable } from '@/lib/analyzer/analysis-result'
+import { getMergeRateGuidance } from './merge-rate-guidance'
 
 export interface ActivityCardLine {
   label: string
@@ -43,6 +44,8 @@ export function buildActivitySections(results: AnalysisResult[], windowDays: Act
 }
 
 function buildCards(metrics: ReturnType<typeof getWindowMetrics>): ActivityCardViewModel[] {
+  const mergeRateGuidance = getMergeRateGuidance(metrics.prsMerged, metrics.prsOpened)
+
   return [
     {
       title: 'Commits',
@@ -53,9 +56,13 @@ function buildCards(metrics: ReturnType<typeof getWindowMetrics>): ActivityCardV
       lines: [
         { label: 'Opened', value: formatMetric(metrics.prsOpened) },
         { label: 'Merged', value: formatMetric(metrics.prsMerged) },
-        { label: 'Merge rate', value: formatRatio(metrics.prsMerged, metrics.prsOpened) },
+        { label: 'Merge rate', value: mergeRateGuidance.percentage },
+        { label: 'Assessment', value: mergeRateGuidance.bandLabel },
       ],
-      detail: formatRatioDetail(metrics.prsMerged, metrics.prsOpened, 'merged', 'opened'),
+      detail:
+        mergeRateGuidance.band === 'unavailable'
+          ? undefined
+          : `${mergeRateGuidance.summary} ${mergeRateGuidance.recommendation}`,
     },
     {
       title: 'Issues',

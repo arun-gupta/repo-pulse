@@ -30,7 +30,8 @@ export const HEALTH_RATIO_DEFINITIONS: HealthRatioDefinition[] = [
     category: 'activity',
     label: 'PR merge rate',
     formula: 'merged PRs / opened PRs',
-    description: 'Share of pull requests opened in the selected window that were merged in that same window.',
+    description:
+      'Share of pull requests opened in the selected window that were merged in that same window. Strong is 70% or higher, Mixed is 40% to 69.9%, and Weak is below 40%.',
   },
   {
     id: 'stale-issue-ratio',
