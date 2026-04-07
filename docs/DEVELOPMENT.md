@@ -95,9 +95,11 @@ npm run build
 
 ---
 
-## Phase 2 and Phase 3
+## Phase 2, Phase 3, and Phase 4
 
 When Phase 1 is complete and deployed, run the same loop for each Phase 2 feature (`P2-F01`, `P2-F02`), then Phase 3 (`P3-F01`, `P3-F02`). The analyzer module must not be modified to accommodate Phase 2 or 3 — only wrapped.
+
+Phase 4 ports the application to support GitLab in addition to GitHub. It introduces a provider abstraction layer (GitHub and GitLab implement the same interface) so the analyzer, delivery phases, and UI remain unchanged. Phase 4 begins only after Phase 3 is complete.
 
 ---
 

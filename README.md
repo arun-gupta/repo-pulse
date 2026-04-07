@@ -9,6 +9,7 @@ Live in action: [repopulse-arun-gupta.vercel.app](https://repopulse-arun-gupta.v
 - Phase 1: Next.js web app on Vercel for interactive repository analysis
 - Phase 2: GitHub Action for scheduled analysis and alerting
 - Phase 3: MCP server callable by tools such as Claude and Cursor
+- Phase 4: GitLab support — port the analyzer and data layer to work with GitLab in addition to GitHub
 
 ## Getting Started
 

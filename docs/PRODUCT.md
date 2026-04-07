@@ -12,13 +12,14 @@ This document is the canonical product definition for RepoPulse. It is the sourc
 
 ## Roadmap
 
-RepoPulse is built in three phases. Phase 1 architectural decisions must not block Phases 2 or 3.
+RepoPulse is built in four phases. Phase 1 architectural decisions must not block Phases 2, 3, or 4.
 
 - **Phase 1** — Web app (Next.js / Vercel): interactive dashboard for on-demand repo analysis
 - **Phase 2** — GitHub Action: scheduled or triggered analysis with artifact output and threshold alerting
 - **Phase 3** — MCP Server: exposes analysis as a tool callable by AI assistants (Claude, Cursor, etc.)
+- **Phase 4** — GitLab support: port the analyzer, data fetching, and auth layers to work with GitLab in addition to GitHub, across all delivery phases (P1, P2, P3)
 
-The core analysis logic is shared across all three phases via a framework-agnostic analyzer module. No phase duplicates it.
+The core analysis logic is shared across all phases via a framework-agnostic analyzer module. No phase duplicates it. Phase 4 introduces a provider abstraction so GitHub and GitLab data sources are interchangeable.
 
 ---
 
