@@ -57,6 +57,18 @@ describe('buildJsonExport', () => {
     expect(parsed.rateLimit?.remaining).toBe(4000)
   })
 
+  it('includes computed contributor metrics for each repo', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ contributors: { sustainabilityScore: string; sustainabilityMetrics: Array<{ label: string; value: string }>; experimentalMetrics: Array<{ label: string; value: string }> } }> }
+    const contributors = parsed.results[0].contributors
+    expect(contributors).toBeDefined()
+    expect(contributors.sustainabilityScore).toBeDefined()
+    expect(contributors.sustainabilityMetrics.some((m) => m.label === 'Top 20% contributor share')).toBe(true)
+    expect(contributors.experimentalMetrics.some((m) => m.label === 'Elephant Factor')).toBe(true)
+    expect(contributors.experimentalMetrics.some((m) => m.label === 'Single-vendor dependency ratio')).toBe(true)
+  })
+
   it('includes computed scores for each repo', async () => {
     const result = buildJsonExport(MINIMAL_RESPONSE)
     const text = await result.blob.text()

@@ -1,6 +1,7 @@
 import type { AnalysisResult, AnalyzeResponse, ResponsivenessMetrics } from '@/lib/analyzer/analysis-result'
 import { getActivityScore } from '@/lib/activity/score-config'
 import { getSustainabilityScore } from '@/lib/contributors/score-config'
+import { buildContributorsViewModels } from '@/lib/contributors/view-model'
 import { formatHours, formatPercentage, getResponsivenessScore } from '@/lib/responsiveness/score-config'
 import { encodeRepos } from '@/lib/export/shareable-url'
 
@@ -60,6 +61,7 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
   const activity = getActivityScore(result)
   const sustainability = getSustainabilityScore(result)
   const responsiveness = getResponsivenessScore(result)
+  const contributors = buildContributorsViewModels([result])[0]
   const rm = getResponsivenessMetrics(result)
   const am = result.activityMetricsByWindow?.[90]
 
@@ -107,8 +109,21 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     `- **Score**: ${sustainability.value}`,
     `- **Total contributors**: ${fmt(result.totalContributors)}`,
     `- **Unique commit authors (90 days)**: ${fmt(result.uniqueCommitAuthors90d)}`,
+    `- **Repeat contributors (90 days)**: ${fmt(result.contributorMetricsByWindow?.[90]?.repeatContributors ?? 'unavailable')}`,
+    `- **New contributors (90 days)**: ${fmt(result.contributorMetricsByWindow?.[90]?.newContributors ?? 'unavailable')}`,
     `- **Maintainer count**: ${fmt(result.maintainerCount)}`,
     `- **Top 20% contributor share**: ${fmtPct(sustainability.concentration)}`,
+    ...(contributors ? contributors.sustainabilityMetrics
+      .filter((m) => m.label === 'Types of contributions')
+      .map((m) => `- **Types of contributions**: ${m.value}`) : []),
+    ...(contributors?.experimentalMetrics.length
+      ? [
+          '',
+          '#### Experimental (heuristic org attribution)',
+          '',
+          ...contributors.experimentalMetrics.map((m) => `- **${m.label}**: ${m.value}`),
+        ]
+      : []),
     '',
     '### Responsiveness',
     '',

@@ -73,7 +73,33 @@ describe('buildMarkdownReport', () => {
     const md = buildMarkdownReport(MINIMAL_RESPONSE)
     expect(md).toContain('Total contributors')
     expect(md).toContain('Unique commit authors')
+    expect(md).toContain('Repeat contributors (90 days)')
+    expect(md).toContain('New contributors (90 days)')
     expect(md).toContain('Top 20% contributor share')
+    expect(md).toContain('Types of contributions')
+  })
+
+  it('includes experimental contributor metrics when org attribution is available', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [
+        {
+          repo: 'facebook/react',
+          ...RESULT_BASE,
+          contributorMetricsByWindow: {
+            30: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            60: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            90: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            180: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            365: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+          },
+        },
+      ],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).toContain('Elephant Factor')
+    expect(md).toContain('Single-vendor dependency ratio')
+    expect(md).toContain('Experimental (heuristic org attribution)')
   })
 
   it('includes all responsiveness panes', () => {

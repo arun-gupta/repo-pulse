@@ -1,6 +1,7 @@
 import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import { getActivityScore } from '@/lib/activity/score-config'
 import { getSustainabilityScore } from '@/lib/contributors/score-config'
+import { buildContributorsViewModels } from '@/lib/contributors/view-model'
 import { getResponsivenessScore } from '@/lib/responsiveness/score-config'
 
 export interface JsonExportResult {
@@ -36,12 +37,24 @@ function buildTimestamp(): string {
   return `${yyyy}-${mm}-${dd}-${HH}${MM}${ss}`
 }
 
+function computeContributors(result: AnalysisResult) {
+  const section = buildContributorsViewModels([result])[0]
+  if (!section) return undefined
+  return {
+    sustainabilityScore: section.sustainabilityScore.value,
+    sustainabilityMetrics: section.sustainabilityMetrics.map((m) => ({ label: m.label, value: m.value })),
+    coreMetrics: section.coreMetrics.map((m) => ({ label: m.label, value: m.value })),
+    experimentalMetrics: section.experimentalMetrics.map((m) => ({ label: m.label, value: m.value })),
+  }
+}
+
 export function buildJsonExport(response: AnalyzeResponse): JsonExportResult {
   const enriched = {
     ...response,
     results: response.results.map((result) => ({
       ...result,
       scores: computeScores(result),
+      contributors: computeContributors(result),
     })),
   }
   const json = JSON.stringify(enriched, null, 2)
