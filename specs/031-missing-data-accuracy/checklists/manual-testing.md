@@ -1,9 +1,7 @@
 # Manual Testing Checklist: Missing Data & Accuracy (P1-F12)
 
 **Purpose**: Sign-off before opening the PR  
-**Feature**: [spec.md](../spec.md)  
-**Signed off by**: arun-gupta  
-**Date**: 2026-04-06
+**Feature**: [spec.md](../spec.md)
 
 ---
 
@@ -36,3 +34,13 @@ Analyze any public repository with real data (e.g. `nvidia/topograph` or `facebo
 
 > Inline `"—"` rendering, muted styling, absence of amber callout panels, zero vs dash distinction,
 > and all build/lint/test gates are covered by automated tests and do not require manual verification.
+
+---
+
+## Signoff
+
+| Item | Status | Notes |
+|------|--------|-------|
+| All automated tests pass (`npm test`) | ✅ 241 passed (48 files) | |
+| Manual checklist reviewed | ✅ | |
+| Reviewed by | arun-gupta | 2026-04-06 |
