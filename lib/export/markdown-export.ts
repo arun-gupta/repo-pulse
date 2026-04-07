@@ -1,6 +1,8 @@
 import type { AnalysisResult, AnalyzeResponse, ResponsivenessMetrics } from '@/lib/analyzer/analysis-result'
 import { getActivityScore } from '@/lib/activity/score-config'
 import { getSustainabilityScore } from '@/lib/contributors/score-config'
+import { buildContributorsViewModels } from '@/lib/contributors/view-model'
+import { buildHealthRatioRows } from '@/lib/health-ratios/view-model'
 import { formatHours, formatPercentage, getResponsivenessScore } from '@/lib/responsiveness/score-config'
 import { encodeRepos } from '@/lib/export/shareable-url'
 
@@ -56,10 +58,18 @@ function getResponsivenessMetrics(result: AnalysisResult): ResponsivenessMetrics
   )
 }
 
+const HEALTH_RATIO_CATEGORY_LABELS: Record<string, string> = {
+  ecosystem: 'Overview',
+  contributors: 'Contributors',
+  activity: 'Activity',
+}
+
 function renderRepo(result: AnalysisResult, appUrl?: string): string {
   const activity = getActivityScore(result)
   const sustainability = getSustainabilityScore(result)
   const responsiveness = getResponsivenessScore(result)
+  const contributors = buildContributorsViewModels([result])[0]
+  const healthRatioRows = buildHealthRatioRows([result])
   const rm = getResponsivenessMetrics(result)
   const am = result.activityMetricsByWindow?.[90]
 
@@ -79,12 +89,36 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     '',
     `- **GitHub**: [${result.repo}](${githubUrl})`,
     ...(appUrl ? [`- **Analysis**: [View in RepoPulse](${appUrl})`] : []),
+    '',
+    '### Overview',
+    '',
     `- **Stars**: ${fmt(result.stars)}`,
     `- **Forks**: ${fmt(result.forks)}`,
     `- **Watchers**: ${fmt(result.watchers)}`,
     `- **Primary language**: ${fmt(result.primaryLanguage)}`,
     `- **Description**: ${fmt(result.description)}`,
     `- **Created**: ${fmt(result.createdAt)}`,
+    '',
+    '### Contributors',
+    '',
+    `- **Score**: ${sustainability.value}`,
+    `- **Total contributors**: ${fmt(result.totalContributors)}`,
+    `- **Unique commit authors (90 days)**: ${fmt(result.uniqueCommitAuthors90d)}`,
+    `- **Repeat contributors (90 days)**: ${fmt(result.contributorMetricsByWindow?.[90]?.repeatContributors ?? 'unavailable')}`,
+    `- **New contributors (90 days)**: ${fmt(result.contributorMetricsByWindow?.[90]?.newContributors ?? 'unavailable')}`,
+    `- **Maintainer count**: ${fmt(result.maintainerCount)}`,
+    `- **Top 20% contributor share**: ${fmtPct(sustainability.concentration)}`,
+    ...(contributors ? contributors.sustainabilityMetrics
+      .filter((m) => m.label === 'Types of contributions')
+      .map((m) => `- **Types of contributions**: ${m.value}`) : []),
+    ...(contributors?.experimentalMetrics.length
+      ? [
+          '',
+          '#### Experimental (heuristic org attribution)',
+          '',
+          ...contributors.experimentalMetrics.map((m) => `- **${m.label}**: ${m.value}`),
+        ]
+      : []),
     '',
     '### Activity',
     '',
@@ -101,14 +135,6 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     `- **Median time to merge**: ${fmtHours(medianMergeHours)}`,
     `- **Median time to close**: ${fmtHours(medianCloseHours)}`,
     `- **Releases (12 months)**: ${fmt(releases)}`,
-    '',
-    '### Sustainability',
-    '',
-    `- **Score**: ${sustainability.value}`,
-    `- **Total contributors**: ${fmt(result.totalContributors)}`,
-    `- **Unique commit authors (90 days)**: ${fmt(result.uniqueCommitAuthors90d)}`,
-    `- **Maintainer count**: ${fmt(result.maintainerCount)}`,
-    `- **Top 20% contributor share**: ${fmtPct(sustainability.concentration)}`,
     '',
     '### Responsiveness',
     '',
@@ -146,7 +172,26 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     '',
     `- **PR review depth**: ${fmt(rm.prReviewDepth)}`,
     `- **Issues closed without comment**: ${fmtPct(rm.issuesClosedWithoutCommentRatio)}`,
+    '',
+    '### Health Ratios',
+    '',
   ]
+
+  const ratiosByCategory = new Map<string, typeof healthRatioRows>()
+  for (const row of healthRatioRows) {
+    const key = row.category
+    if (!ratiosByCategory.has(key)) ratiosByCategory.set(key, [])
+    ratiosByCategory.get(key)!.push(row)
+  }
+  for (const [category, rows] of ratiosByCategory) {
+    const categoryLabel = HEALTH_RATIO_CATEGORY_LABELS[category] ?? category
+    lines.push(`#### ${categoryLabel}`, '')
+    for (const row of rows) {
+      const cell = row.cells[0]
+      lines.push(`- **${row.label}**: ${cell ? cell.displayValue : '—'}`)
+    }
+    lines.push('')
+  }
 
   if (result.missingFields.length > 0) {
     lines.push('', '### Missing Data', '')

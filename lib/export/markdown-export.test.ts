@@ -52,11 +52,19 @@ describe('buildMarkdownReport', () => {
     expect(md).toContain('## facebook/react')
   })
 
-  it('includes Activity, Sustainability, and Responsiveness sections', () => {
+  it('includes Overview, Contributors, Activity, and Responsiveness sections in tab order', () => {
     const md = buildMarkdownReport(MINIMAL_RESPONSE)
+    expect(md).toContain('### Overview')
+    expect(md).toContain('### Contributors')
     expect(md).toContain('### Activity')
-    expect(md).toContain('### Sustainability')
     expect(md).toContain('### Responsiveness')
+    const overviewPos = md.indexOf('### Overview')
+    const contributorsPos = md.indexOf('### Contributors')
+    const activityPos = md.indexOf('### Activity')
+    const responsivenessPos = md.indexOf('### Responsiveness')
+    expect(overviewPos).toBeLessThan(contributorsPos)
+    expect(contributorsPos).toBeLessThan(activityPos)
+    expect(activityPos).toBeLessThan(responsivenessPos)
   })
 
   it('includes detailed activity metrics', () => {
@@ -73,7 +81,33 @@ describe('buildMarkdownReport', () => {
     const md = buildMarkdownReport(MINIMAL_RESPONSE)
     expect(md).toContain('Total contributors')
     expect(md).toContain('Unique commit authors')
+    expect(md).toContain('Repeat contributors (90 days)')
+    expect(md).toContain('New contributors (90 days)')
     expect(md).toContain('Top 20% contributor share')
+    expect(md).toContain('Types of contributions')
+  })
+
+  it('includes experimental contributor metrics when org attribution is available', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [
+        {
+          repo: 'facebook/react',
+          ...RESULT_BASE,
+          contributorMetricsByWindow: {
+            30: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            60: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            90: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            180: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+            365: { uniqueCommitAuthors: 3, commitCountsByAuthor: { alice: 30, bob: 20 }, repeatContributors: 2, newContributors: 1, commitCountsByExperimentalOrg: { meta: 30, openai: 20 }, experimentalAttributedAuthors: 2, experimentalUnattributedAuthors: 1 },
+          },
+        },
+      ],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).toContain('Elephant Factor')
+    expect(md).toContain('Single-vendor dependency ratio')
+    expect(md).toContain('Experimental (heuristic org attribution)')
   })
 
   it('includes all responsiveness panes', () => {
@@ -83,6 +117,13 @@ describe('buildMarkdownReport', () => {
     expect(md).toContain('Maintainer activity signals')
     expect(md).toContain('Volume & backlog health')
     expect(md).toContain('Engagement quality signals')
+  })
+
+  it('includes a Health Ratios section with category sub-headings', () => {
+    const md = buildMarkdownReport(MINIMAL_RESPONSE)
+    expect(md).toContain('### Health Ratios')
+    expect(md).toContain('#### Overview')
+    expect(md).toContain('#### Activity')
   })
 
   it('includes detailed repo metadata', () => {

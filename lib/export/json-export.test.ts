@@ -57,6 +57,18 @@ describe('buildJsonExport', () => {
     expect(parsed.rateLimit?.remaining).toBe(4000)
   })
 
+  it('includes computed contributor metrics for each repo', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ contributors: { sustainabilityScore: string; sustainabilityMetrics: Array<{ label: string; value: string }>; experimentalMetrics: Array<{ label: string; value: string }> } }> }
+    const contributors = parsed.results[0].contributors
+    expect(contributors).toBeDefined()
+    expect(contributors.sustainabilityScore).toBeDefined()
+    expect(contributors.sustainabilityMetrics.some((m) => m.label === 'Top 20% contributor share')).toBe(true)
+    expect(contributors.experimentalMetrics.some((m) => m.label === 'Elephant Factor')).toBe(true)
+    expect(contributors.experimentalMetrics.some((m) => m.label === 'Single-vendor dependency ratio')).toBe(true)
+  })
+
   it('includes computed scores for each repo', async () => {
     const result = buildJsonExport(MINIMAL_RESPONSE)
     const text = await result.blob.text()
@@ -68,6 +80,17 @@ describe('buildJsonExport', () => {
     expect(scores.activity).toHaveProperty('description')
     expect(scores.sustainability).toHaveProperty('value')
     expect(scores.responsiveness).toHaveProperty('value')
+  })
+
+  it('includes computed health ratios for each repo', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ healthRatios: Array<{ id: string; category: string; label: string; displayValue: string }> }> }
+    const healthRatios = parsed.results[0].healthRatios
+    expect(healthRatios).toBeDefined()
+    expect(healthRatios.length).toBeGreaterThan(0)
+    expect(healthRatios.some((r) => r.id === 'fork-rate')).toBe(true)
+    expect(healthRatios.every((r) => r.category && r.label && r.displayValue !== undefined)).toBe(true)
   })
 
   it('preserves "unavailable" string values verbatim', async () => {
