@@ -128,6 +128,17 @@ describe('contributors/view-model', () => {
     expect(section.missingData).not.toContain('Occasional contributors')
   })
 
+  it('renders em dash for experimental metrics when org attribution is unavailable', () => {
+    // Mirrors nvidia/topograph: commits exist but org attribution heuristic found nothing
+    const section = buildContributorsViewModels([buildResult()])[0]!
+
+    // Default buildResult has commitCountsByExperimentalOrg: 'unavailable' in all windows
+    const elephantFactor = section.experimentalMetrics.find((m) => m.label === 'Elephant Factor')
+    const singleVendor = section.experimentalMetrics.find((m) => m.label === 'Single-vendor dependency ratio')
+    expect(elephantFactor?.value).toBe('—')
+    expect(singleVendor?.value).toBe('—')
+  })
+
   it('excludes detected bot accounts from recent-commit metrics by default', () => {
     const section = buildContributorsViewModels([
       buildResult({

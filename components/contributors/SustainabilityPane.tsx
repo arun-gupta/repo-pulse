@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import { HelpLabel } from '@/components/shared/HelpLabel'
+import { MetricValue } from '@/components/shared/MetricValue'
 import { SUSTAINABILITY_THRESHOLDS } from '@/lib/contributors/score-config'
 import type { ContributorsSectionViewModel } from '@/lib/contributors/view-model'
 import { ContributionBarChart } from './ContributionBarChart'
@@ -81,7 +82,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
               <HelpLabel label={metric.label} helpText={metric.hoverText} />
             </dt>
-            <dd className="mt-1 text-base font-semibold text-slate-900">{metric.value}</dd>
+            <dd className="mt-1 text-base"><MetricValue value={metric.value} /></dd>
             {metric.supportingText ? <p className="mt-1 text-xs text-slate-500">{metric.supportingText}</p> : null}
           </div>
         ))}
@@ -108,7 +109,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
               <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 <HelpLabel label={metric.label} helpText={metric.hoverText} />
               </dt>
-              <dd className="mt-1 text-base font-semibold text-slate-900">{metric.value}</dd>
+              <dd className="mt-1 text-base"><MetricValue value={metric.value} /></dd>
             </div>
           ))}
         </dl>
@@ -118,7 +119,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
             description="Longer bars indicate more experimentally attributed recent commits."
             items={section.experimentalHeatmap}
             ariaLabel="Attributed organization bars"
-            emptyText="unavailable"
+            emptyText="—"
             tone="amber"
             entityLabel="organizations"
             defaultVisibleCount={8}
@@ -161,16 +162,6 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
         ) : null}
       </div>
 
-      {section.missingData.length > 0 ? (
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-900">Missing data</p>
-          <ul className="mt-2 list-disc pl-5 text-sm text-amber-900">
-            {section.missingData.map((field) => (
-              <li key={field}>{field}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
     </section>
   )
 }

@@ -122,7 +122,7 @@ function getContributionConcentrationDetails(
 
 export function formatPercentage(value: number | Unavailable) {
   if (value === 'unavailable') {
-    return value
+    return '—'
   }
 
   return `${(value * 100).toFixed(1)}%`

@@ -36,6 +36,8 @@ When filling manual checklist signoff or similar metadata, use the authenticated
 - In-memory React state only — no localStorage, no cookies, no server-side session (029-github-oauth)
 - TypeScript 5 + React 19, Next.js 16.2 (App Router), Tailwind CSS 4 (030-export)
 - None — all export is ephemeral browser-side (Blob download / clipboard API) (030-export)
+- TypeScript 5, React 19 + Next.js 16.2 (App Router), Tailwind CSS 4 (031-missing-data-accuracy)
+- N/A — ephemeral browser state only (031-missing-data-accuracy)
 
 ## Recent Changes
 - 013-activity-scoring: Added TypeScript 5, React 19, Next.js 16.2 (App Router) + Next.js 16.2, Tailwind CSS 4, Vitest 4, React Testing Library 16, Playwright 1.58

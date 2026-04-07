@@ -96,7 +96,7 @@ export function buildContributorsViewModels(
         },
         {
           label: 'Types of contributions',
-          value: contributionTypes.length > 0 ? contributionTypes.join(', ') : 'unavailable',
+          value: contributionTypes.length > 0 ? contributionTypes.join(', ') : '—',
           hoverText: getContributionTypesHoverText(contributionTypes),
         },
       ],
@@ -279,7 +279,7 @@ function getContributorCompositionHoverText(
 
 function formatMetric(value: number | Unavailable) {
   if (value === 'unavailable') {
-    return value
+    return '—'
   }
 
   return new Intl.NumberFormat('en-US').format(value)
