@@ -16,9 +16,9 @@
 
 **Purpose**: Environment configuration and removal of superseded code
 
-- [ ] T001 Add `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` placeholder entries to `.env.example` and document them in `docs/DEPLOYMENT.md`
-- [ ] T002 [P] Delete `lib/token-storage.ts` and `lib/token-storage.test.ts`
-- [ ] T003 [P] Delete `components/token-input/TokenInput.tsx` and `components/token-input/TokenInput.test.tsx`
+- [X] T001 Add `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` placeholder entries to `.env.example` and document them in `docs/DEPLOYMENT.md`
+- [X] T002 [P] Delete `lib/token-storage.ts` and `lib/token-storage.test.ts`
+- [X] T003 [P] Delete `components/token-input/TokenInput.tsx` and `components/token-input/TokenInput.test.tsx`
 
 ---
 
@@ -28,11 +28,11 @@
 
 **⚠️ CRITICAL**: All user story phases depend on this phase
 
-- [ ] T004 Write failing tests for `AuthContext` (initial state null, signOut clears session) in `components/auth/AuthContext.test.tsx`
-- [ ] T005 Implement `AuthContext` with `session: AuthSession | null` and `signOut()` in `components/auth/AuthContext.tsx`
-- [ ] T006 Verify T004 tests pass
-- [ ] T007 Update `app/api/analyze/route.ts` — remove `process.env.GITHUB_TOKEN ??` fallback; return `401` when `body.token` is absent
-- [ ] T008 [P] Update `app/api/analyze-org/route.ts` — same change as T007
+- [X] T004 Write failing tests for `AuthContext` (initial state null, signOut clears session) in `components/auth/AuthContext.test.tsx`
+- [X] T005 Implement `AuthContext` with `session: AuthSession | null` and `signOut()` in `components/auth/AuthContext.tsx`
+- [X] T006 Verify T004 tests pass
+- [X] T007 Update `app/api/analyze/route.ts` — remove `process.env.GITHUB_TOKEN ??` fallback; return `401` when `body.token` is absent
+- [X] T008 [P] Update `app/api/analyze-org/route.ts` — same change as T007
 
 **Checkpoint**: AuthContext exists and API routes require a token — all story work can now begin
 
@@ -46,21 +46,21 @@
 
 ### Tests for User Story 1 ⚠️ Write first — must fail before implementation
 
-- [ ] T009 [P] [US1] Write failing unit tests for `SignInButton` (renders button, initiates redirect) in `components/auth/SignInButton.test.tsx`
-- [ ] T010 [P] [US1] Write failing unit tests for `AuthGate` (shows sign-in when unauthenticated, shows children when authenticated) in `components/auth/AuthGate.test.tsx`
-- [ ] T011 [P] [US1] Write failing unit tests for `GET /api/auth/login` (redirects to GitHub with correct params, sets state cookie) in `app/api/auth/login/route.test.ts`
-- [ ] T012 [P] [US1] Write failing unit tests for `GET /api/auth/callback` (exchanges code, fetches username, redirects with fragment; rejects missing/mismatched state) in `app/api/auth/callback/route.test.ts`
+- [X] T009 [P] [US1] Write failing unit tests for `SignInButton` (renders button, initiates redirect) in `components/auth/SignInButton.test.tsx`
+- [X] T010 [P] [US1] Write failing unit tests for `AuthGate` (shows sign-in when unauthenticated, shows children when authenticated) in `components/auth/AuthGate.test.tsx`
+- [X] T011 [P] [US1] Write failing unit tests for `GET /api/auth/login` (redirects to GitHub with correct params, sets state cookie) in `app/api/auth/login/route.test.ts`
+- [X] T012 [P] [US1] Write failing unit tests for `GET /api/auth/callback` (exchanges code, fetches username, redirects with fragment; rejects missing/mismatched state) in `app/api/auth/callback/route.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement `GET /api/auth/login` route — generates CSRF state, stores in cookie, redirects to `https://github.com/login/oauth/authorize` in `app/api/auth/login/route.ts`
-- [ ] T014 [US1] Implement `GET /api/auth/callback` route — validates state cookie, exchanges `code` for token via `POST https://github.com/login/oauth/access_token`, fetches `/api/user`, redirects to `/#token=...&username=...` in `app/api/auth/callback/route.ts`
-- [ ] T015 [US1] Implement `SignInButton` — renders "Sign in with GitHub" button that navigates to `/api/auth/login` in `components/auth/SignInButton.tsx`
-- [ ] T016 [US1] Implement `AuthGate` — reads URL fragment on mount (stores token+username in AuthContext, clears fragment), renders `SignInButton` when unauthenticated, renders `children` when authenticated in `components/auth/AuthGate.tsx`
-- [ ] T017 [US1] Wrap app root with `AuthGate` in `app/page.tsx` (or layout)
-- [ ] T018 [US1] Update `RepoInputClient` — remove `hasServerToken` prop, remove `TokenInput` usage, read token from `AuthContext` and pass to API requests in `components/repo-input/RepoInputClient.tsx`
-- [ ] T019 [US1] Update server component that renders `RepoInputClient` — remove `hasServerToken` prop in `app/page.tsx`
-- [ ] T020 [US1] Verify all T009–T012 tests now pass
+- [X] T013 [US1] Implement `GET /api/auth/login` route — generates CSRF state, stores in cookie, redirects to `https://github.com/login/oauth/authorize` in `app/api/auth/login/route.ts`
+- [X] T014 [US1] Implement `GET /api/auth/callback` route — validates state cookie, exchanges `code` for token via `POST https://github.com/login/oauth/access_token`, fetches `/api/user`, redirects to `/#token=...&username=...` in `app/api/auth/callback/route.ts`
+- [X] T015 [US1] Implement `SignInButton` — renders "Sign in with GitHub" button that navigates to `/api/auth/login` in `components/auth/SignInButton.tsx`
+- [X] T016 [US1] Implement `AuthGate` — reads URL fragment on mount (stores token+username in AuthContext, clears fragment), renders `SignInButton` when unauthenticated, renders `children` when authenticated in `components/auth/AuthGate.tsx`
+- [X] T017 [US1] Wrap app root with `AuthGate` in `app/page.tsx` (or layout)
+- [X] T018 [US1] Update `RepoInputClient` — remove `hasServerToken` prop, remove `TokenInput` usage, read token from `AuthContext` and pass to API requests in `components/repo-input/RepoInputClient.tsx`
+- [X] T019 [US1] Update server component that renders `RepoInputClient` — remove `hasServerToken` prop in `app/page.tsx`
+- [X] T020 [US1] Verify all T009–T012 tests now pass
 
 **Checkpoint**: User Story 1 fully functional — user can sign in and run analysis
 
@@ -74,13 +74,13 @@
 
 ### Tests for User Story 2 ⚠️ Write first — must fail before implementation
 
-- [ ] T021 [P] [US2] Write failing unit tests for `UserBadge` (shows username, sign-out button calls signOut) in `components/auth/UserBadge.test.tsx`
+- [X] T021 [P] [US2] Write failing unit tests for `UserBadge` (shows username, sign-out button calls signOut) in `components/auth/UserBadge.test.tsx`
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Implement `UserBadge` — displays signed-in username and a "Sign out" button that calls `signOut()` from `AuthContext` in `components/auth/UserBadge.tsx`
-- [ ] T023 [US2] Integrate `UserBadge` into `AuthGate` — show `UserBadge` alongside children when authenticated in `components/auth/AuthGate.tsx`
-- [ ] T024 [US2] Verify T021 tests pass
+- [X] T022 [US2] Implement `UserBadge` — displays signed-in username and a "Sign out" button that calls `signOut()` from `AuthContext` in `components/auth/UserBadge.tsx`
+- [X] T023 [US2] Integrate `UserBadge` into `AuthGate` — show `UserBadge` alongside children when authenticated in `components/auth/AuthGate.tsx`
+- [X] T024 [US2] Verify T021 tests pass
 
 **Checkpoint**: User Stories 1 and 2 both functional — full sign-in/sign-out cycle works
 
@@ -94,14 +94,14 @@
 
 ### Tests for User Story 3 ⚠️ Write first — must fail before implementation
 
-- [ ] T025 [P] [US3] Write failing unit tests for `AuthGate` error state (renders error message when `auth_error` query param is present) in `components/auth/AuthGate.test.tsx`
-- [ ] T026 [P] [US3] Write failing unit tests for callback route error path (redirects to `/?auth_error=...` on denied authorization or state mismatch) in `app/api/auth/callback/route.test.ts`
+- [X] T025 [P] [US3] Write failing unit tests for `AuthGate` error state (renders error message when `auth_error` query param is present) in `components/auth/AuthGate.test.tsx`
+- [X] T026 [P] [US3] Write failing unit tests for callback route error path (redirects to `/?auth_error=...` on denied authorization or state mismatch) in `app/api/auth/callback/route.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Update `GET /api/auth/callback` — handle `error` query param from GitHub (denied authorization) and state mismatch; redirect to `/?auth_error=<reason>` in `app/api/auth/callback/route.ts`
-- [ ] T028 [US3] Update `AuthGate` — read `auth_error` query param on mount, display error message, clear param from URL in `components/auth/AuthGate.tsx`
-- [ ] T029 [US3] Verify T025–T026 tests pass
+- [X] T027 [US3] Update `GET /api/auth/callback` — handle `error` query param from GitHub (denied authorization) and state mismatch; redirect to `/?auth_error=<reason>` in `app/api/auth/callback/route.ts`
+- [X] T028 [US3] Update `AuthGate` — read `auth_error` query param on mount, display error message, clear param from URL in `components/auth/AuthGate.tsx`
+- [X] T029 [US3] Verify T025–T026 tests pass
 
 **Checkpoint**: All three user stories functional — full OAuth happy path and error path covered
 
@@ -109,13 +109,13 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T030 [P] Write E2E test for full sign-in flow (mock OAuth callback, verify username shown, verify analysis request succeeds) in `e2e/auth.spec.ts`
-- [ ] T031 [P] Write E2E test for sign-out flow in `e2e/auth.spec.ts`
-- [ ] T032 [P] Write E2E test for OAuth error path (auth_error param → error message shown) in `e2e/auth.spec.ts`
-- [ ] T033 Update `docs/DEVELOPMENT.md` — mark P1-F14 as ✅ Done in the implementation order table
-- [ ] T034 [P] Update `README.md` — document `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` env vars; remove `GITHUB_TOKEN` references
-- [ ] T035 [P] Create manual testing checklist at `specs/029-github-oauth/checklists/manual-testing.md`
-- [ ] T036 Run `npm test`, `npm run lint`, and `npm run build` — confirm all pass
+- [X] T030 [P] Write E2E test for full sign-in flow (mock OAuth callback, verify username shown, verify analysis request succeeds) in `e2e/auth.spec.ts`
+- [X] T031 [P] Write E2E test for sign-out flow in `e2e/auth.spec.ts`
+- [X] T032 [P] Write E2E test for OAuth error path (auth_error param → error message shown) in `e2e/auth.spec.ts`
+- [X] T033 Update `docs/DEVELOPMENT.md` — mark P1-F14 as ✅ Done in the implementation order table
+- [X] T034 [P] Update `README.md` — document `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` env vars; remove `GITHUB_TOKEN` references
+- [X] T035 [P] Create manual testing checklist at `specs/029-github-oauth/checklists/manual-testing.md`
+- [X] T036 Run `npm test`, `npm run lint`, and `npm run build` — confirm all pass
 
 ---
 

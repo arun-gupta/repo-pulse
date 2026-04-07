@@ -13,7 +13,7 @@ Live in action: [repopulse-arun-gupta.vercel.app](https://repopulse-arun-gupta.v
 
 ## Getting Started
 
-RepoPulse supports a server-side `GITHUB_TOKEN` or the browser PAT flow. For local development, you can optionally set `GITHUB_TOKEN` in `.env.local`.
+RepoPulse uses GitHub OAuth for authentication. Sign in with your GitHub account to analyze repositories — no personal access token needed.
 
 ```bash
 npm install
@@ -22,13 +22,14 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Optional local env:
+Required env vars (create a [GitHub OAuth App](https://github.com/settings/developers) with callback URL `http://localhost:3000/api/auth/callback`):
 
 ```bash
-GITHUB_TOKEN=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
 ```
 
-For recommended token type and permissions, use the `GITHUB_TOKEN` setup guidance in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#local).
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for full setup and Vercel deployment instructions.
 
 ## Product
 

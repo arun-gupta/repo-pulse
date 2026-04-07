@@ -76,7 +76,7 @@ This is the planned implementation order for Phase 1. It may differ from the fea
 | 11 | P1-F11 | Health Ratios | ✅ Done |
 | 12 | P1-F16 | Org-Level Repo Inventory | ✅ Done |
 | 13 | P1-F06 | Repo Comparison | ✅ Done |
-| 14 | P1-F14 | GitHub OAuth Authentication | — |
+| 14 | P1-F14 | GitHub OAuth Authentication | ✅ Done |
 | 15 | P1-F13 | Export | — |
 | 16 | P1-F12 | Missing Data & Accuracy | — |
 
