@@ -2,6 +2,7 @@ import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-re
 import { getActivityScore } from '@/lib/activity/score-config'
 import { getSustainabilityScore } from '@/lib/contributors/score-config'
 import { buildContributorsViewModels } from '@/lib/contributors/view-model'
+import { buildHealthRatioRows } from '@/lib/health-ratios/view-model'
 import { getResponsivenessScore } from '@/lib/responsiveness/score-config'
 
 export interface JsonExportResult {
@@ -37,6 +38,17 @@ function buildTimestamp(): string {
   return `${yyyy}-${mm}-${dd}-${HH}${MM}${ss}`
 }
 
+function computeHealthRatios(result: AnalysisResult) {
+  const rows = buildHealthRatioRows([result])
+  return rows.map((row) => ({
+    id: row.id,
+    category: row.category,
+    label: row.label,
+    value: row.cells[0]?.value ?? 'unavailable',
+    displayValue: row.cells[0]?.displayValue ?? '—',
+  }))
+}
+
 function computeContributors(result: AnalysisResult) {
   const section = buildContributorsViewModels([result])[0]
   if (!section) return undefined
@@ -55,6 +67,7 @@ export function buildJsonExport(response: AnalyzeResponse): JsonExportResult {
       ...result,
       scores: computeScores(result),
       contributors: computeContributors(result),
+      healthRatios: computeHealthRatios(result),
     })),
   }
   const json = JSON.stringify(enriched, null, 2)

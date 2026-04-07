@@ -82,6 +82,17 @@ describe('buildJsonExport', () => {
     expect(scores.responsiveness).toHaveProperty('value')
   })
 
+  it('includes computed health ratios for each repo', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ healthRatios: Array<{ id: string; category: string; label: string; displayValue: string }> }> }
+    const healthRatios = parsed.results[0].healthRatios
+    expect(healthRatios).toBeDefined()
+    expect(healthRatios.length).toBeGreaterThan(0)
+    expect(healthRatios.some((r) => r.id === 'fork-rate')).toBe(true)
+    expect(healthRatios.every((r) => r.category && r.label && r.displayValue !== undefined)).toBe(true)
+  })
+
   it('preserves "unavailable" string values verbatim', async () => {
     const result = buildJsonExport(MINIMAL_RESPONSE)
     const text = await result.blob.text()

@@ -2,6 +2,7 @@ import type { AnalysisResult, AnalyzeResponse, ResponsivenessMetrics } from '@/l
 import { getActivityScore } from '@/lib/activity/score-config'
 import { getSustainabilityScore } from '@/lib/contributors/score-config'
 import { buildContributorsViewModels } from '@/lib/contributors/view-model'
+import { buildHealthRatioRows } from '@/lib/health-ratios/view-model'
 import { formatHours, formatPercentage, getResponsivenessScore } from '@/lib/responsiveness/score-config'
 import { encodeRepos } from '@/lib/export/shareable-url'
 
@@ -57,11 +58,18 @@ function getResponsivenessMetrics(result: AnalysisResult): ResponsivenessMetrics
   )
 }
 
+const HEALTH_RATIO_CATEGORY_LABELS: Record<string, string> = {
+  ecosystem: 'Overview',
+  contributors: 'Contributors',
+  activity: 'Activity',
+}
+
 function renderRepo(result: AnalysisResult, appUrl?: string): string {
   const activity = getActivityScore(result)
   const sustainability = getSustainabilityScore(result)
   const responsiveness = getResponsivenessScore(result)
   const contributors = buildContributorsViewModels([result])[0]
+  const healthRatioRows = buildHealthRatioRows([result])
   const rm = getResponsivenessMetrics(result)
   const am = result.activityMetricsByWindow?.[90]
 
@@ -164,7 +172,26 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     '',
     `- **PR review depth**: ${fmt(rm.prReviewDepth)}`,
     `- **Issues closed without comment**: ${fmtPct(rm.issuesClosedWithoutCommentRatio)}`,
+    '',
+    '### Health Ratios',
+    '',
   ]
+
+  const ratiosByCategory = new Map<string, typeof healthRatioRows>()
+  for (const row of healthRatioRows) {
+    const key = row.category
+    if (!ratiosByCategory.has(key)) ratiosByCategory.set(key, [])
+    ratiosByCategory.get(key)!.push(row)
+  }
+  for (const [category, rows] of ratiosByCategory) {
+    const categoryLabel = HEALTH_RATIO_CATEGORY_LABELS[category] ?? category
+    lines.push(`#### ${categoryLabel}`, '')
+    for (const row of rows) {
+      const cell = row.cells[0]
+      lines.push(`- **${row.label}**: ${cell ? cell.displayValue : '—'}`)
+    }
+    lines.push('')
+  }
 
   if (result.missingFields.length > 0) {
     lines.push('', '### Missing Data', '')

@@ -119,6 +119,13 @@ describe('buildMarkdownReport', () => {
     expect(md).toContain('Engagement quality signals')
   })
 
+  it('includes a Health Ratios section with category sub-headings', () => {
+    const md = buildMarkdownReport(MINIMAL_RESPONSE)
+    expect(md).toContain('### Health Ratios')
+    expect(md).toContain('#### Overview')
+    expect(md).toContain('#### Activity')
+  })
+
   it('includes detailed repo metadata', () => {
     const md = buildMarkdownReport(MINIMAL_RESPONSE)
     expect(md).toContain('Forks')
