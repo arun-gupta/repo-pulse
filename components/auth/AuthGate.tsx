@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from './AuthContext'
@@ -60,7 +61,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b border-slate-200 px-6 py-3">
-        <span className="text-sm font-semibold text-slate-900">RepoPulse</span>
+        <Link href="/" aria-label="RepoPulse — return to home" className="text-sm font-semibold text-slate-900 hover:opacity-70 transition-opacity">RepoPulse</Link>
         <UserBadge />
       </header>
       <main className="flex-1">{children}</main>

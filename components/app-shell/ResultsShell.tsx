@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { resultTabs } from '@/lib/results-shell/tabs'
 import type { ResultTabId } from '@/specs/006-results-shell/contracts/results-shell-props'
@@ -50,7 +51,9 @@ export function ResultsShell({
       <header className="w-full bg-sky-900 text-white">
         <div className="mx-auto flex max-w-5xl items-start justify-between gap-4 px-4 py-5">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white">RepoPulse</h1>
+            <Link href="/" aria-label="RepoPulse — return to home" className="hover:opacity-80 transition-opacity">
+              <h1 className="text-2xl font-semibold tracking-tight text-white">RepoPulse</h1>
+            </Link>
             <p className="mt-1 text-sm text-sky-100 md:text-base">
               CHAOSS-aligned GitHub health analyzer for repository analysis and organization inventory browsing.
             </p>
