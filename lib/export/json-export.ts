@@ -1,5 +1,6 @@
 import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import { getActivityScore } from '@/lib/activity/score-config'
+import { buildComparisonSections } from '@/lib/comparison/view-model'
 import { getSustainabilityScore } from '@/lib/contributors/score-config'
 import { buildContributorsViewModels } from '@/lib/contributors/view-model'
 import { buildHealthRatioRows } from '@/lib/health-ratios/view-model'
@@ -60,6 +61,27 @@ function computeContributors(result: AnalysisResult) {
   }
 }
 
+function computeComparison(results: AnalysisResult[]) {
+  if (results.length < 2) return undefined
+  return buildComparisonSections(results).map((section) => ({
+    id: section.id,
+    label: section.label,
+    rows: section.rows.map((row) => ({
+      attributeId: row.attributeId,
+      label: row.label,
+      medianValue: row.medianValue,
+      medianDisplay: row.medianDisplay,
+      cells: row.cells.map((cell) => ({
+        repo: cell.repo,
+        rawValue: cell.rawValue,
+        displayValue: cell.displayValue,
+        deltaDisplay: cell.deltaDisplay,
+        status: cell.status,
+      })),
+    })),
+  }))
+}
+
 export function buildJsonExport(response: AnalyzeResponse): JsonExportResult {
   const enriched = {
     ...response,
@@ -69,6 +91,7 @@ export function buildJsonExport(response: AnalyzeResponse): JsonExportResult {
       contributors: computeContributors(result),
       healthRatios: computeHealthRatios(result),
     })),
+    comparison: computeComparison(response.results),
   }
   const json = JSON.stringify(enriched, null, 2)
   const blob = new Blob([json], { type: 'application/json' })

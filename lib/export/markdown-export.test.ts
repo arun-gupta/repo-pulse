@@ -155,6 +155,41 @@ describe('buildMarkdownReport', () => {
     expect(md).toContain('## vercel/next.js')
   })
 
+  it('omits a Comparison section for a single repo', () => {
+    const md = buildMarkdownReport(MINIMAL_RESPONSE)
+    expect(md).not.toContain('## Comparison')
+  })
+
+  it('includes a Comparison section when 2+ repos are analyzed', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [
+        { repo: 'facebook/react', ...RESULT_BASE },
+        { repo: 'vercel/next.js', ...RESULT_BASE, name: 'next.js' },
+      ],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).toContain('## Comparison')
+  })
+
+  it('comparison section includes per-attribute table rows with median', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [
+        { repo: 'facebook/react', ...RESULT_BASE },
+        { repo: 'vercel/next.js', ...RESULT_BASE, name: 'next.js', stars: 120000 },
+      ],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).toContain('Median')
+    expect(md).toContain('facebook/react (anchor)')
+    expect(md).toContain('vercel/next.js')
+    expect(md).toContain('Stars')
+    // non-anchor cells include delta display with % when values differ
+    expect(md).toContain('vs anchor')
+    expect(md).toContain('%')
+  })
+
   it('includes a failed repositories section when failures exist', () => {
     const response: AnalyzeResponse = {
       ...MINIMAL_RESPONSE,

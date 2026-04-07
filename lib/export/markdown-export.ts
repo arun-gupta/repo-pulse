@@ -1,5 +1,7 @@
 import type { AnalysisResult, AnalyzeResponse, ResponsivenessMetrics } from '@/lib/analyzer/analysis-result'
 import { getActivityScore } from '@/lib/activity/score-config'
+import { buildComparisonSections } from '@/lib/comparison/view-model'
+import { limitComparedResults } from '@/lib/comparison/view-model'
 import { getSustainabilityScore } from '@/lib/contributors/score-config'
 import { buildContributorsViewModels } from '@/lib/contributors/view-model'
 import { buildHealthRatioRows } from '@/lib/health-ratios/view-model'
@@ -203,6 +205,40 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
   return lines.join('\n')
 }
 
+function renderComparison(results: AnalysisResult[]): string {
+  const sections = buildComparisonSections(results)
+  if (sections.length === 0) return ''
+
+  const repos = limitComparedResults(results)
+  const anchorRepo = repos[0]?.repo ?? ''
+
+  const lines: string[] = ['## Comparison', '']
+
+  for (const section of sections) {
+    lines.push(`### ${section.label}`, '')
+
+    const headerCols = ['Metric', ...repos.map((r) => r.repo === anchorRepo ? `${r.repo} (anchor)` : r.repo), 'Median']
+    lines.push(`| ${headerCols.join(' | ')} |`)
+    lines.push(`| ${headerCols.map(() => '---').join(' | ')} |`)
+
+    for (const row of section.rows) {
+      const valueCols = repos.map((r) => {
+        const cell = row.cells.find((c) => c.repo === r.repo)
+        if (!cell) return '—'
+        if (cell.deltaDisplay && cell.deltaDisplay !== 'Same as anchor' && cell.repo !== anchorRepo) {
+          return `${cell.displayValue} (${cell.deltaDisplay})`
+        }
+        return cell.displayValue
+      })
+      lines.push(`| ${[row.label, ...valueCols, row.medianDisplay].join(' | ')} |`)
+    }
+
+    lines.push('')
+  }
+
+  return lines.join('\n')
+}
+
 export function buildMarkdownReport(response: AnalyzeResponse, analyzedRepos?: string[]): string {
   const timestamp = new Date().toISOString()
   const repoCount = response.results.length + response.failures.length
@@ -218,6 +254,7 @@ export function buildMarkdownReport(response: AnalyzeResponse, analyzedRepos?: s
   ]
 
   const sections = response.results.map((result) => renderRepo(result, shareableUrl))
+  const comparisonSection = response.results.length >= 2 ? renderComparison(response.results) : ''
 
   const failureLines: string[] = []
   if (response.failures.length > 0) {
@@ -230,6 +267,9 @@ export function buildMarkdownReport(response: AnalyzeResponse, analyzedRepos?: s
   const parts = [...header]
   for (const section of sections) {
     parts.push('---', '', section, '')
+  }
+  if (comparisonSection) {
+    parts.push('---', '', comparisonSection)
   }
   if (failureLines.length > 0) {
     parts.push('---', '', ...failureLines)

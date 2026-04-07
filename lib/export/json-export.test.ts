@@ -99,6 +99,37 @@ describe('buildJsonExport', () => {
     expect(text).toContain('"unavailable"')
   })
 
+  it('omits comparison key for a single repo', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { comparison?: unknown }
+    expect(parsed.comparison).toBeUndefined()
+  })
+
+  it('includes comparison data when 2+ repos are analyzed', async () => {
+    const multiResponse: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [
+        { ...MINIMAL_RESPONSE.results[0] },
+        { ...MINIMAL_RESPONSE.results[0], repo: 'vercel/next.js', name: 'next.js' },
+      ],
+    }
+    const result = buildJsonExport(multiResponse)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { comparison: Array<{ id: string; label: string; rows: Array<{ attributeId: string; label: string; medianDisplay: string; cells: Array<{ repo: string; displayValue: string; status: string }> }> }> }
+    expect(parsed.comparison).toBeDefined()
+    expect(parsed.comparison.length).toBeGreaterThan(0)
+    const overviewSection = parsed.comparison.find((s) => s.id === 'overview')
+    expect(overviewSection).toBeDefined()
+    const starsRow = overviewSection!.rows.find((r) => r.attributeId === 'stars')
+    expect(starsRow).toBeDefined()
+    expect(starsRow!.medianDisplay).toBeDefined()
+    expect(starsRow!.cells).toHaveLength(2)
+    expect(starsRow!.cells[0].repo).toBe('facebook/react')
+    expect(starsRow!.cells[0].status).toBe('neutral')
+    expect(starsRow!.cells[1].repo).toBe('vercel/next.js')
+  })
+
   it('includes all repos when multiple repos are present', async () => {
     const multiResponse: AnalyzeResponse = {
       ...MINIMAL_RESPONSE,
