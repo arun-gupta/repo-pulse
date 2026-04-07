@@ -16,9 +16,9 @@
 
 **Purpose**: Create the `ExportControls` component shell and wire it into `RepoInputClient`. This is a blocking prerequisite — all three user stories add to this same component.
 
-- [ ] T001 Create `components/export/ExportControls.tsx` — shell component rendering three disabled controls ("Download JSON", "Download Markdown", "Copy link") when `analysisResponse` is null, otherwise enabled; accepts `ExportControlsProps` from `specs/030-export/contracts/export-props.ts`
-- [ ] T002 Write unit tests for `ExportControls` shell (controls disabled when no results, enabled when results present) in `components/export/ExportControls.test.tsx`
-- [ ] T003 Wire `ExportControls` into `RepoInputClient` — pass `analysisResponse` and `analyzedRepos` (the repos array from last analysis) as props; render `ExportControls` above the `ResultsShell` when `analysisResponse` is non-null in `components/repo-input/RepoInputClient.tsx`
+- [x] T001 Create `components/export/ExportControls.tsx` — shell component rendering three disabled controls ("Download JSON", "Download Markdown", "Copy link") when `analysisResponse` is null, otherwise enabled; accepts `ExportControlsProps` from `specs/030-export/contracts/export-props.ts`
+- [x] T002 Write unit tests for `ExportControls` shell (controls disabled when no results, enabled when results present) in `components/export/ExportControls.test.tsx`
+- [x] T003 Wire `ExportControls` into `RepoInputClient` — pass `analysisResponse` and `analyzedRepos` (the repos array from last analysis) as props; render `ExportControls` above the `ResultsShell` when `analysisResponse` is non-null in `components/repo-input/RepoInputClient.tsx`
 
 **Checkpoint**: `ExportControls` renders in the results view with all three controls; all are disabled until analysis completes.
 
@@ -32,14 +32,14 @@
 
 ### Tests for User Story 1 ⚠️ Write first — must fail before implementation
 
-- [ ] T004 [P] [US1] Write failing unit tests for `json-export` (blob MIME type is `application/json`, filename matches `repopulse-YYYY-MM-DD-HHmmss.json` pattern, blob content round-trips to the original `AnalyzeResponse`, `"unavailable"` values preserved) in `lib/export/json-export.test.ts`
-- [ ] T005 [P] [US1] Write failing unit tests for `ExportControls` Download JSON button (onClick triggers download, disabled when no results) in `components/export/ExportControls.test.tsx`
+- [x] T004 [P] [US1] Write failing unit tests for `json-export` (blob MIME type is `application/json`, filename matches `repopulse-YYYY-MM-DD-HHmmss.json` pattern, blob content round-trips to the original `AnalyzeResponse`, `"unavailable"` values preserved) in `lib/export/json-export.test.ts`
+- [x] T005 [P] [US1] Write failing unit tests for `ExportControls` Download JSON button (onClick triggers download, disabled when no results) in `components/export/ExportControls.test.tsx`
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Implement `lib/export/json-export.ts` — `buildJsonExport(response: AnalyzeResponse): JsonExportResult` returns a `Blob` and timestamped filename; `triggerDownload(result: JsonExportResult): void` creates object URL, clicks anchor, revokes URL
-- [ ] T007 [US1] Wire Download JSON button in `ExportControls` — onClick calls `buildJsonExport(analysisResponse)` then `triggerDownload()` in `components/export/ExportControls.tsx`
-- [ ] T008 [US1] Verify T004–T005 tests pass
+- [x] T006 [US1] Implement `lib/export/json-export.ts` — `buildJsonExport(response: AnalyzeResponse): JsonExportResult` returns a `Blob` and timestamped filename; `triggerDownload(result: JsonExportResult): void` creates object URL, clicks anchor, revokes URL
+- [x] T007 [US1] Wire Download JSON button in `ExportControls` — onClick calls `buildJsonExport(analysisResponse)` then `triggerDownload()` in `components/export/ExportControls.tsx`
+- [x] T008 [US1] Verify T004–T005 tests pass
 
 **Checkpoint**: User can download a valid JSON file after analysis.
 
@@ -53,14 +53,14 @@
 
 ### Tests for User Story 2 ⚠️ Write first — must fail before implementation
 
-- [ ] T009 [P] [US2] Write failing unit tests for `markdown-export` (top-level header with timestamp, one `##` section per repo, Activity/Sustainability/Responsiveness scores present, `"unavailable"` values render as `N/A`, filename matches pattern, multiple repos produce multiple sections) in `lib/export/markdown-export.test.ts`
-- [ ] T010 [P] [US2] Write failing unit tests for `ExportControls` Download Markdown button (onClick triggers download, disabled when no results) in `components/export/ExportControls.test.tsx`
+- [x] T009 [P] [US2] Write failing unit tests for `markdown-export` (top-level header with timestamp, one `##` section per repo, Activity/Sustainability/Responsiveness scores present, `"unavailable"` values render as `N/A`, filename matches pattern, multiple repos produce multiple sections) in `lib/export/markdown-export.test.ts`
+- [x] T010 [P] [US2] Write failing unit tests for `ExportControls` Download Markdown button (onClick triggers download, disabled when no results) in `components/export/ExportControls.test.tsx`
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] Implement `lib/export/markdown-export.ts` — `buildMarkdownExport(response: AnalyzeResponse): MarkdownExportResult`; uses `getActivityScore`, `getSustainabilityScore`, `getResponsivenessScore` from existing score-config modules; renders `"unavailable"` as `N/A`; returns Blob (`text/markdown`) and timestamped filename in `lib/export/markdown-export.ts`
-- [ ] T012 [US2] Wire Download Markdown button in `ExportControls` — onClick calls `buildMarkdownExport(analysisResponse)` then `triggerDownload()` in `components/export/ExportControls.tsx`
-- [ ] T013 [US2] Verify T009–T010 tests pass
+- [x] T011 [US2] Implement `lib/export/markdown-export.ts` — `buildMarkdownExport(response: AnalyzeResponse): MarkdownExportResult`; uses `getActivityScore`, `getSustainabilityScore`, `getResponsivenessScore` from existing score-config modules; renders `"unavailable"` as `N/A`; returns Blob (`text/markdown`) and timestamped filename in `lib/export/markdown-export.ts`
+- [x] T012 [US2] Wire Download Markdown button in `ExportControls` — onClick calls `buildMarkdownExport(analysisResponse)` then `triggerDownload()` in `components/export/ExportControls.tsx`
+- [x] T013 [US2] Verify T009–T010 tests pass
 
 **Checkpoint**: User can download a readable CHAOSS-aligned Markdown report after analysis.
 
@@ -74,16 +74,16 @@
 
 ### Tests for User Story 3 ⚠️ Write first — must fail before implementation
 
-- [ ] T014 [P] [US3] Write failing unit tests for `shareable-url` (`encodeRepos(repos)` returns URL with `?repos=` param, no token; `decodeRepos(url)` returns repos array; round-trip preserves slugs; empty list encodes/decodes correctly) in `lib/export/shareable-url.test.ts`
-- [ ] T015 [P] [US3] Write failing unit tests for `ExportControls` Copy Link button (calls clipboard write on click, shows fallback input when clipboard unavailable) in `components/export/ExportControls.test.tsx`
-- [ ] T016 [P] [US3] Write failing unit tests for `RepoInputClient` reading `?repos=` query param on mount (pre-populates textarea with decoded repos) in `components/repo-input/RepoInputClient.test.tsx`
+- [x] T014 [P] [US3] Write failing unit tests for `shareable-url` (`encodeRepos(repos)` returns URL with `?repos=` param, no token; `decodeRepos(url)` returns repos array; round-trip preserves slugs; empty list encodes/decodes correctly) in `lib/export/shareable-url.test.ts`
+- [x] T015 [P] [US3] Write failing unit tests for `ExportControls` Copy Link button (calls clipboard write on click, shows fallback input when clipboard unavailable) in `components/export/ExportControls.test.tsx`
+- [x] T016 [P] [US3] Write failing unit tests for `RepoInputClient` reading `?repos=` query param on mount (pre-populates textarea with decoded repos) in `components/repo-input/RepoInputClient.test.tsx`
 
 ### Implementation for User Story 3
 
-- [ ] T017 [US3] Implement `lib/export/shareable-url.ts` — `encodeRepos(repos: string[]): string` builds URL with `?repos=` param (comma-separated, no token); `decodeRepos(search: string): string[]` parses repos from `URLSearchParams` in `lib/export/shareable-url.ts`
-- [ ] T018 [US3] Implement Copy Link button in `ExportControls` — `navigator.clipboard.writeText(url)` on click; on failure render a read-only `<input>` with the URL as fallback (FR-009); "Copied!" confirmation shown on success in `components/export/ExportControls.tsx`
-- [ ] T019 [US3] Update `RepoInputClient` to read `?repos=` query param on mount using `useSearchParams` and pre-populate the repo textarea (wrap in `Suspense` if not already present) in `components/repo-input/RepoInputClient.tsx`
-- [ ] T020 [US3] Verify T014–T016 tests pass
+- [x] T017 [US3] Implement `lib/export/shareable-url.ts` — `encodeRepos(repos: string[]): string` builds URL with `?repos=` param (comma-separated, no token); `decodeRepos(search: string): string[]` parses repos from `URLSearchParams` in `lib/export/shareable-url.ts`
+- [x] T018 [US3] Implement Copy Link button in `ExportControls` — `navigator.clipboard.writeText(url)` on click; on failure render a read-only `<input>` with the URL as fallback (FR-009); "Copied!" confirmation shown on success in `components/export/ExportControls.tsx`
+- [x] T019 [US3] Update `RepoInputClient` to read `?repos=` query param on mount using `useSearchParams` and pre-populate the repo textarea (wrap in `Suspense` if not already present) in `components/repo-input/RepoInputClient.tsx`
+- [x] T020 [US3] Verify T014–T016 tests pass
 
 **Checkpoint**: All three user stories functional — JSON download, Markdown download, and shareable URL all work.
 
@@ -91,10 +91,10 @@
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T021 [P] Write E2E tests for all three export flows (JSON download, Markdown download, copy link, URL round-trip) in `e2e/export.spec.ts`
-- [ ] T022 [P] Update `docs/DEVELOPMENT.md` — mark P1-F13 as ✅ Done in the implementation order table
-- [ ] T023 [P] Create manual testing checklist at `specs/030-export/checklists/manual-testing.md`
-- [ ] T024 Run `npm test`, `npm run lint`, and `npm run build` — confirm all pass
+- [x] T021 [P] Write E2E tests for all three export flows (JSON download, Markdown download, copy link, URL round-trip) in `e2e/export.spec.ts`
+- [x] T022 [P] Update `docs/DEVELOPMENT.md` — mark P1-F13 as ✅ Done in the implementation order table
+- [x] T023 [P] Create manual testing checklist at `specs/030-export/checklists/manual-testing.md`
+- [x] T024 Run `npm test`, `npm run lint`, and `npm run build` — confirm all pass
 
 ---
 
