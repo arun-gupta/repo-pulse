@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import { HelpLabel } from '@/components/shared/HelpLabel'
+import { MetricValue } from '@/components/shared/MetricValue'
 import { SUSTAINABILITY_THRESHOLDS } from '@/lib/contributors/score-config'
 import type { ContributorsSectionViewModel } from '@/lib/contributors/view-model'
 import { ContributionBarChart } from './ContributionBarChart'
@@ -81,7 +82,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
               <HelpLabel label={metric.label} helpText={metric.hoverText} />
             </dt>
-            <dd className="mt-1 text-base font-semibold text-slate-900">{metric.value}</dd>
+            <dd className="mt-1 text-base"><MetricValue value={metric.value} /></dd>
             {metric.supportingText ? <p className="mt-1 text-xs text-slate-500">{metric.supportingText}</p> : null}
           </div>
         ))}
@@ -108,7 +109,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
               <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 <HelpLabel label={metric.label} helpText={metric.hoverText} />
               </dt>
-              <dd className="mt-1 text-base font-semibold text-slate-900">{metric.value}</dd>
+              <dd className="mt-1 text-base"><MetricValue value={metric.value} /></dd>
             </div>
           ))}
         </dl>
