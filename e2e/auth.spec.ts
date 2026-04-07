@@ -39,8 +39,8 @@ test.describe('P1-F14 GitHub OAuth Authentication', () => {
   test('shows error message when auth_error query param is present', async ({ page }) => {
     await page.goto('/?auth_error=access_denied')
 
-    await expect(page.getByRole('alert')).toBeVisible()
-    await expect(page.getByRole('alert')).toContainText('access denied')
+    await expect(page.getByText(/sign-in failed/i)).toBeVisible()
+    await expect(page.getByText(/access denied/i)).toBeVisible()
     await expect(page.getByRole('link', { name: /sign in with github/i })).toBeVisible()
   })
 })

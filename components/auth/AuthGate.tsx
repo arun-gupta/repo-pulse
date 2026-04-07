@@ -13,6 +13,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const authError = searchParams.get('auth_error')
 
   useEffect(() => {
+    // Remove stale PAT key left by the pre-OAuth token-storage implementation
+    localStorage.removeItem('forkprint_github_token')
+
     // Read token and username from URL fragment after OAuth callback
     if (typeof window === 'undefined') return
     const hash = window.location.hash
