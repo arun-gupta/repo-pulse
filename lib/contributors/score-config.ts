@@ -1,5 +1,6 @@
 import type { AnalysisResult, Unavailable } from '@/lib/analyzer/analysis-result'
 import type { ScoreTone, ScoreValue } from '@/specs/008-metric-cards/contracts/metric-card-props'
+import { getCalibrationForStars } from '@/lib/scoring/config-loader'
 
 export interface SustainabilityScoreDefinition {
   value: ScoreValue
@@ -17,26 +18,23 @@ export interface SustainabilityThreshold {
   description: string
 }
 
-export const SUSTAINABILITY_THRESHOLDS: SustainabilityThreshold[] = [
-  {
-    maxTopContributorShare: 0.5,
-    value: 'High',
-    tone: 'success',
-    description: 'Contributor activity is broadly distributed across the most active authors.',
-  },
-  {
-    maxTopContributorShare: 0.75,
-    value: 'Medium',
-    tone: 'warning',
-    description: 'Contributor activity is somewhat concentrated and may indicate moderate resilience risk.',
-  },
-  {
-    maxTopContributorShare: Number.POSITIVE_INFINITY,
-    value: 'Low',
-    tone: 'danger',
-    description: 'Contributor activity is highly concentrated, suggesting low resilience if key authors step away.',
-  },
+const SUSTAINABILITY_BAND_DEFINITIONS = [
+  { tone: 'success' as const, value: 'High' as const, description: 'Contributor activity is broadly distributed across the most active authors.' },
+  { tone: 'warning' as const, value: 'Medium' as const, description: 'Contributor activity is somewhat concentrated and may indicate moderate resilience risk.' },
+  { tone: 'danger' as const, value: 'Low' as const, description: 'Contributor activity is highly concentrated, suggesting low resilience if key authors step away.' },
 ]
+
+function getSustainabilityThresholds(stars: number | 'unavailable'): SustainabilityThreshold[] {
+  const cal = getCalibrationForStars(stars)
+  return [
+    { maxTopContributorShare: cal.topContributorShare.p25, ...SUSTAINABILITY_BAND_DEFINITIONS[0]! },
+    { maxTopContributorShare: cal.topContributorShare.p75, ...SUSTAINABILITY_BAND_DEFINITIONS[1]! },
+    { maxTopContributorShare: Number.POSITIVE_INFINITY,    ...SUSTAINABILITY_BAND_DEFINITIONS[2]! },
+  ]
+}
+
+// Exported for use in UI help surfaces — uses established bracket as display representative.
+export const SUSTAINABILITY_THRESHOLDS: SustainabilityThreshold[] = getSustainabilityThresholds(1000)
 
 const INSUFFICIENT_SCORE: SustainabilityScoreDefinition = {
   value: 'Insufficient verified public data',
@@ -48,11 +46,13 @@ const INSUFFICIENT_SCORE: SustainabilityScoreDefinition = {
 }
 
 export function getSustainabilityScore(result: AnalysisResult): SustainabilityScoreDefinition {
-  return getSustainabilityScoreFromCommitCounts(result.commitCountsByAuthor)
+  const thresholds = getSustainabilityThresholds(result.stars)
+  return getSustainabilityScoreFromCommitCounts(result.commitCountsByAuthor, thresholds)
 }
 
 export function getSustainabilityScoreFromCommitCounts(
   commitCountsByAuthor: Record<string, number> | Unavailable,
+  thresholds: SustainabilityThreshold[] = SUSTAINABILITY_THRESHOLDS,
 ): SustainabilityScoreDefinition {
   const concentration = getContributionConcentrationDetails(commitCountsByAuthor)
 
@@ -60,7 +60,7 @@ export function getSustainabilityScoreFromCommitCounts(
     return INSUFFICIENT_SCORE
   }
 
-  const threshold = SUSTAINABILITY_THRESHOLDS.find((candidate) => concentration.share <= candidate.maxTopContributorShare)
+  const threshold = thresholds.find((candidate) => concentration.share <= candidate.maxTopContributorShare)
   if (!threshold) {
     return INSUFFICIENT_SCORE
   }
