@@ -1,5 +1,6 @@
 import { ACTIVITY_WINDOW_DAYS, type ActivityWindowDays, type AnalysisResult, type ResponsivenessMetrics, type Unavailable } from '@/lib/analyzer/analysis-result'
 import type { ScoreTone, ScoreValue } from '@/specs/008-metric-cards/contracts/metric-card-props'
+import { type BracketCalibration, getCalibrationForStars } from '@/lib/scoring/config-loader'
 
 export interface ResponsivenessScoreDefinition {
   value: ScoreValue
@@ -134,12 +135,13 @@ export function getResponsivenessScore(result: AnalysisResult, windowDays: Activ
     }
   }
 
+  const cal = getCalibrationForStars(result.stars)
   const weightedScore =
-    evaluateResponseTime(metrics) * 0.3 +
-    evaluateResolution(metrics) * 0.25 +
-    evaluateMaintainerSignals(metrics) * 0.15 +
-    evaluateBacklogHealth(metrics) * 0.15 +
-    evaluateEngagementQuality(metrics) * 0.15
+    evaluateResponseTime(metrics, cal) * 0.3 +
+    evaluateResolution(metrics, cal) * 0.25 +
+    evaluateMaintainerSignals(metrics, cal) * 0.15 +
+    evaluateBacklogHealth(metrics, cal) * 0.15 +
+    evaluateEngagementQuality(metrics, cal) * 0.15
 
   const band = RESPONSIVENESS_SCORE_BANDS.find((candidate) => weightedScore >= candidate.minScore) ?? RESPONSIVENESS_SCORE_BANDS.at(-1)!
 
@@ -192,35 +194,35 @@ function getMissingResponsivenessInputs(metrics?: ResponsivenessMetrics) {
   return missing
 }
 
-function evaluateResponseTime(metrics: ResponsivenessMetrics) {
-  const issueScore = scoreDurationPair(metrics.issueFirstResponseMedianHours, metrics.issueFirstResponseP90Hours, 24, 168)
-  const prScore = scoreDurationPair(metrics.prFirstReviewMedianHours, metrics.prFirstReviewP90Hours, 48, 240)
+function evaluateResponseTime(metrics: ResponsivenessMetrics, cal: BracketCalibration) {
+  const issueScore = scoreDurationPair(metrics.issueFirstResponseMedianHours, metrics.issueFirstResponseP90Hours, cal.issueFirstResponseMedianHours.p25, cal.issueFirstResponseMedianHours.p75)
+  const prScore = scoreDurationPair(metrics.prFirstReviewMedianHours, metrics.prFirstReviewP90Hours, cal.prFirstReviewMedianHours.p25, cal.prFirstReviewMedianHours.p75)
   return (issueScore + prScore) / 2
 }
 
-function evaluateResolution(metrics: ResponsivenessMetrics) {
-  const issueResolutionScore = scoreDurationPair(metrics.issueResolutionMedianHours, metrics.issueResolutionP90Hours, 168, 720)
-  const prMergeScore = scoreDurationPair(metrics.prMergeMedianHours, metrics.prMergeP90Hours, 168, 720)
-  const flowScore = scoreRatio(metrics.issueResolutionRate, 0.9, 0.65)
+function evaluateResolution(metrics: ResponsivenessMetrics, cal: BracketCalibration) {
+  const issueResolutionScore = scoreDurationPair(metrics.issueResolutionMedianHours, metrics.issueResolutionP90Hours, cal.issueResolutionMedianHours.p25, cal.issueResolutionMedianHours.p75)
+  const prMergeScore = scoreDurationPair(metrics.prMergeMedianHours, metrics.prMergeP90Hours, cal.prMergeMedianHours.p25, cal.prMergeMedianHours.p75)
+  const flowScore = scoreRatio(metrics.issueResolutionRate, cal.issueResolutionRate.p75, cal.issueResolutionRate.p25)
   return (issueResolutionScore + prMergeScore + flowScore) / 3
 }
 
-function evaluateMaintainerSignals(metrics: ResponsivenessMetrics) {
-  const responseCoverage = scoreRatio(metrics.contributorResponseRate, 0.8, 0.5)
-  const humanBias = scoreRatio(metrics.humanResponseRatio, 0.7, 0.4)
-  const botPenalty = inverseScoreRatio(metrics.botResponseRatio, 0.25, 0.5)
+function evaluateMaintainerSignals(metrics: ResponsivenessMetrics, cal: BracketCalibration) {
+  const responseCoverage = scoreRatio(metrics.contributorResponseRate, cal.contributorResponseRate.p75, cal.contributorResponseRate.p25)
+  const humanBias = scoreRatio(metrics.humanResponseRatio, cal.humanResponseRatio.p75, cal.humanResponseRatio.p25)
+  const botPenalty = inverseScoreRatio(metrics.botResponseRatio, cal.botResponseRatio.p25, cal.botResponseRatio.p75)
   return (responseCoverage + humanBias + botPenalty) / 3
 }
 
-function evaluateBacklogHealth(metrics: ResponsivenessMetrics) {
-  const staleIssues = inverseScoreRatio(metrics.staleIssueRatio, 0.2, 0.4)
-  const stalePrs = inverseScoreRatio(metrics.stalePrRatio, 0.15, 0.3)
+function evaluateBacklogHealth(metrics: ResponsivenessMetrics, cal: BracketCalibration) {
+  const staleIssues = inverseScoreRatio(metrics.staleIssueRatio, cal.staleIssueRatio.p25, cal.staleIssueRatio.p75)
+  const stalePrs = inverseScoreRatio(metrics.stalePrRatio, cal.stalePrRatio.p25, cal.stalePrRatio.p75)
   return (staleIssues + stalePrs) / 2
 }
 
-function evaluateEngagementQuality(metrics: ResponsivenessMetrics) {
-  const reviewDepth = scoreRatio(metrics.prReviewDepth, 1.5, 0.75)
-  const issuesClosedSilently = inverseScoreRatio(metrics.issuesClosedWithoutCommentRatio, 0.15, 0.35)
+function evaluateEngagementQuality(metrics: ResponsivenessMetrics, cal: BracketCalibration) {
+  const reviewDepth = scoreRatio(metrics.prReviewDepth, cal.prReviewDepth.p75, cal.prReviewDepth.p25)
+  const issuesClosedSilently = inverseScoreRatio(metrics.issuesClosedWithoutCommentRatio, cal.issuesClosedWithoutCommentRatio.p25, cal.issuesClosedWithoutCommentRatio.p75)
   return (reviewDepth + issuesClosedSilently) / 2
 }
 

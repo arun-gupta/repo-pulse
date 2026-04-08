@@ -1,5 +1,6 @@
 import type { ActivityWindowDays, AnalysisResult, Unavailable } from '@/lib/analyzer/analysis-result'
 import type { ScoreTone, ScoreValue } from '@/specs/008-metric-cards/contracts/metric-card-props'
+import { type BracketCalibration, getCalibrationForStars } from '@/lib/scoring/config-loader'
 
 export interface ActivityScoreDefinition {
   value: ScoreValue
@@ -139,10 +140,11 @@ export function getActivityScore(result: AnalysisResult, windowDays: ActivityWin
     }
   }
 
+  const cal = getCalibrationForStars(result.stars)
   const weightedScore =
-    evaluatePrFlow(metrics.prsMerged, metrics.prsOpened) * 0.25 +
-    evaluateIssueFlow(metrics.issuesClosed, metrics.issuesOpened, metrics.staleIssueRatio) * 0.2 +
-    evaluateCompletionSpeed(metrics.medianTimeToMergeHours, metrics.medianTimeToCloseHours) * 0.15 +
+    evaluatePrFlow(metrics.prsMerged, metrics.prsOpened, cal) * 0.25 +
+    evaluateIssueFlow(metrics.issuesClosed, metrics.issuesOpened, metrics.staleIssueRatio, cal) * 0.2 +
+    evaluateCompletionSpeed(metrics.medianTimeToMergeHours, metrics.medianTimeToCloseHours, cal) * 0.15 +
     evaluateSustainedActivity(metrics.commits, windowDays) * 0.25 +
     evaluateReleaseCadence(metrics.releases, windowDays) * 0.15
 
@@ -199,26 +201,26 @@ function getMissingActivityScoreInputs(result: AnalysisResult, windowDays: Activ
   return missing
 }
 
-function evaluatePrFlow(merged: number | Unavailable, opened: number | Unavailable) {
+function evaluatePrFlow(merged: number | Unavailable, opened: number | Unavailable, cal: BracketCalibration) {
   const rate = ratio(merged, opened)
   if (rate === 'unavailable') return 0
-  if (rate >= 0.6) return 100
-  if (rate >= 0.35) return 70
+  if (rate >= cal.prMergeRate.p75) return 100
+  if (rate >= cal.prMergeRate.p25) return 70
   return 40
 }
 
-function evaluateIssueFlow(closed: number | Unavailable, opened: number | Unavailable, staleIssueRatio: number | Unavailable) {
+function evaluateIssueFlow(closed: number | Unavailable, opened: number | Unavailable, staleIssueRatio: number | Unavailable, cal: BracketCalibration) {
   const closureRate = ratio(closed, opened)
   if (closureRate === 'unavailable' || staleIssueRatio === 'unavailable') return 0
-  if (closureRate >= 0.8 && staleIssueRatio <= 0.25) return 100
-  if (closureRate >= 0.5 && staleIssueRatio <= 0.5) return 70
+  if (closureRate >= cal.issueClosureRate.p75 && staleIssueRatio <= cal.staleIssueRatio.p50) return 100
+  if (closureRate >= cal.issueClosureRate.p25 && staleIssueRatio <= cal.staleIssueRatio.p75) return 70
   return 40
 }
 
-function evaluateCompletionSpeed(medianMergeHours: number | Unavailable, medianCloseHours: number | Unavailable) {
+function evaluateCompletionSpeed(medianMergeHours: number | Unavailable, medianCloseHours: number | Unavailable, cal: BracketCalibration) {
   if (medianMergeHours === 'unavailable' || medianCloseHours === 'unavailable') return 0
-  if (medianMergeHours <= 168 && medianCloseHours <= 168) return 100
-  if (medianMergeHours <= 720 && medianCloseHours <= 720) return 70
+  if (medianMergeHours <= cal.medianTimeToMergeHours.p75 && medianCloseHours <= cal.medianTimeToCloseHours.p75) return 100
+  if (medianMergeHours <= cal.medianTimeToMergeHours.p90 && medianCloseHours <= cal.medianTimeToCloseHours.p90) return 70
   return 40
 }
 
