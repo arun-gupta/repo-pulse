@@ -44,7 +44,7 @@ function nextToken(): string {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const BATCH_SIZE = 5             // repos per GraphQL alias query
+const BATCH_SIZE = 3             // repos per GraphQL alias query (kept at 3 to avoid RESOURCE_LIMITS_EXCEEDED)
 const PR_WINDOW_DAYS = 90
 const ISSUE_WINDOW_DAYS = 90
 const STALE_DAYS = 30
@@ -306,6 +306,30 @@ function percentiles(values: number[]): PercentileSet {
   }
 }
 
+async function fetchWithRetry(url: string, init: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, init)
+      if (res.status >= 500 && attempt < maxRetries) {
+        const wait = 10 * (attempt + 1)
+        console.log(`    ${res.status} from ${url.split('?')[0]}. Retrying in ${wait}s...`)
+        await sleep(wait * 1000)
+        continue
+      }
+      return res
+    } catch (err) {
+      if (attempt < maxRetries) {
+        const wait = 5 * (attempt + 1)
+        console.log(`    Network error (attempt ${attempt + 1}/${maxRetries}). Retrying in ${wait}s...`)
+        await sleep(wait * 1000)
+        continue
+      }
+      throw err
+    }
+  }
+  throw new Error('Unreachable')
+}
+
 function median(values: number[]): number | null {
   if (values.length === 0) return null
   const sorted = [...values].sort((a, b) => a - b)
@@ -354,9 +378,8 @@ async function fetchSearchPage(
   token: string,
 ): Promise<SearchRepoItem[]> {
   const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=${sort}&per_page=100&page=${page}`
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-  })
+  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+  const res = await fetchWithRetry(url, { headers })
 
   if (!res.ok) {
     if (res.status === 403 || res.status === 429) {
@@ -482,7 +505,7 @@ function buildBatchQuery(repos: string[]): string {
 }
 
 async function runGraphQL(query: string, token: string): Promise<Record<string, GQLRepoData | null>> {
-  const res = await fetch('https://api.github.com/graphql', {
+  const res = await fetchWithRetry('https://api.github.com/graphql', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -514,10 +537,9 @@ async function runGraphQL(query: string, token: string): Promise<Record<string, 
 
 async function fetchTopContributorShare(fullName: string, token: string): Promise<number | null> {
   const url = `https://api.github.com/repos/${fullName}/stats/contributors`
+  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
   for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-    })
+    const res = await fetchWithRetry(url, { headers })
 
     if (res.status === 202) {
       // GitHub is computing stats — wait and retry
@@ -560,10 +582,9 @@ async function fetchStalePrCount(fullName: string, token: string): Promise<numbe
   const q = `is:pr is:open repo:${fullName} updated:<${cutoffDate}`
   const url = `https://api.github.com/search/issues?q=${encodeURIComponent(q)}&per_page=1`
 
+  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
   for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
-    })
+    const res = await fetchWithRetry(url, { headers })
 
     if (res.status === 403 || res.status === 429) {
       const wait = Number(res.headers.get('Retry-After') ?? '30')
@@ -594,11 +615,14 @@ function computeMetrics(
   const forkRate = stars > 0 ? forks / stars : null
   const watcherRate = stars > 0 ? watchers / stars : null
 
-  // Filter PRs/issues to the activity window
-  const recentPRs = data.mergedPRs.nodes.filter(
+  // Filter PRs/issues to the activity window (guard against null nodes from RESOURCE_LIMITS_EXCEEDED)
+  const prNodes = (data.mergedPRs?.nodes ?? []).filter((n): n is GQLPRNode => n !== null)
+  const issueNodes = (data.closedIssues?.nodes ?? []).filter((n): n is GQLIssueNode => n !== null)
+
+  const recentPRs = prNodes.filter(
     (pr) => pr.mergedAt && pr.mergedAt >= PR_WINDOW,
   )
-  const recentIssues = data.closedIssues.nodes.filter(
+  const recentIssues = issueNodes.filter(
     (issue) => issue.closedAt && issue.closedAt >= ISSUE_WINDOW,
   )
 
@@ -637,7 +661,7 @@ function computeMetrics(
   // Issue first response: hours from issue open to first comment
   const issueFirstResponseTimes = recentIssues
     .map((issue) => {
-      const firstComment = issue.timelineItems.nodes[0]?.createdAt
+      const firstComment = issue.timelineItems?.nodes?.[0]?.createdAt
       if (!firstComment) return null
       const h = hoursBetween(issue.createdAt, firstComment)
       return h >= 0 ? h : null
@@ -649,7 +673,7 @@ function computeMetrics(
   // PR first review: hours from PR open to first review/comment
   const prFirstReviewTimes = recentPRs
     .map((pr) => {
-      const firstReview = pr.timelineItems.nodes[0]?.createdAt
+      const firstReview = pr.timelineItems?.nodes?.[0]?.createdAt
       if (!firstReview) return null
       const h = hoursBetween(pr.createdAt, firstReview)
       return h >= 0 ? h : null
@@ -661,13 +685,13 @@ function computeMetrics(
   // PR review depth: average reviews per merged PR
   const prReviewDepth =
     recentPRs.length > 0
-      ? recentPRs.reduce((s, pr) => s + pr.reviews.totalCount, 0) / recentPRs.length
+      ? recentPRs.reduce((s, pr) => s + (pr.reviews?.totalCount ?? 0), 0) / recentPRs.length
       : null
 
   // Issues closed without any comment
   const issuesClosedWithoutCommentRatio =
     recentIssues.length > 0
-      ? recentIssues.filter((i) => i.comments.totalCount === 0).length / recentIssues.length
+      ? recentIssues.filter((i) => (i.comments?.totalCount ?? 0) === 0).length / recentIssues.length
       : null
 
   // Stale PR ratio: open PRs not updated in STALE_DAYS / total open PRs
@@ -679,10 +703,10 @@ function computeMetrics(
   // Bot detection on closed issues — classify first responder as bot or human.
   // Bot heuristic: login ends in [bot] or is a known automation account.
   const issuesWithFirstResponder = recentIssues.filter(
-    (i) => i.timelineItems.nodes[0]?.author?.login,
+    (i) => i.timelineItems?.nodes?.[0]?.author?.login,
   )
   const botFirstResponses = issuesWithFirstResponder.filter((i) =>
-    isBot(i.timelineItems.nodes[0]!.author!.login),
+    isBot(i.timelineItems!.nodes[0]!.author!.login),
   )
   const n = issuesWithFirstResponder.length
   const botResponseRatio = n > 0 ? botFirstResponses.length / n : null
@@ -691,7 +715,7 @@ function computeMetrics(
   // Contributor response rate: fraction of closed issues that received any comment
   const contributorResponseRate =
     recentIssues.length > 0
-      ? recentIssues.filter((i) => i.comments.totalCount > 0).length / recentIssues.length
+      ? recentIssues.filter((i) => (i.comments?.totalCount ?? 0) > 0).length / recentIssues.length
       : null
 
   return {
@@ -804,7 +828,7 @@ function computeBracketCalibration(results: RepoMetrics[]) {
 // ─── Dry-run support ─────────────────────────────────────────────────────────
 
 const DRY_RUN = process.argv.includes('--dry-run')
-const REPOS_OUTPUT_PATH = 'scripts/calibrate-repos.md'
+const REPOS_OUTPUT_PATH = 'docs/calibrate-repos.md'
 
 function writeDryRunReport(sampledRepos: Record<BracketKey, string[]>) {
   const lines: string[] = [
