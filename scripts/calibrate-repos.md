@@ -217,6 +217,6 @@ Generated: 2026-04-09
 
 To proceed with full calibration using these repos, run:
 ```
-npm run calibrate-fast
+npm run calibrate
 ```
 The checkpoint already contains the sampled repos — the full run will skip re-sampling.
