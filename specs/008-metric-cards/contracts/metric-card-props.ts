@@ -1,4 +1,5 @@
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+import type { AttentionTier, EngagementTier, ReachTier } from '@/lib/ecosystem-map/spectrum-config'
 
 export type ScoreValue = number | 'Not scored yet' | 'Insufficient verified public data'
 export type ScoreTone = 'success' | 'warning' | 'danger' | 'neutral'
@@ -11,13 +12,10 @@ export interface ScoreBadgeProps {
 }
 
 export interface MetricCardProfile {
-  reachPercentile: number
-  reachLabel: string
-  engagementPercentile: number
-  engagementLabel: string
-  engagementRate: number | 'unavailable'
-  attentionPercentile: number
-  attentionLabel: string
+  reachTier: ReachTier
+  builderEngagementTier: EngagementTier
+  builderEngagementRate: number | 'unavailable'
+  attentionTier: AttentionTier
   attentionRate: number | 'unavailable'
 }
 

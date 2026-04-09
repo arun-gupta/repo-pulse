@@ -15,12 +15,9 @@ export interface EcosystemProfileRowViewModel {
 }
 
 export interface EcosystemSpectrumProfileViewModel {
-  reachPercentile: number | null
-  reachLabel: string | null
-  engagementPercentile: number | null
-  engagementLabel: string | null
-  attentionPercentile: number | null
-  attentionLabel: string | null
+  reachTier: 'Emerging' | 'Growing' | 'Strong' | 'Exceptional' | null
+  engagementTier: 'Light' | 'Healthy' | 'Strong' | 'Exceptional' | null
+  attentionTier: 'Light' | 'Active' | 'Strong' | 'Exceptional' | null
   forkRateLabel: string | null
   watcherRateLabel: string | null
 }
