@@ -13,6 +13,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
+      <head>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
