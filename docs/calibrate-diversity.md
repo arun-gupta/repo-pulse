@@ -34,53 +34,14 @@ xychart-beta
 
 ### Strata targets
 
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Emerging (10–99 stars) — 400 repos"
-  x-axis ["10–19", "20–34", "35–54", "55–99"]
-  y-axis "Target repos" 0 --> 125
-  bar [118, 102, 92, 88]
-```
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Growing (100–999 stars) — 400 repos"
-  x-axis ["100–199", "200–349", "350–549", "550–749", "750–999"]
-  y-axis "Target repos" 0 --> 115
-  bar [108, 87, 80, 70, 55]
-```
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Established (1k–10k stars) — 400 repos"
-  x-axis ["1k–2k", "2k–3.5k", "3.5k–5k", "5k–7k", "7k–10k"]
-  y-axis "Target repos" 0 --> 115
-  bar [108, 87, 80, 70, 55]
-```
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Popular (10k+ stars) — 390 repos"
-  x-axis ["10k–20k", "20k–40k", "40k–80k", "80k–170k", "170k+"]
-  y-axis "Target repos" 0 --> 120
-  bar [115, 95, 80, 60, 40]
-```
+| Stratum | Emerging (10–99) | Growing (100–999) | Established (1k–10k) | Popular (10k+) |
+|---------|-----------------|-------------------|---------------------|----------------|
+| S1 | 118 (10–19) | 108 (100–199) | 108 (1k–2k) | 115 (10k–20k) |
+| S2 | 102 (20–34) | 87 (200–349) | 87 (2k–3.5k) | 95 (20k–40k) |
+| S3 | 92 (35–54) | 80 (350–549) | 80 (3.5k–5k) | 80 (40k–80k) |
+| S4 | 88 (55–99) | 70 (550–749) | 70 (5k–7k) | 60 (80k–170k) |
+| S5 | — | 55 (750–999) | 55 (7k–10k) | 40 (170k+) |
+| **Total** | **400** | **400** | **400** | **390** |
 
 **Why 4 vs 5 strata?** Emerging (10–99 stars) uses 4 strata because the range spans only 90 stars — a narrow range where a 5th stratum would create sub-ranges too small to be meaningful. Growing, Established, and Popular each span one or more orders of magnitude and use 5 strata for finer coverage.
 
