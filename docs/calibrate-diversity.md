@@ -32,24 +32,6 @@ xychart-beta
   bar [20, 19, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4]
 ```
 
-| Organization | Repos |
-|-------------|-------|
-| apache | 20 |
-| microsoft | 19 |
-| google | 9 |
-| facebook | 8 |
-| NVIDIA | 7 |
-| Azure | 6 |
-| dotnet | 6 |
-| aws | 6 |
-| openai | 6 |
-| mwakidenis | 5 |
-| hashicorp | 5 |
-| open-telemetry | 4 |
-| Dicklesworthstone | 4 |
-| WebAssembly | 4 |
-| anthropics | 4 |
-
 ### Strata targets
 
 #### Emerging (10–99 stars)
@@ -130,25 +112,6 @@ xychart-beta
   bar [137, 127, 105, 88, 82, 81, 77, 54, 45, 34, 34, 34, 33, 31, 31]
 ```
 
-| Language | Repos | % |
-|----------|-------|---|
-| Python | 137 | 8.5% |
-| TypeScript | 127 | 7.9% |
-| Go | 105 | 6.5% |
-| C++ | 88 | 5.5% |
-| Java | 82 | 5.1% |
-| JavaScript | 81 | 5.0% |
-| Rust | 77 | 4.8% |
-| C# | 54 | 3.4% |
-| C | 45 | 2.8% |
-| Kotlin | 34 | 2.1% |
-| Shell | 34 | 2.1% |
-| Ruby | 34 | 2.1% |
-| PHP | 33 | 2.1% |
-| Lua | 31 | 1.9% |
-| Swift | 31 | 1.9% |
-| *Others* | *607* | *37.8%* |
-
 Cap: 15 per bracket for popular languages (JavaScript, TypeScript, Python, Java, Go, Rust, C++, C#), 8 for others. Caps apply only to auto-sampled repos — manually curated repos are exempt (see note below).
 
 ### Sampling rules
@@ -198,19 +161,17 @@ xychart-beta
 
 **93** unique languages
 
-| Language | Repos | % |
-|----------|-------|---|
-| TypeScript | 28 | 7.0% |
-| Python | 27 | 6.8% |
-| JavaScript | 21 | 5.3% |
-| Rust | 18 | 4.5% |
-| C# | 17 | 4.3% |
-| C++ | 16 | 4.0% |
-| Go | 16 | 4.0% |
-| Java | 16 | 4.0% |
-| Kotlin | 10 | 2.5% |
-| Nix | 10 | 2.5% |
-| *Others* | *221* | *55.3%* |
+```mermaid
+---
+config:
+  theme: neutral
+---
+xychart-beta
+  title "Emerging — Top 10 Languages"
+  x-axis ["TS", "Python", "JS", "Rust", "C#", "C++", "Go", "Java", "Kotlin", "Nix"]
+  y-axis "Repos" 0 --> 30
+  bar [28, 27, 21, 18, 17, 16, 16, 16, 10, 10]
+```
 
 ## Growing (100–999 stars) (400 repos)
 
@@ -234,19 +195,17 @@ xychart-beta
 
 **88** unique languages
 
-| Language | Repos | % |
-|----------|-------|---|
-| Python | 27 | 6.8% |
-| TypeScript | 24 | 6.0% |
-| Go | 20 | 5.0% |
-| C++ | 20 | 5.0% |
-| Rust | 19 | 4.8% |
-| JavaScript | 17 | 4.3% |
-| Java | 16 | 4.0% |
-| C# | 13 | 3.3% |
-| Shell | 12 | 3.0% |
-| Kotlin | 9 | 2.3% |
-| *Others* | *223* | *55.8%* |
+```mermaid
+---
+config:
+  theme: neutral
+---
+xychart-beta
+  title "Growing — Top 10 Languages"
+  x-axis ["Python", "TS", "Go", "C++", "Rust", "JS", "Java", "C#", "Shell", "Kotlin"]
+  y-axis "Repos" 0 --> 30
+  bar [27, 24, 20, 20, 19, 17, 16, 13, 12, 9]
+```
 
 ## Established (1k–10k stars) (400 repos)
 
@@ -283,19 +242,17 @@ xychart-beta
 
 **91** unique languages
 
-| Language | Repos | % |
-|----------|-------|---|
-| Python | 29 | 7.2% |
-| TypeScript | 24 | 6.0% |
-| Java | 21 | 5.3% |
-| C++ | 21 | 5.3% |
-| Rust | 19 | 4.8% |
-| Go | 18 | 4.5% |
-| JavaScript | 17 | 4.3% |
-| C# | 16 | 4.0% |
-| C | 10 | 2.5% |
-| Swift | 10 | 2.5% |
-| *Others* | *215* | *53.8%* |
+```mermaid
+---
+config:
+  theme: neutral
+---
+xychart-beta
+  title "Established — Top 10 Languages"
+  x-axis ["Python", "TS", "Java", "C++", "Rust", "Go", "JS", "C#", "C", "Swift"]
+  y-axis "Repos" 0 --> 30
+  bar [29, 24, 21, 21, 19, 18, 17, 16, 10, 10]
+```
 
 ## Popular (10k+ stars) (404 repos)
 
@@ -337,17 +294,15 @@ xychart-beta
 
 **61** unique languages
 
-| Language | Repos | % |
-|----------|-------|---|
-| Python | 54 | 13.4% |
-| Go | 51 | 12.6% |
-| TypeScript | 51 | 12.6% |
-| C++ | 31 | 7.7% |
-| Java | 29 | 7.2% |
-| JavaScript | 26 | 6.4% |
-| Rust | 21 | 5.2% |
-| C | 18 | 4.5% |
-| Ruby | 9 | 2.2% |
-| C# | 8 | 2.0% |
-| *Others* | *106* | *26.2%* |
+```mermaid
+---
+config:
+  theme: neutral
+---
+xychart-beta
+  title "Popular — Top 10 Languages"
+  x-axis ["Python", "Go", "TS", "C++", "Java", "JS", "Rust", "C", "Ruby", "C#"]
+  y-axis "Repos" 0 --> 60
+  bar [54, 51, 51, 31, 29, 26, 21, 18, 9, 8]
+```
 
