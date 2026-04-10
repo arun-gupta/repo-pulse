@@ -1,5 +1,6 @@
 import { type ActivityWindowDays, ACTIVITY_WINDOW_DAYS, type AnalysisResult, type Unavailable } from '@/lib/analyzer/analysis-result'
 import { getMergeRateGuidance } from './merge-rate-guidance'
+import { formatPercentileLabel, getCalibrationForStars, interpolatePercentile } from '@/lib/scoring/config-loader'
 
 export interface ActivityCardLine {
   label: string
@@ -64,7 +65,7 @@ function buildCards(metrics: ReturnType<typeof getWindowMetrics>, stars: number 
       lines: [
         { label: 'Opened', value: formatMetric(metrics.issuesOpened) },
         { label: 'Closed', value: formatMetric(metrics.issuesClosed) },
-        { label: 'Closure rate', value: formatRatio(metrics.issuesClosed, metrics.issuesOpened) },
+        { label: 'Closure rate', value: formatClosureRateWithPercentile(metrics.issuesClosed, metrics.issuesOpened, stars) },
       ],
       detail: formatRatioDetail(metrics.issuesClosed, metrics.issuesOpened, 'closed', 'opened'),
     },
@@ -118,5 +119,14 @@ function formatRatioDetail(
   }
 
   return `${formatMetric(numerator)} ${numeratorLabel} / ${formatMetric(denominator)} ${denominatorLabel}`
+}
+
+function formatClosureRateWithPercentile(closed: number | Unavailable, opened: number | Unavailable, stars: number | Unavailable): string {
+  const raw = formatRatio(closed, opened)
+  if (raw === '—' || typeof closed !== 'number' || typeof opened !== 'number' || opened <= 0) return raw
+  const rate = closed / opened
+  const cal = getCalibrationForStars(stars)
+  const p = interpolatePercentile(rate, cal.issueClosureRate)
+  return `${raw} (${formatPercentileLabel(p)})`
 }
 

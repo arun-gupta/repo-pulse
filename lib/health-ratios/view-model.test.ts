@@ -6,10 +6,10 @@ describe('health-ratios/view-model', () => {
   it('builds grouped ratio rows from verified result inputs', () => {
     const rows = buildHealthRatioRows([buildResult()])
 
-    expect(rows.find((row) => row.id === 'fork-rate')?.cells[0]?.displayValue).toBe('25.0%')
+    expect(rows.find((row) => row.id === 'fork-rate')?.cells[0]?.displayValue).toMatch(/25\.0% \((Top|Bottom) \d+%\)/)
     expect(rows.find((row) => row.id === 'pr-merge-rate')?.cells[0]?.displayValue).toMatch(/75\.0% \((Top|Bottom) \d+%\)/)
-    expect(rows.find((row) => row.id === 'repeat-contributor-ratio')?.cells[0]?.displayValue).toBe('25.0%')
-    expect(rows.find((row) => row.id === 'new-contributor-ratio')?.cells[0]?.displayValue).toBe('16.7%')
+    expect(rows.find((row) => row.id === 'repeat-contributor-ratio')?.cells[0]?.displayValue).toMatch(/25\.0% \((Top|Bottom) \d+%\)/)
+    expect(rows.find((row) => row.id === 'new-contributor-ratio')?.cells[0]?.displayValue).toMatch(/16\.7% \((Top|Bottom) \d+%\)/)
   })
 
   it('sorts unavailable values after numeric values', () => {
@@ -31,14 +31,10 @@ describe('health-ratios/view-model', () => {
       newContributors: 2,
     })
 
-    expect(rows[0]).toMatchObject({
-      label: 'Repeat contributor ratio',
-      value: '25.0%',
-    })
-    expect(rows[1]).toMatchObject({
-      label: 'New contributor ratio',
-      value: '16.7%',
-    })
+    expect(rows[0]?.label).toBe('Repeat contributor ratio')
+    expect(rows[0]?.value).toMatch(/25\.0%/)
+    expect(rows[1]?.label).toBe('New contributor ratio')
+    expect(rows[1]?.value).toMatch(/16\.7%/)
     expect(rows[1]?.hoverText).toMatch(/available 365-day history/i)
   })
 })
