@@ -88,20 +88,6 @@ xychart-beta
 
 ### Language diversity
 
-**152** unique languages across all brackets.
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Top 15 Languages (repos across all brackets)"
-  x-axis ["Python", "TS", "Go", "C++", "Java", "JS", "Rust", "C#", "C", "Kotlin", "Shell", "Ruby", "PHP", "Lua", "Swift"]
-  y-axis "Repos" 0 --> 150
-  bar [137, 127, 105, 88, 82, 81, 77, 54, 45, 34, 34, 34, 33, 31, 31]
-```
-
 Cap: 15 per bracket for popular languages (JavaScript, TypeScript, Python, Java, Go, Rust, C++, C#), 8 for others. Caps apply only to auto-sampled repos — manually curated repos are exempt (see note below).
 
 ### Sampling rules
@@ -113,7 +99,27 @@ Cap: 15 per bracket for popular languages (JavaScript, TypeScript, Python, Java,
 
 > **Note on language cap exceptions:** Per-bracket language counts may exceed the 15/8 cap because ~120 manually curated repos (from CNCF, Apache, Eclipse, Mozilla, GNOME, HashiCorp, OpenAI, Anthropic, Mistral, Google, AWS, Microsoft, Netflix, LF Open Source Index, and GitHub top-100) are exempt from language caps. These repos were selected for their importance to the open source ecosystem, not by language. Enforcing caps on them would exclude significant projects (e.g., torvalds/linux, kubernetes/kubernetes) solely to satisfy an artificial distribution constraint. Language caps remain enforced during auto-sampling to prevent any single language from dominating the sample.
 
----
+### Language distribution by bracket
+
+**152** unique languages across all brackets (93 Emerging · 88 Growing · 91 Established · 61 Popular).
+
+| Language | Emerging | Growing | Established | Popular | **Total** |
+|----------|----------|---------|-------------|---------|-----------|
+| Python | 27 | 27 | 29 | 54 | **137** |
+| TypeScript | 28 | 24 | 24 | 51 | **127** |
+| Go | 16 | 20 | 18 | 51 | **105** |
+| C++ | 16 | 20 | 21 | 31 | **88** |
+| Java | 16 | 16 | 21 | 29 | **82** |
+| JavaScript | 21 | 17 | 17 | 26 | **81** |
+| Rust | 18 | 19 | 19 | 21 | **77** |
+| C# | 17 | 13 | 16 | 8 | **54** |
+| C | 7 | 10 | 10 | 18 | **45** |
+| Kotlin | 10 | 9 | 8 | 7 | **34** |
+| Shell | 8 | 12 | 7 | 7 | **34** |
+| Ruby | 7 | 8 | 10 | 9 | **34** |
+| PHP | 9 | 8 | 9 | 7 | **33** |
+| Lua | 8 | 8 | 8 | 7 | **31** |
+| Swift | 7 | 7 | 10 | 7 | **31** |
 
 ---
 
@@ -129,22 +135,6 @@ Cap: 15 per bracket for popular languages (JavaScript, TypeScript, Python, Java,
   - Xor-el: 2
   - nuuuwan: 2
   - Bd-Mutant7: 2
-
-### Language distribution
-
-**93** unique languages
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Emerging — Top 10 Languages"
-  x-axis ["TS", "Python", "JS", "Rust", "C#", "C++", "Go", "Java", "Kotlin", "Nix"]
-  y-axis "Repos" 0 --> 30
-  bar [28, 27, 21, 18, 17, 16, 16, 16, 10, 10]
-```
 
 ## Growing (100–999 stars) (400 repos)
 
@@ -163,22 +153,6 @@ xychart-beta
   - Alchyr: 2
   - selenide-examples: 2
   - terraform-google-modules: 2
-
-### Language distribution
-
-**88** unique languages
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Growing — Top 10 Languages"
-  x-axis ["Python", "TS", "Go", "C++", "Rust", "JS", "Java", "C#", "Shell", "Kotlin"]
-  y-axis "Repos" 0 --> 30
-  bar [27, 24, 20, 20, 19, 17, 16, 13, 12, 9]
-```
 
 ## Established (1k–10k stars) (400 repos)
 
@@ -210,22 +184,6 @@ xychart-beta
   - OWASP: 2
   - swiftlang: 2
   - Azure: 2
-
-### Language distribution
-
-**91** unique languages
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Established — Top 10 Languages"
-  x-axis ["Python", "TS", "Java", "C++", "Rust", "Go", "JS", "C#", "C", "Swift"]
-  y-axis "Repos" 0 --> 30
-  bar [29, 24, 21, 21, 19, 18, 17, 16, 10, 10]
-```
 
 ## Popular (10k+ stars) (404 repos)
 
@@ -262,20 +220,4 @@ xychart-beta
   - alibaba: 2
   - material-components: 2
   - NVIDIA: 2
-
-### Language distribution
-
-**61** unique languages
-
-```mermaid
----
-config:
-  theme: neutral
----
-xychart-beta
-  title "Popular — Top 10 Languages"
-  x-axis ["Python", "Go", "TS", "C++", "Java", "JS", "Rust", "C", "Ruby", "C#"]
-  y-axis "Repos" 0 --> 60
-  bar [54, 51, 51, 31, 29, 26, 21, 18, 9, 8]
-```
 
