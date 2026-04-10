@@ -56,39 +56,14 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for full setup and Vercel deploym
 
 ## Roadmap
 
-### Phase 1 — Web app + core scoring ✅
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 1 | Web app + core scoring (Activity, Responsiveness, Sustainability) | ✅ Done |
+| 2 | Expand scoring dimensions (Documentation, Security, Community, Release Health) | Next |
+| 3 | Integrations (GitHub Action, MCP Server, CLI, PR bot, VS Code, Badge, Webhook) | Planned |
+| 4 | Git provider support (GitLab, Bitbucket, Gitea) | Planned |
 
-Interactive dashboard with OSS Health Score from Activity, Responsiveness, and Sustainability.
-
-### Phase 2 — Expand scoring dimensions
-
-| Dimension | Description |
-|-----------|-------------|
-| Documentation | README, CONTRIBUTING, LICENSE, SECURITY, templates |
-| Security | Dependency updates, branch protection, CI/CD |
-| Community | Discussions, templates, CODEOWNERS, governance |
-| Release Health | Frequency, semver compliance, release notes |
-
-### Phase 3 — Integrations
-
-| Feature | Description |
-|---------|-------------|
-| GitHub Action | Scheduled analysis with threshold alerting |
-| MCP Server | Expose analysis as a tool for AI assistants (Claude, Cursor) |
-| Embeddable badge | Health score SVG badge for repository READMEs |
-| CLI tool | `npx repopulse owner/repo` for terminal and CI/CD pipelines |
-| PR comment bot | Auto-comment health score on new pull requests |
-| VS Code extension | Health score in the editor sidebar |
-| Webhook receiver | Trigger analysis on push, release, or PR events |
-
-### Phase 4 — Git provider support
-
-| Provider | Status |
-|----------|--------|
-| GitHub | ✅ Supported |
-| GitLab | Planned |
-| Bitbucket | Future |
-| Gitea | Future |
+See [`docs/PRODUCT.md`](docs/PRODUCT.md) for detailed feature specifications per phase.
 
 ## Docs
 
