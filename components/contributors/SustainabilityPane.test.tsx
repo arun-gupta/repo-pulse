@@ -49,11 +49,11 @@ describe('SustainabilityPane', () => {
             },
           ],
           experimentalHeatmap: [
-            { contributor: 'meta', commits: 7, commitsLabel: '7 attributed commits', intensity: 'max' },
-            { contributor: 'openai', commits: 3, commitsLabel: '3 attributed commits', intensity: 'high' },
+            { contributor: 'meta', commits: 7, commitsLabel: '7 commits', intensity: 'max' },
+            { contributor: 'openai', commits: 3, commitsLabel: '3 commits', intensity: 'high' },
           ],
           experimentalWarning:
-            'Best-effort estimate. Uses heuristic public GitHub organization attribution and may be incomplete or inaccurate.',
+            'Based on verified public GitHub organization memberships only. Contributors without public org membership appear as "Unaffiliated." Affiliations reflect current membership at analysis time — not historical employment at the time each commit was made. Contributors who change employers will show under their current organization.',
           missingData: ['Total contributors', 'New contributors (90d)'],
         }}
       />,
@@ -74,7 +74,7 @@ describe('SustainabilityPane', () => {
     expect(screen.queryByText('Occasional contributors')).not.toBeInTheDocument()
     expect(screen.getByText('Types of contributions')).toBeInTheDocument()
     expect(screen.getByText('Commits, Pull requests, Issues')).toBeInTheDocument()
-    expect(screen.getByText(/best-effort estimate/i)).toBeInTheDocument()
+    expect(screen.getByText(/verified public GitHub organization memberships/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /chaoss elephant factor reference/i })).toHaveAttribute(
       'href',
       'https://chaoss.community/kb/metric-elephant-factor/',
@@ -119,15 +119,15 @@ describe('SustainabilityPane', () => {
     expect(screen.getByRole('button', { name: /hide chart/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /hide names/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /show numbers/i })).toBeInTheDocument()
-    expect(screen.getByRole('list', { name: /attributed organization bars/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/meta 7 attributed commits/i)).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: /organization contribution bars/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/meta 7 commits/i)).toBeInTheDocument()
     expect(screen.getByText('meta')).toBeInTheDocument()
-    expect(screen.queryByText('7 attributed commits')).not.toBeInTheDocument()
+    expect(screen.queryByText('7 commits')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: /show numbers/i }))
 
     expect(screen.getByRole('button', { name: /hide numbers/i })).toBeInTheDocument()
-    expect(screen.getByText('7 attributed commits')).toBeInTheDocument()
+    expect(screen.getByText('7 commits')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: /hide names/i }))
 

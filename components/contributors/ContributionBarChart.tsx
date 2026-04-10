@@ -9,7 +9,7 @@ interface ContributionBarChartProps {
   items: ContributorHeatmapCell[]
   ariaLabel: string
   emptyText: string
-  tone?: 'cyan' | 'amber'
+  tone?: 'cyan' | 'amber' | 'slate'
   defaultVisibleCount?: number
   entityLabel: string
   actions?: ReactNode
@@ -46,7 +46,9 @@ export function ContributionBarChart({
   const barToneClass =
     tone === 'amber'
       ? 'bg-gradient-to-r from-amber-200 via-amber-400 to-amber-700'
-      : 'bg-gradient-to-r from-cyan-200 via-cyan-400 to-cyan-700'
+      : tone === 'slate'
+        ? 'bg-gradient-to-r from-slate-200 via-slate-400 to-slate-600'
+        : 'bg-gradient-to-r from-cyan-200 via-cyan-400 to-cyan-700'
 
   return (
     <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">

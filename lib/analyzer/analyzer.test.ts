@@ -683,7 +683,7 @@ describe('analyze', () => {
     expect(result.results[0]?.missingFields).toContain('maintainerCount')
   })
 
-  it('keeps verified-organization metrics unavailable when contributors do not resolve to exactly one public organization', async () => {
+  it('shows Unaffiliated in org metrics when contributors have no public organization', async () => {
     fetchPublicUserOrganizationsMock.mockResolvedValueOnce({
       data: [],
       rateLimit: { remaining: 4995, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
@@ -737,9 +737,8 @@ describe('analyze', () => {
     })
 
     expect(result.results[0]).toMatchObject({
-      commitCountsByExperimentalOrg: 'unavailable',
+      commitCountsByExperimentalOrg: { Unaffiliated: 1 },
     })
-    expect(result.results[0]?.missingFields).toContain('commitCountsByExperimentalOrg')
   })
 
   it('degrades experimental org attribution when a user organization lookup fails', async () => {

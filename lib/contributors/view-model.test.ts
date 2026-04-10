@@ -111,7 +111,7 @@ describe('contributors/view-model', () => {
     expect(section.experimentalMetrics.find((metric) => metric.label === 'Elephant Factor')?.value).toBe('1')
     expect(section.experimentalMetrics.find((metric) => metric.label === 'Single-vendor dependency ratio')?.value).toBe('63.6%')
     expect(section.experimentalHeatmap.map((cell) => cell.contributor)).toEqual(['meta', 'openai', 'vercel'])
-    expect(section.experimentalHeatmap[0]?.commitsLabel).toBe('7 attributed commits')
+    expect(section.experimentalHeatmap[0]?.commitsLabel).toBe('7 commits')
   })
 
   it('keeps unavailable contributor values explicit', () => {
