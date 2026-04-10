@@ -1,6 +1,7 @@
 import type { AnalysisResult, ContributorWindowDays, ContributorWindowMetrics, Unavailable } from '@/lib/analyzer/analysis-result'
 import { buildContributorRatioMetricRows } from '@/lib/health-ratios/view-model'
 import { computeContributionConcentration, formatPercentage, getSustainabilityScoreFromCommitCounts } from './score-config'
+import { formatPercentileLabel, getCalibrationForStars, interpolatePercentile } from '@/lib/scoring/config-loader'
 
 export interface ContributorMetricRow {
   label: string
@@ -83,7 +84,7 @@ export function buildContributorsViewModels(
       sustainabilityMetrics: [
         {
           label: 'Top 20% contributor share',
-          value: formatPercentage(sustainabilityScore.concentration),
+          value: formatConcentrationWithPercentile(sustainabilityScore.concentration, result.stars),
           supportingText: getTopContributorGroupText(
             sustainabilityScore.topContributorCount,
             sustainabilityScore.contributorCount,
@@ -275,6 +276,14 @@ function getContributorCompositionHoverText(
   const inactiveContributors = Math.max(totalContributors - activeContributors, 0)
 
   return `${totalHover} Within that total, ${new Intl.NumberFormat('en-US').format(activeContributors)} contributors made at least one verified commit in the last ${windowDays} days: ${new Intl.NumberFormat('en-US').format(repeatContributors)} repeat and ${new Intl.NumberFormat('en-US').format(oneTimeContributors)} one-time. ${new Intl.NumberFormat('en-US').format(inactiveContributors)} were not active in the last ${windowDays} days.`
+}
+
+function formatConcentrationWithPercentile(concentration: number | Unavailable, stars: number | Unavailable): string {
+  const formatted = formatPercentage(concentration)
+  if (formatted === '—' || concentration === 'unavailable') return formatted
+  const cal = getCalibrationForStars(stars)
+  const p = interpolatePercentile(concentration, cal.topContributorShare, true)
+  return `${formatted} (${formatPercentileLabel(p)})`
 }
 
 function formatMetric(value: number | Unavailable) {

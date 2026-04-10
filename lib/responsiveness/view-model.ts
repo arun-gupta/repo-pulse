@@ -1,5 +1,6 @@
-import { ACTIVITY_WINDOW_DAYS, type ActivityWindowDays, type AnalysisResult, type ResponsivenessMetrics } from '@/lib/analyzer/analysis-result'
+import { ACTIVITY_WINDOW_DAYS, type ActivityWindowDays, type AnalysisResult, type ResponsivenessMetrics, type Unavailable } from '@/lib/analyzer/analysis-result'
 import { formatCount, formatHours, formatPercentage, getResponsivenessScore } from './score-config'
+import { type BracketCalibration, type PercentileSet, formatPercentileLabel, getCalibrationForStars, interpolatePercentile } from '@/lib/scoring/config-loader'
 
 export interface ResponsivenessMetricViewModel {
   label: string
@@ -36,7 +37,7 @@ export function buildResponsivenessSections(results: AnalysisResult[], windowDay
 
     return {
       repo: result.repo,
-      panes: buildPanes(metrics),
+      panes: buildPanes(metrics, getCalibrationForStars(result.stars)),
       score: getResponsivenessScore(result, windowDays),
     }
   })
@@ -68,21 +69,27 @@ function getResponsivenessMetrics(result: AnalysisResult, windowDays: ActivityWi
   )
 }
 
-function buildPanes(metrics: ResponsivenessMetrics): ResponsivenessPaneViewModel[] {
+function withPercentile(formatted: string, raw: number | Unavailable, ps: PercentileSet | undefined, inverted = false): string {
+  if (formatted === '—' || raw === 'unavailable' || !ps) return formatted
+  const p = interpolatePercentile(raw as number, ps, inverted)
+  return `${formatted} (${formatPercentileLabel(p)})`
+}
+
+function buildPanes(metrics: ResponsivenessMetrics, cal: BracketCalibration): ResponsivenessPaneViewModel[] {
   return [
     {
       title: 'Issue & PR response time',
       metrics: [
-        { label: 'Issue first response (median)', value: formatHours(metrics.issueFirstResponseMedianHours) },
+        { label: 'Issue first response (median)', value: withPercentile(formatHours(metrics.issueFirstResponseMedianHours), metrics.issueFirstResponseMedianHours, cal.issueFirstResponseMedianHours, true) },
         {
           label: 'Issue first response (p90)',
-          value: formatHours(metrics.issueFirstResponseP90Hours),
+          value: withPercentile(formatHours(metrics.issueFirstResponseP90Hours), metrics.issueFirstResponseP90Hours, cal.issueFirstResponseP90Hours, true),
           helpText: '90th percentile time from issue open to the first non-author response. Shows slower outliers.',
         },
-        { label: 'PR first review (median)', value: formatHours(metrics.prFirstReviewMedianHours) },
+        { label: 'PR first review (median)', value: withPercentile(formatHours(metrics.prFirstReviewMedianHours), metrics.prFirstReviewMedianHours, cal.prFirstReviewMedianHours, true) },
         {
           label: 'PR first review (p90)',
-          value: formatHours(metrics.prFirstReviewP90Hours),
+          value: withPercentile(formatHours(metrics.prFirstReviewP90Hours), metrics.prFirstReviewP90Hours, cal.prFirstReviewP90Hours, true),
           helpText: '90th percentile time from pull request open to the first non-author review. Shows slower outliers.',
         },
       ],
@@ -90,21 +97,21 @@ function buildPanes(metrics: ResponsivenessMetrics): ResponsivenessPaneViewModel
     {
       title: 'Resolution metrics',
       metrics: [
-        { label: 'Issue resolution duration (median)', value: formatHours(metrics.issueResolutionMedianHours) },
+        { label: 'Issue resolution duration (median)', value: withPercentile(formatHours(metrics.issueResolutionMedianHours), metrics.issueResolutionMedianHours, cal.issueResolutionMedianHours, true) },
         {
           label: 'Issue resolution duration (p90)',
-          value: formatHours(metrics.issueResolutionP90Hours),
+          value: withPercentile(formatHours(metrics.issueResolutionP90Hours), metrics.issueResolutionP90Hours, cal.issueResolutionP90Hours, true),
           helpText: '90th percentile time from issue open to close. Shows slower-to-resolve outliers.',
         },
-        { label: 'PR merge duration (median)', value: formatHours(metrics.prMergeMedianHours) },
+        { label: 'PR merge duration (median)', value: withPercentile(formatHours(metrics.prMergeMedianHours), metrics.prMergeMedianHours, cal.prMergeMedianHours, true) },
         {
           label: 'PR merge duration (p90)',
-          value: formatHours(metrics.prMergeP90Hours),
+          value: withPercentile(formatHours(metrics.prMergeP90Hours), metrics.prMergeP90Hours, cal.prMergeP90Hours, true),
           helpText: '90th percentile time from pull request open to merge. Shows slower merge outliers.',
         },
         {
           label: 'Issue resolution rate',
-          value: formatPercentage(metrics.issueResolutionRate),
+          value: withPercentile(formatPercentage(metrics.issueResolutionRate), metrics.issueResolutionRate, cal.issueResolutionRate),
           helpText: 'Closed issues divided by opened issues in the selected recent window.',
         },
       ],
@@ -114,17 +121,17 @@ function buildPanes(metrics: ResponsivenessMetrics): ResponsivenessPaneViewModel
       metrics: [
         {
           label: 'Contributor response rate',
-          value: formatPercentage(metrics.contributorResponseRate),
+          value: withPercentile(formatPercentage(metrics.contributorResponseRate), metrics.contributorResponseRate, cal.contributorResponseRate),
           helpText: 'Share of newly opened issues and pull requests that received at least one non-author human response.',
         },
         {
           label: 'Human first-response ratio',
-          value: formatPercentage(metrics.humanResponseRatio),
+          value: withPercentile(formatPercentage(metrics.humanResponseRatio), metrics.humanResponseRatio, cal.humanResponseRatio),
           helpText: 'Share of first responses that came from a human account rather than a bot.',
         },
         {
           label: 'Bot first-response ratio',
-          value: formatPercentage(metrics.botResponseRatio),
+          value: withPercentile(formatPercentage(metrics.botResponseRatio), metrics.botResponseRatio, cal.botResponseRatio, true),
           helpText: 'Share of first responses that came from bot accounts such as accounts ending in [bot] or -bot.',
         },
       ],
@@ -134,16 +141,16 @@ function buildPanes(metrics: ResponsivenessMetrics): ResponsivenessPaneViewModel
       metrics: [
         {
           label: 'Stale issue ratio',
-          value: formatPercentage(metrics.staleIssueRatio),
+          value: withPercentile(formatPercentage(metrics.staleIssueRatio), metrics.staleIssueRatio, cal.staleIssueRatio, true),
           helpText: 'Share of currently open issues that have been open longer than the selected recent window.',
         },
         {
           label: 'Stale PR ratio',
-          value: formatPercentage(metrics.stalePrRatio),
+          value: withPercentile(formatPercentage(metrics.stalePrRatio), metrics.stalePrRatio, cal.stalePrRatio, true),
           helpText: 'Share of currently open pull requests that have been open longer than the selected recent window.',
         },
-        { label: 'Open issues', value: formatCount(metrics.openIssueCount) },
-        { label: 'Open PR backlog', value: formatCount(metrics.openPullRequestCount) },
+        { label: 'Open issues', value: withPercentile(formatCount(metrics.openIssueCount), metrics.openIssueCount, (cal as unknown as Record<string, PercentileSet | undefined>).openIssueCount) },
+        { label: 'Open PR backlog', value: withPercentile(formatCount(metrics.openPullRequestCount), metrics.openPullRequestCount, (cal as unknown as Record<string, PercentileSet | undefined>).openPrCount) },
       ],
     },
     {
@@ -151,12 +158,12 @@ function buildPanes(metrics: ResponsivenessMetrics): ResponsivenessPaneViewModel
       metrics: [
         {
           label: 'PR review depth',
-          value: formatCount(metrics.prReviewDepth, 1),
+          value: withPercentile(formatCount(metrics.prReviewDepth, 1), metrics.prReviewDepth, cal.prReviewDepth),
           helpText: 'Average number of review events recorded per newly opened pull request in the selected window.',
         },
         {
           label: 'Issues closed without comment',
-          value: formatPercentage(metrics.issuesClosedWithoutCommentRatio),
+          value: withPercentile(formatPercentage(metrics.issuesClosedWithoutCommentRatio), metrics.issuesClosedWithoutCommentRatio, cal.issuesClosedWithoutCommentRatio, true),
           helpText: 'Share of issues closed in the selected window that had no public issue comments.',
         },
       ],

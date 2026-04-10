@@ -13,6 +13,7 @@ import {
   type HealthRatioCategory,
 } from './ratio-definitions'
 import { getMergeRateGuidance } from '@/lib/activity/merge-rate-guidance'
+import { type PercentileSet, formatPercentileLabel, getCalibrationForStars, interpolatePercentile } from '@/lib/scoring/config-loader'
 
 export interface HealthRatioCell {
   repo: string
@@ -66,7 +67,7 @@ export function buildHealthRatioRows(
         displayValue:
           definition.id === 'pr-merge-rate'
             ? getMergeRateGuidance(windowMetrics?.prsMerged ?? 'unavailable', windowMetrics?.prsOpened ?? 'unavailable', result.stars).tableDisplayValue
-            : formatHealthRatio(value),
+            : formatHealthRatioWithPercentile(value, result.stars, definition.id),
       }
     }),
   }))
@@ -146,16 +147,36 @@ export function buildContributorRatioMetricRows(
   return [
     {
       label: 'Repeat contributor ratio',
-      value: formatHealthRatioForHomeView(repeatContributorRatio),
+      value: formatHealthRatioWithPercentile(repeatContributorRatio, result.stars, 'repeat-contributor-ratio'),
       hoverText: 'Repeat contributors divided by total contributors. Repeat contributors made more than one verified commit in the selected window.',
     },
     {
       label: 'New contributor ratio',
-      value: formatHealthRatioForHomeView(newContributorRatio),
+      value: formatHealthRatioWithPercentile(newContributorRatio, result.stars, 'new-contributor-ratio'),
       hoverText:
         'New contributors divided by total contributors. New contributors are authors whose first verified commit in the available 365-day history falls within the selected window.',
     },
   ]
+}
+
+const RATIO_CALIBRATION_MAP: Record<string, { key: string; inverted: boolean }> = {
+  'fork-rate': { key: 'forkRate', inverted: false },
+  'watcher-rate': { key: 'watcherRate', inverted: false },
+  'stale-issue-ratio': { key: 'staleIssueRatio', inverted: true },
+  'repeat-contributor-ratio': { key: 'repeatContributorRatio', inverted: false },
+  'new-contributor-ratio': { key: 'newContributorRatio', inverted: false },
+}
+
+function formatHealthRatioWithPercentile(value: number | Unavailable, stars: number | Unavailable, definitionId: string): string {
+  const formatted = formatHealthRatio(value)
+  if (formatted === '—' || typeof value !== 'number') return formatted
+  const mapping = RATIO_CALIBRATION_MAP[definitionId]
+  if (!mapping) return formatted
+  const cal = getCalibrationForStars(stars)
+  const ps = (cal as unknown as Record<string, PercentileSet | undefined>)[mapping.key]
+  if (!ps) return formatted
+  const p = interpolatePercentile(value, ps, mapping.inverted)
+  return `${formatted} (${formatPercentileLabel(p)})`
 }
 
 function formatHealthRatioForHomeView(value: number | Unavailable) {

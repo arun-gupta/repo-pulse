@@ -16,7 +16,7 @@ describe('HealthRatiosView', () => {
     expect(within(region).getByRole('heading', { name: 'Contributors' })).toBeInTheDocument()
     expect(within(region).getByText('Fork rate')).toBeInTheDocument()
     expect(within(region).getByText('Repeat contributor ratio')).toBeInTheDocument()
-    expect(within(region).getAllByText('25.0%').length).toBeGreaterThan(0)
+    expect(within(region).getAllByText(/25\.0%/).length).toBeGreaterThan(0)
     expect(within(region).getByText(/75\.0%.*(?:Top|Bottom) \d+%/)).toBeInTheDocument()
   })
 

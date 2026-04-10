@@ -85,8 +85,8 @@ describe('contributors/view-model', () => {
     expect(section.coreMetrics.find((metric) => metric.label === 'Contributor composition')?.supportingText).toBe(
       '3 repeat, 2 one-time, 7 inactive',
     )
-    expect(section.coreMetrics.find((metric) => metric.label === 'Repeat contributor ratio')?.value).toBe('25.0%')
-    expect(section.coreMetrics.find((metric) => metric.label === 'New contributor ratio')?.value).toBe('16.7%')
+    expect(section.coreMetrics.find((metric) => metric.label === 'Repeat contributor ratio')?.value).toMatch(/25\.0%/)
+    expect(section.coreMetrics.find((metric) => metric.label === 'New contributor ratio')?.value).toMatch(/16\.7%/)
     expect(section.coreMetrics.find((metric) => metric.label === 'Contributor composition')?.breakdown).toEqual({
       segments: [
         { label: 'Repeat', value: 3, tone: 'strong' },
@@ -99,7 +99,7 @@ describe('contributors/view-model', () => {
     expect(section.coreMetrics.find((metric) => metric.label === 'Contribution concentration')).toBeUndefined()
     expect(section.heatmap[0]?.contributor).toBe('alice')
     expect(section.heatmap.map((cell) => cell.intensity)).toEqual(['max', 'higher', 'high', 'low', 'low'])
-    expect(section.sustainabilityMetrics.find((metric) => metric.label === 'Top 20% contributor share')?.value).toBe('36.4%')
+    expect(section.sustainabilityMetrics.find((metric) => metric.label === 'Top 20% contributor share')?.value).toMatch(/36\.4%/)
     expect(section.sustainabilityMetrics.find((metric) => metric.label === 'Top 20% contributor share')?.supportingText).toBe(
       '1 of 5 active contributors',
     )
