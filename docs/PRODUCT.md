@@ -589,6 +589,21 @@ Users can take analysis results out of the UI in standard formats.
 
 ---
 
+### Phase 2 — Expand scoring dimensions
+
+Phase 2 adds new scoring buckets to the OSS Health Score. Each bucket produces a percentile score and is weighted into the composite health score. Feature specs will be created as each bucket is implemented.
+
+| Feature ID | Feature | Description | Issues |
+|---|---|---|---|
+| P2-F01 | Documentation scoring | Evaluate README, CONTRIBUTING, LICENSE, SECURITY, templates | #66, #67 |
+| P2-F02 | Security scoring | Dependency updates, branch protection, CI/CD, vulnerability disclosure | #68, #71 |
+| P2-F03 | Community scoring | Discussions, templates, CODEOWNERS, governance | #70 |
+| P2-F04 | Release health scoring | Frequency, semver compliance, release notes | #69 |
+| P2-F05 | Development cadence | Commit regularity, active weeks ratio, longest gap | #73 |
+| P2-F06 | Project maturity | Age-normalized metrics, growth trajectory | #74 |
+
+---
+
 ### Phase 3 — Extensibility features
 
 These features wrap the shared analyzer module without duplicating logic.
