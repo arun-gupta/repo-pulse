@@ -2,7 +2,7 @@
 
 Generated: 2026-04-10
 
-## Emerging (10–99 stars) (390 repos)
+## Emerging (10–99 stars) (400 repos)
 
 - [danielwoz/ubiquiti-protect-onvif-event-listener](https://github.com/danielwoz/ubiquiti-protect-onvif-event-listener)
 - [HyperlinksSpace/tonnftdapp](https://github.com/HyperlinksSpace/tonnftdapp)
@@ -394,8 +394,18 @@ Generated: 2026-04-10
 - [mwakidenis/Rental-management](https://github.com/mwakidenis/Rental-management)
 - [Abisai343/cad-viewer](https://github.com/Abisai343/cad-viewer)
 - [DhouiouiCharfeddine/react-native-expo-facial-recognition](https://github.com/DhouiouiCharfeddine/react-native-expo-facial-recognition)
+- [fokkonaut/F-DDrace](https://github.com/fokkonaut/F-DDrace)
+- [example42/pabawi](https://github.com/example42/pabawi)
+- [carlos-emr/carlos](https://github.com/carlos-emr/carlos)
+- [hackclub/infill](https://github.com/hackclub/infill)
+- [RyderFreeman4Logos/cli-sub-agent](https://github.com/RyderFreeman4Logos/cli-sub-agent)
+- [DoubleStyx/Renderide](https://github.com/DoubleStyx/Renderide)
+- [marianfoo/arc-1](https://github.com/marianfoo/arc-1)
+- [Arianlavi/RebeldevConfig](https://github.com/Arianlavi/RebeldevConfig)
+- [ronnycoding/.claude](https://github.com/ronnycoding/.claude)
+- [natsukium/edgepkgs](https://github.com/natsukium/edgepkgs)
 
-## Growing (100–999 stars) (390 repos)
+## Growing (100–999 stars) (400 repos)
 
 - [iboxz/free-v2ray-collector](https://github.com/iboxz/free-v2ray-collector)
 - [ROCm/rocm-libraries](https://github.com/ROCm/rocm-libraries)
@@ -787,8 +797,18 @@ Generated: 2026-04-10
 - [getsolus/packages](https://github.com/getsolus/packages)
 - [YOURLS/containers](https://github.com/YOURLS/containers)
 - [mediar-ai/fazm](https://github.com/mediar-ai/fazm)
+- [EvolutionAPI/evo-nexus](https://github.com/EvolutionAPI/evo-nexus)
+- [Vann-Dev/proxy-list](https://github.com/Vann-Dev/proxy-list)
+- [cymz6/AutoIPTV-Hotel](https://github.com/cymz6/AutoIPTV-Hotel)
+- [descope/descopecli](https://github.com/descope/descopecli)
+- [Commit-Boost/commit-boost-client](https://github.com/Commit-Boost/commit-boost-client)
+- [Picovoice/orca](https://github.com/Picovoice/orca)
+- [leosuncin/nest-api-example](https://github.com/leosuncin/nest-api-example)
+- [isledecomp/reccmp](https://github.com/isledecomp/reccmp)
+- [bzsanti/oxidizePdf](https://github.com/bzsanti/oxidizePdf)
+- [ctrlplanedev/ctrlplane](https://github.com/ctrlplanedev/ctrlplane)
 
-## Established (1k–10k stars) (390 repos)
+## Established (1k–10k stars) (400 repos)
 
 - [nymtech/nym](https://github.com/nymtech/nym)
 - [kenzok8/small](https://github.com/kenzok8/small)
@@ -1180,8 +1200,18 @@ Generated: 2026-04-10
 - [2U1/Qwen-VL-Series-Finetune](https://github.com/2U1/Qwen-VL-Series-Finetune)
 - [aws/deep-learning-containers](https://github.com/aws/deep-learning-containers)
 - [Azure/azure-sdk-for-go](https://github.com/Azure/azure-sdk-for-go)
+- [lineofflight/frankfurter](https://github.com/lineofflight/frankfurter)
+- [CloakHQ/CloakBrowser](https://github.com/CloakHQ/CloakBrowser)
+- [clerk/javascript](https://github.com/clerk/javascript)
+- [inertiajs/inertia-rails](https://github.com/inertiajs/inertia-rails)
+- [chopratejas/headroom](https://github.com/chopratejas/headroom)
+- [kaitranntt/ccs](https://github.com/kaitranntt/ccs)
+- [ethereum/execution-specs](https://github.com/ethereum/execution-specs)
+- [cdpdriver/zendriver](https://github.com/cdpdriver/zendriver)
+- [matthartman/ghost-pepper](https://github.com/matthartman/ghost-pepper)
+- [Norbyte/bg3se](https://github.com/Norbyte/bg3se)
 
-## Popular (10k+ stars) (390 repos)
+## Popular (10k+ stars) (404 repos)
 
 - [mobile-dev-inc/Maestro](https://github.com/mobile-dev-inc/Maestro)
 - [NixOS/nixpkgs](https://github.com/NixOS/nixpkgs)
@@ -1573,7 +1603,6 @@ Generated: 2026-04-10
 - [huggingface/trl](https://github.com/huggingface/trl)
 - [NVIDIA/Megatron-LM](https://github.com/NVIDIA/Megatron-LM)
 - [alibaba/page-agent](https://github.com/alibaba/page-agent)
-
 - [torvalds/linux](https://github.com/torvalds/linux)
 - [vercel/next.js](https://github.com/vercel/next.js)
 - [nodejs/node](https://github.com/nodejs/node)
@@ -1590,7 +1619,7 @@ Generated: 2026-04-10
 - [dotnet/aspnetcore](https://github.com/dotnet/aspnetcore)
 
 ---
-**Total: 1574 repos**
+**Total: 1604 repos**
 
 To proceed with full calibration using these repos, run:
 ```
