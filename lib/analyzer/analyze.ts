@@ -1218,7 +1218,7 @@ async function buildExperimentalOrganizationCommitCountsByWindow(
   }
 
   let rateLimit: RateLimitState | null = null
-  const organizationByLogin = new Map<string, string | null>()
+  const organizationsByLogin = new Map<string, string[]>()
 
   for (const login of uniqueLogins) {
     const response = await fetchPublicUserOrganizations(token, login).catch((error) => ({
@@ -1228,16 +1228,15 @@ async function buildExperimentalOrganizationCommitCountsByWindow(
     rateLimit = response.rateLimit ?? rateLimit
 
     if (response.data === 'unavailable') {
-      organizationByLogin.set(login, null)
+      organizationsByLogin.set(login, [])
       continue
     }
 
-    const [org] = response.data
-    organizationByLogin.set(login, org ?? null)
+    organizationsByLogin.set(login, response.data)
   }
 
   return {
-    data: buildExperimentalMetricsByWindow(recentCommitNodes, organizationByLogin, now),
+    data: buildExperimentalMetricsByWindow(recentCommitNodes, organizationsByLogin, now),
     rateLimit,
   }
 }
@@ -1382,7 +1381,7 @@ function createUnavailableContributorWindowMetrics(): Record<ContributorWindowDa
 
 function buildExperimentalMetricsByWindow(
   recentCommitNodes: CommitNode[],
-  organizationByLogin: Map<string, string | null>,
+  organizationsByLogin: Map<string, string[]>,
   now: Date,
 ): Record<ContributorWindowDays, ContributorWindowMetrics> {
   return Object.fromEntries(
@@ -1421,14 +1420,31 @@ function buildExperimentalMetricsByWindow(
           continue
         }
 
-        const org = organizationByLogin.get(login) ?? null
-        if (!org) {
+        const orgs = organizationsByLogin.get(login) ?? []
+        if (orgs.length === 0) {
           unattributedAuthors.add(actorKey)
           continue
         }
 
         attributedAuthors.add(actorKey)
-        commitCountsByExperimentalOrg.set(org, (commitCountsByExperimentalOrg.get(org) ?? 0) + 1)
+        // Attribute commit to all public organizations the contributor belongs to
+        for (const org of orgs) {
+          commitCountsByExperimentalOrg.set(org, (commitCountsByExperimentalOrg.get(org) ?? 0) + 1)
+        }
+      }
+
+      // Include unaffiliated commits in the org map for transparent reporting
+      if (unattributedAuthors.size > 0 && sawResolvableAuthor) {
+        let unaffiliatedCommits = 0
+        for (const node of windowNodes) {
+          const actorKey = getCommitActorKey(node)
+          if (actorKey && unattributedAuthors.has(actorKey)) {
+            unaffiliatedCommits++
+          }
+        }
+        if (unaffiliatedCommits > 0) {
+          commitCountsByExperimentalOrg.set('Unaffiliated', unaffiliatedCommits)
+        }
       }
 
       return [

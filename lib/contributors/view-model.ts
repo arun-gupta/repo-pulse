@@ -122,7 +122,7 @@ export function buildContributorsViewModels(
         },
       ],
       experimentalWarning:
-        'Best-effort estimate. Uses heuristic public GitHub organization attribution and may be incomplete or inaccurate.',
+        'Based on verified public GitHub organization memberships only. Contributors without public org membership appear as "Unaffiliated." Affiliations reflect current membership at analysis time — not historical employment at the time each commit was made. Contributors who change employers will show under their current organization.',
       missingData: buildMissingDataList(
         result,
         windowMetrics,
@@ -346,7 +346,11 @@ function computeElephantFactor(commitCountsByExperimentalOrg: Record<string, num
     return 'unavailable'
   }
 
-  const counts = Object.values(commitCountsByExperimentalOrg).filter((count) => count > 0).sort((a, b) => b - a)
+  // Exclude "Unaffiliated" — it's not a real organization
+  const counts = Object.entries(commitCountsByExperimentalOrg)
+    .filter(([org, count]) => org !== 'Unaffiliated' && count > 0)
+    .map(([, count]) => count)
+    .sort((a, b) => b - a)
   if (counts.length === 0) {
     return 'unavailable'
   }
@@ -371,7 +375,10 @@ function computeSingleVendorDependencyRatio(
     return 'unavailable'
   }
 
-  const counts = Object.values(commitCountsByExperimentalOrg).filter((count) => count > 0)
+  // Exclude "Unaffiliated" — it's not a real organization
+  const counts = Object.entries(commitCountsByExperimentalOrg)
+    .filter(([org, count]) => org !== 'Unaffiliated' && count > 0)
+    .map(([, count]) => count)
   if (counts.length === 0) {
     return 'unavailable'
   }
@@ -453,7 +460,7 @@ function buildHeatmap(
   return entries.map(([contributor, commits]) => ({
     contributor: kind === 'organization' ? contributor : formatContributorLabel(contributor),
     commits,
-    commitsLabel: `${new Intl.NumberFormat('en-US').format(commits)} ${kind === 'organization' ? 'attributed ' : ''}${commits === 1 ? 'commit' : 'commits'}`,
+    commitsLabel: `${new Intl.NumberFormat('en-US').format(commits)} ${commits === 1 ? 'commit' : 'commits'}`,
     intensity: getIntensity(commits, maxCommits),
   }))
 }

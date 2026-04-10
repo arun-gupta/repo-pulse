@@ -70,16 +70,16 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
         ))}
       </dl>
 
-      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-900">Experimental</p>
-          <p className="text-sm text-amber-900">{section.experimentalWarning}</p>
-          <p className="text-sm text-amber-900">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-900">Organization Affiliation</p>
+          <p className="text-sm text-slate-600">{section.experimentalWarning}</p>
+          <p className="text-sm text-slate-600">
             <a
               href="https://chaoss.community/kb/metric-elephant-factor/"
               target="_blank"
               rel="noreferrer"
-              className="font-medium underline underline-offset-2"
+              className="font-medium text-slate-700 underline underline-offset-2"
             >
               CHAOSS Elephant Factor reference
             </a>
@@ -87,7 +87,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
         </div>
         <dl className="mt-3 grid gap-3 md:grid-cols-2">
           {section.experimentalMetrics.map((metric) => (
-            <div key={metric.label} className="rounded-xl border border-amber-200 bg-white p-3">
+            <div key={metric.label} className="rounded-xl border border-slate-200 bg-white p-3">
               <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 <HelpLabel label={metric.label} helpText={metric.hoverText} />
               </dt>
@@ -97,12 +97,12 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
         </dl>
         {section.experimentalHeatmap.length > 0 ? (
           <ContributionBarChart
-            title="Attributed organization chart"
-            description="Longer bars indicate more experimentally attributed recent commits."
+            title="Organization contribution chart"
+            description="Longer bars indicate more recent commits attributed via verified public GitHub organization membership."
             items={section.experimentalHeatmap}
-            ariaLabel="Attributed organization bars"
+            ariaLabel="Organization contribution bars"
             emptyText="—"
-            tone="amber"
+            tone="slate"
             entityLabel="organizations"
             defaultVisibleCount={8}
             collapsed={!showExperimentalHeatmap}
@@ -113,7 +113,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
                 <button
                   type="button"
                   onClick={() => setShowExperimentalHeatmap((current) => !current)}
-                  className="rounded-full border border-amber-200 px-3 py-1 text-xs font-medium text-amber-900 transition hover:border-amber-300"
+                  className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                   aria-pressed={showExperimentalHeatmap}
                 >
                   {showExperimentalHeatmap ? 'Hide chart' : 'Show chart'}
@@ -123,7 +123,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
                     <button
                       type="button"
                       onClick={() => setShowExperimentalNames((current) => !current)}
-                      className="rounded-full border border-amber-200 px-3 py-1 text-xs font-medium text-amber-900 transition hover:border-amber-300"
+                      className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                       aria-pressed={showExperimentalNames}
                     >
                       {showExperimentalNames ? 'Hide names' : 'Show names'}
@@ -131,7 +131,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
                     <button
                       type="button"
                       onClick={() => setShowExperimentalNumbers((current) => !current)}
-                      className="rounded-full border border-amber-200 px-3 py-1 text-xs font-medium text-amber-900 transition hover:border-amber-300"
+                      className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400"
                       aria-pressed={showExperimentalNumbers}
                     >
                       {showExperimentalNumbers ? 'Hide numbers' : 'Show numbers'}
