@@ -69,7 +69,7 @@ Interactive dashboard with OSS Health Score from Activity, Responsiveness, and S
 | Community | Discussions, templates, CODEOWNERS, governance |
 | Release Health | Frequency, semver compliance, release notes |
 
-### Phase 3 — Extensibility
+### Phase 3 — Integrations
 
 | Feature | Description |
 |---------|-------------|

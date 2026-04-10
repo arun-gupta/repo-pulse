@@ -27,7 +27,7 @@ Add new scoring buckets to the health score. Each bucket adds a new dimension wi
 | Community | 10% | Discussions, templates, CODEOWNERS, governance | #70 |
 | Release Health | 5% | Frequency, semver compliance, release notes | #69 |
 
-### Phase 3 — Extensibility
+### Phase 3 — Integrations
 
 The core analysis logic is shared via a framework-agnostic analyzer module. These extensions wrap the same analyzer without duplicating logic.
 
@@ -604,9 +604,9 @@ Phase 2 adds new scoring buckets to the OSS Health Score. Each bucket produces a
 
 ---
 
-### Phase 3 — Extensibility features
+### Phase 3 — Integrations
 
-These features wrap the shared analyzer module without duplicating logic.
+These features deliver the OSS Health Score through additional channels, wrapping the shared analyzer module without duplicating logic.
 
 ---
 
