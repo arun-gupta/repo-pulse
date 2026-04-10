@@ -75,7 +75,11 @@ Interactive dashboard with OSS Health Score from Activity, Responsiveness, and S
 |---------|-------------|
 | GitHub Action | Scheduled analysis with threshold alerting |
 | MCP Server | Expose analysis as a tool for AI assistants (Claude, Cursor) |
-| Embeddable badge | Health score badge for repository READMEs |
+| Embeddable badge | Health score SVG badge for repository READMEs |
+| CLI tool | `npx repopulse owner/repo` for terminal and CI/CD pipelines |
+| PR comment bot | Auto-comment health score on new pull requests |
+| VS Code extension | Health score in the editor sidebar |
+| Webhook receiver | Trigger analysis on push, release, or PR events |
 
 ### Phase 4 — Git provider support
 

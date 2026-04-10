@@ -608,9 +608,19 @@ Phase 2 adds new scoring buckets to the OSS Health Score. Each bucket produces a
 
 These features deliver the OSS Health Score through additional channels, wrapping the shared analyzer module without duplicating logic.
 
+| Feature ID | Feature | Description |
+|---|---|---|
+| P3-F01 | GitHub Action | Scheduled analysis with threshold alerting |
+| P3-F02 | MCP Server | AI assistant integration (Claude, Cursor) |
+| P3-F03 | Embeddable badge | Health score SVG badge for READMEs |
+| P3-F04 | CLI tool | `npx repopulse owner/repo` for terminal and CI/CD pipelines |
+| P3-F05 | PR comment bot | Auto-comment health score on new pull requests |
+| P3-F06 | VS Code extension | Health score in the editor sidebar for the current repo |
+| P3-F07 | Webhook receiver | Trigger analysis on push, release, or PR events |
+
 ---
 
-#### GitHub Action — Scheduled Analysis & Alerting
+#### `[P3-F01]` GitHub Action — Scheduled Analysis & Alerting
 
 RepoPulse runs as a GitHub Action on a schedule or manual trigger, with optional threshold alerting.
 
@@ -622,7 +632,7 @@ RepoPulse runs as a GitHub Action on a schedule or manual trigger, with optional
 
 ---
 
-#### MCP Server — AI Assistant Integration
+#### `[P3-F02]` MCP Server — AI Assistant Integration
 
 RepoPulse exposes repo health analysis as an MCP tool callable by AI assistants.
 
@@ -634,9 +644,57 @@ RepoPulse exposes repo health analysis as an MCP tool callable by AI assistants.
 
 ---
 
-#### Embeddable Badge
+#### `[P3-F03]` Embeddable Badge
 
 Health score badge for repository READMEs: `![RepoPulse](https://repopulse.dev/api/badge/owner/repo)`
+
+---
+
+#### `[P3-F04]` CLI Tool
+
+Command-line interface for terminal usage and CI/CD pipelines.
+
+**Key capabilities**
+- `npx repopulse owner/repo` — zero-install analysis
+- JSON and Markdown output formats
+- Exit code reflects health score threshold (for CI gating)
+- Wraps the shared analyzer module
+
+---
+
+#### `[P3-F05]` PR Comment Bot
+
+Automatically comments the OSS Health Score on new pull requests.
+
+**Key capabilities**
+- GitHub App or Action that posts a health score summary on each new PR
+- Shows how the PR's target repo scores across all dimensions
+- Highlights recommendations for weak areas
+- Configurable: opt-in per repo, threshold for commenting
+
+---
+
+#### `[P3-F06]` VS Code Extension
+
+Health score visible in the editor sidebar for the current repository.
+
+**Key capabilities**
+- Detects the current repo from the workspace's git remote
+- Displays health score and dimension breakdown in a sidebar panel
+- Click-through to the full web dashboard
+- Refresh on demand or on workspace open
+
+---
+
+#### `[P3-F07]` Webhook Receiver
+
+Trigger analysis on repository events for real-time health monitoring.
+
+**Key capabilities**
+- Accepts GitHub webhook events (push, release, pull_request)
+- Runs analysis on the target repo
+- Posts results to a configured destination (Slack, issue, dashboard)
+- Configurable event filters and cooldown period
 
 ---
 
