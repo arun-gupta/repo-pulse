@@ -66,7 +66,8 @@ test.describe('P1-F12 Missing Data & Accuracy', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          results: [buildResult('facebook/react', { missingFields: [] })],
+          results: [buildResult('facebook/react', { documentationResult: 'unavailable',
+    missingFields: [] })],
           failures: [],
           rateLimit: null,
         }),
@@ -135,6 +136,7 @@ function buildResult(repo: string, overrides: Record<string, unknown>) {
     issueFirstResponseTimestamps: 'unavailable',
     issueCloseTimestamps: 'unavailable',
     prMergeTimestamps: 'unavailable',
+    documentationResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

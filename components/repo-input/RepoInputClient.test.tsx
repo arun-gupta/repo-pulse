@@ -50,7 +50,8 @@ describe('RepoInputClient', () => {
           issueFirstResponseTimestamps: 'unavailable',
           issueCloseTimestamps: 'unavailable',
           prMergeTimestamps: 'unavailable',
-          missingFields: [],
+          documentationResult: 'unavailable',
+    missingFields: [],
         },
       ],
       failures: [],
@@ -538,6 +539,7 @@ function buildAnalysisResult(repo: string, overrides: Record<string, unknown> = 
     staleIssueRatio: 0.2,
     medianTimeToMergeHours: 24,
     medianTimeToCloseHours: 36,
+    documentationResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

@@ -1,6 +1,6 @@
 import type { DocumentationResult } from '@/lib/analyzer/analysis-result'
 import { getBracketLabel, getCalibrationForStars, interpolatePercentile, percentileToTone } from '@/lib/scoring/config-loader'
-import type { ScoreTone } from '@/lib/scoring/config-loader'
+import type { ScoreTone } from '@/specs/008-metric-cards/contracts/metric-card-props'
 
 export interface DocumentationRecommendation {
   bucket: 'documentation'
