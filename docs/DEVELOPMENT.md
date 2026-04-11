@@ -112,6 +112,7 @@ Phase 2 adds new scoring buckets to the health score. Requirements specs live in
 | 9 | P2-F08 | Licensing & Compliance | #115 | |
 | 10 | P2-F09 | Governance & Transparency | #116 | |
 | 11 | P2-F10 | Accessibility & Onboarding | #117 | |
+| 12 | P2-F11 | Ecosystem Reach | #118 | |
 
 ## Phase 3 feature order
 

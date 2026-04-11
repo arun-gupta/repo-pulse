@@ -566,6 +566,7 @@ Phase 2 adds new scoring buckets to the OSS Health Score. Each bucket produces a
 | P2-F08 | Licensing & Compliance | #115 |
 | P2-F09 | Governance & Transparency | #116 |
 | P2-F10 | Accessibility & Onboarding | #117 |
+| P2-F11 | Ecosystem Reach | #118 |
 
 ### Phase 3 — Integrations
 
