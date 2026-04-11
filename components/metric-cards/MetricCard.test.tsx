@@ -110,6 +110,7 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
     issueFirstResponseTimestamps: 'unavailable',
     issueCloseTimestamps: 'unavailable',
     prMergeTimestamps: 'unavailable',
+    documentationResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

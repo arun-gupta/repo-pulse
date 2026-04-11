@@ -7,7 +7,10 @@ import type {
   AnalyzeResponse,
   ContributorWindowDays,
   ContributorWindowMetrics,
+  DocumentationFileCheck,
+  DocumentationResult,
   RateLimitState,
+  ReadmeSectionCheck,
   ResponsivenessMetrics,
   RepositoryFetchFailure,
   Unavailable,
@@ -16,6 +19,11 @@ import { CONTRIBUTOR_WINDOW_DAYS } from './analysis-result'
 import { queryGitHubGraphQL } from './github-graphql'
 import { fetchContributorCount, fetchMaintainerCount, fetchPublicUserOrganizations } from './github-rest'
 import { REPO_ACTIVITY_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
+
+interface DocBlob {
+  text?: string
+  oid?: string
+}
 
 interface RepoOverviewResponse {
   repository: {
@@ -28,6 +36,31 @@ interface RepoOverviewResponse {
     watchers: { totalCount: number }
     issues: { totalCount: number }
     pullRequests?: { totalCount: number }
+    licenseInfo?: { spdxId: string | null; name: string | null } | null
+    docReadmeMd?: DocBlob | null
+    docReadmeLower?: DocBlob | null
+    docReadmeRst?: DocBlob | null
+    docReadmeTxt?: DocBlob | null
+    docReadmePlain?: DocBlob | null
+    docLicense?: DocBlob | null
+    docLicenseMd?: DocBlob | null
+    docLicenseTxt?: DocBlob | null
+    docCopying?: DocBlob | null
+    docContributing?: DocBlob | null
+    docContributingRst?: DocBlob | null
+    docContributingTxt?: DocBlob | null
+    docCodeOfConduct?: DocBlob | null
+    docCodeOfConductRst?: DocBlob | null
+    docCodeOfConductTxt?: DocBlob | null
+    docLicenseRst?: DocBlob | null
+    docSecurity?: DocBlob | null
+    docSecurityRst?: DocBlob | null
+    docChangelog?: DocBlob | null
+    docChangelogPlain?: DocBlob | null
+    docChanges?: DocBlob | null
+    docChangesRst?: DocBlob | null
+    docHistory?: DocBlob | null
+    docNews?: DocBlob | null
   } | null
 }
 
@@ -548,11 +581,97 @@ function buildAnalysisResult(
     staleIssueRatio: activityMetricsByWindow[90].staleIssueRatio,
     medianTimeToMergeHours: activityMetricsByWindow[90].medianTimeToMergeHours,
     medianTimeToCloseHours: activityMetricsByWindow[90].medianTimeToCloseHours,
+    documentationResult: extractDocumentationResult(overview.repository),
     issueFirstResponseTimestamps,
     issueCloseTimestamps,
     prMergeTimestamps,
     missingFields,
   }
+}
+
+function extractDocumentationResult(repo: RepoOverviewResponse['repository']): DocumentationResult | Unavailable {
+  if (!repo) return 'unavailable'
+
+  const findFirst = (...aliases: (DocBlob | null | undefined)[]): DocBlob | null =>
+    aliases.find((a) => a != null) ?? null
+
+  const readmeBlob = findFirst(repo.docReadmeMd, repo.docReadmeLower, repo.docReadmeRst, repo.docReadmeTxt, repo.docReadmePlain)
+  const licenseBlob = findFirst(repo.docLicense, repo.docLicenseMd, repo.docLicenseTxt, repo.docLicenseRst, repo.docCopying)
+  const contributingBlob = findFirst(repo.docContributing, repo.docContributingRst, repo.docContributingTxt)
+  const codeOfConductBlob = findFirst(repo.docCodeOfConduct, repo.docCodeOfConductRst, repo.docCodeOfConductTxt)
+  const securityBlob = findFirst(repo.docSecurity, repo.docSecurityRst)
+  const changelogBlob = findFirst(repo.docChangelog, repo.docChangelogPlain, repo.docChanges, repo.docChangesRst, repo.docHistory, repo.docNews)
+
+  const readmePathMap: [string, DocBlob | null | undefined][] = [
+    ['README.md', repo.docReadmeMd], ['readme.md', repo.docReadmeLower], ['README.rst', repo.docReadmeRst],
+    ['README.txt', repo.docReadmeTxt], ['README', repo.docReadmePlain],
+  ]
+  const licensePathMap: [string, DocBlob | null | undefined][] = [
+    ['LICENSE', repo.docLicense], ['LICENSE.md', repo.docLicenseMd], ['LICENSE.txt', repo.docLicenseTxt], ['LICENSE.rst', repo.docLicenseRst], ['COPYING', repo.docCopying],
+  ]
+  const contributingPathMap: [string, DocBlob | null | undefined][] = [
+    ['CONTRIBUTING.md', repo.docContributing], ['CONTRIBUTING.rst', repo.docContributingRst], ['CONTRIBUTING.txt', repo.docContributingTxt],
+  ]
+  const changelogPathMap: [string, DocBlob | null | undefined][] = [
+    ['CHANGELOG.md', repo.docChangelog], ['CHANGELOG', repo.docChangelogPlain], ['CHANGES.md', repo.docChanges],
+    ['CHANGES.rst', repo.docChangesRst], ['HISTORY.md', repo.docHistory], ['NEWS.md', repo.docNews],
+  ]
+
+  function foundPath(pathMap: [string, DocBlob | null | undefined][]): string | null {
+    for (const [path, blob] of pathMap) {
+      if (blob != null) return path
+    }
+    return null
+  }
+
+  const readmeContent = readmeBlob?.text ?? null
+
+  const fileChecks: DocumentationFileCheck[] = [
+    { name: 'readme', found: readmeBlob !== null, path: foundPath(readmePathMap), licenseType: null },
+    { name: 'license', found: licenseBlob !== null, path: foundPath(licensePathMap), licenseType: repo.licenseInfo?.spdxId ?? null },
+    { name: 'contributing', found: contributingBlob !== null, path: foundPath(contributingPathMap), licenseType: null },
+    { name: 'code_of_conduct', found: codeOfConductBlob !== null, path: foundPath([['CODE_OF_CONDUCT.md', repo.docCodeOfConduct], ['CODE_OF_CONDUCT.rst', repo.docCodeOfConductRst], ['CODE_OF_CONDUCT.txt', repo.docCodeOfConductTxt]]), licenseType: null },
+    { name: 'security', found: securityBlob !== null, path: foundPath([['SECURITY.md', repo.docSecurity], ['SECURITY.rst', repo.docSecurityRst]]), licenseType: null },
+    { name: 'changelog', found: changelogBlob !== null, path: foundPath(changelogPathMap), licenseType: null },
+  ]
+
+  const readmeSections = detectReadmeSections(readmeContent)
+
+  return { fileChecks, readmeSections, readmeContent }
+}
+
+// Matches both Markdown headings (## Title) and RST headings (Title\n====)
+function sectionPatterns(keyword: RegExp): RegExp[] {
+  return [
+    new RegExp(`^#+\\s*${keyword.source}`, 'im'),               // Markdown: ## Keyword
+    new RegExp(`^(${keyword.source})[^\\n]*\\n[=\\-~^"]+$`, 'im'), // RST: Keyword\n======
+  ]
+}
+
+const SECTION_PATTERNS: Array<{ name: ReadmeSectionCheck['name']; patterns: RegExp[] }> = [
+  { name: 'description', patterns: sectionPatterns(/(?:about|overview|description|introduction|what is|features)/) },
+  { name: 'installation', patterns: sectionPatterns(/(?:install(?:ation|ing)?|setup|getting\s*started|quick\s*start)/) },
+  { name: 'usage', patterns: sectionPatterns(/(?:usage|examples?|how\s*to\s*use|tutorial|demo)/) },
+  { name: 'contributing', patterns: sectionPatterns(/(?:contribut(?:ing|e|ors?)|how\s*to\s*contribute)/) },
+  { name: 'license', patterns: sectionPatterns(/licen[sc]e/) },
+]
+
+function detectReadmeSections(content: string | null): ReadmeSectionCheck[] {
+  if (!content) {
+    return SECTION_PATTERNS.map(({ name }) => ({ name, detected: false }))
+  }
+
+  // Treat the first non-empty paragraph as a description if no explicit heading
+  const hasDescriptionHeading = SECTION_PATTERNS[0]!.patterns.some((p) => p.test(content))
+  const firstParagraph = content.split('\n').find((line) => line.trim().length > 0 && !line.startsWith('#'))
+  const hasImplicitDescription = !hasDescriptionHeading && firstParagraph != null && firstParagraph.trim().length > 20
+
+  return SECTION_PATTERNS.map(({ name, patterns }) => {
+    if (name === 'description') {
+      return { name, detected: hasDescriptionHeading || hasImplicitDescription }
+    }
+    return { name, detected: patterns.some((p) => p.test(content)) }
+  })
 }
 
 function buildSearchQuery(repoSearch: string, qualifiers: string, dateField: 'created' | 'merged' | 'closed', since: Date) {

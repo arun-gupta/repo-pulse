@@ -193,6 +193,7 @@ function buildResult(repo: string, overrides: Record<string, unknown>) {
     issueFirstResponseTimestamps: 'unavailable',
     issueCloseTimestamps: 'unavailable',
     prMergeTimestamps: 'unavailable',
+    documentationResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

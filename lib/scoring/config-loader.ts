@@ -38,6 +38,7 @@ export interface BracketCalibration {
   prReviewDepth: PercentileSet
   issuesClosedWithoutCommentRatio: PercentileSet
   topContributorShare: PercentileSet
+  documentationScore?: PercentileSet
 }
 
 export function getBracket(stars: number | Unavailable): BracketKey {

@@ -47,6 +47,24 @@ export interface ResponsivenessMetrics {
   openPullRequestCount: number | Unavailable
 }
 
+export interface DocumentationFileCheck {
+  name: 'readme' | 'license' | 'contributing' | 'code_of_conduct' | 'security' | 'changelog'
+  found: boolean
+  path: string | null
+  licenseType: string | null
+}
+
+export interface ReadmeSectionCheck {
+  name: 'description' | 'installation' | 'usage' | 'contributing' | 'license'
+  detected: boolean
+}
+
+export interface DocumentationResult {
+  fileChecks: DocumentationFileCheck[]
+  readmeSections: ReadmeSectionCheck[]
+  readmeContent: string | null
+}
+
 export interface AnalysisResult {
   repo: string
   name: string | Unavailable
@@ -80,6 +98,7 @@ export interface AnalysisResult {
   issueFirstResponseTimestamps: string[] | Unavailable
   issueCloseTimestamps: string[] | Unavailable
   prMergeTimestamps: string[] | Unavailable
+  documentationResult: DocumentationResult | Unavailable
   missingFields: string[]
 }
 

@@ -27,7 +27,8 @@ const RESULT_BASE = {
   issueFirstResponseTimestamps: [],
   issueCloseTimestamps: [],
   prMergeTimestamps: [],
-  missingFields: [],
+  documentationResult: 'unavailable',
+    missingFields: [],
 }
 
 const MINIMAL_RESPONSE: AnalyzeResponse = {

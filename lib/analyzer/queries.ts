@@ -18,6 +18,34 @@ export const REPO_OVERVIEW_QUERY = `
       pullRequests(states: OPEN) {
         totalCount
       }
+      licenseInfo {
+        spdxId
+        name
+      }
+      docReadmeMd: object(expression: "HEAD:README.md") { ... on Blob { text } }
+      docReadmeLower: object(expression: "HEAD:readme.md") { ... on Blob { text } }
+      docReadmeRst: object(expression: "HEAD:README.rst") { ... on Blob { text } }
+      docReadmeTxt: object(expression: "HEAD:README.txt") { ... on Blob { text } }
+      docReadmePlain: object(expression: "HEAD:README") { ... on Blob { text } }
+      docLicense: object(expression: "HEAD:LICENSE") { ... on Blob { oid } }
+      docLicenseMd: object(expression: "HEAD:LICENSE.md") { ... on Blob { oid } }
+      docLicenseTxt: object(expression: "HEAD:LICENSE.txt") { ... on Blob { oid } }
+      docCopying: object(expression: "HEAD:COPYING") { ... on Blob { oid } }
+      docContributing: object(expression: "HEAD:CONTRIBUTING.md") { ... on Blob { oid } }
+      docContributingRst: object(expression: "HEAD:CONTRIBUTING.rst") { ... on Blob { oid } }
+      docContributingTxt: object(expression: "HEAD:CONTRIBUTING.txt") { ... on Blob { oid } }
+      docCodeOfConduct: object(expression: "HEAD:CODE_OF_CONDUCT.md") { ... on Blob { oid } }
+      docCodeOfConductRst: object(expression: "HEAD:CODE_OF_CONDUCT.rst") { ... on Blob { oid } }
+      docCodeOfConductTxt: object(expression: "HEAD:CODE_OF_CONDUCT.txt") { ... on Blob { oid } }
+      docLicenseRst: object(expression: "HEAD:LICENSE.rst") { ... on Blob { oid } }
+      docSecurity: object(expression: "HEAD:SECURITY.md") { ... on Blob { oid } }
+      docSecurityRst: object(expression: "HEAD:SECURITY.rst") { ... on Blob { oid } }
+      docChangelog: object(expression: "HEAD:CHANGELOG.md") { ... on Blob { oid } }
+      docChangelogPlain: object(expression: "HEAD:CHANGELOG") { ... on Blob { oid } }
+      docChanges: object(expression: "HEAD:CHANGES.md") { ... on Blob { oid } }
+      docChangesRst: object(expression: "HEAD:CHANGES.rst") { ... on Blob { oid } }
+      docHistory: object(expression: "HEAD:HISTORY.md") { ... on Blob { oid } }
+      docNews: object(expression: "HEAD:NEWS.md") { ... on Blob { oid } }
     }
     rateLimit {
       remaining
