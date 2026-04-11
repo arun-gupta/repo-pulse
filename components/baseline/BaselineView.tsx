@@ -24,7 +24,7 @@ const PERCENTAGE_METRICS = new Set([
   'prMergeRate', 'issueClosureRate', 'staleIssueRatio', 'stalePrRatio',
   'issueResolutionRate', 'contributorResponseRate', 'humanResponseRatio',
   'botResponseRatio', 'issuesClosedWithoutCommentRatio', 'topContributorShare',
-  'forkRate', 'watcherRate',
+  'forkRate', 'watcherRate', 'documentationScore',
 ])
 
 const DURATION_METRICS = new Set([
