@@ -649,7 +649,7 @@ function sectionPatterns(keyword: RegExp): RegExp[] {
 }
 
 const SECTION_PATTERNS: Array<{ name: ReadmeSectionCheck['name']; patterns: RegExp[] }> = [
-  { name: 'description', patterns: sectionPatterns(/(?:about|overview|description|introduction|what is)/) },
+  { name: 'description', patterns: sectionPatterns(/(?:about|overview|description|introduction|what is|features)/) },
   { name: 'installation', patterns: sectionPatterns(/(?:install(?:ation|ing)?|setup|getting\s*started|quick\s*start)/) },
   { name: 'usage', patterns: sectionPatterns(/(?:usage|examples?|how\s*to\s*use|tutorial|demo)/) },
   { name: 'contributing', patterns: sectionPatterns(/(?:contribut(?:ing|e|ors?)|how\s*to\s*contribute)/) },

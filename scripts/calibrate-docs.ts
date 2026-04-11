@@ -196,7 +196,7 @@ function rstAndMdPatterns(keyword: RegExp): RegExp[] {
 }
 
 const SECTION_PATTERNS: Array<{ name: string; patterns: RegExp[] }> = [
-  { name: 'description', patterns: rstAndMdPatterns(/(?:about|overview|description|introduction|what is)/) },
+  { name: 'description', patterns: rstAndMdPatterns(/(?:about|overview|description|introduction|what is|features)/) },
   { name: 'installation', patterns: rstAndMdPatterns(/(?:install(?:ation|ing)?|setup|getting\s*started|quick\s*start)/) },
   { name: 'usage', patterns: rstAndMdPatterns(/(?:usage|examples?|how\s*to\s*use|tutorial|demo)/) },
   { name: 'contributing', patterns: rstAndMdPatterns(/(?:contribut(?:ing|e|ors?)|how\s*to\s*contribute)/) },
