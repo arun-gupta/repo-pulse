@@ -276,6 +276,41 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     '',
   )
 
+  // Documentation section
+  if (result.documentationResult !== 'unavailable') {
+    const docScore = getDocumentationScore(result.documentationResult, result.stars)
+    const { fileChecks, readmeSections } = result.documentationResult
+    const FILE_LABELS: Record<string, string> = {
+      readme: 'README', license: 'LICENSE', contributing: 'CONTRIBUTING',
+      code_of_conduct: 'CODE_OF_CONDUCT', security: 'SECURITY', changelog: 'CHANGELOG',
+    }
+    const SECTION_LABELS: Record<string, string> = {
+      description: 'Description / Overview', installation: 'Installation / Setup',
+      usage: 'Usage / Examples', contributing: 'Contributing', license: 'License',
+    }
+
+    lines.push(
+      '### Documentation',
+      '',
+      `**Score**: ${docScore.value}`,
+      '',
+      '#### Files',
+      '',
+      mdTable(fileChecks.map((f) => [
+        FILE_LABELS[f.name] ?? f.name,
+        f.found ? `Present${f.path ? ` (${f.path})` : ''}${f.licenseType ? ` — ${f.licenseType}` : ''}` : 'Missing',
+      ])),
+      '',
+      '#### README Sections',
+      '',
+      mdTable(readmeSections.map((s) => [
+        SECTION_LABELS[s.name] ?? s.name,
+        s.detected ? 'Detected' : 'Missing',
+      ])),
+      '',
+    )
+  }
+
   // Health Ratios section with tables per category
   lines.push('### Health Ratios', '')
 
