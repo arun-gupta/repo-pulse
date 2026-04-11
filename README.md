@@ -17,18 +17,7 @@ Live: [repopulse-arun-gupta.vercel.app](https://repopulse-arun-gupta.vercel.app)
 
 Each dimension is scored as a percentile relative to repos in the same star bracket (Emerging, Growing, Established, Popular). The weighted composite becomes the overall health score.
 
-### Coming soon
-
-| Dimension | What it will evaluate |
-|-----------|---------------------|
-| **Security** | Dependency updates, branch protection, CI/CD, vulnerability disclosure |
-| **Community** | Discussions, issue/PR templates, CODEOWNERS, governance |
-| **Release Health** | Frequency, semver compliance, release notes |
-| **Inclusive Naming** | Default branch naming, inclusive terminology in repo metadata |
-| **Licensing & Compliance** | OSI-approved license, SPDX identifier, DCO/CLA enforcement |
-| **Governance & Transparency** | CODEOWNERS, branch protection, required reviewers, changelog |
-| **Accessibility & Onboarding** | Good first issues, time-to-first-contribution, devcontainer, issue/PR templates |
-| **Ecosystem Reach** | Downstream dependents, package registry presence, distribution channels |
+**Coming soon**: Licensing & Compliance, Inclusive Naming, Governance & Transparency, Community, Security, Accessibility & Onboarding, Release Health, Development Cadence, Project Maturity, and Ecosystem Reach. See the [Phase 2 roadmap](docs/DEVELOPMENT.md#phase-2-feature-order) for details.
 
 ## Features
 
