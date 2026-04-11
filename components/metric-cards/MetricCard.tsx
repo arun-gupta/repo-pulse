@@ -52,15 +52,11 @@ export function MetricCard({ card }: MetricCardProps) {
       </div>
 
       {hs.recommendations.length > 0 ? (
-        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-800">Recommendations</p>
-          <ul className="mt-1.5 space-y-1">
-            {hs.recommendations.map((rec, i) => (
-              <li key={i} className="text-xs text-amber-900">
-                <span className="font-medium">{rec.bucket}:</span> {rec.message}
-              </li>
-            ))}
-          </ul>
+        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+          <p className="text-xs text-slate-600">
+            <span className="font-medium text-slate-800">{hs.recommendations.length} recommendation{hs.recommendations.length !== 1 ? 's' : ''}</span>
+            {' — '}see Recommendations tab for details
+          </p>
         </div>
       ) : null}
     </article>
