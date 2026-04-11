@@ -556,16 +556,16 @@ Phase 2 adds new scoring buckets to the OSS Health Score. Each bucket produces a
 | Feature ID | Feature | Issues |
 |---|---|---|
 | P2-F01a | Documentation scoring (basic) | #66 |
+| P2-F02 | Licensing & Compliance | #115 |
+| P2-F03 | Inclusive naming | #107 |
 | P2-F01b | Documentation scoring (advanced) | #110, #67 |
-| P2-F02 | Security scoring | #68, #71 |
-| P2-F03 | Community scoring | #70 |
-| P2-F04 | Release health scoring | #69 |
-| P2-F05 | Development cadence | #73 |
-| P2-F06 | Project maturity | #74 |
-| P2-F07 | Inclusive naming | #107 |
-| P2-F08 | Licensing & Compliance | #115 |
-| P2-F09 | Governance & Transparency | #116 |
-| P2-F10 | Accessibility & Onboarding | #117 |
+| P2-F04 | Governance & Transparency | #116 |
+| P2-F05 | Community scoring | #70 |
+| P2-F06 | Security scoring | #68, #71 |
+| P2-F07 | Accessibility & Onboarding | #117 |
+| P2-F08 | Release health scoring | #69 |
+| P2-F09 | Development cadence | #73 |
+| P2-F10 | Project maturity | #74 |
 | P2-F11 | Ecosystem Reach | #118 |
 
 ### Phase 3 — Integrations
