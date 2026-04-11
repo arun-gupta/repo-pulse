@@ -562,6 +562,7 @@ Phase 2 adds new scoring buckets to the OSS Health Score. Each bucket produces a
 | P2-F04 | Release health scoring | #69 |
 | P2-F05 | Development cadence | #73 |
 | P2-F06 | Project maturity | #74 |
+| P2-F07 | Inclusive naming | #107 |
 
 ### Phase 3 — Integrations
 
