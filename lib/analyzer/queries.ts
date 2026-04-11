@@ -35,10 +35,15 @@ export const REPO_OVERVIEW_QUERY = `
       docContributingRst: object(expression: "HEAD:CONTRIBUTING.rst") { ... on Blob { oid } }
       docContributingTxt: object(expression: "HEAD:CONTRIBUTING.txt") { ... on Blob { oid } }
       docCodeOfConduct: object(expression: "HEAD:CODE_OF_CONDUCT.md") { ... on Blob { oid } }
+      docCodeOfConductRst: object(expression: "HEAD:CODE_OF_CONDUCT.rst") { ... on Blob { oid } }
+      docCodeOfConductTxt: object(expression: "HEAD:CODE_OF_CONDUCT.txt") { ... on Blob { oid } }
+      docLicenseRst: object(expression: "HEAD:LICENSE.rst") { ... on Blob { oid } }
       docSecurity: object(expression: "HEAD:SECURITY.md") { ... on Blob { oid } }
+      docSecurityRst: object(expression: "HEAD:SECURITY.rst") { ... on Blob { oid } }
       docChangelog: object(expression: "HEAD:CHANGELOG.md") { ... on Blob { oid } }
       docChangelogPlain: object(expression: "HEAD:CHANGELOG") { ... on Blob { oid } }
       docChanges: object(expression: "HEAD:CHANGES.md") { ... on Blob { oid } }
+      docChangesRst: object(expression: "HEAD:CHANGES.rst") { ... on Blob { oid } }
       docHistory: object(expression: "HEAD:HISTORY.md") { ... on Blob { oid } }
       docNews: object(expression: "HEAD:NEWS.md") { ... on Blob { oid } }
     }

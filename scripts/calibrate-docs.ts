@@ -188,12 +188,19 @@ const SECTION_WEIGHTS: Record<string, number> = {
   contributing: 0.15, license: 0.10,
 }
 
+function rstAndMdPatterns(keyword: RegExp): RegExp[] {
+  return [
+    new RegExp(`^#+\\s*${keyword.source}`, 'im'),
+    new RegExp(`^(${keyword.source})[^\\n]*\\n[=\\-~^"]+$`, 'im'),
+  ]
+}
+
 const SECTION_PATTERNS: Array<{ name: string; patterns: RegExp[] }> = [
-  { name: 'description', patterns: [/^#+\s*(about|overview|description|introduction|what is)/im] },
-  { name: 'installation', patterns: [/^#+\s*(install(ation|ing)?|setup|getting\s*started|quick\s*start)/im] },
-  { name: 'usage', patterns: [/^#+\s*(usage|examples?|how\s*to\s*use|tutorial|demo)/im] },
-  { name: 'contributing', patterns: [/^#+\s*(contribut(ing|e|ors?)|how\s*to\s*contribute)/im] },
-  { name: 'license', patterns: [/^#+\s*licen[sc]e/im] },
+  { name: 'description', patterns: rstAndMdPatterns(/(?:about|overview|description|introduction|what is)/) },
+  { name: 'installation', patterns: rstAndMdPatterns(/(?:install(?:ation|ing)?|setup|getting\s*started|quick\s*start)/) },
+  { name: 'usage', patterns: rstAndMdPatterns(/(?:usage|examples?|how\s*to\s*use|tutorial|demo)/) },
+  { name: 'contributing', patterns: rstAndMdPatterns(/(?:contribut(?:ing|e|ors?)|how\s*to\s*contribute)/) },
+  { name: 'license', patterns: rstAndMdPatterns(/licen[sc]e/) },
 ]
 
 function computeDocScore(repo: DocRepoData): number {

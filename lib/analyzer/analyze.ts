@@ -50,10 +50,15 @@ interface RepoOverviewResponse {
     docContributingRst?: DocBlob | null
     docContributingTxt?: DocBlob | null
     docCodeOfConduct?: DocBlob | null
+    docCodeOfConductRst?: DocBlob | null
+    docCodeOfConductTxt?: DocBlob | null
+    docLicenseRst?: DocBlob | null
     docSecurity?: DocBlob | null
+    docSecurityRst?: DocBlob | null
     docChangelog?: DocBlob | null
     docChangelogPlain?: DocBlob | null
     docChanges?: DocBlob | null
+    docChangesRst?: DocBlob | null
     docHistory?: DocBlob | null
     docNews?: DocBlob | null
   } | null
@@ -591,25 +596,25 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
     aliases.find((a) => a != null) ?? null
 
   const readmeBlob = findFirst(repo.docReadmeMd, repo.docReadmeLower, repo.docReadmeRst, repo.docReadmeTxt, repo.docReadmePlain)
-  const licenseBlob = findFirst(repo.docLicense, repo.docLicenseMd, repo.docLicenseTxt, repo.docCopying)
+  const licenseBlob = findFirst(repo.docLicense, repo.docLicenseMd, repo.docLicenseTxt, repo.docLicenseRst, repo.docCopying)
   const contributingBlob = findFirst(repo.docContributing, repo.docContributingRst, repo.docContributingTxt)
-  const codeOfConductBlob = repo.docCodeOfConduct ?? null
-  const securityBlob = repo.docSecurity ?? null
-  const changelogBlob = findFirst(repo.docChangelog, repo.docChangelogPlain, repo.docChanges, repo.docHistory, repo.docNews)
+  const codeOfConductBlob = findFirst(repo.docCodeOfConduct, repo.docCodeOfConductRst, repo.docCodeOfConductTxt)
+  const securityBlob = findFirst(repo.docSecurity, repo.docSecurityRst)
+  const changelogBlob = findFirst(repo.docChangelog, repo.docChangelogPlain, repo.docChanges, repo.docChangesRst, repo.docHistory, repo.docNews)
 
   const readmePathMap: [string, DocBlob | null | undefined][] = [
     ['README.md', repo.docReadmeMd], ['readme.md', repo.docReadmeLower], ['README.rst', repo.docReadmeRst],
     ['README.txt', repo.docReadmeTxt], ['README', repo.docReadmePlain],
   ]
   const licensePathMap: [string, DocBlob | null | undefined][] = [
-    ['LICENSE', repo.docLicense], ['LICENSE.md', repo.docLicenseMd], ['LICENSE.txt', repo.docLicenseTxt], ['COPYING', repo.docCopying],
+    ['LICENSE', repo.docLicense], ['LICENSE.md', repo.docLicenseMd], ['LICENSE.txt', repo.docLicenseTxt], ['LICENSE.rst', repo.docLicenseRst], ['COPYING', repo.docCopying],
   ]
   const contributingPathMap: [string, DocBlob | null | undefined][] = [
     ['CONTRIBUTING.md', repo.docContributing], ['CONTRIBUTING.rst', repo.docContributingRst], ['CONTRIBUTING.txt', repo.docContributingTxt],
   ]
   const changelogPathMap: [string, DocBlob | null | undefined][] = [
     ['CHANGELOG.md', repo.docChangelog], ['CHANGELOG', repo.docChangelogPlain], ['CHANGES.md', repo.docChanges],
-    ['HISTORY.md', repo.docHistory], ['NEWS.md', repo.docNews],
+    ['CHANGES.rst', repo.docChangesRst], ['HISTORY.md', repo.docHistory], ['NEWS.md', repo.docNews],
   ]
 
   function foundPath(pathMap: [string, DocBlob | null | undefined][]): string | null {
@@ -625,8 +630,8 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
     { name: 'readme', found: readmeBlob !== null, path: foundPath(readmePathMap), licenseType: null },
     { name: 'license', found: licenseBlob !== null, path: foundPath(licensePathMap), licenseType: repo.licenseInfo?.spdxId ?? null },
     { name: 'contributing', found: contributingBlob !== null, path: foundPath(contributingPathMap), licenseType: null },
-    { name: 'code_of_conduct', found: codeOfConductBlob !== null, path: codeOfConductBlob ? 'CODE_OF_CONDUCT.md' : null, licenseType: null },
-    { name: 'security', found: securityBlob !== null, path: securityBlob ? 'SECURITY.md' : null, licenseType: null },
+    { name: 'code_of_conduct', found: codeOfConductBlob !== null, path: foundPath([['CODE_OF_CONDUCT.md', repo.docCodeOfConduct], ['CODE_OF_CONDUCT.rst', repo.docCodeOfConductRst], ['CODE_OF_CONDUCT.txt', repo.docCodeOfConductTxt]]), licenseType: null },
+    { name: 'security', found: securityBlob !== null, path: foundPath([['SECURITY.md', repo.docSecurity], ['SECURITY.rst', repo.docSecurityRst]]), licenseType: null },
     { name: 'changelog', found: changelogBlob !== null, path: foundPath(changelogPathMap), licenseType: null },
   ]
 
@@ -635,12 +640,20 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
   return { fileChecks, readmeSections, readmeContent }
 }
 
+// Matches both Markdown headings (## Title) and RST headings (Title\n====)
+function sectionPatterns(keyword: RegExp): RegExp[] {
+  return [
+    new RegExp(`^#+\\s*${keyword.source}`, 'im'),               // Markdown: ## Keyword
+    new RegExp(`^(${keyword.source})[^\\n]*\\n[=\\-~^"]+$`, 'im'), // RST: Keyword\n======
+  ]
+}
+
 const SECTION_PATTERNS: Array<{ name: ReadmeSectionCheck['name']; patterns: RegExp[] }> = [
-  { name: 'description', patterns: [/^#+\s*(about|overview|description|introduction|what is)/im] },
-  { name: 'installation', patterns: [/^#+\s*(install(ation|ing)?|setup|getting\s*started|quick\s*start)/im] },
-  { name: 'usage', patterns: [/^#+\s*(usage|examples?|how\s*to\s*use|tutorial|demo)/im] },
-  { name: 'contributing', patterns: [/^#+\s*(contribut(ing|e|ors?)|how\s*to\s*contribute)/im] },
-  { name: 'license', patterns: [/^#+\s*licen[sc]e/im] },
+  { name: 'description', patterns: sectionPatterns(/(?:about|overview|description|introduction|what is)/) },
+  { name: 'installation', patterns: sectionPatterns(/(?:install(?:ation|ing)?|setup|getting\s*started|quick\s*start)/) },
+  { name: 'usage', patterns: sectionPatterns(/(?:usage|examples?|how\s*to\s*use|tutorial|demo)/) },
+  { name: 'contributing', patterns: sectionPatterns(/(?:contribut(?:ing|e|ors?)|how\s*to\s*contribute)/) },
+  { name: 'license', patterns: sectionPatterns(/licen[sc]e/) },
 ]
 
 function detectReadmeSections(content: string | null): ReadmeSectionCheck[] {
