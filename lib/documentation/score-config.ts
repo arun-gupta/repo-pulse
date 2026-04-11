@@ -31,12 +31,12 @@ const FILE_WEIGHTS: Record<string, number> = {
 }
 
 const FILE_RECOMMENDATIONS: Record<string, string> = {
-  readme: 'Add a README to help users understand what this project does and how to use it',
-  license: 'Add a license file to clarify how others can use, modify, and distribute this project',
-  contributing: 'Add contributing guidelines to help new contributors understand how to participate',
-  code_of_conduct: 'Add a code of conduct to set expectations for community interaction',
-  security: 'Add a security policy with vulnerability reporting instructions so users know how to disclose issues responsibly',
-  changelog: 'Add a changelog to help users understand what changed between releases',
+  readme: 'Add a README (e.g. README.md) to help users understand what this project does and how to use it',
+  license: 'Add a license file (e.g. LICENSE) to clarify how others can use, modify, and distribute this project',
+  contributing: 'Add contributing guidelines (e.g. CONTRIBUTING.md) to help new contributors understand how to participate',
+  code_of_conduct: 'Add a code of conduct (e.g. CODE_OF_CONDUCT.md) to set expectations for community interaction',
+  security: 'Add a security policy (e.g. SECURITY.md) with vulnerability reporting instructions so users know how to disclose issues responsibly',
+  changelog: 'Add a changelog (e.g. CHANGELOG.md) to help users understand what changed between releases',
 }
 
 const SECTION_WEIGHTS: Record<string, number> = {
