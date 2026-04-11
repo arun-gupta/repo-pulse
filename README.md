@@ -67,6 +67,10 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for full setup and Vercel deploym
 
 See [`docs/PRODUCT.md`](docs/PRODUCT.md) for detailed feature specifications per phase.
 
+## Contributing
+
+We welcome contributions! See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup instructions, development workflow, and how to submit a pull request. Check out issues labeled [`good first issue`](https://github.com/arun-gupta/repo-pulse/labels/good%20first%20issue) to get started.
+
 ## Docs
 
 - [`docs/PRODUCT.md`](docs/PRODUCT.md) — Product definition and feature specifications
