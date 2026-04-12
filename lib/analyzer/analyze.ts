@@ -345,22 +345,6 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       })
       latestRateLimit = commitAndReleases.rateLimit ?? latestRateLimit
 
-      // Debug: trace commit history availability
-      const dbgRepo = commitAndReleases.data.repository
-      const dbgRef = dbgRepo?.defaultBranchRef
-      const dbgTarget = dbgRef?.target
-      const dbgCommits = dbgTarget?.recent365Commits
-      console.log(`[DEBUG:${repo}] Pass 1 result:`, {
-        hasRepository: !!dbgRepo,
-        hasDefaultBranchRef: !!dbgRef,
-        hasTarget: !!dbgTarget,
-        hasRecent365Commits: !!dbgCommits,
-        commitNodeCount: dbgCommits?.nodes?.length ?? 0,
-        hasNextPage: dbgCommits?.pageInfo?.hasNextPage ?? false,
-        recent30: dbgTarget?.recent30?.totalCount ?? 'null',
-        recent90: dbgTarget?.recent90?.totalCount ?? 'null',
-      })
-
       // Pass 2: Search-based PR/issue counts (may hit RESOURCE_LIMITS_EXCEEDED)
       const searchVariables = {
         prsOpened30Query: buildSearchQuery(repoSearch, 'is:pr', 'created', since30),
@@ -455,7 +439,6 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         initialConnection: activity.data.repository?.defaultBranchRef?.target?.recent365Commits ?? null,
       })
       latestRateLimit = commitHistory.rateLimit ?? latestRateLimit
-      console.log(`[DEBUG:${repo}] Commit history: ${commitHistory.nodes.length} nodes collected`)
 
       const contributorMetricsByWindow = buildContributorMetricsByWindow(commitHistory.nodes, now)
       const activityMetricsByWindow = buildActivityMetricsByWindow(

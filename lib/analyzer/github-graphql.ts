@@ -31,27 +31,13 @@ export async function queryGitHubGraphQL<T>(
 
   const payload = (await response.json()) as { data?: T; errors?: Array<{ message: string; type?: string }> }
 
-  // Extract query name for debug logging
-  const queryNameMatch = query.match(/query\s+(\w+)/)
-  const queryName = queryNameMatch?.[1] ?? 'unknown'
-
   if (payload.errors?.length) {
-    console.warn(`[GraphQL:${queryName}] Errors:`, JSON.stringify(payload.errors, null, 2))
-    console.warn(`[GraphQL:${queryName}] Has partial data: ${!!payload.data}`)
-    if (payload.data) {
-      const topKeys = Object.keys(payload.data as Record<string, unknown>)
-      const nullKeys = topKeys.filter((k) => (payload.data as Record<string, unknown>)[k] == null)
-      console.warn(`[GraphQL:${queryName}] Data keys: ${topKeys.join(', ')}`)
-      console.warn(`[GraphQL:${queryName}] Null keys: ${nullKeys.join(', ') || '(none)'}`)
-    }
-
     const isResourceLimitExceeded = payload.errors.some(
       (error) => error.type === 'RESOURCE_LIMITS_EXCEEDED' || error.message.includes('RESOURCE_LIMITS_EXCEEDED'),
     )
 
     // RESOURCE_LIMITS_EXCEEDED returns partial data — use what we got
     if (isResourceLimitExceeded && payload.data) {
-      console.warn(`[GraphQL:${queryName}] Using partial data despite RESOURCE_LIMITS_EXCEEDED`)
       const data = payload.data
       const rateLimit = extractRateLimit(data)
       return { data, rateLimit }
