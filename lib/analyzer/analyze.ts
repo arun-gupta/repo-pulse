@@ -18,7 +18,7 @@ import type {
 import { CONTRIBUTOR_WINDOW_DAYS } from './analysis-result'
 import { queryGitHubGraphQL } from './github-graphql'
 import { fetchContributorCount, fetchMaintainerCount, fetchPublicUserOrganizations } from './github-rest'
-import { REPO_ACTIVITY_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
+import { REPO_COMMIT_AND_RELEASES_QUERY, REPO_ACTIVITY_COUNTS_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
 
 interface DocBlob {
   text?: string
@@ -64,7 +64,7 @@ interface RepoOverviewResponse {
   } | null
 }
 
-interface RepoActivityResponse {
+interface RepoCommitAndReleasesResponse {
   repository: {
     releases: {
       nodes: Array<{
@@ -82,31 +82,36 @@ interface RepoActivityResponse {
       } | null
     } | null
   } | null
-  prsOpened30: { issueCount: number }
-  prsOpened60: { issueCount: number }
-  prsOpened90: { issueCount: number }
-  prsOpened180: { issueCount: number }
-  prsOpened365: { issueCount: number }
-  prsMerged30: { issueCount: number }
-  prsMerged60: { issueCount: number }
-  prsMerged90: { issueCount: number }
-  prsMerged180: { issueCount: number }
-  prsMerged365: { issueCount: number }
-  issuesOpened30: { issueCount: number }
-  issuesOpened60: { issueCount: number }
-  issuesOpened90: { issueCount: number }
-  issuesOpened180: { issueCount: number }
-  issuesOpened365: { issueCount: number }
-  issuesClosed30: { issueCount: number }
-  issuesClosed60: { issueCount: number }
-  issuesClosed90: { issueCount: number }
-  issuesClosed180: { issueCount: number }
-  issuesClosed365: { issueCount: number }
-  staleIssues30: { issueCount: number }
-  staleIssues60: { issueCount: number }
-  staleIssues90: { issueCount: number }
-  staleIssues180: { issueCount: number }
-  staleIssues365: { issueCount: number }
+}
+
+interface SearchCount { issueCount: number }
+
+interface RepoActivityCountsResponse {
+  prsOpened30: SearchCount
+  prsOpened60: SearchCount
+  prsOpened90: SearchCount
+  prsOpened180: SearchCount
+  prsOpened365: SearchCount
+  prsMerged30: SearchCount
+  prsMerged60: SearchCount
+  prsMerged90: SearchCount
+  prsMerged180: SearchCount
+  prsMerged365: SearchCount
+  issuesOpened30: SearchCount
+  issuesOpened60: SearchCount
+  issuesOpened90: SearchCount
+  issuesOpened180: SearchCount
+  issuesOpened365: SearchCount
+  issuesClosed30: SearchCount
+  issuesClosed60: SearchCount
+  issuesClosed90: SearchCount
+  issuesClosed180: SearchCount
+  issuesClosed365: SearchCount
+  staleIssues30: SearchCount
+  staleIssues60: SearchCount
+  staleIssues90: SearchCount
+  staleIssues180: SearchCount
+  staleIssues365: SearchCount
   recentMergedPullRequests: {
     nodes: Array<{
       createdAt: string
@@ -120,6 +125,8 @@ interface RepoActivityResponse {
     }>
   }
 }
+
+type RepoActivityResponse = RepoCommitAndReleasesResponse & RepoActivityCountsResponse
 
 interface SearchActorNode {
   login: string | null
@@ -326,7 +333,8 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       staleBefore365.setDate(now.getDate() - 365)
       const repoSearch = `${owner}/${name}`
 
-      const activity = await queryGitHubGraphQL<RepoActivityResponse>(input.token, REPO_ACTIVITY_QUERY, {
+      // Pass 1: Commit history + releases (lightweight — no search queries)
+      const commitAndReleases = await queryGitHubGraphQL<RepoCommitAndReleasesResponse>(input.token, REPO_COMMIT_AND_RELEASES_QUERY, {
         owner,
         name,
         since30: since30.toISOString(),
@@ -334,6 +342,11 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         since90: since90.toISOString(),
         since180: since180.toISOString(),
         since365: since365.toISOString(),
+      })
+      latestRateLimit = commitAndReleases.rateLimit ?? latestRateLimit
+
+      // Pass 2: Search-based PR/issue counts (may hit RESOURCE_LIMITS_EXCEEDED)
+      const searchVariables = {
         prsOpened30Query: buildSearchQuery(repoSearch, 'is:pr', 'created', since30),
         prsOpened60Query: buildSearchQuery(repoSearch, 'is:pr', 'created', since60),
         prsOpened90Query: buildSearchQuery(repoSearch, 'is:pr', 'created', since90),
@@ -359,8 +372,24 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         staleIssues90Query: buildOpenIssuesOlderThanQuery(repoSearch, staleBefore90),
         staleIssues180Query: buildOpenIssuesOlderThanQuery(repoSearch, staleBefore180),
         staleIssues365Query: buildOpenIssuesOlderThanQuery(repoSearch, staleBefore365),
-      })
-      latestRateLimit = activity.rateLimit ?? latestRateLimit
+      }
+
+      let activityCounts: RepoActivityCountsResponse
+      try {
+        const countsResponse = await queryGitHubGraphQL<RepoActivityCountsResponse>(input.token, REPO_ACTIVITY_COUNTS_QUERY, searchVariables)
+        latestRateLimit = countsResponse.rateLimit ?? latestRateLimit
+        activityCounts = countsResponse.data
+      } catch (countsError) {
+        latestRateLimit = extractRateLimitFromError(countsError) ?? latestRateLimit
+        diagnostics.push(buildDiagnostic(repo, 'github-graphql:activity-counts', countsError))
+        activityCounts = buildUnavailableActivityCounts()
+      }
+
+      // Merge pass 1 + pass 2 into the combined activity response
+      const activity = {
+        data: { ...commitAndReleases.data, ...activityCounts } as RepoActivityResponse,
+        rateLimit: latestRateLimit,
+      }
 
       const responsiveness = await fetchResponsivenessTwoPass(
         input.token,
@@ -1659,6 +1688,19 @@ function buildFailure(repo: string, error: unknown): RepositoryFetchFailure {
   }
 
   return { repo, reason: 'Repository could not be analyzed.', code: 'FETCH_FAILED' }
+}
+
+function buildUnavailableActivityCounts(): RepoActivityCountsResponse {
+  const unavailable = { issueCount: 0 }
+  return {
+    prsOpened30: unavailable, prsOpened60: unavailable, prsOpened90: unavailable, prsOpened180: unavailable, prsOpened365: unavailable,
+    prsMerged30: unavailable, prsMerged60: unavailable, prsMerged90: unavailable, prsMerged180: unavailable, prsMerged365: unavailable,
+    issuesOpened30: unavailable, issuesOpened60: unavailable, issuesOpened90: unavailable, issuesOpened180: unavailable, issuesOpened365: unavailable,
+    issuesClosed30: unavailable, issuesClosed60: unavailable, issuesClosed90: unavailable, issuesClosed180: unavailable, issuesClosed365: unavailable,
+    staleIssues30: unavailable, staleIssues60: unavailable, staleIssues90: unavailable, staleIssues180: unavailable, staleIssues365: unavailable,
+    recentMergedPullRequests: { nodes: [] },
+    recentClosedIssues: { nodes: [] },
+  }
 }
 
 function buildDiagnostic(

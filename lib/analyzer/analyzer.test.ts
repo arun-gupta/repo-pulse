@@ -53,13 +53,17 @@ describe('analyze', () => {
         },
         rateLimit: { remaining: 4999, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
       })
+      // Activity pass 1: commit history + releases
       .mockResolvedValueOnce({
         data: {
           repository: {
+            releases: { nodes: [] },
             defaultBranchRef: {
               target: {
                 recent30: { totalCount: 7 },
+                recent60: { totalCount: 12 },
                 recent90: { totalCount: 18 },
+                recent180: { totalCount: 30 },
                 recent365Commits: {
                   pageInfo: { hasNextPage: false, endCursor: null },
                   nodes: [
@@ -80,9 +84,20 @@ describe('analyze', () => {
               },
             },
           },
-          prsOpened: { issueCount: 4 },
-          prsMerged: { issueCount: 3 },
-          issuesClosed: { issueCount: 6 },
+          rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z' },
+        },
+        rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
+      })
+      // Activity pass 2: search-based counts
+      .mockResolvedValueOnce({
+        data: {
+          prsOpened30: { issueCount: 4 }, prsOpened60: { issueCount: 4 }, prsOpened90: { issueCount: 4 }, prsOpened180: { issueCount: 4 }, prsOpened365: { issueCount: 4 },
+          prsMerged30: { issueCount: 3 }, prsMerged60: { issueCount: 3 }, prsMerged90: { issueCount: 3 }, prsMerged180: { issueCount: 3 }, prsMerged365: { issueCount: 3 },
+          issuesOpened30: { issueCount: 0 }, issuesOpened60: { issueCount: 0 }, issuesOpened90: { issueCount: 0 }, issuesOpened180: { issueCount: 0 }, issuesOpened365: { issueCount: 0 },
+          issuesClosed30: { issueCount: 6 }, issuesClosed60: { issueCount: 6 }, issuesClosed90: { issueCount: 6 }, issuesClosed180: { issueCount: 6 }, issuesClosed365: { issueCount: 6 },
+          staleIssues30: { issueCount: 0 }, staleIssues60: { issueCount: 0 }, staleIssues90: { issueCount: 0 }, staleIssues180: { issueCount: 0 }, staleIssues365: { issueCount: 0 },
+          recentMergedPullRequests: { nodes: [] },
+          recentClosedIssues: { nodes: [] },
           rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z' },
         },
         rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
@@ -179,6 +194,7 @@ describe('analyze', () => {
         },
         rateLimit: { remaining: 4999, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
       })
+      // Activity pass 1: commit history + releases
       .mockResolvedValueOnce({
         data: {
           repository: {
@@ -196,26 +212,19 @@ describe('analyze', () => {
               },
             },
           },
-          prsOpened30: { issueCount: 2 },
-          prsOpened60: { issueCount: 3 },
-          prsOpened90: { issueCount: 4 },
-          prsOpened180: { issueCount: 7 },
-          prsOpened365: { issueCount: 12 },
-          prsMerged30: { issueCount: 1 },
-          prsMerged60: { issueCount: 2 },
-          prsMerged90: { issueCount: 3 },
-          prsMerged180: { issueCount: 5 },
-          prsMerged365: { issueCount: 9 },
-          issuesOpened30: { issueCount: 4 },
-          issuesOpened60: { issueCount: 6 },
-          issuesOpened90: { issueCount: 8 },
-          issuesOpened180: { issueCount: 10 },
-          issuesOpened365: { issueCount: 16 },
-          issuesClosed30: { issueCount: 3 },
-          issuesClosed60: { issueCount: 5 },
-          issuesClosed90: { issueCount: 6 },
-          issuesClosed180: { issueCount: 8 },
-          issuesClosed365: { issueCount: 13 },
+        },
+        rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
+      })
+      // Activity pass 2: search-based counts
+      .mockResolvedValueOnce({
+        data: {
+          prsOpened30: { issueCount: 2 }, prsOpened60: { issueCount: 3 }, prsOpened90: { issueCount: 4 }, prsOpened180: { issueCount: 7 }, prsOpened365: { issueCount: 12 },
+          prsMerged30: { issueCount: 1 }, prsMerged60: { issueCount: 2 }, prsMerged90: { issueCount: 3 }, prsMerged180: { issueCount: 5 }, prsMerged365: { issueCount: 9 },
+          issuesOpened30: { issueCount: 4 }, issuesOpened60: { issueCount: 6 }, issuesOpened90: { issueCount: 8 }, issuesOpened180: { issueCount: 10 }, issuesOpened365: { issueCount: 16 },
+          issuesClosed30: { issueCount: 3 }, issuesClosed60: { issueCount: 5 }, issuesClosed90: { issueCount: 6 }, issuesClosed180: { issueCount: 8 }, issuesClosed365: { issueCount: 13 },
+          staleIssues30: { issueCount: 0 }, staleIssues60: { issueCount: 0 }, staleIssues90: { issueCount: 0 }, staleIssues180: { issueCount: 0 }, staleIssues365: { issueCount: 0 },
+          recentMergedPullRequests: { nodes: [] },
+          recentClosedIssues: { nodes: [] },
         },
         rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
       })
@@ -275,6 +284,7 @@ describe('analyze', () => {
         },
         rateLimit: { remaining: 4999, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
       })
+      // Activity pass 1: commit history + releases
       .mockResolvedValueOnce({
         data: {
           repository: {
@@ -297,31 +307,17 @@ describe('analyze', () => {
               },
             },
           },
-          prsOpened30: { issueCount: 2 },
-          prsOpened60: { issueCount: 3 },
-          prsOpened90: { issueCount: 4 },
-          prsOpened180: { issueCount: 5 },
-          prsOpened365: { issueCount: 6 },
-          prsMerged30: { issueCount: 1 },
-          prsMerged60: { issueCount: 2 },
-          prsMerged90: { issueCount: 3 },
-          prsMerged180: { issueCount: 4 },
-          prsMerged365: { issueCount: 5 },
-          issuesOpened30: { issueCount: 3 },
-          issuesOpened60: { issueCount: 5 },
-          issuesOpened90: { issueCount: 8 },
-          issuesOpened180: { issueCount: 10 },
-          issuesOpened365: { issueCount: 11 },
-          issuesClosed30: { issueCount: 2 },
-          issuesClosed60: { issueCount: 4 },
-          issuesClosed90: { issueCount: 6 },
-          issuesClosed180: { issueCount: 8 },
-          issuesClosed365: { issueCount: 9 },
-          staleIssues30: { issueCount: 1 },
-          staleIssues60: { issueCount: 1 },
-          staleIssues90: { issueCount: 2 },
-          staleIssues180: { issueCount: 2 },
-          staleIssues365: { issueCount: 3 },
+        },
+        rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
+      })
+      // Activity pass 2: search-based counts
+      .mockResolvedValueOnce({
+        data: {
+          prsOpened30: { issueCount: 2 }, prsOpened60: { issueCount: 3 }, prsOpened90: { issueCount: 4 }, prsOpened180: { issueCount: 5 }, prsOpened365: { issueCount: 6 },
+          prsMerged30: { issueCount: 1 }, prsMerged60: { issueCount: 2 }, prsMerged90: { issueCount: 3 }, prsMerged180: { issueCount: 4 }, prsMerged365: { issueCount: 5 },
+          issuesOpened30: { issueCount: 3 }, issuesOpened60: { issueCount: 5 }, issuesOpened90: { issueCount: 8 }, issuesOpened180: { issueCount: 10 }, issuesOpened365: { issueCount: 11 },
+          issuesClosed30: { issueCount: 2 }, issuesClosed60: { issueCount: 4 }, issuesClosed90: { issueCount: 6 }, issuesClosed180: { issueCount: 8 }, issuesClosed365: { issueCount: 9 },
+          staleIssues30: { issueCount: 1 }, staleIssues60: { issueCount: 1 }, staleIssues90: { issueCount: 2 }, staleIssues180: { issueCount: 2 }, staleIssues365: { issueCount: 3 },
           recentMergedPullRequests: { nodes: [{ createdAt: '2026-03-01T00:00:00Z', mergedAt: '2026-03-02T12:00:00Z' }] },
           recentClosedIssues: { nodes: [{ createdAt: '2026-03-03T00:00:00Z', closedAt: '2026-03-05T00:00:00Z' }] },
         },
@@ -411,6 +407,7 @@ describe('analyze', () => {
 
   it('isolates a failing repository while still returning successful results for others', async () => {
     queryGitHubGraphQLMock
+      // react: overview
       .mockResolvedValueOnce({
         data: {
           repository: {
@@ -427,13 +424,17 @@ describe('analyze', () => {
         },
         rateLimit: { remaining: 4999, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
       })
+      // react: activity pass 1
       .mockResolvedValueOnce({
         data: {
           repository: {
+            releases: { nodes: [] },
             defaultBranchRef: {
               target: {
                 recent30: { totalCount: 7 },
+                recent60: { totalCount: 12 },
                 recent90: { totalCount: 18 },
+                recent180: { totalCount: 30 },
                 recent365Commits: {
                   pageInfo: { hasNextPage: false, endCursor: null },
                   nodes: [
@@ -446,13 +447,23 @@ describe('analyze', () => {
               },
             },
           },
-          prsOpened: { issueCount: 4 },
-          prsMerged: { issueCount: 3 },
-          issuesClosed: { issueCount: 6 },
-          rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z' },
         },
         rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
       })
+      // react: activity pass 2
+      .mockResolvedValueOnce({
+        data: {
+          prsOpened30: { issueCount: 4 }, prsOpened60: { issueCount: 4 }, prsOpened90: { issueCount: 4 }, prsOpened180: { issueCount: 4 }, prsOpened365: { issueCount: 4 },
+          prsMerged30: { issueCount: 3 }, prsMerged60: { issueCount: 3 }, prsMerged90: { issueCount: 3 }, prsMerged180: { issueCount: 3 }, prsMerged365: { issueCount: 3 },
+          issuesOpened30: { issueCount: 0 }, issuesOpened60: { issueCount: 0 }, issuesOpened90: { issueCount: 0 }, issuesOpened180: { issueCount: 0 }, issuesOpened365: { issueCount: 0 },
+          issuesClosed30: { issueCount: 6 }, issuesClosed60: { issueCount: 6 }, issuesClosed90: { issueCount: 6 }, issuesClosed180: { issueCount: 6 }, issuesClosed365: { issueCount: 6 },
+          staleIssues30: { issueCount: 0 }, staleIssues60: { issueCount: 0 }, staleIssues90: { issueCount: 0 }, staleIssues180: { issueCount: 0 }, staleIssues365: { issueCount: 0 },
+          recentMergedPullRequests: { nodes: [] },
+          recentClosedIssues: { nodes: [] },
+        },
+        rateLimit: { remaining: 4998, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
+      })
+      // react: responsiveness pass 1
       .mockResolvedValueOnce({
         data: {
           recentCreatedIssues: { nodes: [] },
@@ -467,6 +478,7 @@ describe('analyze', () => {
         },
         rateLimit: { remaining: 4997, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
       })
+      // missing-repo: overview fails
       .mockRejectedValueOnce(new Error('not found'))
 
     const result = await analyze({
