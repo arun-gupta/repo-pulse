@@ -577,7 +577,7 @@ describe('analyze', () => {
     })
   })
 
-  it('keeps total contributors unavailable when the contributor count cannot be verified', async () => {
+  it('falls back to commit-based contributor count when REST API contributor count is unavailable', async () => {
     fetchContributorCountMock.mockResolvedValueOnce({
       data: 'unavailable',
       rateLimit: { remaining: 4997, resetAt: '2026-03-31T23:59:59Z', retryAfter: 'unavailable' },
@@ -631,9 +631,10 @@ describe('analyze', () => {
     })
 
     expect(result.results[0]).toMatchObject({
-      totalContributors: 'unavailable',
+      totalContributors: 1,
+      totalContributorsSource: 'commit-history',
     })
-    expect(result.results[0]?.missingFields).toContain('totalContributors')
+    expect(result.results[0]?.missingFields).not.toContain('totalContributors')
   })
 
   it('keeps maintainer count unavailable when no supported maintainer or owner file can be verified', async () => {

@@ -345,6 +345,22 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       })
       latestRateLimit = commitAndReleases.rateLimit ?? latestRateLimit
 
+      // Debug: trace commit history availability
+      const dbgRepo = commitAndReleases.data.repository
+      const dbgRef = dbgRepo?.defaultBranchRef
+      const dbgTarget = dbgRef?.target
+      const dbgCommits = dbgTarget?.recent365Commits
+      console.log(`[DEBUG:${repo}] Pass 1 result:`, {
+        hasRepository: !!dbgRepo,
+        hasDefaultBranchRef: !!dbgRef,
+        hasTarget: !!dbgTarget,
+        hasRecent365Commits: !!dbgCommits,
+        commitNodeCount: dbgCommits?.nodes?.length ?? 0,
+        hasNextPage: dbgCommits?.pageInfo?.hasNextPage ?? false,
+        recent30: dbgTarget?.recent30?.totalCount ?? 'null',
+        recent90: dbgTarget?.recent90?.totalCount ?? 'null',
+      })
+
       // Pass 2: Search-based PR/issue counts (may hit RESOURCE_LIMITS_EXCEEDED)
       const searchVariables = {
         prsOpened30Query: buildSearchQuery(repoSearch, 'is:pr', 'created', since30),
@@ -439,6 +455,7 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         initialConnection: activity.data.repository?.defaultBranchRef?.target?.recent365Commits ?? null,
       })
       latestRateLimit = commitHistory.rateLimit ?? latestRateLimit
+      console.log(`[DEBUG:${repo}] Commit history: ${commitHistory.nodes.length} nodes collected`)
 
       const contributorMetricsByWindow = buildContributorMetricsByWindow(commitHistory.nodes, now)
       const activityMetricsByWindow = buildActivityMetricsByWindow(
@@ -536,7 +553,12 @@ function buildAnalysisResult(
     }
 
     if (field === 'totalContributors') {
-      return totalContributorCount === 'unavailable'
+      const resolvedTotal = totalContributorCount !== 'unavailable'
+        ? totalContributorCount
+        : contributorMetricsByWindow[365].uniqueCommitAuthors !== 'unavailable' && contributorMetricsByWindow[365].uniqueCommitAuthors > 0
+          ? contributorMetricsByWindow[365].uniqueCommitAuthors
+          : 'unavailable'
+      return resolvedTotal === 'unavailable'
     }
 
     if (field === 'maintainerCount') {
@@ -587,7 +609,12 @@ function buildAnalysisResult(
     issuesOpen: overview.repository?.issues.totalCount ?? 'unavailable',
     issuesClosed90d: activity.issuesClosed90?.issueCount ?? legacyActivity.issuesClosed?.issueCount ?? 'unavailable',
     uniqueCommitAuthors90d: contributorMetrics.uniqueCommitAuthors,
-    totalContributors: totalContributorCount,
+    totalContributors: totalContributorCount !== 'unavailable'
+      ? totalContributorCount
+      : contributorMetricsByWindow[365].uniqueCommitAuthors !== 'unavailable' && contributorMetricsByWindow[365].uniqueCommitAuthors > 0
+        ? contributorMetricsByWindow[365].uniqueCommitAuthors
+        : 'unavailable',
+    totalContributorsSource: totalContributorCount !== 'unavailable' ? 'api' : 'commit-history',
     maintainerCount,
     commitCountsByAuthor: contributorMetrics.commitCountsByAuthor,
     commitCountsByExperimentalOrg: experimentalMetrics.commitCountsByExperimentalOrg,
@@ -1389,6 +1416,11 @@ async function buildExperimentalOrganizationCommitCountsByWindow(
   }
 }
 
+// Cap commit history pagination to avoid extremely long analysis times
+// for repos like torvalds/linux (50,000+ commits/year). 2,000 commits
+// is enough to identify unique contributors and compute accurate ratios.
+const MAX_COMMIT_HISTORY_NODES = 2000
+
 async function collectRecentCommitHistory({
   token,
   owner,
@@ -1411,7 +1443,7 @@ async function collectRecentCommitHistory({
   let hasNextPage = initialConnection.pageInfo.hasNextPage
   let cursor = initialConnection.pageInfo.endCursor
 
-  while (hasNextPage && cursor) {
+  while (hasNextPage && cursor && nodes.length < MAX_COMMIT_HISTORY_NODES) {
     const response = await queryGitHubGraphQL<RepoCommitHistoryPageResponse>(token, REPO_COMMIT_HISTORY_PAGE_QUERY, {
       owner,
       name,
@@ -1466,10 +1498,10 @@ function buildContributorMetrics(
 ): Pick<ContributorWindowMetrics, 'uniqueCommitAuthors' | 'commitCountsByAuthor' | 'repeatContributors' | 'newContributors'> {
   if (recentCommitNodes.length === 0) {
     return {
-      uniqueCommitAuthors: 'unavailable',
-      commitCountsByAuthor: 'unavailable',
-      repeatContributors: 'unavailable',
-      newContributors: 'unavailable',
+      uniqueCommitAuthors: 0,
+      commitCountsByAuthor: {},
+      repeatContributors: 0,
+      newContributors: 0,
     }
   }
 
