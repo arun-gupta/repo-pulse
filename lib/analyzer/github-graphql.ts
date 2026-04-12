@@ -29,9 +29,20 @@ export async function queryGitHubGraphQL<T>(
     throw error
   }
 
-  const payload = (await response.json()) as { data?: T; errors?: Array<{ message: string }> }
+  const payload = (await response.json()) as { data?: T; errors?: Array<{ message: string; type?: string }> }
 
   if (payload.errors?.length) {
+    const isResourceLimitExceeded = payload.errors.some(
+      (error) => error.type === 'RESOURCE_LIMITS_EXCEEDED' || error.message.includes('RESOURCE_LIMITS_EXCEEDED'),
+    )
+
+    // RESOURCE_LIMITS_EXCEEDED returns partial data — use what we got
+    if (isResourceLimitExceeded && payload.data) {
+      const data = payload.data
+      const rateLimit = extractRateLimit(data)
+      return { data, rateLimit }
+    }
+
     throw new Error(payload.errors[0]?.message ?? 'GitHub GraphQL request failed')
   }
 

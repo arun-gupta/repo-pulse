@@ -68,7 +68,9 @@ export function buildContributorsViewModels(
         {
           label: 'Contributor composition',
           value: formatMetric(result.totalContributors),
-          secondaryValue: 'GitHub API contributors',
+          secondaryValue: result.totalContributorsSource === 'commit-history'
+            ? 'Unique commit authors (estimated from recent commit history)'
+            : 'GitHub API contributors',
           hoverText: getContributorCompositionHoverText(result.totalContributors, activeContributors, repeatContributors, windowDays),
           supportingText: getContributorCompositionText(result.totalContributors, activeContributors, repeatContributors),
           breakdown: getContributorCompositionBreakdown(result.totalContributors, activeContributors, repeatContributors),

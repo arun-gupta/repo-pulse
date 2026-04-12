@@ -83,6 +83,7 @@ export interface AnalysisResult {
   issuesClosed90d: number | Unavailable
   uniqueCommitAuthors90d: number | Unavailable
   totalContributors: number | Unavailable
+  totalContributorsSource?: 'api' | 'commit-history'
   maintainerCount: number | Unavailable
   commitCountsByAuthor: Record<string, number> | Unavailable
   commitCountsByExperimentalOrg: Record<string, number> | Unavailable

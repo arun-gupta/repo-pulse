@@ -54,8 +54,15 @@ export const REPO_OVERVIEW_QUERY = `
   }
 `
 
-export const REPO_ACTIVITY_QUERY = `
-  query RepoActivity(
+// ─── Two-pass activity queries ──────────────────────────────────────────────
+//
+// Pass 1: Commit history + releases — lightweight, stays well under
+//         GitHub's RESOURCE_LIMITS_EXCEEDED threshold.
+// Pass 2: Search-based PR/issue counts — may trigger RESOURCE_LIMITS_EXCEEDED
+//         on repos with large PR/issue volumes, but pass 1 data is preserved.
+
+export const REPO_COMMIT_AND_RELEASES_QUERY = `
+  query RepoCommitAndReleases(
     $owner: String!
     $name: String!
     $since30: GitTimestamp!
@@ -63,31 +70,6 @@ export const REPO_ACTIVITY_QUERY = `
     $since90: GitTimestamp!
     $since180: GitTimestamp!
     $since365: GitTimestamp!
-    $prsOpened30Query: String!
-    $prsOpened60Query: String!
-    $prsOpened90Query: String!
-    $prsOpened180Query: String!
-    $prsOpened365Query: String!
-    $prsMerged30Query: String!
-    $prsMerged60Query: String!
-    $prsMerged90Query: String!
-    $prsMerged180Query: String!
-    $prsMerged365Query: String!
-    $issuesOpened30Query: String!
-    $issuesOpened60Query: String!
-    $issuesOpened90Query: String!
-    $issuesOpened180Query: String!
-    $issuesOpened365Query: String!
-    $issuesClosed30Query: String!
-    $issuesClosed60Query: String!
-    $issuesClosed90Query: String!
-    $issuesClosed180Query: String!
-    $issuesClosed365Query: String!
-    $staleIssues30Query: String!
-    $staleIssues60Query: String!
-    $staleIssues90Query: String!
-    $staleIssues180Query: String!
-    $staleIssues365Query: String!
   ) {
     repository(owner: $owner, name: $name) {
       releases(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
@@ -131,6 +113,41 @@ export const REPO_ACTIVITY_QUERY = `
         }
       }
     }
+    rateLimit {
+      remaining
+      resetAt
+    }
+  }
+`
+
+export const REPO_ACTIVITY_COUNTS_QUERY = `
+  query RepoActivityCounts(
+    $prsOpened30Query: String!
+    $prsOpened60Query: String!
+    $prsOpened90Query: String!
+    $prsOpened180Query: String!
+    $prsOpened365Query: String!
+    $prsMerged30Query: String!
+    $prsMerged60Query: String!
+    $prsMerged90Query: String!
+    $prsMerged180Query: String!
+    $prsMerged365Query: String!
+    $issuesOpened30Query: String!
+    $issuesOpened60Query: String!
+    $issuesOpened90Query: String!
+    $issuesOpened180Query: String!
+    $issuesOpened365Query: String!
+    $issuesClosed30Query: String!
+    $issuesClosed60Query: String!
+    $issuesClosed90Query: String!
+    $issuesClosed180Query: String!
+    $issuesClosed365Query: String!
+    $staleIssues30Query: String!
+    $staleIssues60Query: String!
+    $staleIssues90Query: String!
+    $staleIssues180Query: String!
+    $staleIssues365Query: String!
+  ) {
     prsOpened30: search(query: $prsOpened30Query, type: ISSUE) {
       issueCount
     }
