@@ -19,9 +19,9 @@
 
 **Purpose**: Create the inclusive naming module structure and static data
 
-- [ ] T001 Create `lib/inclusive-naming/` directory structure
-- [ ] T002 [P] Create INI Tier 1–3 word list data in `lib/inclusive-naming/word-list.ts` with term, tier, recommendation, replacements, and termPage for each entry. Exclude all Tier 0 terms.
-- [ ] T003 [P] Add `InclusiveNamingCheck`, `InclusiveNamingResult`, and `InclusiveNamingRecommendation` interfaces to `lib/analyzer/analysis-result.ts`
+- [x] T001 Create `lib/inclusive-naming/` directory structure
+- [x] T002 [P] Create INI Tier 1–3 word list data in `lib/inclusive-naming/word-list.ts` with term, tier, recommendation, replacements, and termPage for each entry. Exclude all Tier 0 terms.
+- [x] T003 [P] Add `InclusiveNamingCheck`, `InclusiveNamingResult`, and `InclusiveNamingRecommendation` interfaces to `lib/analyzer/analysis-result.ts`
 
 ---
 
@@ -31,10 +31,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Add `defaultBranchRef { name }` to `REPO_OVERVIEW_QUERY` in `lib/analyzer/queries.ts` and update `RepoOverviewResponse` interface in `lib/analyzer/analyze.ts`
-- [ ] T005 Add `repositoryTopics(first: 20) { nodes { topic { name } } }` to `REPO_OVERVIEW_QUERY` in `lib/analyzer/queries.ts` and update `RepoOverviewResponse` interface in `lib/analyzer/analyze.ts`
-- [ ] T006 Add `defaultBranchName` and `topics` fields to `AnalysisResult` in `lib/analyzer/analysis-result.ts`
-- [ ] T007 Extract `defaultBranchName` and `topics` from overview response and populate `AnalysisResult` in `lib/analyzer/analyze.ts`
+- [x] T004 Add `defaultBranchRef { name }` to `REPO_OVERVIEW_QUERY` in `lib/analyzer/queries.ts` and update `RepoOverviewResponse` interface in `lib/analyzer/analyze.ts`
+- [x] T005 Add `repositoryTopics(first: 20) { nodes { topic { name } } }` to `REPO_OVERVIEW_QUERY` in `lib/analyzer/queries.ts` and update `RepoOverviewResponse` interface in `lib/analyzer/analyze.ts`
+- [x] T006 Add `defaultBranchName` and `topics` fields to `AnalysisResult` in `lib/analyzer/analysis-result.ts`
+- [x] T007 Extract `defaultBranchName` and `topics` from overview response and populate `AnalysisResult` in `lib/analyzer/analyze.ts`
 
 **Checkpoint**: GraphQL fetches branch name and topics; AnalysisResult carries inclusive naming data
 
@@ -50,14 +50,14 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T008 [P] [US1] Write word list data integrity tests in `__tests__/inclusive-naming/word-list.test.ts`: verify all Tier 1–3 terms present, no Tier 0 terms, each entry has non-empty replacements array
-- [ ] T009 [P] [US1] Write branch name checker tests in `__tests__/inclusive-naming/checker.test.ts`: `master` → fails, `main` → passes, `develop` → passes, `trunk` → passes, null → unavailable
+- [x] T008 [P] [US1] Write word list data integrity tests in `__tests__/inclusive-naming/word-list.test.ts`: verify all Tier 1–3 terms present, no Tier 0 terms, each entry has non-empty replacements array
+- [x] T009 [P] [US1] Write branch name checker tests in `__tests__/inclusive-naming/checker.test.ts`: `master` → fails, `main` → passes, `develop` → passes, `trunk` → passes, null → unavailable
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Implement `checkBranchName(branchName: string | null): InclusiveNamingCheck` in `lib/inclusive-naming/checker.ts`
-- [ ] T011 [US1] Implement `extractInclusiveNamingResult()` in `lib/analyzer/analyze.ts` that calls `checkBranchName` and populates `InclusiveNamingResult` on `AnalysisResult` (metadata checks as empty array for now)
-- [ ] T012 [US1] Verify T008 and T009 tests pass
+- [x] T010 [US1] Implement `checkBranchName(branchName: string | null): InclusiveNamingCheck` in `lib/inclusive-naming/checker.ts`
+- [x] T011 [US1] Implement `extractInclusiveNamingResult()` in `lib/analyzer/analyze.ts` that calls `checkBranchName` and populates `InclusiveNamingResult` on `AnalysisResult` (metadata checks as empty array for now)
+- [x] T012 [US1] Verify T008 and T009 tests pass
 
 **Checkpoint**: Branch name check works end-to-end. MVP complete.
 
@@ -73,15 +73,15 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T013 [P] [US2] Write description scanner tests in `__tests__/inclusive-naming/checker.test.ts`: "whitelist" flagged (Tier 1), "sanity-check" flagged (Tier 2), "blast-radius" flagged (Tier 3), "blackbox" NOT flagged (Tier 0), "mastery" NOT flagged (substring), "mastermind" NOT flagged (Tier 0), case-insensitive matching
-- [ ] T014 [P] [US2] Write topic scanner tests in `__tests__/inclusive-naming/checker.test.ts`: exact match on topic labels, "master-slave" flagged, "machine-learning" NOT flagged
+- [x] T013 [P] [US2] Write description scanner tests in `__tests__/inclusive-naming/checker.test.ts`: "whitelist" flagged (Tier 1), "sanity-check" flagged (Tier 2), "blast-radius" flagged (Tier 3), "blackbox" NOT flagged (Tier 0), "mastery" NOT flagged (substring), "mastermind" NOT flagged (Tier 0), case-insensitive matching
+- [x] T014 [P] [US2] Write topic scanner tests in `__tests__/inclusive-naming/checker.test.ts`: exact match on topic labels, "master-slave" flagged, "machine-learning" NOT flagged
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Implement `checkDescription(description: string | null): InclusiveNamingCheck[]` in `lib/inclusive-naming/checker.ts` using whole-word regex matching (`\b`) and case-insensitive search
-- [ ] T016 [US2] Implement `checkTopics(topics: string[]): InclusiveNamingCheck[]` in `lib/inclusive-naming/checker.ts` using exact match against word list terms
-- [ ] T017 [US2] Update `extractInclusiveNamingResult()` in `lib/analyzer/analyze.ts` to call `checkDescription` and `checkTopics`, populating `metadataChecks` on `InclusiveNamingResult`
-- [ ] T018 [US2] Verify T013 and T014 tests pass
+- [x] T015 [US2] Implement `checkDescription(description: string | null): InclusiveNamingCheck[]` in `lib/inclusive-naming/checker.ts` using whole-word regex matching (`\b`) and case-insensitive search
+- [x] T016 [US2] Implement `checkTopics(topics: string[]): InclusiveNamingCheck[]` in `lib/inclusive-naming/checker.ts` using exact match against word list terms
+- [x] T017 [US2] Update `extractInclusiveNamingResult()` in `lib/analyzer/analyze.ts` to call `checkDescription` and `checkTopics`, populating `metadataChecks` on `InclusiveNamingResult`
+- [x] T018 [US2] Verify T013 and T014 tests pass
 
 **Checkpoint**: Branch name + metadata checks both work. All analysis-layer checks complete.
 
@@ -97,19 +97,19 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T019 [P] [US3] Write inclusive naming score calculation tests in `__tests__/inclusive-naming/score-config.test.ts`: branch score (binary 0/1), metadata score with tier penalties (-0.25 T1, -0.15 T2, -0.10 T3), composite weighting (70/30), floor at 0.0, recommendation generation with tier severity labels
-- [ ] T020 [P] [US3] Write four-part Documentation composite tests in `__tests__/documentation/score-config.test.ts`: verify 35/30/25/10 weights, fallback to three-part (40/30/30) when inclusive naming unavailable
+- [x] T019 [P] [US3] Write inclusive naming score calculation tests in `__tests__/inclusive-naming/score-config.test.ts`: branch score (binary 0/1), metadata score with tier penalties (-0.25 T1, -0.15 T2, -0.10 T3), composite weighting (70/30), floor at 0.0, recommendation generation with tier severity labels
+- [x] T020 [P] [US3] Write four-part Documentation composite tests in `__tests__/documentation/score-config.test.ts`: verify 35/30/25/10 weights, fallback to three-part (40/30/30) when inclusive naming unavailable
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Implement `getInclusiveNamingScore(result: InclusiveNamingResult): { branchScore: number; metadataScore: number; compositeScore: number; recommendations: InclusiveNamingRecommendation[] }` in `lib/inclusive-naming/score-config.ts`
-- [ ] T022 [US3] Update `DocumentationScoreDefinition` in `lib/documentation/score-config.ts` to include `inclusiveNamingScore: number` field
-- [ ] T023 [US3] Update `COMPOSITE_WEIGHTS` in `lib/documentation/score-config.ts` to four-part model: `{ filePresence: 0.35, readmeQuality: 0.30, licensing: 0.25, inclusiveNaming: 0.10 }`
-- [ ] T024 [US3] Update `FALLBACK_COMPOSITE_WEIGHTS` in `lib/documentation/score-config.ts` for when inclusive naming is unavailable (fall back to current three-part 40/30/30)
-- [ ] T025 [US3] Update `getDocumentationScore()` in `lib/documentation/score-config.ts` to call `getInclusiveNamingScore()` and integrate into composite
-- [ ] T026 [US3] Update `DocumentationRecommendation` category union in `lib/documentation/score-config.ts` to include `'inclusive_naming'`
-- [ ] T027 [US3] Merge inclusive naming recommendations into the documentation recommendations array in `getDocumentationScore()` so they flow through to `health-score.ts` and the Recommendations tab
-- [ ] T028 [US3] Verify T019 and T020 tests pass
+- [x] T021 [US3] Implement `getInclusiveNamingScore(result: InclusiveNamingResult): { branchScore: number; metadataScore: number; compositeScore: number; recommendations: InclusiveNamingRecommendation[] }` in `lib/inclusive-naming/score-config.ts`
+- [x] T022 [US3] Update `DocumentationScoreDefinition` in `lib/documentation/score-config.ts` to include `inclusiveNamingScore: number` field
+- [x] T023 [US3] Update `COMPOSITE_WEIGHTS` in `lib/documentation/score-config.ts` to four-part model: `{ filePresence: 0.35, readmeQuality: 0.30, licensing: 0.25, inclusiveNaming: 0.10 }`
+- [x] T024 [US3] Update `FALLBACK_COMPOSITE_WEIGHTS` in `lib/documentation/score-config.ts` for when inclusive naming is unavailable (fall back to current three-part 40/30/30)
+- [x] T025 [US3] Update `getDocumentationScore()` in `lib/documentation/score-config.ts` to call `getInclusiveNamingScore()` and integrate into composite
+- [x] T026 [US3] Update `DocumentationRecommendation` category union in `lib/documentation/score-config.ts` to include `'inclusive_naming'`
+- [x] T027 [US3] Merge inclusive naming recommendations into the documentation recommendations array in `getDocumentationScore()` so they flow through to `health-score.ts` and the Recommendations tab
+- [x] T028 [US3] Verify T019 and T020 tests pass
 
 **Checkpoint**: Scoring fully integrated. Documentation composite reflects four-part model.
 
@@ -121,13 +121,13 @@
 
 ### Tests
 
-- [ ] T029 [P] Write UI rendering tests in `__tests__/components/DocumentationView.test.tsx`: Inclusive Naming pane renders, passing checks show green, failing checks show term + severity + replacements, unavailable state handled
+- [x] T029 [P] Write UI rendering tests in `__tests__/components/DocumentationView.test.tsx`: Inclusive Naming pane renders, passing checks show green, failing checks show term + severity + replacements, unavailable state handled
 
 ### Implementation
 
-- [ ] T030 Add Inclusive Naming pane to `components/documentation/DocumentationView.tsx`: display branch name check result, metadata check results grouped by tier, recommendations with severity labels and INI reference link
-- [ ] T031 Update `components/documentation/DocumentationScoreHelp.tsx` to explain the four-part scoring model (35% file presence, 30% README quality, 25% licensing, 10% inclusive naming) with tier weight explanation
-- [ ] T032 Verify T029 tests pass
+- [x] T030 Add Inclusive Naming pane to `components/documentation/DocumentationView.tsx`: display branch name check result, metadata check results grouped by tier, recommendations with severity labels and INI reference link
+- [x] T031 Update `components/documentation/DocumentationScoreHelp.tsx` to explain the four-part scoring model (35% file presence, 30% README quality, 25% licensing, 10% inclusive naming) with tier weight explanation
+- [x] T032 Verify T029 tests pass
 
 **Checkpoint**: Full UI rendering of inclusive naming results in Documentation tab
 
@@ -137,11 +137,11 @@
 
 **Purpose**: Calibration, cleanup, and manual testing
 
-- [ ] T033 Update calibration data in `lib/scoring/calibration-data.json` if documentation percentiles need re-calibration with the new four-part model
-- [ ] T034 Run `npm run lint` and fix any linting issues
-- [ ] T035 Run `npm test` and verify all tests pass (existing + new)
-- [ ] T036 Run `npm run build` and verify clean build
-- [ ] T037 Create manual testing checklist at `specs/129-inclusive-naming/checklists/manual-testing.md`
+- [x] T033 Update calibration data in `lib/scoring/calibration-data.json` if documentation percentiles need re-calibration with the new four-part model
+- [x] T034 Run `npm run lint` and fix any linting issues
+- [x] T035 Run `npm test` and verify all tests pass (existing + new)
+- [x] T036 Run `npm run build` and verify clean build
+- [x] T037 Create manual testing checklist at `specs/129-inclusive-naming/checklists/manual-testing.md`
 - [ ] T038 Complete and sign off manual testing checklist
 
 ---
