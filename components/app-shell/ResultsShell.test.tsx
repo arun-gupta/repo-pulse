@@ -13,6 +13,7 @@ describe('ResultsShell', () => {
         activity={<div>Activity coming soon</div>}
         responsiveness={<div>Responsiveness coming soon</div>}
         documentation={<div>Documentation coming soon</div>}
+        security={<div>Security coming soon</div>}
         recommendations={<div>Recommendations coming soon</div>}
         comparison={<div>Comparison coming soon</div>}
       />,
@@ -36,6 +37,7 @@ describe('ResultsShell', () => {
         activity={<div>Activity coming soon</div>}
         responsiveness={<div>Responsiveness coming soon</div>}
         documentation={<div>Documentation coming soon</div>}
+        security={<div>Security coming soon</div>}
         recommendations={<div>Recommendations coming soon</div>}
         comparison={<div>Comparison coming soon</div>}
       />,
@@ -54,6 +56,7 @@ describe('ResultsShell', () => {
         activity={<div>Activity coming soon</div>}
         responsiveness={<div>Responsiveness coming soon</div>}
         documentation={<div>Documentation coming soon</div>}
+        security={<div>Security coming soon</div>}
         recommendations={<div>Recommendations coming soon</div>}
         comparison={<div>Comparison coming soon</div>}
       />,
@@ -76,6 +79,7 @@ describe('ResultsShell', () => {
         activity={<div>Activity coming soon</div>}
         responsiveness={<div>Responsiveness coming soon</div>}
         documentation={<div>Documentation coming soon</div>}
+        security={<div>Security coming soon</div>}
         recommendations={<div>Recommendations coming soon</div>}
         comparison={<div>Comparison coming soon</div>}
       />,
@@ -94,6 +98,9 @@ describe('ResultsShell', () => {
         contributors={<div>Contributors content</div>}
         activity={<div>Activity content</div>}
         responsiveness={<div>Responsiveness content</div>}
+        documentation={<div>Documentation content</div>}
+        security={<div>Security content</div>}
+        recommendations={<div>Recommendations content</div>}
         comparison={<div>Comparison content</div>}
       />,
     )
@@ -109,6 +116,9 @@ describe('ResultsShell', () => {
         contributors={<div>Contributors content</div>}
         activity={<div>Activity content</div>}
         responsiveness={<div>Responsiveness content</div>}
+        documentation={<div>Documentation content</div>}
+        security={<div>Security content</div>}
+        recommendations={<div>Recommendations content</div>}
         comparison={<div>Comparison content</div>}
       />,
     )
@@ -127,6 +137,9 @@ describe('ResultsShell', () => {
         contributors={<div>Contributors content</div>}
         activity={<div>Activity content</div>}
         responsiveness={<div>Responsiveness content</div>}
+        documentation={<div>Documentation content</div>}
+        security={<div>Security content</div>}
+        recommendations={<div>Recommendations content</div>}
         comparison={<div>Comparison content</div>}
       />,
     )

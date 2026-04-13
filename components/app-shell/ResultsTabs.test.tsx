@@ -30,4 +30,35 @@ describe('ResultsTabs', () => {
     expect(screen.queryByRole('tab', { name: 'Health Ratios' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Metrics' })).not.toBeInTheDocument()
   })
+
+  it('shows overflow tabs in a More menu when tab count exceeds visible limit', async () => {
+    const manyTabs: ResultTabDefinition[] = [
+      { id: 'overview', label: 'Overview', status: 'implemented', description: '' },
+      { id: 'contributors', label: 'Contributors', status: 'placeholder', description: '' },
+      { id: 'activity', label: 'Activity', status: 'placeholder', description: '' },
+      { id: 'responsiveness', label: 'Responsiveness', status: 'implemented', description: '' },
+      { id: 'documentation', label: 'Documentation', status: 'implemented', description: '' },
+      { id: 'security', label: 'Security', status: 'implemented', description: '' },
+      { id: 'recommendations', label: 'Recommendations', status: 'implemented', description: '' },
+      { id: 'comparison', label: 'Comparison', status: 'implemented', description: '' },
+      { id: 'comparison', label: 'Extra Tab', status: 'implemented', description: '' },
+    ]
+    const onChange = vi.fn()
+
+    render(<ResultsTabs tabs={manyTabs} activeTab="overview" onChange={onChange} />)
+
+    // First 8 tabs are visible directly
+    expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Comparison' })).toBeInTheDocument()
+
+    // Overflow tabs are hidden until More is clicked
+    expect(screen.queryByRole('tab', { name: 'Extra Tab' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /More/ }))
+
+    expect(screen.getByRole('tab', { name: 'Extra Tab' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Extra Tab' }))
+    expect(onChange).toHaveBeenCalledWith('comparison')
+  })
 })
