@@ -58,6 +58,7 @@ describe('RepoInputClient', () => {
       branchCheck: { checkType: 'branch', term: 'main', passed: true, tier: null, severity: null, replacements: [], context: null },
       metadataChecks: [],
     },
+    securityResult: 'unavailable',
     missingFields: [],
         },
       ],
@@ -522,6 +523,7 @@ function buildAnalysisResult(repo: string, overrides: Record<string, unknown> = 
       branchCheck: { checkType: 'branch', term: 'main', passed: true, tier: null, severity: null, replacements: [], context: null },
       metadataChecks: [],
     },
+    securityResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

@@ -21,6 +21,9 @@ import { fetchContributorCount, fetchMaintainerCount, fetchPublicUserOrganizatio
 import { REPO_COMMIT_AND_RELEASES_QUERY, REPO_ACTIVITY_COUNTS_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
 import { extractLicensingResult, type LicenseFileInfo } from './extract-licensing'
 import { extractInclusiveNamingResult } from '@/lib/inclusive-naming/checker'
+import type { SecurityResult, DirectSecurityCheck } from '@/lib/security/analysis-result'
+import { fetchScorecardData } from '@/lib/security/scorecard-client'
+import { fetchBranchProtection } from '@/lib/security/direct-checks'
 
 interface DocBlob {
   text?: string
@@ -68,6 +71,12 @@ interface RepoOverviewResponse {
     docChangesRst?: DocBlob | null
     docHistory?: DocBlob | null
     docNews?: DocBlob | null
+    secDependabot?: DocBlob | null
+    secDependabotYaml?: DocBlob | null
+    secRenovateRoot?: DocBlob | null
+    secRenovateGithub?: DocBlob | null
+    secRenovateConfig?: DocBlob | null
+    secRenovateRc?: DocBlob | null
     workflowDir?: {
       entries: Array<{
         name: string
@@ -350,6 +359,12 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       staleBefore365.setDate(now.getDate() - 365)
       const repoSearch = `${owner}/${name}`
 
+      // Fetch OpenSSF Scorecard data and branch protection in parallel
+      console.log(`[analyzer] ${repo} — fetching OpenSSF Scorecard + branch protection`)
+      const scorecardPromise = fetchScorecardData(owner!, name!)
+      const defaultBranch = overview.data.repository?.defaultBranchRef?.name ?? 'main'
+      const branchProtectionPromise = fetchBranchProtection(owner!, name!, defaultBranch, input.token)
+
       // Pass 1: Commit history + releases (lightweight — no search queries)
       console.log(`[analyzer] ${repo} — pass 1: commit history + releases`)
       const commitAndReleases = await queryGitHubGraphQL<RepoCommitAndReleasesResponse>(input.token, REPO_COMMIT_AND_RELEASES_QUERY, {
@@ -472,20 +487,34 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       const experimentalOrgAttribution = await buildExperimentalOrganizationCommitCountsByWindow(input.token, commitHistory.nodes, now)
       latestRateLimit = experimentalOrgAttribution.rateLimit ?? latestRateLimit
 
-      results.push(
-        buildAnalysisResult(
-          repo,
-          overview.data,
-          activity.data,
-          responsiveness.data,
-          contributorMetricsByWindow,
-          activityMetricsByWindow,
-          contributorCount.data,
-          maintainerCount.data,
-          experimentalOrgAttribution.data,
-          commitHistory.nodes,
-        ),
+      const analysisResult = buildAnalysisResult(
+        repo,
+        overview.data,
+        activity.data,
+        responsiveness.data,
+        contributorMetricsByWindow,
+        activityMetricsByWindow,
+        contributorCount.data,
+        maintainerCount.data,
+        experimentalOrgAttribution.data,
+        commitHistory.nodes,
       )
+
+      // Populate Scorecard data and branch protection (fetched in parallel earlier)
+      const [scorecardData, branchProtection] = await Promise.all([scorecardPromise, branchProtectionPromise])
+      if (analysisResult.securityResult !== 'unavailable') {
+        analysisResult.securityResult.scorecard = scorecardData
+        analysisResult.securityResult.branchProtectionEnabled = branchProtection
+        // Update the branch_protection direct check
+        const bpCheck = analysisResult.securityResult.directChecks.find((c) => c.name === 'branch_protection')
+        if (bpCheck) {
+          bpCheck.detected = branchProtection === 'unavailable' ? 'unavailable' : branchProtection
+          bpCheck.details = branchProtection === true ? 'Branch protection enabled' :
+            branchProtection === false ? 'No branch protection rules detected' : null
+        }
+      }
+
+      results.push(analysisResult)
       const repoElapsed = ((Date.now() - repoStart) / 1000).toFixed(1)
       console.log(`[analyzer] ${repo} — done in ${repoElapsed}s`)
     } catch (error) {
@@ -683,6 +712,7 @@ function buildAnalysisResult(
     issueFirstResponseTimestamps,
     issueCloseTimestamps,
     prMergeTimestamps,
+    securityResult: extractSecurityResult(overview.repository),
     missingFields,
   }
 }
@@ -737,6 +767,46 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
   const readmeSections = detectReadmeSections(readmeContent)
 
   return { fileChecks, readmeSections, readmeContent }
+}
+
+function extractSecurityResult(repo: RepoOverviewResponse['repository']): SecurityResult | 'unavailable' {
+  if (!repo) return 'unavailable'
+
+  const hasDependabot = (repo.secDependabot != null) || (repo.secDependabotYaml != null)
+  const hasRenovate = (repo.secRenovateRoot != null) || (repo.secRenovateGithub != null) ||
+    (repo.secRenovateConfig != null) || (repo.secRenovateRc != null)
+  const hasSecurity = (repo.docSecurity != null) || (repo.docSecurityRst != null)
+  const hasWorkflows = repo.workflowDir?.entries != null && repo.workflowDir.entries.length > 0
+
+  const directChecks: DirectSecurityCheck[] = [
+    {
+      name: 'security_policy',
+      detected: hasSecurity,
+      details: hasSecurity ? 'SECURITY.md detected' : null,
+    },
+    {
+      name: 'dependabot',
+      detected: hasDependabot || hasRenovate,
+      details: hasDependabot ? 'Dependabot configuration detected' :
+        hasRenovate ? 'Renovate configuration detected' : null,
+    },
+    {
+      name: 'ci_cd',
+      detected: hasWorkflows,
+      details: hasWorkflows ? `${repo.workflowDir!.entries.length} workflow file(s) detected` : null,
+    },
+    {
+      name: 'branch_protection',
+      detected: 'unavailable',
+      details: null,
+    },
+  ]
+
+  return {
+    scorecard: 'unavailable',
+    directChecks,
+    branchProtectionEnabled: 'unavailable',
+  }
 }
 
 // Matches both Markdown headings (## Title) and RST headings (Title\n====)

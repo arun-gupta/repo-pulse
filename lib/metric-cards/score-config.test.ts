@@ -6,11 +6,12 @@ describe('score-config', () => {
   it('returns one default badge per CHAOSS category', () => {
     const badges = getDefaultScoreBadges()
 
-    expect(badges).toHaveLength(3)
+    expect(badges).toHaveLength(4)
     expect(badges.map((badge) => badge.category)).toEqual([
       'Sustainability',
       'Activity',
       'Responsiveness',
+      'Security',
     ])
     expect(badges.every((badge) => badge.value === 'Not scored yet')).toBe(true)
   })
@@ -101,6 +102,7 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
       branchCheck: { checkType: 'branch', term: 'main', passed: true, tier: null, severity: null, replacements: [], context: null },
       metadataChecks: [],
     },
+    securityResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

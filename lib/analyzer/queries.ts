@@ -59,6 +59,12 @@ export const REPO_OVERVIEW_QUERY = `
       docChangesRst: object(expression: "HEAD:CHANGES.rst") { ... on Blob { oid } }
       docHistory: object(expression: "HEAD:HISTORY.md") { ... on Blob { oid } }
       docNews: object(expression: "HEAD:NEWS.md") { ... on Blob { oid } }
+      secDependabot: object(expression: "HEAD:.github/dependabot.yml") { ... on Blob { oid } }
+      secDependabotYaml: object(expression: "HEAD:.github/dependabot.yaml") { ... on Blob { oid } }
+      secRenovateRoot: object(expression: "HEAD:renovate.json") { ... on Blob { oid } }
+      secRenovateGithub: object(expression: "HEAD:.github/renovate.json") { ... on Blob { oid } }
+      secRenovateConfig: object(expression: "HEAD:.renovaterc.json") { ... on Blob { oid } }
+      secRenovateRc: object(expression: "HEAD:.renovaterc") { ... on Blob { oid } }
       workflowDir: object(expression: "HEAD:.github/workflows") {
         ... on Tree {
           entries {

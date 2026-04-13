@@ -22,7 +22,7 @@ describe('buildMetricCardViewModels', () => {
     expect(card.primaryLanguage).toBe('—')
     expect(typeof card.profile?.reachPercentile).toBe('number')
     expect(card.profile?.reachLabel).toMatch(/\d+\w{2} percentile/)
-    expect(card.scoreBadges).toHaveLength(3)
+    expect(card.scoreBadges).toHaveLength(4)
     expect(card.scoreBadges.find((badge) => badge.category === 'Sustainability')?.value).toBe('Insufficient verified public data')
     expect(card.details.find((detail) => detail.label === 'Releases (12mo)')?.value).toBe('—')
   })
@@ -83,6 +83,7 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
       branchCheck: { checkType: 'branch', term: 'main', passed: true, tier: null, severity: null, replacements: [], context: null },
       metadataChecks: [],
     },
+    securityResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

@@ -278,6 +278,7 @@ function buildResult(repo: string, overrides: Partial<AnalysisResult> = {}): Ana
       branchCheck: { checkType: 'branch', term: 'main', passed: true, tier: null, severity: null, replacements: [], context: null },
       metadataChecks: [],
     },
+    securityResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

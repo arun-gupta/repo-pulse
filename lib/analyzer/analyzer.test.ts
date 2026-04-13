@@ -13,6 +13,14 @@ vi.mock('./github-rest', () => ({
   fetchPublicUserOrganizations: vi.fn(),
 }))
 
+vi.mock('@/lib/security/scorecard-client', () => ({
+  fetchScorecardData: vi.fn().mockResolvedValue('unavailable'),
+}))
+
+vi.mock('@/lib/security/direct-checks', () => ({
+  fetchBranchProtection: vi.fn().mockResolvedValue('unavailable'),
+}))
+
 const queryGitHubGraphQLMock = vi.mocked(queryGitHubGraphQL)
 const fetchContributorCountMock = vi.mocked(fetchContributorCount)
 const fetchMaintainerCountMock = vi.mocked(fetchMaintainerCount)
