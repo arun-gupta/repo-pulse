@@ -4,6 +4,14 @@ export interface LoadingQuote {
   context?: string
 }
 
+// Diversity guidelines for maintaining this collection:
+// - Every quote must have a verified attribution (author + context/affiliation)
+// - Maintain geographic diversity: include voices from Africa, Asia, Europe, Latin America, not just the US
+// - Maintain gender diversity: aim for at least 25% women authors
+// - Maintain industry diversity: tech, academia, government, NGO, civic tech, security, hardware
+// - Max 2 quotes per author to keep the pool varied
+// - All quotes should relate to open source, software, collaboration, or digital public goods
+
 export const LOADING_QUOTES: LoadingQuote[] = [
   // Open source philosophy & community
   {
