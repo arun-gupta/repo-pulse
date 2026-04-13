@@ -205,6 +205,7 @@ export const RECOMMENDATION_CATALOG: RecommendationCatalogEntry[] = [
     remediationHint: 'Create `SECURITY.md` with sections: Reporting a Vulnerability, Contact, Response Timeline. GitHub also supports private vulnerability reporting.',
     docsUrl: `${SCORECARD_DOCS_BASE}#security-policy`,
     directCheckMapping: 'security_policy',
+    tags: ['governance'],
   },
   {
     key: 'Packaging',
@@ -243,6 +244,7 @@ export const RECOMMENDATION_CATALOG: RecommendationCatalogEntry[] = [
     remediationHint: 'Create a `LICENSE` file at the repo root. Use `choosealicense.com` to pick an appropriate license.',
     docsUrl: `${SCORECARD_DOCS_BASE}#license`,
     directCheckMapping: null,
+    tags: ['governance'],
   },
 
   // --- Direct checks ---
@@ -257,6 +259,7 @@ export const RECOMMENDATION_CATALOG: RecommendationCatalogEntry[] = [
     remediationHint: 'Create `SECURITY.md` at the repo root with sections for reporting process, contact info, and response expectations.',
     docsUrl: null,
     directCheckMapping: null,
+    tags: ['governance'],
   },
   {
     key: 'dependabot',

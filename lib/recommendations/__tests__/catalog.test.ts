@@ -100,7 +100,12 @@ describe('getCatalogEntriesByTag', () => {
   it('returns governance-tagged entries', () => {
     const governance = getCatalogEntriesByTag('governance')
     const ids = governance.map((e) => e.id).sort()
-    expect(ids).toEqual(['DOC-6', 'SEC-3', 'SEC-5', 'SUS-2'])
+    expect(ids).toEqual([
+      'DOC-12', 'DOC-13', 'DOC-14',
+      'DOC-2', 'DOC-3', 'DOC-4', 'DOC-5', 'DOC-6',
+      'SEC-14', 'SEC-17', 'SEC-3', 'SEC-5',
+      'SUS-2',
+    ])
   })
 
   it('returns empty array for unknown tag', () => {

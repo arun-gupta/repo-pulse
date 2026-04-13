@@ -41,11 +41,11 @@ const SEC: CatalogEntry[] = [
   { id: 'SEC-11', bucket: 'Security', key: 'Fuzzing', title: 'Adopt fuzz testing to find edge-case bugs' },
   { id: 'SEC-12', bucket: 'Security', key: 'Pinned-Dependencies', title: 'Pin dependencies to specific versions by hash' },
   { id: 'SEC-13', bucket: 'Security', key: 'SAST', title: 'Enable static application security testing (SAST)' },
-  { id: 'SEC-14', bucket: 'Security', key: 'Security-Policy', title: 'Add a security vulnerability disclosure policy' },
+  { id: 'SEC-14', bucket: 'Security', key: 'Security-Policy', title: 'Add a security vulnerability disclosure policy', tags: ['governance'] },
   { id: 'SEC-15', bucket: 'Security', key: 'Packaging', title: 'Publish packages through official registries' },
   // Low
   { id: 'SEC-16', bucket: 'Security', key: 'CI-Tests', title: 'Run automated tests on pull requests' },
-  { id: 'SEC-17', bucket: 'Security', key: 'License', title: 'Add a recognized open-source license' },
+  { id: 'SEC-17', bucket: 'Security', key: 'License', title: 'Add a recognized open-source license', tags: ['governance'] },
 ]
 
 /**
@@ -88,10 +88,10 @@ const SUS: CatalogEntry[] = [
 const DOC: CatalogEntry[] = [
   // File presence
   { id: 'DOC-1', bucket: 'Documentation', key: 'file:readme', title: 'Add a README' },
-  { id: 'DOC-2', bucket: 'Documentation', key: 'file:license', title: 'Add a LICENSE file' },
-  { id: 'DOC-3', bucket: 'Documentation', key: 'file:contributing', title: 'Add CONTRIBUTING.md' },
-  { id: 'DOC-4', bucket: 'Documentation', key: 'file:code_of_conduct', title: 'Add CODE_OF_CONDUCT.md' },
-  { id: 'DOC-5', bucket: 'Documentation', key: 'file:security', title: 'Add SECURITY.md' },
+  { id: 'DOC-2', bucket: 'Documentation', key: 'file:license', title: 'Add a LICENSE file', tags: ['governance'] },
+  { id: 'DOC-3', bucket: 'Documentation', key: 'file:contributing', title: 'Add CONTRIBUTING.md', tags: ['governance'] },
+  { id: 'DOC-4', bucket: 'Documentation', key: 'file:code_of_conduct', title: 'Add CODE_OF_CONDUCT.md', tags: ['governance'] },
+  { id: 'DOC-5', bucket: 'Documentation', key: 'file:security', title: 'Add SECURITY.md', tags: ['governance'] },
   { id: 'DOC-6', bucket: 'Documentation', key: 'file:changelog', title: 'Add CHANGELOG.md', tags: ['governance'] },
   // README sections
   { id: 'DOC-7', bucket: 'Documentation', key: 'section:description', title: 'Add a project description to your README' },
@@ -100,9 +100,9 @@ const DOC: CatalogEntry[] = [
   { id: 'DOC-10', bucket: 'Documentation', key: 'section:contributing', title: 'Add a contributing section to your README' },
   { id: 'DOC-11', bucket: 'Documentation', key: 'section:license', title: 'Add a license section to your README' },
   // Licensing
-  { id: 'DOC-12', bucket: 'Documentation', key: 'licensing:license', title: 'Add an open source license' },
-  { id: 'DOC-13', bucket: 'Documentation', key: 'licensing:osi_license', title: 'Use an OSI-approved license' },
-  { id: 'DOC-14', bucket: 'Documentation', key: 'licensing:dco_cla', title: 'Enforce a DCO or CLA for contributions' },
+  { id: 'DOC-12', bucket: 'Documentation', key: 'licensing:license', title: 'Add an open source license', tags: ['governance'] },
+  { id: 'DOC-13', bucket: 'Documentation', key: 'licensing:osi_license', title: 'Use an OSI-approved license', tags: ['governance'] },
+  { id: 'DOC-14', bucket: 'Documentation', key: 'licensing:dco_cla', title: 'Enforce a DCO or CLA for contributions', tags: ['governance'] },
 ]
 
 // ── Combined catalog ──────────────────────────────────────────────────
