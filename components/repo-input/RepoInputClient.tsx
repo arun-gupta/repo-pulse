@@ -240,6 +240,12 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       description: 'Documentation file presence, README quality, and improvement recommendations.',
     },
     {
+      id: 'security',
+      label: 'Security',
+      status: 'implemented',
+      description: 'Security posture including OpenSSF Scorecard checks, dependency automation, and branch protection.',
+    },
+    {
       id: 'recommendations',
       label: 'Recommendations',
       status: 'implemented',
