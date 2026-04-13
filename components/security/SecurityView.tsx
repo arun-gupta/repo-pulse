@@ -3,7 +3,7 @@
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import { getSecurityScore } from '@/lib/security/score-config'
-import type { SecurityScoreDefinition, ScorecardCheck, DirectSecurityCheck } from '@/lib/security/analysis-result'
+import type { ScorecardCheck, DirectSecurityCheck } from '@/lib/security/analysis-result'
 
 interface SecurityViewProps {
   results: AnalysisResult[]
@@ -62,23 +62,6 @@ function DirectChecksSection({ checks }: { checks: DirectSecurityCheck[] }) {
                 <p className="text-xs text-slate-400">Unavailable</p>
               ) : null}
             </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-function RecommendationsSection({ recommendations }: { recommendations: SecurityScoreDefinition['recommendations'] }) {
-  if (recommendations.length === 0) return null
-
-  return (
-    <section aria-label="Security Recommendations" className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-      <h3 className="text-xs font-medium uppercase tracking-wide text-amber-700">Recommendations</h3>
-      <ul className="mt-3 space-y-2">
-        {recommendations.map((rec) => (
-          <li key={`${rec.category}-${rec.item}`} className="text-sm text-amber-900">
-            {rec.text}
           </li>
         ))}
       </ul>
@@ -149,9 +132,6 @@ export function SecurityView({ results }: SecurityViewProps) {
               <DirectChecksSection checks={result.securityResult.directChecks} />
             </div>
 
-            <div className="mt-4">
-              <RecommendationsSection recommendations={score.recommendations} />
-            </div>
           </div>
         )
       })}
