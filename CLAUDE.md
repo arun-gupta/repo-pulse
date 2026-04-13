@@ -24,7 +24,11 @@ Command definitions are available in `.claude/commands/`.
 See `docs/DEVELOPMENT.md` for the full technology stack, testing commands, and development workflow.
 
 ## PR Merge Rule
-Never merge a PR without the user explicitly confirming that every item in the PR test plan is checked. Do not infer confirmation from phrases like "manual check confirmed" if any checkbox remains unchecked — ask explicitly before merging.
+Never run `gh pr merge` automatically. PR merging is always a manual user action. When the user confirms the test plan:
+1. Check off every test plan checkbox in the PR body (via `gh pr edit`).
+2. Ask the user to merge the PR themselves.
+
+Do not infer confirmation from phrases like "manual check confirmed" if any checkbox remains unchecked — ask explicitly before merging.
 
 ## On Ambiguity
 If a spec is missing, incomplete, or conflicts with the constitution — 
