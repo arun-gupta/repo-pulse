@@ -27,7 +27,7 @@ export const LOADING_QUOTES: LoadingQuote[] = [
   {
     text: 'You open it up with interfaces so anyone can build applications on top of it.',
     author: 'Nandan Nilekani',
-    context: 'Architect of India Stack',
+    context: 'Co-founder Infosys, Architect of India Stack',
   },
   {
     text: 'When you post the imperfect, when you share your mistakes, people will start editing and co-creating.',
