@@ -253,6 +253,11 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     context: 'Chief Web Advocate, World Wide Web Foundation, Nigeria',
   },
   {
+    text: 'Fostering an open source culture in an enterprise sustains innovation.',
+    author: 'Arun Gupta',
+    context: 'Open Source Strategist',
+  },
+  {
     text: 'Code is law.',
     author: 'Lawrence Lessig',
     context: 'Professor, Harvard Law School; founder, Creative Commons',
