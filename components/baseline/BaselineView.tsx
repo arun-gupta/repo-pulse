@@ -138,13 +138,14 @@ export function BaselineView() {
       <section className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-sky-900">OSS Health Score</h3>
         <p className="mt-2 text-sm text-sky-800">
-          The composite health score is computed from four weighted buckets:
+          The composite health score is computed from five weighted buckets:
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
-          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Activity 30%</span>
-          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Responsiveness 30%</span>
-          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Sustainability 25%</span>
-          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Documentation 15%</span>
+          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Activity 25%</span>
+          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Responsiveness 25%</span>
+          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Contributors 23%</span>
+          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Security 15%</span>
+          <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Documentation 12%</span>
         </div>
         <p className="mt-2 text-xs text-sky-700">
           Each bucket produces a percentile score relative to repos in the same star bracket. The weighted average becomes the overall health score.
