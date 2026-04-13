@@ -103,7 +103,7 @@ Phase 2 adds new scoring buckets to the health score. Requirements specs live in
 |---|---|---|---|---|
 | 1 | P2-F01a | Documentation scoring (basic) | #66 | ✅ Done |
 | 2 | P2-F02 | Licensing & Compliance | #115 | ✅ Done |
-| 3 | P2-F03 | Inclusive naming | #107 | |
+| 3 | P2-F03 | Inclusive naming | #107 | ✅ Done |
 | 4 | P2-F01b | Documentation scoring (advanced) | #110, #67 | |
 | 5 | P2-F04 | Governance & Transparency | #116 | |
 | 6 | P2-F05 | Community scoring | #70 | |
