@@ -78,6 +78,14 @@ export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
       tab: 'contributors',
     })
   }
+  if (result.maintainerCount === 'unavailable') {
+    recommendations.push({
+      bucket: 'Sustainability',
+      percentile: sustainabilityPercentile ?? 0,
+      message: 'No maintainers could be identified. Add a CODEOWNERS file, an MAINTAINERS file, or configure repository roles so maintainer responsibility is visible to contributors and adopters.',
+      tab: 'contributors',
+    })
+  }
   if (documentation !== null) {
     for (const rec of documentation.recommendations) {
       recommendations.push({
