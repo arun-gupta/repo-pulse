@@ -3,7 +3,7 @@
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import { getSecurityScore } from '@/lib/security/score-config'
-import type { ScorecardCheck, DirectSecurityCheck } from '@/lib/security/analysis-result'
+import type { ScorecardCheck, DirectSecurityCheck, SecurityScoreDefinition } from '@/lib/security/analysis-result'
 
 interface SecurityViewProps {
   results: AnalysisResult[]
@@ -73,7 +73,13 @@ function DirectChecksSection({ checks }: { checks: DirectSecurityCheck[] }) {
   )
 }
 
-function SecuritySummary({ score }: { score: SecurityScoreDefinition }) {
+function SecuritySummary({
+  score,
+  scorecardOverallScore,
+}: {
+  score: SecurityScoreDefinition
+  scorecardOverallScore: number | null
+}) {
   const modeLabel = score.mode === 'scorecard' ? 'Scorecard + direct checks' : 'Direct checks only'
 
   return (
@@ -84,11 +90,16 @@ function SecuritySummary({ score }: { score: SecurityScoreDefinition }) {
         tone={score.tone}
       />
       <div className="min-w-0">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500" data-testid="security-composite-score">
           {typeof score.value === 'number'
             ? `${score.value}/100`
             : score.value}
         </p>
+        {scorecardOverallScore !== null ? (
+          <p className="text-sm text-slate-500" data-testid="security-openssf-score">
+            OpenSSF Scorecard: {scorecardOverallScore}/10
+          </p>
+        ) : null}
         <p className="text-xs text-slate-400" data-testid="security-mode">{modeLabel}</p>
       </div>
     </div>
@@ -112,13 +123,16 @@ export function SecurityView({ results }: SecurityViewProps) {
 
         const score = getSecurityScore(result.securityResult, result.stars)
         const hasScorecard = result.securityResult.scorecard !== 'unavailable'
+        const scorecardOverallScore = hasScorecard
+          ? (result.securityResult.scorecard as Exclude<typeof result.securityResult.scorecard, 'unavailable'>).overallScore
+          : null
 
         return (
           <div key={result.repo} className="rounded-xl border border-slate-200 bg-white p-6">
             <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
 
             <div className="mt-4">
-              <SecuritySummary score={score} />
+              <SecuritySummary score={score} scorecardOverallScore={scorecardOverallScore} />
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
