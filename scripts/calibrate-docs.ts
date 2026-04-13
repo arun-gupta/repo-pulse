@@ -11,6 +11,7 @@
 
 import { loadEnvConfig } from '@next/env'
 import { readFileSync, writeFileSync } from 'fs'
+import { isOsiApproved, getPermissivenessTier } from '../lib/licensing/license-data'
 
 loadEnvConfig(process.cwd())
 
@@ -84,15 +85,12 @@ function buildDocQuery(repos: string[]): string {
     const [owner, name] = fullName.split('/')
     return `
       repo${i}: repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(name)}) {
+        licenseInfo { spdxId }
         readmeMd: object(expression: "HEAD:README.md") { ... on Blob { text } }
         readmeLower: object(expression: "HEAD:readme.md") { ... on Blob { text } }
         readmeRst: object(expression: "HEAD:README.rst") { ... on Blob { text } }
         readmeTxt: object(expression: "HEAD:README.txt") { ... on Blob { text } }
         readmePlain: object(expression: "HEAD:README") { ... on Blob { text } }
-        license: object(expression: "HEAD:LICENSE") { ... on Blob { oid } }
-        licenseMd: object(expression: "HEAD:LICENSE.md") { ... on Blob { oid } }
-        licenseTxt: object(expression: "HEAD:LICENSE.txt") { ... on Blob { oid } }
-        copying: object(expression: "HEAD:COPYING") { ... on Blob { oid } }
         contributing: object(expression: "HEAD:CONTRIBUTING.md") { ... on Blob { oid } }
         contributingRst: object(expression: "HEAD:CONTRIBUTING.rst") { ... on Blob { oid } }
         contributingTxt: object(expression: "HEAD:CONTRIBUTING.txt") { ... on Blob { oid } }
@@ -103,6 +101,14 @@ function buildDocQuery(repos: string[]): string {
         changes: object(expression: "HEAD:CHANGES.md") { ... on Blob { oid } }
         history: object(expression: "HEAD:HISTORY.md") { ... on Blob { oid } }
         news: object(expression: "HEAD:NEWS.md") { ... on Blob { oid } }
+        workflows: object(expression: "HEAD:.github/workflows") {
+          ... on Tree { entries { name object { ... on Blob { text } } } }
+        }
+        defaultBranchRef {
+          target {
+            ... on Commit { history(first: 20) { nodes { message } } }
+          }
+        }
       }`
   }).join('\n')
 
@@ -127,16 +133,14 @@ async function fetchWithRetry(url: string, init: RequestInit, retries = 3): Prom
 }
 
 interface DocBlob { text?: string; oid?: string }
+interface WorkflowEntry { name: string; object: { text: string } | null }
 interface DocRepoData {
+  licenseInfo?: { spdxId: string | null } | null
   readmeMd?: DocBlob | null
   readmeLower?: DocBlob | null
   readmeRst?: DocBlob | null
   readmeTxt?: DocBlob | null
   readmePlain?: DocBlob | null
-  license?: DocBlob | null
-  licenseMd?: DocBlob | null
-  licenseTxt?: DocBlob | null
-  copying?: DocBlob | null
   contributing?: DocBlob | null
   contributingRst?: DocBlob | null
   contributingTxt?: DocBlob | null
@@ -147,6 +151,8 @@ interface DocRepoData {
   changes?: DocBlob | null
   history?: DocBlob | null
   news?: DocBlob | null
+  workflows?: { entries: WorkflowEntry[] } | null
+  defaultBranchRef?: { target: { history: { nodes: Array<{ message: string }> } } } | null
 }
 
 async function runGraphQL(query: string, token: string): Promise<Record<string, DocRepoData | null>> {
@@ -178,9 +184,10 @@ async function runGraphQL(query: string, token: string): Promise<Record<string, 
 
 // ─── Scoring ─────────────────────────────────────────────────────────────────
 
+// Matches lib/documentation/score-config.ts — license excluded (scored in licensing sub-score)
 const FILE_WEIGHTS: Record<string, number> = {
-  readme: 0.25, license: 0.20, contributing: 0.15,
-  code_of_conduct: 0.10, security: 0.15, changelog: 0.15,
+  readme: 0.30, contributing: 0.20,
+  code_of_conduct: 0.10, security: 0.20, changelog: 0.20,
 }
 
 const SECTION_WEIGHTS: Record<string, number> = {
@@ -203,20 +210,44 @@ const SECTION_PATTERNS: Array<{ name: string; patterns: RegExp[] }> = [
   { name: 'license', patterns: rstAndMdPatterns(/licen[sc]e/) },
 ]
 
+// Licensing sub-score weights — matches lib/documentation/score-config.ts
+const LICENSING_WEIGHTS = {
+  licensePresent: 0.40,
+  osiApproved: 0.25,
+  tierClassified: 0.10,
+  dcoClaEnforced: 0.25,
+}
+
+// Composite weights — matches lib/documentation/score-config.ts
+const COMPOSITE_WEIGHTS = {
+  filePresence: 0.40,
+  readmeQuality: 0.30,
+  licensing: 0.30,
+}
+
+const DCO_CLA_BOT_PATTERNS = [
+  'apps/dco',
+  'probot/dco',
+  'cla-assistant/cla-assistant',
+  'contributor-assistant/github-action',
+]
+
+const SIGNED_OFF_BY_RE = /^signed-off-by:\s/im
+const SIGNED_OFF_BY_RATIO_THRESHOLD = 0.8
+
 function computeDocScore(repo: DocRepoData): number {
   const has = (blob: DocBlob | null | undefined) => blob != null
   const any = (...blobs: (DocBlob | null | undefined)[]) => blobs.some(has)
 
-  // File presence (60%)
+  // File presence sub-score — license excluded (scored in licensing sub-score)
   let fileScore = 0
   if (any(repo.readmeMd, repo.readmeLower, repo.readmeRst, repo.readmeTxt, repo.readmePlain)) fileScore += FILE_WEIGHTS.readme!
-  if (any(repo.license, repo.licenseMd, repo.licenseTxt, repo.copying)) fileScore += FILE_WEIGHTS.license!
   if (any(repo.contributing, repo.contributingRst, repo.contributingTxt)) fileScore += FILE_WEIGHTS.contributing!
   if (has(repo.codeOfConduct)) fileScore += FILE_WEIGHTS.code_of_conduct!
   if (has(repo.security)) fileScore += FILE_WEIGHTS.security!
   if (any(repo.changelog, repo.changelogPlain, repo.changes, repo.history, repo.news)) fileScore += FILE_WEIGHTS.changelog!
 
-  // README quality (40%)
+  // README quality sub-score
   const readmeBlob = repo.readmeMd ?? repo.readmeLower ?? repo.readmeRst ?? repo.readmeTxt ?? repo.readmePlain
   const content = readmeBlob?.text ?? null
   let sectionScore = 0
@@ -235,7 +266,48 @@ function computeDocScore(repo: DocRepoData): number {
     }
   }
 
-  return fileScore * 0.6 + sectionScore * 0.4
+  // Licensing sub-score
+  const spdxId = repo.licenseInfo?.spdxId ?? null
+  let licensingScore = 0
+
+  if (spdxId && spdxId !== 'NOASSERTION') {
+    licensingScore += LICENSING_WEIGHTS.licensePresent
+  } else if (spdxId === 'NOASSERTION') {
+    licensingScore += LICENSING_WEIGHTS.licensePresent * 0.3
+  }
+
+  if (isOsiApproved(spdxId)) {
+    licensingScore += LICENSING_WEIGHTS.osiApproved
+  }
+
+  if (getPermissivenessTier(spdxId) !== null) {
+    licensingScore += LICENSING_WEIGHTS.tierClassified
+  }
+
+  // DCO/CLA enforcement: bot detection + signed-off-by ratio
+  const workflowEntries = repo.workflows?.entries ?? []
+  const hasDcoBot = workflowEntries.some((entry) => {
+    const text = entry.object?.text
+    if (!text) return false
+    return DCO_CLA_BOT_PATTERNS.some((pattern) => text.includes(pattern))
+  })
+
+  const commits = repo.defaultBranchRef?.target?.history?.nodes ?? []
+  let signedOffEnforced = false
+  if (commits.length > 0) {
+    const signedCount = commits.filter((c) => SIGNED_OFF_BY_RE.test(c.message)).length
+    signedOffEnforced = (signedCount / commits.length) >= SIGNED_OFF_BY_RATIO_THRESHOLD
+  }
+
+  if (hasDcoBot || signedOffEnforced) {
+    licensingScore += LICENSING_WEIGHTS.dcoClaEnforced
+  }
+
+  return (
+    fileScore * COMPOSITE_WEIGHTS.filePresence +
+    sectionScore * COMPOSITE_WEIGHTS.readmeQuality +
+    licensingScore * COMPOSITE_WEIGHTS.licensing
+  )
 }
 
 // ─── Percentile computation ──────────────────────────────────────────────────
