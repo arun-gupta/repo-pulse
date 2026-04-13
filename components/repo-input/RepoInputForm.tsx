@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { normalizeOrgInput } from '@/lib/analyzer/org-inventory'
 import { parseRepos } from '@/lib/parse-repos'
 
@@ -23,7 +23,16 @@ export function RepoInputForm({
   const [repoValue, setRepoValue] = useState(initialRepoValue)
   const [orgValue, setOrgValue] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const repoTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const mode = controlledMode ?? uncontrolledMode
+
+  useEffect(() => {
+    if (mode !== 'repos' || !repoTextareaRef.current) return
+
+    const textarea = repoTextareaRef.current
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }, [mode, repoValue])
 
   function updateMode(nextMode: 'repos' | 'org') {
     onModeChange?.(nextMode)
@@ -87,11 +96,12 @@ export function RepoInputForm({
       </div>
       {mode === 'repos' ? (
         <textarea
+          ref={repoTextareaRef}
           value={repoValue}
           onChange={(e) => setRepoValue(e.target.value)}
           placeholder={'facebook/react ollama/ollama\ngithub.com/kubernetes/kubernetes\nhttps://github.com/pytorch/pytorch'}
-          rows={5}
-          className="w-full rounded border border-slate-300 bg-white p-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          rows={3}
+          className="w-full resize-none overflow-hidden rounded border border-slate-300 bg-white p-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-label="Repository list"
           aria-describedby={error ? 'repo-input-error' : undefined}
         />
