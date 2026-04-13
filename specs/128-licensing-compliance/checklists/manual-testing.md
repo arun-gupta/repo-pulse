@@ -6,33 +6,33 @@
 
 ## Prerequisites
 
-- [ ] Application builds without errors
-- [ ] All automated tests pass
+- [x] Application builds without errors
+- [x] All automated tests pass *(312 tests, 54 files)*
 
 ## US1: License Presence and Quality Assessment
 
-- [ ] Analyze a repo with an OSI-approved license (e.g., MIT) — Documentation score includes licensing sub-score, score is higher than without licensing
-- [ ] Analyze a repo with no license — Documentation score reflects zero licensing sub-score, recommendation to add a license is shown
-- [ ] Analyze a repo with SPDX ID `NOASSERTION` — partial credit in licensing sub-score, recommendation to use a standard license
-- [ ] Documentation bucket composite uses three-part model (file presence + README quality + licensing)
-- [ ] File presence sub-score no longer includes license file weight (5 files scored, not 6)
-- [ ] Licensing sub-score falls back to two-part model gracefully when licensing data is unavailable
+- [x] Analyze a repo with an OSI-approved license — Documentation score includes licensing sub-score, score is higher than without licensing *(Test with `arun-gupta/repo-pulse` — Apache-2.0)*
+- [x] Analyze a repo with no license — Documentation score reflects zero licensing sub-score, recommendation to add a license is shown *(Test with `arun-gupta/docker-images` — no license)*
+- [x] Analyze a repo with SPDX ID `NOASSERTION` — partial credit in licensing sub-score, recommendation to use a standard license *(Test with `donnemartin/system-design-primer` — NOASSERTION)*
+- [x] Documentation bucket composite uses three-part model (file presence + README quality + licensing) *(Click "Show details" below Documentation score badge on any repo)*
+- [x] File presence sub-score no longer includes license file weight (5 files scored, not 6)
+- [x] Licensing sub-score falls back to two-part model gracefully when licensing data is unavailable *(Verified via unit test T017 — cannot be triggered via UI)*
 
 ## US2: License Permissiveness Classification
 
-- [ ] Analyze a repo with permissive license (MIT, Apache-2.0, BSD) — Licensing pane shows "Permissive"
-- [ ] Analyze a repo with copyleft license (GPL-3.0, AGPL-3.0) — Licensing pane shows "Copyleft"
-- [ ] Analyze a repo with weak copyleft license (MPL-2.0, LGPL-3.0) — Licensing pane shows "Weak Copyleft"
-- [ ] Licensing pane displays license name and SPDX ID
-- [ ] Licensing pane displays OSI approval status
-- [ ] Licensing pane handles unavailable data gracefully (shows "unavailable" state)
+- [x] Analyze a repo with permissive license (MIT, Apache-2.0, BSD) — Licensing pane shows "Permissive" *(Tested with `arun-gupta/repo-pulse` — Apache-2.0)*
+- [x] Analyze a repo with copyleft license (GPL-3.0, AGPL-3.0) — Licensing pane shows "Copyleft" *(Tested with `justjavac/free-programming-books-zh_CN` — GPL-3.0)*
+- [x] Analyze a repo with weak copyleft license (MPL-2.0, LGPL-3.0) — Licensing pane shows "Weak Copyleft" *(Tested with `syncthing/syncthing` — MPL-2.0)*
+- [x] Licensing pane displays license name and SPDX ID *(Verified across all repos above)*
+- [x] Licensing pane displays OSI approval status *(Verified across all repos above)*
+- [x] Licensing pane handles unavailable data gracefully (shows "unavailable" state) *(Verified via component test — cannot be triggered via UI)*
 
 ## US3: DCO/CLA Enforcement Detection
 
 - [ ] Analyze a repo with Signed-off-by commit trailers — Licensing pane shows DCO enforcement detected
 - [ ] Analyze a repo with DCO/CLA bot in GitHub Actions workflows — Licensing pane shows enforcement detected
 - [ ] Analyze a repo with no enforcement signals — Licensing pane shows "Not detected" with recommendation
-- [ ] Empty repo (zero commits) — DCO/CLA shows "not applicable", not penalized
+- [ ] Empty repo (zero commits) — DCO/CLA shows "not applicable", not penalized *(Verified via unit test — cannot be triggered via UI)*
 
 ## Score Integration
 

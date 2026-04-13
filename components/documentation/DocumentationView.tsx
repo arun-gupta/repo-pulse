@@ -82,10 +82,14 @@ function LicensingPane({ licensingResult }: { licensingResult: LicensingResult |
         {/* DCO/CLA enforcement */}
         <li className="flex items-start gap-2">
           <span className={`mt-0.5 text-sm ${contributorAgreement.enforced ? 'text-emerald-600' : 'text-slate-400'}`}>
-            {contributorAgreement.enforced ? '✓' : '✗'}
+            {contributorAgreement.enforced ? '✓' : contributorAgreement.signedOffByRatio === null && !contributorAgreement.dcoOrClaBot ? '·' : '✗'}
           </span>
           <p className={`text-sm font-medium ${contributorAgreement.enforced ? 'text-slate-900' : 'text-slate-400'}`}>
-            {contributorAgreement.enforced ? 'DCO/CLA enforcement detected' : 'DCO/CLA enforcement not detected'}
+            {contributorAgreement.enforced
+              ? 'DCO/CLA enforcement detected'
+              : contributorAgreement.signedOffByRatio === null && !contributorAgreement.dcoOrClaBot
+                ? 'DCO/CLA enforcement not applicable'
+                : 'DCO/CLA enforcement not detected'}
           </p>
         </li>
       </ul>

@@ -128,8 +128,20 @@ describe('DocumentationView', () => {
       expect(within(licensingPane).getByText(/enforcement detected/i)).toBeInTheDocument()
     })
 
-    it('renders no DCO enforcement', () => {
+    it('renders DCO not applicable when no commits and no bot', () => {
       render(<DocumentationView results={[buildResult()]} />)
+
+      const licensingPane = screen.getByRole('region', { name: /licensing/i })
+      expect(within(licensingPane).getByText(/not applicable/i)).toBeInTheDocument()
+    })
+
+    it('renders DCO not detected when commits exist but no enforcement', () => {
+      render(<DocumentationView results={[buildResult({
+        licensingResult: {
+          license: { spdxId: 'MIT', name: 'MIT License', osiApproved: true, permissivenessTier: 'Permissive' },
+          contributorAgreement: { signedOffByRatio: 0.1, dcoOrClaBot: false, enforced: false },
+        },
+      })]} />)
 
       const licensingPane = screen.getByRole('region', { name: /licensing/i })
       expect(within(licensingPane).getByText(/not detected/i)).toBeInTheDocument()
