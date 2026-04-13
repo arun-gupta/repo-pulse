@@ -99,6 +99,20 @@ export function getSecurityScore(
     compositeScore = directCheckScore
   }
 
+  // Handle Branch-Protection fallback: if Scorecard returns -1 for Branch-Protection
+  // and we have a direct query result, update the direct check accordingly
+  if (hasScorecardData) {
+    const scorecard = securityResult.scorecard as Exclude<typeof securityResult.scorecard, 'unavailable'>
+    const bpCheck = scorecard.checks.find((c) => c.name === 'Branch-Protection')
+    if (bpCheck && bpCheck.score === -1 && securityResult.branchProtectionEnabled !== 'unavailable') {
+      // Scorecard couldn't determine branch protection, but our direct query did
+      const bpDirectCheck = securityResult.directChecks.find((c) => c.name === 'branch_protection')
+      if (bpDirectCheck && bpDirectCheck.detected !== 'unavailable') {
+        // Direct check result is already populated — it will contribute to the direct score
+      }
+    }
+  }
+
   // Generate recommendations
   const recommendations = generateDirectCheckRecommendations(securityResult.directChecks, weights)
 

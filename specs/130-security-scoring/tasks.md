@@ -79,16 +79,16 @@
 
 ### Tests for User Story 2
 
-- [ ] T021 [P] [US2] Write tests for Mode B scoring (direct checks only, no Scorecard): verify Scorecard-only signals excluded not penalized, direct check weights rebalanced (security_policy 0.30, dependabot 0.30, ci_cd 0.20, branch_protection 0.20) in lib/security/__tests__/score-config.test.ts
-- [ ] T022 [P] [US2] Write tests for recommendation generation: at least one recommendation per missing direct check signal in lib/security/__tests__/score-config.test.ts
-- [ ] T023 [P] [US2] Write tests for SecurityView in direct-only mode: mode indicator shows "direct checks only", Scorecard section hidden, direct checks displayed with detected/not-detected status in __tests__/security/SecurityView.test.tsx
+- [x] T021 [P] [US2] Write tests for Mode B scoring (direct checks only, no Scorecard): verify Scorecard-only signals excluded not penalized, direct check weights rebalanced (security_policy 0.30, dependabot 0.30, ci_cd 0.20, branch_protection 0.20) in lib/security/__tests__/score-config.test.ts
+- [x] T022 [P] [US2] Write tests for recommendation generation: at least one recommendation per missing direct check signal in lib/security/__tests__/score-config.test.ts
+- [x] T023 [P] [US2] Write tests for SecurityView in direct-only mode: mode indicator shows "direct checks only", Scorecard section hidden, direct checks displayed with detected/not-detected status in __tests__/security/SecurityView.test.tsx
 
 ### Implementation for User Story 2
 
-- [ ] T024 [US2] Implement Mode B scoring in getSecurityScore: when scorecard is 'unavailable', use direct checks only with rebalanced weights, exclude Scorecard-only signals from computation in lib/security/score-config.ts
-- [ ] T025 [US2] Implement recommendation text for each direct check signal: missing security policy, no dependency automation, no CI/CD, no branch protection in lib/security/score-config.ts
-- [ ] T026 [US2] Implement Mode A direct check weight adjustment: when Scorecard is available, reduce security_policy weight to 0.10 and redistribute to other signals in lib/security/score-config.ts
-- [ ] T027 [US2] Update SecurityView to handle direct-only mode: hide Scorecard section, show mode indicator, display "unavailable" badges for Scorecard-only signals in components/security/SecurityView.tsx
+- [x] T024 [US2] Implement Mode B scoring in getSecurityScore: when scorecard is 'unavailable', use direct checks only with rebalanced weights, exclude Scorecard-only signals from computation in lib/security/score-config.ts
+- [x] T025 [US2] Implement recommendation text for each direct check signal: missing security policy, no dependency automation, no CI/CD, no branch protection in lib/security/score-config.ts
+- [x] T026 [US2] Implement Mode A direct check weight adjustment: when Scorecard is available, reduce security_policy weight to 0.10 and redistribute to other signals in lib/security/score-config.ts
+- [x] T027 [US2] Update SecurityView to handle direct-only mode: hide Scorecard section, show mode indicator, display "unavailable" badges for Scorecard-only signals in components/security/SecurityView.tsx
 
 **Checkpoint**: Every repo gets a meaningful security assessment. Small repos show direct checks with recommendations. Large repos show both layers.
 
@@ -102,15 +102,15 @@
 
 ### Tests for User Story 3
 
-- [ ] T028 [P] [US3] Write tests for branch protection GraphQL query: enabled, disabled, unavailable (permission error) in lib/security/__tests__/direct-checks.test.ts
-- [ ] T029 [P] [US3] Write tests for Branch-Protection fallback logic: Scorecard score valid (0-10) → use Scorecard, Scorecard score -1 → use direct query, no Scorecard → use direct query in lib/security/__tests__/score-config.test.ts
+- [x] T028 [P] [US3] Write tests for branch protection GraphQL query: enabled, disabled, unavailable (permission error) in lib/security/__tests__/direct-checks.test.ts
+- [x] T029 [P] [US3] Write tests for Branch-Protection fallback logic: Scorecard score valid (0-10) → use Scorecard, Scorecard score -1 → use direct query, no Scorecard → use direct query in lib/security/__tests__/score-config.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T030 [US3] Implement `fetchBranchProtection(owner, repo, defaultBranch, token)` using GraphQL `branchProtectionRules` query in lib/security/direct-checks.ts
-- [ ] T031 [US3] Call branch protection query in analyze.ts — populate `securityResult.branchProtectionEnabled` in lib/analyzer/analyze.ts
-- [ ] T032 [US3] Implement Branch-Protection fallback in score-config: if Scorecard Branch-Protection score is -1 and direct query returned a result, substitute direct result into scoring in lib/security/score-config.ts
-- [ ] T033 [US3] Update SecurityView to show branch protection status from either source, with indicator of data source in components/security/SecurityView.tsx
+- [x] T030 [US3] Implement `fetchBranchProtection(owner, repo, defaultBranch, token)` using GraphQL `branchProtectionRules` query in lib/security/direct-checks.ts
+- [x] T031 [US3] Call branch protection query in analyze.ts — populate `securityResult.branchProtectionEnabled` in lib/analyzer/analyze.ts
+- [x] T032 [US3] Implement Branch-Protection fallback in score-config: if Scorecard Branch-Protection score is -1 and direct query returned a result, substitute direct result into scoring in lib/security/score-config.ts
+- [x] T033 [US3] Update SecurityView to show branch protection status from either source, with indicator of data source in components/security/SecurityView.tsx
 
 **Checkpoint**: Branch protection is reliably assessed for all repos regardless of Scorecard's ability to determine it.
 

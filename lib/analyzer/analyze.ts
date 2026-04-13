@@ -23,6 +23,7 @@ import { extractLicensingResult, type LicenseFileInfo } from './extract-licensin
 import { extractInclusiveNamingResult } from '@/lib/inclusive-naming/checker'
 import type { SecurityResult, DirectSecurityCheck } from '@/lib/security/analysis-result'
 import { fetchScorecardData } from '@/lib/security/scorecard-client'
+import { fetchBranchProtection } from '@/lib/security/direct-checks'
 
 interface DocBlob {
   text?: string
@@ -358,9 +359,11 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       staleBefore365.setDate(now.getDate() - 365)
       const repoSearch = `${owner}/${name}`
 
-      // Fetch OpenSSF Scorecard data in parallel (unauthenticated, separate API)
-      console.log(`[analyzer] ${repo} — fetching OpenSSF Scorecard`)
+      // Fetch OpenSSF Scorecard data and branch protection in parallel
+      console.log(`[analyzer] ${repo} — fetching OpenSSF Scorecard + branch protection`)
       const scorecardPromise = fetchScorecardData(owner!, name!)
+      const defaultBranch = overview.data.repository?.defaultBranchRef?.name ?? 'main'
+      const branchProtectionPromise = fetchBranchProtection(owner!, name!, defaultBranch, input.token)
 
       // Pass 1: Commit history + releases (lightweight — no search queries)
       console.log(`[analyzer] ${repo} — pass 1: commit history + releases`)
@@ -497,10 +500,18 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         commitHistory.nodes,
       )
 
-      // Populate Scorecard data (fetched in parallel earlier)
-      const scorecardData = await scorecardPromise
+      // Populate Scorecard data and branch protection (fetched in parallel earlier)
+      const [scorecardData, branchProtection] = await Promise.all([scorecardPromise, branchProtectionPromise])
       if (analysisResult.securityResult !== 'unavailable') {
         analysisResult.securityResult.scorecard = scorecardData
+        analysisResult.securityResult.branchProtectionEnabled = branchProtection
+        // Update the branch_protection direct check
+        const bpCheck = analysisResult.securityResult.directChecks.find((c) => c.name === 'branch_protection')
+        if (bpCheck) {
+          bpCheck.detected = branchProtection === 'unavailable' ? 'unavailable' : branchProtection
+          bpCheck.details = branchProtection === true ? 'Branch protection enabled' :
+            branchProtection === false ? 'No branch protection rules detected' : null
+        }
       }
 
       results.push(analysisResult)

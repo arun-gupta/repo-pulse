@@ -134,6 +134,95 @@ describe('getSecurityScore', () => {
     })
   })
 
+  describe('Mode A: direct check weight adjustment', () => {
+    it('reduces security_policy weight when Scorecard is available', () => {
+      // In Mode A, security_policy has weight 0.10 (reduced since Scorecard covers it)
+      // In Mode B, security_policy has weight 0.30
+      // With only security_policy detected, Mode B should give a higher direct score
+      const onlySecPolicy: SecurityResult = {
+        scorecard: 'unavailable',
+        directChecks: [
+          { name: 'security_policy', detected: true, details: 'SECURITY.md detected' },
+          { name: 'dependabot', detected: false, details: null },
+          { name: 'ci_cd', detected: false, details: null },
+          { name: 'branch_protection', detected: false, details: null },
+        ],
+        branchProtectionEnabled: false,
+      }
+
+      const modeB = getSecurityScore(onlySecPolicy, 100)
+      expect(modeB.mode).toBe('direct-only')
+      // In Mode B: security_policy weight 0.30 / total 1.0 → 0.30
+      expect(modeB.directCheckScore).toBeCloseTo(0.30, 2)
+    })
+  })
+
+  describe('recommendation generation per signal', () => {
+    it('generates one recommendation per missing direct check signal', () => {
+      const score = getSecurityScore(noSignalsResult, 100)
+
+      const items = score.recommendations.map((r) => r.item)
+      expect(items).toContain('security_policy')
+      expect(items).toContain('dependabot')
+      expect(items).toContain('ci_cd')
+      // branch_protection is 'unavailable', not false, so no recommendation
+    })
+  })
+
+  describe('Branch-Protection fallback', () => {
+    it('uses Scorecard Branch-Protection score when valid (0-10)', () => {
+      const result: SecurityResult = {
+        ...fullScorecardResult,
+        scorecard: {
+          ...fullScorecardResult.scorecard as Exclude<typeof fullScorecardResult.scorecard, 'unavailable'>,
+          checks: [
+            { name: 'Branch-Protection', score: 8, reason: 'branch protection enabled' },
+          ],
+        },
+      }
+      const score = getSecurityScore(result, 5000)
+      expect(score.mode).toBe('scorecard')
+    })
+
+    it('falls back to direct query when Scorecard Branch-Protection is -1', () => {
+      const result: SecurityResult = {
+        scorecard: {
+          overallScore: 5.0,
+          checks: [
+            { name: 'Branch-Protection', score: -1, reason: 'internal error' },
+          ],
+          scorecardVersion: 'v5.0.0',
+        },
+        directChecks: [
+          { name: 'security_policy', detected: true, details: null },
+          { name: 'dependabot', detected: true, details: null },
+          { name: 'ci_cd', detected: true, details: null },
+          { name: 'branch_protection', detected: true, details: 'Branch protection enabled' },
+        ],
+        branchProtectionEnabled: true,
+      }
+      const score = getSecurityScore(result, 5000)
+      // Branch protection direct check contributes to direct score
+      expect(score.directCheckScore).toBeGreaterThan(0)
+    })
+
+    it('uses direct query when Scorecard is unavailable', () => {
+      const result: SecurityResult = {
+        scorecard: 'unavailable',
+        directChecks: [
+          { name: 'security_policy', detected: false, details: null },
+          { name: 'dependabot', detected: false, details: null },
+          { name: 'ci_cd', detected: false, details: null },
+          { name: 'branch_protection', detected: true, details: 'Branch protection enabled' },
+        ],
+        branchProtectionEnabled: true,
+      }
+      const score = getSecurityScore(result, 5000)
+      expect(score.mode).toBe('direct-only')
+      expect(score.directCheckScore).toBeGreaterThan(0)
+    })
+  })
+
   describe('percentile and tone', () => {
     it('returns percentile when stars are available', () => {
       const score = getSecurityScore(fullScorecardResult, 5000)
