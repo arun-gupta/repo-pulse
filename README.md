@@ -9,7 +9,7 @@ Live: [repopulse-arun-gupta.vercel.app](https://repopulse-arun-gupta.vercel.app)
 ## Features
 
 - **OSS Health Score** — composite percentile with actionable recommendations
-- **7-dimension scorecard** — Reach, Attention, Engagement, Activity, Responsiveness, Contributors, Documentation
+- **8-dimension scorecard** — quick signals (Reach, Attention, Engagement) plus deep-dive dimensions (Activity, Responsiveness, Contributors, Security, Documentation)
 - **Percentile-based scoring** — calibrated against 1600+ repos across 4 star brackets
 - **Unified recommendations** — actionable improvement suggestions across all scoring dimensions
 - **Individual metric percentiles** — every metric shows where the repo ranks
