@@ -66,8 +66,14 @@ describe('ResultsTabs', () => {
     await userEvent.click(screen.getByRole('button', { name: /More/ }))
     await userEvent.click(screen.getByRole('button', { name: /Show all/ }))
 
-    // Now all 8 tabs are visible as inline tab buttons
+    // Now all 8 tabs are visible as inline tab buttons with a Show less button
     expect(screen.getAllByRole('tab')).toHaveLength(8)
     expect(screen.queryByRole('button', { name: /More/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Show less/ })).toBeInTheDocument()
+
+    // Click Show less — collapses back to 6 tabs + More dropdown
+    await userEvent.click(screen.getByRole('button', { name: /Show less/ }))
+    expect(screen.getAllByRole('tab')).toHaveLength(6)
+    expect(screen.getByRole('button', { name: /More/ })).toBeInTheDocument()
   })
 })

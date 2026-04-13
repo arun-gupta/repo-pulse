@@ -39,6 +39,16 @@ export function ResultsTabs({ tabs, activeTab, onChange }: ResultsTabsProps) {
         <TabButton key={tab.id} tab={tab} active={tab.id === activeTab} onClick={() => onChange(tab.id)} />
       ))}
 
+      {expanded && hasOverflow && (
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700"
+          onClick={() => setExpanded(false)}
+        >
+          Show less
+        </button>
+      )}
+
       {overflowTabs.length > 0 && (
         <div className="relative" ref={menuRef}>
           <button
