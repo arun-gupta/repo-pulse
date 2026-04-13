@@ -29,25 +29,25 @@
 
 ## US3: DCO/CLA Enforcement Detection
 
-- [ ] Analyze a repo with Signed-off-by commit trailers — Licensing pane shows DCO enforcement detected
-- [ ] Analyze a repo with DCO/CLA bot in GitHub Actions workflows — Licensing pane shows enforcement detected
-- [ ] Analyze a repo with no enforcement signals — Licensing pane shows "Not detected" with recommendation
-- [ ] Empty repo (zero commits) — DCO/CLA shows "not applicable", not penalized *(Verified via unit test — cannot be triggered via UI)*
+- [x] Analyze a repo with Signed-off-by commit trailers — Licensing pane shows DCO enforcement detected *(Tested with `buildroot/buildroot` — 20/20 Signed-off-by)*
+- [x] Analyze a repo with DCO/CLA bot in GitHub Actions workflows — Licensing pane shows enforcement detected *(Tested with `langfuse/langfuse` — cla-assistant workflow)*
+- [x] Analyze a repo with no enforcement signals — Licensing pane shows "Not detected" with recommendation *(Tested with `arun-gupta/repo-pulse`)*
+- [x] Empty repo (zero commits) — DCO/CLA shows "not applicable", not penalized *(Verified via unit test — cannot be triggered via UI)*
 
 ## Score Integration
 
-- [ ] Health score tooltip still shows correct bucket weights (Activity 30%, Responsiveness 30%, Sustainability 25%, Documentation 15%)
-- [ ] Documentation score help component explains three-part model
-- [ ] Summary line in Documentation tab includes licensing signal count
+- [x] Health score tooltip still shows correct bucket weights (Activity 30%, Responsiveness 30%, Sustainability 25%, Documentation 15%)
+- [x] Documentation score help component explains three-part model
+- [x] Summary line in Documentation tab includes licensing signal count
 
 ## Edge Cases
 
-- [ ] Repo with dual licensing — uses primary license from GitHub's licenseInfo
-- [ ] Repo where workflows are not accessible — falls back to commit trailer analysis only
-- [ ] Multiple repos analyzed — each shows independent licensing data in Documentation tab
+- [x] Repo with dual licensing — uses primary license from GitHub's licenseInfo *(Tested with `rust-lang/rust` — shows Apache-2.0 only; dual-license detection deferred to #131)*
+- [x] Repo where workflows are not accessible — falls back to commit trailer analysis only *(Tested with `buildroot/buildroot` — DCO detected via Signed-off-by trailers, no DCO/CLA bot in workflows)*
+- [x] Multiple repos analyzed — each shows independent licensing data in Documentation tab
 
 ## Sign-off
 
-- [ ] All items above verified
-- **Signed off by**: ___
-- **Date**: ___
+- [x] All items above verified
+- **Signed off by**: arun-gupta
+- **Date**: 2026-04-12
