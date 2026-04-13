@@ -36,7 +36,7 @@ export const LOADING_QUOTES: LoadingQuote[] = [
   {
     text: 'Open source is inextricable from the idea of an open internet, where individuals can shape their own experience and are empowered, safe, and independent.',
     author: 'Mitchell Baker',
-    context: 'Mozilla',
+    context: 'Former CEO and Chairwoman, Mozilla',
   },
   {
     text: 'Source code — the only representation of software that contains human readable knowledge — is a precious digital object.',
