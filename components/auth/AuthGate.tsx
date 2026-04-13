@@ -57,7 +57,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           <p>Analyze any public repo, compare side-by-side, and see exactly where it ranks.</p>
         </div>
         <SignInButton />
-        <a href="/baseline" className="text-xs text-slate-400 hover:text-slate-600 transition">View scoring baseline</a>
+        <a href="/baseline" target="_blank" rel="noopener noreferrer" className="text-xs text-slate-400 hover:text-slate-600 transition">View scoring baseline</a>
       </div>
     )
   }
