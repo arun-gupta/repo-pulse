@@ -21,6 +21,7 @@ import { fetchContributorCount, fetchMaintainerCount, fetchPublicUserOrganizatio
 import { REPO_COMMIT_AND_RELEASES_QUERY, REPO_ACTIVITY_COUNTS_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
 import { extractLicensingResult, type LicenseFileInfo } from './extract-licensing'
 import { extractInclusiveNamingResult } from '@/lib/inclusive-naming/checker'
+import type { SecurityResult, DirectSecurityCheck } from '@/lib/security/analysis-result'
 
 interface DocBlob {
   text?: string
@@ -68,6 +69,12 @@ interface RepoOverviewResponse {
     docChangesRst?: DocBlob | null
     docHistory?: DocBlob | null
     docNews?: DocBlob | null
+    secDependabot?: DocBlob | null
+    secDependabotYaml?: DocBlob | null
+    secRenovateRoot?: DocBlob | null
+    secRenovateGithub?: DocBlob | null
+    secRenovateConfig?: DocBlob | null
+    secRenovateRc?: DocBlob | null
     workflowDir?: {
       entries: Array<{
         name: string
@@ -683,6 +690,7 @@ function buildAnalysisResult(
     issueFirstResponseTimestamps,
     issueCloseTimestamps,
     prMergeTimestamps,
+    securityResult: extractSecurityResult(overview.repository),
     missingFields,
   }
 }
@@ -737,6 +745,46 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
   const readmeSections = detectReadmeSections(readmeContent)
 
   return { fileChecks, readmeSections, readmeContent }
+}
+
+function extractSecurityResult(repo: RepoOverviewResponse['repository']): SecurityResult | 'unavailable' {
+  if (!repo) return 'unavailable'
+
+  const hasDependabot = (repo.secDependabot != null) || (repo.secDependabotYaml != null)
+  const hasRenovate = (repo.secRenovateRoot != null) || (repo.secRenovateGithub != null) ||
+    (repo.secRenovateConfig != null) || (repo.secRenovateRc != null)
+  const hasSecurity = (repo.docSecurity != null) || (repo.docSecurityRst != null)
+  const hasWorkflows = repo.workflowDir?.entries != null && repo.workflowDir.entries.length > 0
+
+  const directChecks: DirectSecurityCheck[] = [
+    {
+      name: 'security_policy',
+      detected: hasSecurity,
+      details: hasSecurity ? 'SECURITY.md detected' : null,
+    },
+    {
+      name: 'dependabot',
+      detected: hasDependabot || hasRenovate,
+      details: hasDependabot ? 'Dependabot configuration detected' :
+        hasRenovate ? 'Renovate configuration detected' : null,
+    },
+    {
+      name: 'ci_cd',
+      detected: hasWorkflows,
+      details: hasWorkflows ? `${repo.workflowDir!.entries.length} workflow file(s) detected` : null,
+    },
+    {
+      name: 'branch_protection',
+      detected: 'unavailable',
+      details: null,
+    },
+  ]
+
+  return {
+    scorecard: 'unavailable',
+    directChecks,
+    branchProtectionEnabled: 'unavailable',
+  }
 }
 
 // Matches both Markdown headings (## Title) and RST headings (Title\n====)

@@ -118,6 +118,7 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
       branchCheck: { checkType: 'branch', term: 'main', passed: true, tier: null, severity: null, replacements: [], context: null },
       metadataChecks: [],
     },
+    securityResult: 'unavailable',
     missingFields: [],
     ...overrides,
   }

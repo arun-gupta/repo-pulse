@@ -1,3 +1,5 @@
+import type { SecurityResult } from '@/lib/security/analysis-result'
+
 export type Unavailable = 'unavailable'
 export const CONTRIBUTOR_WINDOW_DAYS = [30, 60, 90, 180, 365] as const
 export type ContributorWindowDays = (typeof CONTRIBUTOR_WINDOW_DAYS)[number]
@@ -157,6 +159,7 @@ export interface AnalysisResult {
   defaultBranchName: string | Unavailable
   topics: string[]
   inclusiveNamingResult: InclusiveNamingResult | Unavailable
+  securityResult: SecurityResult | Unavailable
   missingFields: string[]
 }
 

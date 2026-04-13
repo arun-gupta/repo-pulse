@@ -19,9 +19,9 @@
 
 **Purpose**: Create the security module structure and shared types
 
-- [ ] T001 Create SecurityResult, ScorecardAssessment, ScorecardCheck, DirectSecurityCheck types in lib/security/analysis-result.ts per data-model.md
-- [ ] T002 Create SecurityScoreDefinition and SecurityRecommendation types in lib/security/analysis-result.ts
-- [ ] T003 Add `securityResult: SecurityResult | Unavailable` field to AnalysisResult interface in lib/analyzer/analysis-result.ts
+- [x] T001 Create SecurityResult, ScorecardAssessment, ScorecardCheck, DirectSecurityCheck types in lib/security/analysis-result.ts per data-model.md
+- [x] T002 Create SecurityScoreDefinition and SecurityRecommendation types in lib/security/analysis-result.ts
+- [x] T003 Add `securityResult: SecurityResult | Unavailable` field to AnalysisResult interface in lib/analyzer/analysis-result.ts
 
 ---
 
@@ -31,10 +31,10 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Write tests for GraphQL security file aliases (dependabot.yml, renovate.json, .github/renovate.json, .github/workflows tree) in lib/security/__tests__/direct-checks.test.ts
-- [ ] T005 Add GraphQL aliases for `.github/dependabot.yml`, `renovate.json`, `.github/renovate.json`, and `.github/workflows` (tree check) to REPO_OVERVIEW_QUERY in lib/analyzer/queries.ts
-- [ ] T006 Extract security file detection results from GraphQL response into SecurityResult.directChecks in lib/analyzer/analyze.ts — populate `securityResult` on AnalysisResult with direct checks and `scorecard: 'unavailable'` as initial default
-- [ ] T007 Update existing analyzer tests to include the new securityResult field in lib/analyzer/__tests__/ (ensure no regressions)
+- [x] T004 Write tests for GraphQL security file aliases (dependabot.yml, renovate.json, .github/renovate.json, .github/workflows tree) in lib/security/__tests__/direct-checks.test.ts
+- [x] T005 Add GraphQL aliases for `.github/dependabot.yml`, `renovate.json`, `.github/renovate.json`, and `.github/workflows` (tree check) to REPO_OVERVIEW_QUERY in lib/analyzer/queries.ts
+- [x] T006 Extract security file detection results from GraphQL response into SecurityResult.directChecks in lib/analyzer/analyze.ts — populate `securityResult` on AnalysisResult with direct checks and `scorecard: 'unavailable'` as initial default
+- [x] T007 Update existing analyzer tests to include the new securityResult field in lib/analyzer/__tests__/ (ensure no regressions)
 
 **Checkpoint**: Every analyzed repo now has a `securityResult` with direct file check data. Scorecard is still "unavailable".
 
