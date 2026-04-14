@@ -8,6 +8,7 @@ import { getDocumentationScore } from '@/lib/documentation/score-config'
 import { assignReferenceIds, resolveReferenceId } from '@/lib/recommendations/reference-id'
 import { getResponsivenessScore } from '@/lib/responsiveness/score-config'
 import { getHealthScore } from '@/lib/scoring/health-score'
+import { getInclusiveNamingScore } from '@/lib/inclusive-naming/score-config'
 import { getSecurityScore } from '@/lib/security/score-config'
 
 export interface JsonExportResult {
@@ -20,6 +21,7 @@ interface RepoScores {
   sustainability: { value: number | string; tone: string; description: string }
   responsiveness: { value: number | string; tone: string; description: string }
   documentation: { value: number | string; tone: string; filesFound: number; readmeSections: number } | null
+  security: { value: number | string; tone: string; mode: string } | null
 }
 
 function computeScores(result: AnalysisResult): RepoScores {
@@ -36,11 +38,17 @@ function computeScores(result: AnalysisResult): RepoScores {
       readmeSections: result.documentationResult.readmeSections.filter((s) => s.detected).length,
     }
   }
+  let security: RepoScores['security'] = null
+  if (result.securityResult && result.securityResult !== 'unavailable') {
+    const secScore = getSecurityScore(result.securityResult, result.stars)
+    security = { value: secScore.value, tone: secScore.tone, mode: secScore.mode }
+  }
   return {
     activity: { value: activity.value, tone: activity.tone, description: activity.description },
     sustainability: { value: sustainability.value, tone: sustainability.tone, description: sustainability.description },
     responsiveness: { value: responsiveness.value, tone: responsiveness.tone, description: responsiveness.description },
     documentation,
+    security,
   }
 }
 
@@ -103,6 +111,84 @@ function computeRecommendations(result: AnalysisResult) {
   return [...nonSecurityWithIds, ...securityWithIds]
 }
 
+function computeSecurity(result: AnalysisResult) {
+  if (!result.securityResult || result.securityResult === 'unavailable') return undefined
+  const score = getSecurityScore(result.securityResult, result.stars)
+  return {
+    score: score.value,
+    tone: score.tone,
+    mode: score.mode,
+    compositeScore: score.compositeScore,
+    scorecardScore: score.scorecardScore,
+    directCheckScore: score.directCheckScore,
+    scorecard: result.securityResult.scorecard !== 'unavailable'
+      ? {
+          overallScore: result.securityResult.scorecard.overallScore,
+          version: result.securityResult.scorecard.scorecardVersion,
+          checks: result.securityResult.scorecard.checks.map((c) => ({
+            name: c.name,
+            score: c.score,
+            reason: c.reason,
+          })),
+        }
+      : null,
+    directChecks: result.securityResult.directChecks.map((c) => ({
+      name: c.name,
+      detected: c.detected,
+      details: c.details,
+    })),
+  }
+}
+
+function computeLicensing(result: AnalysisResult) {
+  if (!result.licensingResult || result.licensingResult === 'unavailable') return undefined
+  const lr = result.licensingResult
+  return {
+    license: {
+      spdxId: lr.license.spdxId,
+      name: lr.license.name,
+      osiApproved: lr.license.osiApproved,
+      permissivenessTier: lr.license.permissivenessTier,
+    },
+    additionalLicenses: lr.additionalLicenses.map((l) => ({
+      spdxId: l.spdxId,
+      name: l.name,
+      osiApproved: l.osiApproved,
+      permissivenessTier: l.permissivenessTier,
+    })),
+    contributorAgreement: {
+      enforced: lr.contributorAgreement.enforced,
+      signedOffByRatio: lr.contributorAgreement.signedOffByRatio,
+      dcoOrClaBot: lr.contributorAgreement.dcoOrClaBot,
+    },
+  }
+}
+
+function computeInclusiveNaming(result: AnalysisResult) {
+  if (!result.inclusiveNamingResult || result.inclusiveNamingResult === 'unavailable') return undefined
+  const inr = result.inclusiveNamingResult
+  const score = getInclusiveNamingScore(inr)
+  return {
+    compositeScore: score.compositeScore,
+    branchScore: score.branchScore,
+    metadataScore: score.metadataScore,
+    defaultBranchName: inr.defaultBranchName,
+    branchCheck: {
+      term: inr.branchCheck.term,
+      passed: inr.branchCheck.passed,
+      severity: inr.branchCheck.severity,
+      replacements: inr.branchCheck.replacements,
+    },
+    metadataChecks: inr.metadataChecks.map((c) => ({
+      checkType: c.checkType,
+      term: c.term,
+      passed: c.passed,
+      severity: c.severity,
+      replacements: c.replacements,
+    })),
+  }
+}
+
 function computeComparison(results: AnalysisResult[]) {
   if (results.length < 2) return undefined
   return buildComparisonSections(results).map((section) => ({
@@ -133,6 +219,9 @@ export function buildJsonExport(response: AnalyzeResponse): JsonExportResult {
       contributors: computeContributors(result),
       healthRatios: computeHealthRatios(result),
       recommendations: computeRecommendations(result),
+      security: computeSecurity(result),
+      licensing: computeLicensing(result),
+      inclusiveNaming: computeInclusiveNaming(result),
     })),
     comparison: computeComparison(response.results),
   }

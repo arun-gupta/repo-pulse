@@ -153,6 +153,7 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     `| Activity | ${activity.value} |`,
     `| Responsiveness | ${responsiveness.value} |`,
     `| Documentation | ${result.documentationResult !== 'unavailable' ? getDocumentationScore(result.documentationResult, result.licensingResult, result.stars, result.inclusiveNamingResult).value : 'unavailable'} |`,
+    `| Security | ${result.securityResult && result.securityResult !== 'unavailable' ? getSecurityScore(result.securityResult, result.stars).value : 'unavailable'} |`,
     '',
   )
 
@@ -312,6 +313,121 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
       ])),
       '',
     )
+  }
+
+  // Security section
+  if (result.securityResult && result.securityResult !== 'unavailable') {
+    const secScore = getSecurityScore(result.securityResult, result.stars)
+    const DIRECT_CHECK_LABELS: Record<string, string> = {
+      security_policy: 'Security Policy',
+      dependabot: 'Dependabot / Dependency Updates',
+      ci_cd: 'CI/CD Pipeline',
+      branch_protection: 'Branch Protection',
+    }
+
+    lines.push(
+      '### Security',
+      '',
+      `**Score**: ${secScore.value}`,
+      `**Mode**: ${secScore.mode === 'scorecard' ? 'Scorecard + direct checks' : 'Direct checks only'}`,
+      '',
+    )
+
+    if (result.securityResult.scorecard !== 'unavailable') {
+      const sc = result.securityResult.scorecard
+      lines.push(
+        `#### OpenSSF Scorecard (v${sc.scorecardVersion})`,
+        '',
+        `**Overall score**: ${sc.overallScore} / 10`,
+        '',
+        '| Check | Score |',
+        '| --- | --- |',
+        ...sc.checks.map((c) =>
+          `| ${c.name} | ${c.score === -1 ? 'Indeterminate' : `${c.score} / 10`} |`
+        ),
+        '',
+      )
+    }
+
+    if (result.securityResult.directChecks.length > 0) {
+      lines.push(
+        '#### Direct Security Checks',
+        '',
+        '| Check | Status |',
+        '| --- | --- |',
+        ...result.securityResult.directChecks.map((c) => {
+          const label = DIRECT_CHECK_LABELS[c.name] ?? c.name
+          const status = c.detected === 'unavailable' ? 'Unavailable' : c.detected ? 'Detected' : 'Not detected'
+          return `| ${label} | ${status} |`
+        }),
+        '',
+      )
+    }
+  }
+
+  // Licensing & Compliance section
+  if (result.licensingResult && result.licensingResult !== 'unavailable') {
+    const lr = result.licensingResult
+    const license = lr.license
+
+    lines.push(
+      '### Licensing & Compliance',
+      '',
+    )
+
+    const licensingRows: [string, string][] = [
+      ['License', license.spdxId ? `${license.name} (${license.spdxId})` : 'Not detected'],
+    ]
+    if (lr.additionalLicenses.length > 0) {
+      licensingRows.push(['Additional licenses', lr.additionalLicenses.map((l) => l.name).join(', ')])
+    }
+    licensingRows.push(
+      ['OSI approved', license.osiApproved === true ? 'Yes' : license.osiApproved === false ? 'No' : '—'],
+      ['Permissiveness tier', license.permissivenessTier ?? '—'],
+      ['DCO/CLA enforced', lr.contributorAgreement.enforced === true ? 'Yes' : lr.contributorAgreement.enforced === false ? 'No' : '—'],
+    )
+
+    lines.push(mdTable(licensingRows), '')
+  }
+
+  // Inclusive Naming section
+  if (result.inclusiveNamingResult && result.inclusiveNamingResult !== 'unavailable') {
+    const inr = result.inclusiveNamingResult
+
+    lines.push(
+      '### Inclusive Naming',
+      '',
+    )
+
+    // Default branch
+    const branchStatus = inr.branchCheck.passed ? 'Pass' : 'Fail'
+    const branchDetail = inr.defaultBranchName ? ` (\`${inr.defaultBranchName}\`)` : ''
+    lines.push(`**Default branch**: ${branchStatus}${branchDetail}`, '')
+
+    if (!inr.branchCheck.passed && inr.branchCheck.severity) {
+      lines.push(`- Severity: ${inr.branchCheck.severity}`)
+      if (inr.branchCheck.replacements.length > 0) {
+        lines.push(`- Suggested replacements: ${inr.branchCheck.replacements.join(', ')}`)
+      }
+      lines.push('')
+    }
+
+    // Metadata checks
+    const failingChecks = inr.metadataChecks.filter((c) => !c.passed)
+    if (failingChecks.length > 0) {
+      lines.push(
+        '#### Findings',
+        '',
+        '| Term | Location | Severity | Suggested Replacement |',
+        '| --- | --- | --- | --- |',
+        ...failingChecks.map((c) =>
+          `| ${c.term} | ${c.checkType} | ${c.severity ?? '—'} | ${c.replacements.length > 0 ? c.replacements.join(', ') : '—'} |`
+        ),
+        '',
+      )
+    } else {
+      lines.push('No non-inclusive terms found.', '')
+    }
   }
 
   // Health Ratios section with tables per category
