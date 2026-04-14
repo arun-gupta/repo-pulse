@@ -112,7 +112,18 @@ export function getActivityScore(result: AnalysisResult, windowDays: ActivityWin
     subPercentiles.releaseCadence * 0.15,
   )
 
-  const percentile = Math.min(99, Math.max(0, compositePercentile))
+  // Community signal (P2-F05 / #70): additive Discussions bonus. Bonus-only
+  // semantics — absence (Discussions disabled) never lowers the percentile.
+  // Magnitudes deliberately modest per research.md Q1 pending #152 calibration.
+  //   Enabled + recent activity → up to +5
+  //   Enabled + no recent activity → +1
+  //   Not enabled or unavailable → 0
+  const discussionsBonus = computeDiscussionsBonus(
+    result.hasDiscussionsEnabled,
+    result.discussionsCountWindow,
+  )
+
+  const percentile = Math.min(99, Math.max(0, compositePercentile + discussionsBonus))
 
   return {
     value: percentile,
@@ -129,6 +140,18 @@ export function getActivityScore(result: AnalysisResult, windowDays: ActivityWin
     })),
     missingInputs: [],
   }
+}
+
+function computeDiscussionsBonus(
+  enabled: AnalysisResult['hasDiscussionsEnabled'],
+  count: AnalysisResult['discussionsCountWindow'],
+): number {
+  if (enabled !== true) return 0
+  if (typeof count === 'number' && count > 0) {
+    // Ramp up slowly: 1 discussion → +2, 5+ → +5.
+    return Math.min(5, 1 + Math.floor(count / 2))
+  }
+  return 1 // enabled but no recent activity — a weak positive signal
 }
 
 function getMissingActivityScoreInputs(result: AnalysisResult, windowDays: ActivityWindowDays) {

@@ -23,6 +23,8 @@ const FILE_LABELS: Record<string, string> = {
   code_of_conduct: 'CODE_OF_CONDUCT',
   security: 'SECURITY',
   changelog: 'CHANGELOG',
+  issue_templates: 'Issue templates',
+  pull_request_template: 'PR template',
 }
 
 const SECTION_LABELS: Record<string, string> = {

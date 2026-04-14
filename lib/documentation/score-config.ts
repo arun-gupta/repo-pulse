@@ -32,6 +32,12 @@ const FILE_WEIGHTS: Record<string, number> = {
   code_of_conduct: 0.10,
   security: 0.20,
   changelog: 0.20,
+  // Community signals (P2-F05 / #70). Small weights per research.md Q1.
+  // filePresenceScore is capped at 1.0 below, so templates act as a recovery
+  // signal for repos missing existing files rather than destabilizing scores
+  // for fully-documented repos.
+  issue_templates: 0.05,
+  pull_request_template: 0.05,
 }
 
 const FILE_RECOMMENDATIONS: Record<string, string> = {
@@ -41,6 +47,8 @@ const FILE_RECOMMENDATIONS: Record<string, string> = {
   code_of_conduct: 'Add a code of conduct (e.g. CODE_OF_CONDUCT.md) to set expectations for community interaction',
   security: 'Add a security policy (e.g. SECURITY.md) with vulnerability reporting instructions so users know how to disclose issues responsibly',
   changelog: 'Add a changelog (e.g. CHANGELOG.md) to help users understand what changed between releases',
+  issue_templates: 'Add an issue template in .github/ISSUE_TEMPLATE/ to structure bug reports and feature requests',
+  pull_request_template: 'Add a PULL_REQUEST_TEMPLATE.md to guide contributors through your PR checklist',
 }
 
 const SECTION_WEIGHTS: Record<string, number> = {
@@ -162,7 +170,10 @@ export function getDocumentationScore(
 ): DocumentationScoreDefinition {
   const recommendations: DocumentationRecommendation[] = []
 
-  // File presence sub-score — license file excluded from scoring (scored in licensing sub-score)
+  // File presence sub-score — license file excluded from scoring (scored in licensing sub-score).
+  // Weights sum to 1.10 (5 traditional files + 2 community templates) and the sum is capped at
+  // 1.0, so community-template weights are additive recovery signals that do not destabilize
+  // scores for fully-documented repositories (research.md Q1).
   let filePresenceScore = 0
   for (const check of docResult.fileChecks) {
     if (check.name === 'license') continue
@@ -179,6 +190,7 @@ export function getDocumentationScore(
       })
     }
   }
+  if (filePresenceScore > 1) filePresenceScore = 1
 
   // README quality sub-score
   let readmeQualityScore = 0

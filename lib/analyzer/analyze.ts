@@ -765,6 +765,31 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
 
   const readmeContent = readmeBlob?.text ?? null
 
+  // Community-signal file checks (P2-F05). Issue templates: directory with at
+  // least one .md/.yml/.yaml entry OR a legacy ISSUE_TEMPLATE.md. PR template:
+  // any of the three supported locations. Synthesized here so the Documentation
+  // scoring pipeline can fold them in alongside the five traditional files.
+  const issueTemplateDirEntries = repo.commIssueTemplateDir?.entries ?? []
+  const hasIssueTemplateDir = issueTemplateDirEntries.some((e) => /\.(md|ya?ml)$/i.test(e.name))
+  const hasLegacyIssueTemplate = repo.commIssueTemplateLegacyRoot != null || repo.commIssueTemplateLegacyGithub != null
+  const hasIssueTemplates = hasIssueTemplateDir || hasLegacyIssueTemplate
+  const issueTemplatePath = hasIssueTemplateDir
+    ? '.github/ISSUE_TEMPLATE/'
+    : repo.commIssueTemplateLegacyGithub
+      ? '.github/ISSUE_TEMPLATE.md'
+      : repo.commIssueTemplateLegacyRoot
+        ? 'ISSUE_TEMPLATE.md'
+        : null
+
+  const prTemplatePath = repo.commPrTemplateGithub
+    ? '.github/PULL_REQUEST_TEMPLATE.md'
+    : repo.commPrTemplateRoot
+      ? 'PULL_REQUEST_TEMPLATE.md'
+      : repo.commPrTemplateDocs
+        ? 'docs/PULL_REQUEST_TEMPLATE.md'
+        : null
+  const hasPullRequestTemplate = prTemplatePath !== null
+
   const fileChecks: DocumentationFileCheck[] = [
     { name: 'readme', found: readmeBlob !== null, path: foundPath(readmePathMap) },
     { name: 'license', found: licenseBlob !== null, path: foundPath(licensePathMap) },
@@ -772,6 +797,8 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
     { name: 'code_of_conduct', found: codeOfConductBlob !== null, path: foundPath([['CODE_OF_CONDUCT.md', repo.docCodeOfConduct], ['CODE_OF_CONDUCT.rst', repo.docCodeOfConductRst], ['CODE_OF_CONDUCT.txt', repo.docCodeOfConductTxt]]) },
     { name: 'security', found: securityBlob !== null, path: foundPath([['SECURITY.md', repo.docSecurity], ['SECURITY.rst', repo.docSecurityRst]]) },
     { name: 'changelog', found: changelogBlob !== null, path: foundPath(changelogPathMap) },
+    { name: 'issue_templates', found: hasIssueTemplates, path: issueTemplatePath },
+    { name: 'pull_request_template', found: hasPullRequestTemplate, path: prTemplatePath },
   ]
 
   const readmeSections = detectReadmeSections(readmeContent)

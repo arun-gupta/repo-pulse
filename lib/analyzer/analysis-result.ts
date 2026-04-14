@@ -50,7 +50,15 @@ export interface ResponsivenessMetrics {
 }
 
 export interface DocumentationFileCheck {
-  name: 'readme' | 'license' | 'contributing' | 'code_of_conduct' | 'security' | 'changelog'
+  name:
+    | 'readme'
+    | 'license'
+    | 'contributing'
+    | 'code_of_conduct'
+    | 'security'
+    | 'changelog'
+    | 'issue_templates'
+    | 'pull_request_template'
   found: boolean
   path: string | null
 }

@@ -30,7 +30,7 @@ export interface HealthScoreDefinition {
   recommendations: HealthScoreRecommendation[]
 }
 
-const WEIGHTS = {
+export const WEIGHTS = {
   activity: 0.25,
   responsiveness: 0.25,
   contributors: 0.23,
