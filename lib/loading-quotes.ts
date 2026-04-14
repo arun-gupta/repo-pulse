@@ -193,6 +193,11 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     author: 'Luciano Alves',
     context: 'President, Zabbix Latin America, Brazil',
   },
+  {
+    text: 'Latin America uses a lot of open source tools, but we still need to make the jump to contribute to and create them.',
+    author: 'Gonzalo Peña-Castellanos',
+    context: 'JupyterLab core developer; Python Software Foundation, Colombia',
+  },
 
   // Developer experience & craftsmanship
   {
