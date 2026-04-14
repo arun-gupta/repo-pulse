@@ -4,19 +4,30 @@ import { useState } from 'react'
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import { HelpLabel } from '@/components/shared/HelpLabel'
 import { MetricValue } from '@/components/shared/MetricValue'
+import { TagPill, ActiveFilterBar } from '@/components/tags/TagPill'
 import { formatPercentage } from '@/lib/contributors/score-config'
 import type { ContributorsSectionViewModel } from '@/lib/contributors/view-model'
+import { GOVERNANCE_SUSTAINABILITY_METRICS } from '@/lib/tags/governance'
 import { ContributionBarChart } from './ContributionBarChart'
 
 interface SustainabilityPaneProps {
   section: ContributorsSectionViewModel
+  activeTag?: string | null
+  onTagChange?: (tag: string | null) => void
 }
 
-export function SustainabilityPane({ section }: SustainabilityPaneProps) {
+export function SustainabilityPane({ section, activeTag: externalTag, onTagChange }: SustainabilityPaneProps) {
   const [showDetails, setShowDetails] = useState(false)
   const [showExperimentalHeatmap, setShowExperimentalHeatmap] = useState(false)
   const [showExperimentalNames, setShowExperimentalNames] = useState(true)
   const [showExperimentalNumbers, setShowExperimentalNumbers] = useState(false)
+  const [localTag, setLocalTag] = useState<string | null>(null)
+  const activeTag = externalTag !== undefined ? externalTag : localTag
+  const handleTagClick = (tag: string) => {
+    const next = activeTag === tag ? null : tag
+    if (onTagChange) onTagChange(next)
+    else setLocalTag(next)
+  }
 
   return (
     <section aria-label="Sustainability pane" className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -58,18 +69,31 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
         ) : null}
       </div>
 
+      {activeTag ? (
+        <div className="mt-4">
+          <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
+        </div>
+      ) : null}
+
       <dl className="mt-4 grid gap-3 md:grid-cols-2">
-        {section.sustainabilityMetrics.map((metric) => (
-          <div key={metric.label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              <HelpLabel label={metric.label} helpText={metric.hoverText} />
-            </dt>
-            <dd className="mt-1 text-base"><MetricValue value={metric.value} /></dd>
-            {metric.supportingText ? <p className="mt-1 text-xs text-slate-500">{metric.supportingText}</p> : null}
-          </div>
-        ))}
+        {section.sustainabilityMetrics
+          .filter((metric) => !activeTag || GOVERNANCE_SUSTAINABILITY_METRICS.has(metric.label))
+          .map((metric) => {
+            const isGov = GOVERNANCE_SUSTAINABILITY_METRICS.has(metric.label)
+            return (
+              <div key={metric.label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <dt className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <HelpLabel label={metric.label} helpText={metric.hoverText} />
+                  {isGov ? <TagPill tag="governance" active={activeTag === 'governance'} onClick={handleTagClick} /> : null}
+                </dt>
+                <dd className="mt-1 text-base"><MetricValue value={metric.value} /></dd>
+                {metric.supportingText ? <p className="mt-1 text-xs text-slate-500">{metric.supportingText}</p> : null}
+              </div>
+            )
+          })}
       </dl>
 
+      {!activeTag ? (
       <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-900">Organization Affiliation</p>
@@ -143,6 +167,7 @@ export function SustainabilityPane({ section }: SustainabilityPaneProps) {
           />
         ) : null}
       </div>
+      ) : null}
 
     </section>
   )

@@ -7,9 +7,14 @@ import { getSecurityScore } from '@/lib/security/score-config'
 import type { SecurityRecommendation } from '@/lib/security/analysis-result'
 import { CATEGORY_DEFINITIONS } from '@/lib/security/recommendation-catalog'
 import { assignReferenceIds, resolveReferenceId } from '@/lib/recommendations/reference-id'
+import { getCatalogEntryByKey } from '@/lib/recommendations/catalog'
+import { getCatalogEntry as getSecurityCatalogEntry } from '@/lib/security/recommendation-catalog'
+import { TagPill, ActiveFilterBar } from '@/components/tags/TagPill'
 
 interface RecommendationsViewProps {
   results: AnalysisResult[]
+  activeTag?: string | null
+  onTagChange?: (tag: string | null) => void
 }
 
 const BUCKET_COLORS: Record<string, string> = {
@@ -32,6 +37,16 @@ const SOURCE_LABELS: Record<string, string> = {
   direct_check: 'Direct check',
 }
 
+function getTagsForKey(key: string, isSecurityRec: boolean): string[] {
+  const unified = getCatalogEntryByKey(key)?.tags ?? []
+  if (isSecurityRec) {
+    const sec = getSecurityCatalogEntry(key)?.tags ?? []
+    if (sec.length > 0 && unified.length === 0) return sec
+    if (sec.length > 0) return [...new Set([...unified, ...sec])]
+  }
+  return unified
+}
+
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
     <svg
@@ -44,7 +59,8 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
   )
 }
 
-function SecurityRecommendationCard({ rec, referenceId }: { rec: SecurityRecommendation; referenceId?: string }) {
+function SecurityRecommendationCard({ rec, referenceId, activeTag, onTagClick }: { rec: SecurityRecommendation; referenceId?: string; activeTag: string | null; onTagClick: (tag: string) => void }) {
+  const tags = getTagsForKey(rec.item, true)
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex items-start justify-between gap-2">
@@ -55,6 +71,9 @@ function SecurityRecommendationCard({ rec, referenceId }: { rec: SecurityRecomme
           {rec.title ?? rec.text}
         </h4>
         <div className="flex shrink-0 gap-1.5">
+          {tags.map((tag) => (
+            <TagPill key={tag} tag={tag} active={activeTag === tag} onClick={onTagClick} />
+          ))}
           {rec.riskLevel ? (
             <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${RISK_COLORS[rec.riskLevel] ?? ''}`}>
               {rec.riskLevel}
@@ -96,22 +115,34 @@ function SecurityRecommendationsGroup({
   onToggle,
   categoryCollapsed,
   onCategoryToggle,
+  activeTag,
+  onTagClick,
 }: {
   recommendations: SecurityRecommendation[]
   expanded: boolean
   onToggle: () => void
   categoryCollapsed: Record<string, boolean>
   onCategoryToggle: (key: string) => void
+  activeTag: string | null
+  onTagClick: (tag: string) => void
 }) {
   // Resolve catalog IDs — each rec's `item` field is the catalog key
   const withIds = recommendations.map((rec, i) => ({
     rec,
     referenceId: resolveReferenceId(rec.item, 'Security', i + 1),
+    tags: getTagsForKey(rec.item, true),
   }))
 
+  // Filter by active tag
+  const filtered = activeTag
+    ? withIds.filter((entry) => entry.tags.includes(activeTag))
+    : withIds
+
+  if (filtered.length === 0) return null
+
   // Group by category
-  const groups = new Map<string, typeof withIds>()
-  for (const entry of withIds) {
+  const groups = new Map<string, typeof filtered>()
+  for (const entry of filtered) {
     const key = entry.rec.groupCategory ?? 'best_practices'
     const group = groups.get(key) ?? []
     group.push(entry)
@@ -135,7 +166,7 @@ function SecurityRecommendationsGroup({
         <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${BUCKET_COLORS.Security}`}>
           Security
         </span>
-        <span className="text-xs text-slate-400">{recommendations.length} recommendation{recommendations.length !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-slate-400">{filtered.length} recommendation{filtered.length !== 1 ? 's' : ''}</span>
       </button>
       {expanded ? (
         <div className="mt-3 space-y-4">
@@ -156,7 +187,7 @@ function SecurityRecommendationsGroup({
                 {!collapsed ? (
                   <div className="space-y-2">
                     {entries.map(({ rec, referenceId }) => (
-                      <SecurityRecommendationCard key={`${rec.item}-${referenceId}`} rec={rec} referenceId={referenceId} />
+                      <SecurityRecommendationCard key={`${rec.item}-${referenceId}`} rec={rec} referenceId={referenceId} activeTag={activeTag} onTagClick={onTagClick} />
                     ))}
                   </div>
                 ) : null}
@@ -169,9 +200,17 @@ function SecurityRecommendationsGroup({
   )
 }
 
-export function RecommendationsView({ results }: RecommendationsViewProps) {
+export function RecommendationsView({ results, activeTag: externalTag, onTagChange }: RecommendationsViewProps) {
   const [collapsedBuckets, setCollapsedBuckets] = useState<Record<string, boolean>>({})
   const [categoryCollapsed, setCategoryCollapsed] = useState<Record<string, boolean>>({})
+  const [localTag, setLocalTag] = useState<string | null>(null)
+  const activeTag = externalTag !== undefined ? externalTag : localTag
+
+  const handleTagClick = (tag: string) => {
+    const next = activeTag === tag ? null : tag
+    if (onTagChange) onTagChange(next)
+    else setLocalTag(next)
+  }
 
   return (
     <section aria-label="Recommendations view" className="space-y-6">
@@ -196,18 +235,30 @@ export function RecommendationsView({ results }: RecommendationsViewProps) {
           )
         }
 
-        // Assign reference IDs to non-security recs
-        const nonSecurityWithIds = assignReferenceIds(nonSecurityRecs)
+        // Assign reference IDs and resolve tags for non-security recs
+        const nonSecurityWithIds = assignReferenceIds(nonSecurityRecs).map((rec) => ({
+          ...rec,
+          tags: getTagsForKey(rec.key, false),
+        }))
+
+        // Filter by active tag
+        const filteredNonSecurity = activeTag
+          ? nonSecurityWithIds.filter((rec) => rec.tags.includes(activeTag))
+          : nonSecurityWithIds
+        const filteredSecurityRecs = activeTag
+          ? securityRecs.filter((rec) => getTagsForKey(rec.item, true).includes(activeTag))
+          : securityRecs
 
         // Group non-security recs by bucket
-        const bucketGroups = new Map<string, typeof nonSecurityWithIds>()
-        for (const rec of nonSecurityWithIds) {
+        const bucketGroups = new Map<string, typeof filteredNonSecurity>()
+        for (const rec of filteredNonSecurity) {
           const group = bucketGroups.get(rec.bucket) ?? []
           group.push(rec)
           bucketGroups.set(rec.bucket, group)
         }
 
-        const bucketCount = bucketGroups.size + (securityRecs.length > 0 ? 1 : 0)
+        const filteredTotal = filteredNonSecurity.length + filteredSecurityRecs.length
+        const bucketCount = bucketGroups.size + (filteredSecurityRecs.length > 0 ? 1 : 0)
 
         // Collect all bucket keys for expand/collapse all
         const allBucketKeys = [...Array.from(bucketGroups.keys()), ...(securityRecs.length > 0 ? ['Security'] : [])]
@@ -240,7 +291,9 @@ export function RecommendationsView({ results }: RecommendationsViewProps) {
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {totalCount} recommendation{totalCount !== 1 ? 's' : ''} across {bucketCount} dimension{bucketCount !== 1 ? 's' : ''}
+                  {activeTag
+                    ? `${filteredTotal} of ${totalCount} recommendation${totalCount !== 1 ? 's' : ''} matching "${activeTag}"`
+                    : `${totalCount} recommendation${totalCount !== 1 ? 's' : ''} across ${bucketCount} dimension${bucketCount !== 1 ? 's' : ''}`}
                 </p>
               </div>
               <button
@@ -251,6 +304,16 @@ export function RecommendationsView({ results }: RecommendationsViewProps) {
                 {allExpanded ? 'Collapse all' : 'Expand all'}
               </button>
             </div>
+
+            {activeTag ? (
+              <div className="mt-3">
+                <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
+              </div>
+            ) : null}
+
+            {filteredTotal === 0 && activeTag ? (
+              <p className="mt-4 text-center text-sm text-slate-400">No recommendations match the "{activeTag}" tag.</p>
+            ) : null}
 
             <div className="mt-4 space-y-4">
               {Array.from(bucketGroups.entries()).map(([bucket, recs]) => {
@@ -274,7 +337,10 @@ export function RecommendationsView({ results }: RecommendationsViewProps) {
                         {recs.map((rec, i) => (
                           <li key={i} className="flex items-start gap-2">
                             <span className="shrink-0 rounded bg-slate-200 px-1.5 py-0.5 text-xs font-mono font-medium text-slate-500">{rec.referenceId}</span>
-                            <p className="text-sm text-slate-700">{rec.message}</p>
+                            <p className="flex-1 text-sm text-slate-700">{rec.message}</p>
+                            {rec.tags.map((tag) => (
+                              <TagPill key={tag} tag={tag} active={activeTag === tag} onClick={handleTagClick} />
+                            ))}
                           </li>
                         ))}
                       </ul>
@@ -283,13 +349,15 @@ export function RecommendationsView({ results }: RecommendationsViewProps) {
                 )
               })}
 
-              {securityRecs.length > 0 ? (
+              {filteredSecurityRecs.length > 0 ? (
                 <SecurityRecommendationsGroup
-                  recommendations={securityRecs}
+                  recommendations={filteredSecurityRecs}
                   expanded={!collapsedBuckets['Security']}
                   onToggle={() => setCollapsedBuckets((prev) => ({ ...prev, Security: !prev.Security }))}
                   categoryCollapsed={categoryCollapsed}
                   onCategoryToggle={(key) => setCategoryCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))}
+                  activeTag={activeTag}
+                  onTagClick={handleTagClick}
                 />
               ) : null}
             </div>
