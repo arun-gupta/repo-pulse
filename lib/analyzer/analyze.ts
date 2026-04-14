@@ -77,6 +77,15 @@ interface RepoOverviewResponse {
     secRenovateGithub?: DocBlob | null
     secRenovateConfig?: DocBlob | null
     secRenovateRc?: DocBlob | null
+    hasDiscussionsEnabled?: boolean | null
+    commFunding?: { oid: string } | null
+    commIssueTemplateLegacyRoot?: { oid: string } | null
+    commIssueTemplateLegacyGithub?: { oid: string } | null
+    commIssueTemplateDir?: { entries: Array<{ name: string }> } | null
+    commPrTemplateRoot?: { oid: string } | null
+    commPrTemplateGithub?: { oid: string } | null
+    commPrTemplateDocs?: { oid: string } | null
+    commDiscussionsRecent?: { nodes: Array<{ createdAt: string }> } | null
     workflowDir?: {
       entries: Array<{
         name: string
@@ -713,6 +722,7 @@ function buildAnalysisResult(
     issueCloseTimestamps,
     prMergeTimestamps,
     securityResult: extractSecurityResult(overview.repository),
+    ...extractCommunitySignals(overview.repository),
     missingFields,
   }
 }
@@ -767,6 +777,91 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
   const readmeSections = detectReadmeSections(readmeContent)
 
   return { fileChecks, readmeSections, readmeContent }
+}
+
+interface CommunitySignalSet {
+  hasIssueTemplates: boolean | Unavailable
+  hasPullRequestTemplate: boolean | Unavailable
+  hasFundingConfig: boolean | Unavailable
+  hasDiscussionsEnabled: boolean | Unavailable
+  discussionsCountWindow: number | Unavailable
+  discussionsWindowDays: ActivityWindowDays | Unavailable
+}
+
+/**
+ * Extract the five community signals from the REPO_OVERVIEW response.
+ *
+ * Issue templates: directory under `.github/ISSUE_TEMPLATE/` containing at
+ * least one `.md` or `.yml`/`.yaml` file, OR a legacy `ISSUE_TEMPLATE.md`
+ * in the repo root or `.github/`.
+ *
+ * Pull-request template: `PULL_REQUEST_TEMPLATE.md` in `.github/`, repo
+ * root, or `docs/`.
+ *
+ * Funding config: `.github/FUNDING.yml`.
+ *
+ * Discussions enabled: repository-level flag.
+ *
+ * Discussions count: gated on `hasDiscussionsEnabled === true`. Counts
+ * discussions created within the last `windowDays` from the first 100
+ * recent discussions. See specs/180-community-scoring/research.md Q2.
+ */
+export function extractCommunitySignals(
+  repo: RepoOverviewResponse['repository'],
+  windowDays: ActivityWindowDays = 90,
+): CommunitySignalSet {
+  if (!repo) {
+    return {
+      hasIssueTemplates: 'unavailable',
+      hasPullRequestTemplate: 'unavailable',
+      hasFundingConfig: 'unavailable',
+      hasDiscussionsEnabled: 'unavailable',
+      discussionsCountWindow: 'unavailable',
+      discussionsWindowDays: 'unavailable',
+    }
+  }
+
+  // Issue templates — either legacy file or directory with at least one template entry
+  const dirEntries = repo.commIssueTemplateDir?.entries ?? []
+  const hasTemplateDir = dirEntries.some((e) => /\.(md|ya?ml)$/i.test(e.name))
+  const hasLegacyTemplate =
+    repo.commIssueTemplateLegacyRoot != null || repo.commIssueTemplateLegacyGithub != null
+  const hasIssueTemplates: boolean = hasTemplateDir || hasLegacyTemplate
+
+  // PR template — any of the three supported locations
+  const hasPullRequestTemplate: boolean =
+    repo.commPrTemplateRoot != null ||
+    repo.commPrTemplateGithub != null ||
+    repo.commPrTemplateDocs != null
+
+  // FUNDING.yml
+  const hasFundingConfig: boolean = repo.commFunding != null
+
+  // Discussions enabled
+  const hasDiscussionsEnabled: boolean | Unavailable =
+    typeof repo.hasDiscussionsEnabled === 'boolean' ? repo.hasDiscussionsEnabled : 'unavailable'
+
+  // Discussions count in window (gated on enablement)
+  let discussionsCountWindow: number | Unavailable = 'unavailable'
+  let discussionsWindowDays: ActivityWindowDays | Unavailable = 'unavailable'
+  if (hasDiscussionsEnabled === true) {
+    const nodes = repo.commDiscussionsRecent?.nodes ?? []
+    const sinceMs = Date.now() - windowDays * 24 * 60 * 60 * 1000
+    discussionsCountWindow = nodes.filter((node) => {
+      const created = Date.parse(node.createdAt)
+      return Number.isFinite(created) && created >= sinceMs
+    }).length
+    discussionsWindowDays = windowDays
+  }
+
+  return {
+    hasIssueTemplates,
+    hasPullRequestTemplate,
+    hasFundingConfig,
+    hasDiscussionsEnabled,
+    discussionsCountWindow,
+    discussionsWindowDays,
+  }
 }
 
 function extractSecurityResult(repo: RepoOverviewResponse['repository']): SecurityResult | 'unavailable' {
