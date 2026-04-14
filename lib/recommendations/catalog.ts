@@ -66,6 +66,7 @@ const ACT: CatalogEntry[] = [
   { id: 'ACT-2', bucket: 'Activity', key: 'issue_flow', title: 'Triage and close stale issues', tags: ['contrib-ex'] },
   { id: 'ACT-3', bucket: 'Activity', key: 'completion_speed', title: 'Reduce time to merge PRs and close issues' },
   { id: 'ACT-4', bucket: 'Activity', key: 'sustained_activity', title: 'Increase commit frequency for sustained momentum' },
+  { id: 'ACT-5', bucket: 'Activity', key: 'feature:discussions_enabled', title: 'Enable GitHub Discussions for contributor conversation', tags: ['community', 'contrib-ex'] },
 ]
 
 // ── Responsiveness ────────────────────────────────────────────────────
@@ -81,6 +82,7 @@ const RSP: CatalogEntry[] = [
 const CTR: CatalogEntry[] = [
   { id: 'CTR-1', bucket: 'Contributors', key: 'contributor_diversity', title: 'Onboard more contributors to reduce single-maintainer risk' },
   { id: 'CTR-2', bucket: 'Contributors', key: 'no_maintainers', title: 'Add a CODEOWNERS or MAINTAINERS.md file', tags: ['governance'] },
+  { id: 'CTR-3', bucket: 'Contributors', key: 'file:funding', title: 'Add a FUNDING.yml to disclose funding channels', tags: ['community', 'governance'] },
 ]
 
 // ── Documentation ─────────────────────────────────────────────────────
@@ -103,6 +105,9 @@ const DOC: CatalogEntry[] = [
   { id: 'DOC-12', bucket: 'Documentation', key: 'licensing:license', title: 'Add an open source license', tags: ['governance', 'compliance'] },
   { id: 'DOC-13', bucket: 'Documentation', key: 'licensing:osi_license', title: 'Use an OSI-approved license', tags: ['governance', 'compliance'] },
   { id: 'DOC-14', bucket: 'Documentation', key: 'licensing:dco_cla', title: 'Enforce a DCO or CLA for contributions', tags: ['governance', 'compliance'] },
+  // Community templates
+  { id: 'DOC-15', bucket: 'Documentation', key: 'file:issue_templates', title: 'Add an issue template in .github/ISSUE_TEMPLATE/', tags: ['community', 'contrib-ex'] },
+  { id: 'DOC-16', bucket: 'Documentation', key: 'file:pull_request_template', title: 'Add a PULL_REQUEST_TEMPLATE.md', tags: ['community', 'contrib-ex'] },
 ]
 
 // ── Combined catalog ──────────────────────────────────────────────────

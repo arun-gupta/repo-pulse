@@ -38,20 +38,24 @@ describe('RECOMMENDATION_CATALOG', () => {
     expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Security')).toHaveLength(17)
   })
 
-  it('has 4 activity entries', () => {
-    expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Activity')).toHaveLength(4)
+  it('has 5 activity entries', () => {
+    expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Activity')).toHaveLength(5)
   })
 
   it('has 3 responsiveness entries', () => {
     expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Responsiveness')).toHaveLength(3)
   })
 
-  it('has 2 contributors entries', () => {
-    expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Contributors')).toHaveLength(2)
+  it('has 3 contributors entries', () => {
+    expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Contributors')).toHaveLength(3)
   })
 
-  it('has 14 documentation entries', () => {
-    expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Documentation')).toHaveLength(14)
+  it('has 16 documentation entries', () => {
+    expect(RECOMMENDATION_CATALOG.filter((e) => e.bucket === 'Documentation')).toHaveLength(16)
+  })
+
+  it('has 4 community-tagged entries', () => {
+    expect(RECOMMENDATION_CATALOG.filter((e) => (e.tags ?? []).includes('community'))).toHaveLength(4)
   })
 })
 
@@ -102,7 +106,7 @@ describe('getCatalogEntriesByTag', () => {
     const governance = getCatalogEntriesByTag('governance')
     const ids = governance.map((e) => e.id).sort()
     expect(ids).toEqual([
-      'CTR-2',
+      'CTR-2', 'CTR-3',
       'DOC-12', 'DOC-13', 'DOC-14',
       'DOC-2', 'DOC-3', 'DOC-4', 'DOC-5', 'DOC-6',
       'SEC-14', 'SEC-17', 'SEC-3', 'SEC-5',
@@ -139,11 +143,17 @@ describe('getCatalogEntriesByTag', () => {
     const entries = getCatalogEntriesByTag('contrib-ex')
     const ids = entries.map((e) => e.id).sort()
     expect(ids).toEqual([
-      'ACT-2',
-      'DOC-1', 'DOC-10', 'DOC-11', 'DOC-3', 'DOC-4',
+      'ACT-2', 'ACT-5',
+      'DOC-1', 'DOC-10', 'DOC-11', 'DOC-15', 'DOC-16', 'DOC-3', 'DOC-4',
       'DOC-7', 'DOC-8', 'DOC-9',
       'RSP-1',
     ])
+  })
+
+  it('returns community-tagged entries', () => {
+    const entries = getCatalogEntriesByTag('community')
+    const ids = entries.map((e) => e.id).sort()
+    expect(ids).toEqual(['ACT-5', 'CTR-3', 'DOC-15', 'DOC-16'])
   })
 
   it('entries with multiple tags return for each tag', () => {
