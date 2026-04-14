@@ -2,6 +2,7 @@
 
 const TAG_COLORS: Record<string, string> = {
   governance: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  community: 'bg-amber-50 text-amber-700 border-amber-200',
   'supply-chain': 'bg-orange-50 text-orange-700 border-orange-200',
   'quick-win': 'bg-emerald-50 text-emerald-700 border-emerald-200',
   compliance: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -10,6 +11,7 @@ const TAG_COLORS: Record<string, string> = {
 
 const TAG_RING_COLORS: Record<string, string> = {
   governance: 'ring-indigo-400',
+  community: 'ring-amber-400',
   'supply-chain': 'ring-orange-400',
   'quick-win': 'ring-emerald-400',
   compliance: 'ring-rose-400',

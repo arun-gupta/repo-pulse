@@ -77,6 +77,18 @@ interface RepoOverviewResponse {
     secRenovateGithub?: DocBlob | null
     secRenovateConfig?: DocBlob | null
     secRenovateRc?: DocBlob | null
+    hasDiscussionsEnabled?: boolean | null
+    commFunding?: { oid: string } | null
+    commIssueTemplateLegacyRoot?: { oid: string } | null
+    commIssueTemplateLegacyGithub?: { oid: string } | null
+    commIssueTemplateDir?: { entries: Array<{ name: string }> } | null
+    commPrTemplateRoot?: { oid: string } | null
+    commPrTemplateGithub?: { oid: string } | null
+    commPrTemplateDocs?: { oid: string } | null
+    commDiscussionsRecent?: { nodes: Array<{ createdAt: string }> } | null
+    commGovernanceRoot?: { oid: string } | null
+    commGovernanceGithub?: { oid: string } | null
+    commGovernanceDocs?: { oid: string } | null
     workflowDir?: {
       entries: Array<{
         name: string
@@ -713,6 +725,7 @@ function buildAnalysisResult(
     issueCloseTimestamps,
     prMergeTimestamps,
     securityResult: extractSecurityResult(overview.repository),
+    ...extractCommunitySignals(overview.repository),
     missingFields,
   }
 }
@@ -755,6 +768,40 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
 
   const readmeContent = readmeBlob?.text ?? null
 
+  // Community-signal file checks (P2-F05). Issue templates: directory with at
+  // least one .md/.yml/.yaml entry OR a legacy ISSUE_TEMPLATE.md. PR template:
+  // any of the three supported locations. Synthesized here so the Documentation
+  // scoring pipeline can fold them in alongside the five traditional files.
+  const issueTemplateDirEntries = repo.commIssueTemplateDir?.entries ?? []
+  const hasIssueTemplateDir = issueTemplateDirEntries.some((e) => /\.(md|ya?ml)$/i.test(e.name))
+  const hasLegacyIssueTemplate = repo.commIssueTemplateLegacyRoot != null || repo.commIssueTemplateLegacyGithub != null
+  const hasIssueTemplates = hasIssueTemplateDir || hasLegacyIssueTemplate
+  const issueTemplatePath = hasIssueTemplateDir
+    ? '.github/ISSUE_TEMPLATE/'
+    : repo.commIssueTemplateLegacyGithub
+      ? '.github/ISSUE_TEMPLATE.md'
+      : repo.commIssueTemplateLegacyRoot
+        ? 'ISSUE_TEMPLATE.md'
+        : null
+
+  const prTemplatePath = repo.commPrTemplateGithub
+    ? '.github/PULL_REQUEST_TEMPLATE.md'
+    : repo.commPrTemplateRoot
+      ? 'PULL_REQUEST_TEMPLATE.md'
+      : repo.commPrTemplateDocs
+        ? 'docs/PULL_REQUEST_TEMPLATE.md'
+        : null
+  const hasPullRequestTemplate = prTemplatePath !== null
+
+  const governancePath = repo.commGovernanceRoot
+    ? 'GOVERNANCE.md'
+    : repo.commGovernanceGithub
+      ? '.github/GOVERNANCE.md'
+      : repo.commGovernanceDocs
+        ? 'docs/GOVERNANCE.md'
+        : null
+  const hasGovernance = governancePath !== null
+
   const fileChecks: DocumentationFileCheck[] = [
     { name: 'readme', found: readmeBlob !== null, path: foundPath(readmePathMap) },
     { name: 'license', found: licenseBlob !== null, path: foundPath(licensePathMap) },
@@ -762,11 +809,99 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
     { name: 'code_of_conduct', found: codeOfConductBlob !== null, path: foundPath([['CODE_OF_CONDUCT.md', repo.docCodeOfConduct], ['CODE_OF_CONDUCT.rst', repo.docCodeOfConductRst], ['CODE_OF_CONDUCT.txt', repo.docCodeOfConductTxt]]) },
     { name: 'security', found: securityBlob !== null, path: foundPath([['SECURITY.md', repo.docSecurity], ['SECURITY.rst', repo.docSecurityRst]]) },
     { name: 'changelog', found: changelogBlob !== null, path: foundPath(changelogPathMap) },
+    { name: 'issue_templates', found: hasIssueTemplates, path: issueTemplatePath },
+    { name: 'pull_request_template', found: hasPullRequestTemplate, path: prTemplatePath },
+    { name: 'governance', found: hasGovernance, path: governancePath },
   ]
 
   const readmeSections = detectReadmeSections(readmeContent)
 
   return { fileChecks, readmeSections, readmeContent }
+}
+
+interface CommunitySignalSet {
+  hasIssueTemplates: boolean | Unavailable
+  hasPullRequestTemplate: boolean | Unavailable
+  hasFundingConfig: boolean | Unavailable
+  hasDiscussionsEnabled: boolean | Unavailable
+  discussionsCountWindow: number | Unavailable
+  discussionsWindowDays: ActivityWindowDays | Unavailable
+}
+
+/**
+ * Extract the five community signals from the REPO_OVERVIEW response.
+ *
+ * Issue templates: directory under `.github/ISSUE_TEMPLATE/` containing at
+ * least one `.md` or `.yml`/`.yaml` file, OR a legacy `ISSUE_TEMPLATE.md`
+ * in the repo root or `.github/`.
+ *
+ * Pull-request template: `PULL_REQUEST_TEMPLATE.md` in `.github/`, repo
+ * root, or `docs/`.
+ *
+ * Funding config: `.github/FUNDING.yml`.
+ *
+ * Discussions enabled: repository-level flag.
+ *
+ * Discussions count: gated on `hasDiscussionsEnabled === true`. Counts
+ * discussions created within the last `windowDays` from the first 100
+ * recent discussions. See specs/180-community-scoring/research.md Q2.
+ */
+export function extractCommunitySignals(
+  repo: RepoOverviewResponse['repository'],
+  windowDays: ActivityWindowDays = 90,
+): CommunitySignalSet {
+  if (!repo) {
+    return {
+      hasIssueTemplates: 'unavailable',
+      hasPullRequestTemplate: 'unavailable',
+      hasFundingConfig: 'unavailable',
+      hasDiscussionsEnabled: 'unavailable',
+      discussionsCountWindow: 'unavailable',
+      discussionsWindowDays: 'unavailable',
+    }
+  }
+
+  // Issue templates — either legacy file or directory with at least one template entry
+  const dirEntries = repo.commIssueTemplateDir?.entries ?? []
+  const hasTemplateDir = dirEntries.some((e) => /\.(md|ya?ml)$/i.test(e.name))
+  const hasLegacyTemplate =
+    repo.commIssueTemplateLegacyRoot != null || repo.commIssueTemplateLegacyGithub != null
+  const hasIssueTemplates: boolean = hasTemplateDir || hasLegacyTemplate
+
+  // PR template — any of the three supported locations
+  const hasPullRequestTemplate: boolean =
+    repo.commPrTemplateRoot != null ||
+    repo.commPrTemplateGithub != null ||
+    repo.commPrTemplateDocs != null
+
+  // FUNDING.yml
+  const hasFundingConfig: boolean = repo.commFunding != null
+
+  // Discussions enabled
+  const hasDiscussionsEnabled: boolean | Unavailable =
+    typeof repo.hasDiscussionsEnabled === 'boolean' ? repo.hasDiscussionsEnabled : 'unavailable'
+
+  // Discussions count in window (gated on enablement)
+  let discussionsCountWindow: number | Unavailable = 'unavailable'
+  let discussionsWindowDays: ActivityWindowDays | Unavailable = 'unavailable'
+  if (hasDiscussionsEnabled === true) {
+    const nodes = repo.commDiscussionsRecent?.nodes ?? []
+    const sinceMs = Date.now() - windowDays * 24 * 60 * 60 * 1000
+    discussionsCountWindow = nodes.filter((node) => {
+      const created = Date.parse(node.createdAt)
+      return Number.isFinite(created) && created >= sinceMs
+    }).length
+    discussionsWindowDays = windowDays
+  }
+
+  return {
+    hasIssueTemplates,
+    hasPullRequestTemplate,
+    hasFundingConfig,
+    hasDiscussionsEnabled,
+    discussionsCountWindow,
+    discussionsWindowDays,
+  }
 }
 
 function extractSecurityResult(repo: RepoOverviewResponse['repository']): SecurityResult | 'unavailable' {

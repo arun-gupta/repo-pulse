@@ -30,7 +30,7 @@ export interface HealthScoreDefinition {
   recommendations: HealthScoreRecommendation[]
 }
 
-const WEIGHTS = {
+export const WEIGHTS = {
   activity: 0.25,
   responsiveness: 0.25,
   contributors: 0.23,
@@ -95,6 +95,27 @@ export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
       percentile: contributorsPercentile ?? 0,
       message: 'No maintainers identified. Add a CODEOWNERS or MAINTAINERS.md file to make maintainer responsibility visible.',
       tab: 'contributors',
+    })
+  }
+  // CTR-3 (community lens): emit when FUNDING.yml is verifiably absent.
+  // 'unknown' / 'unavailable' state intentionally skipped — never guess.
+  if (result.hasFundingConfig === false) {
+    recommendations.push({
+      bucket: 'Contributors',
+      key: 'file:funding',
+      percentile: contributorsPercentile ?? 0,
+      message: 'Add a .github/FUNDING.yml to disclose sponsorship or funding channels.',
+      tab: 'contributors',
+    })
+  }
+  // ACT-5 (community lens): emit when GitHub Discussions is verifiably disabled.
+  if (result.hasDiscussionsEnabled === false) {
+    recommendations.push({
+      bucket: 'Activity',
+      key: 'feature:discussions_enabled',
+      percentile: activityPercentile ?? 0,
+      message: 'Enable GitHub Discussions to give contributors a dedicated space for long-form conversation.',
+      tab: 'activity',
     })
   }
   if (documentation !== null) {

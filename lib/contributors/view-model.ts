@@ -102,6 +102,18 @@ export function buildContributorsViewModels(
           value: contributionTypes.length > 0 ? contributionTypes.join(', ') : '—',
           hoverText: getContributionTypesHoverText(contributionTypes),
         },
+        // Community signal: funding disclosure (.github/FUNDING.yml). Surface
+        // only when verifiable — never render as "—" when 'unavailable'
+        // (Constitution §II: missing data panel handles unavailability).
+        ...(result.hasFundingConfig === true || result.hasFundingConfig === false
+          ? [{
+              label: 'Funding disclosure',
+              value: result.hasFundingConfig ? 'Present (.github/FUNDING.yml)' : 'Not detected',
+              hoverText: result.hasFundingConfig
+                ? 'FUNDING.yml declares sponsorship or funding channels for this project.'
+                : 'No .github/FUNDING.yml file detected. Adding one signals sustainability outreach.',
+            }]
+          : []),
       ],
       experimentalMetrics: [
         {

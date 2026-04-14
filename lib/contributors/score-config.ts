@@ -24,6 +24,15 @@ const INSUFFICIENT_SCORE: ContributorsScoreDefinition = {
   contributorCount: 'unavailable',
 }
 
+/**
+ * Small additive bonus for community-signal FUNDING.yml presence (P2-F05).
+ * Per research.md Q1 and FR-008: bonus-only — absence never lowers the percentile.
+ * Magnitude is deliberately modest (≤3 percentile points) pending #152 calibration.
+ */
+function fundingBonus(hasFundingConfig: AnalysisResult['hasFundingConfig']): number {
+  return hasFundingConfig === true ? 3 : 0
+}
+
 export function getContributorsScore(result: AnalysisResult): ContributorsScoreDefinition {
   const cal = getCalibrationForStars(result.stars)
   const bracketLabel = getBracketLabel(result.stars)
@@ -34,7 +43,8 @@ export function getContributorsScore(result: AnalysisResult): ContributorsScoreD
   }
 
   // Inverted: lower concentration = higher percentile (better contributor diversity)
-  const percentile = interpolatePercentile(concentration.share, cal.topContributorShare, true)
+  const basePercentile = interpolatePercentile(concentration.share, cal.topContributorShare, true)
+  const percentile = Math.min(99, basePercentile + fundingBonus(result.hasFundingConfig))
 
   return {
     value: percentile,

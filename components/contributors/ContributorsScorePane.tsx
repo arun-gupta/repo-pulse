@@ -8,6 +8,7 @@ import { TagPill, ActiveFilterBar } from '@/components/tags/TagPill'
 import { formatPercentage } from '@/lib/contributors/score-config'
 import type { ContributorsSectionViewModel } from '@/lib/contributors/view-model'
 import { GOVERNANCE_CONTRIBUTORS_METRICS } from '@/lib/tags/governance'
+import { COMMUNITY_CONTRIBUTORS_METRICS } from '@/lib/tags/community'
 import { ContributionBarChart } from './ContributionBarChart'
 
 interface ContributorsScorePaneProps {
@@ -77,14 +78,23 @@ export function ContributorsScorePane({ section, activeTag: externalTag, onTagCh
 
       <dl className="mt-4 grid gap-3 md:grid-cols-2">
         {section.contributorsMetrics
-          .filter((metric) => !activeTag || GOVERNANCE_CONTRIBUTORS_METRICS.has(metric.label))
+          .filter((metric) => {
+            if (!activeTag) return true
+            if (activeTag === 'governance') return GOVERNANCE_CONTRIBUTORS_METRICS.has(metric.label)
+            if (activeTag === 'community') return COMMUNITY_CONTRIBUTORS_METRICS.has(metric.label)
+            return true
+          })
           .map((metric) => {
             const isGov = GOVERNANCE_CONTRIBUTORS_METRICS.has(metric.label)
+            const isCommunity = COMMUNITY_CONTRIBUTORS_METRICS.has(metric.label)
             return (
               <div key={metric.label} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <dt className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-500">
                   <HelpLabel label={metric.label} helpText={metric.hoverText} />
-                  {isGov ? <TagPill tag="governance" active={activeTag === 'governance'} onClick={handleTagClick} /> : null}
+                  <span className="inline-flex gap-1">
+                    {isGov ? <TagPill tag="governance" active={activeTag === 'governance'} onClick={handleTagClick} /> : null}
+                    {isCommunity ? <TagPill tag="community" active={activeTag === 'community'} onClick={handleTagClick} /> : null}
+                  </span>
                 </dt>
                 <dd className="mt-1 text-base"><MetricValue value={metric.value} /></dd>
                 {metric.supportingText ? <p className="mt-1 text-xs text-slate-500">{metric.supportingText}</p> : null}

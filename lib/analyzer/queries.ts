@@ -65,6 +65,24 @@ export const REPO_OVERVIEW_QUERY = `
       secRenovateGithub: object(expression: "HEAD:.github/renovate.json") { ... on Blob { oid } }
       secRenovateConfig: object(expression: "HEAD:.renovaterc.json") { ... on Blob { oid } }
       secRenovateRc: object(expression: "HEAD:.renovaterc") { ... on Blob { oid } }
+      hasDiscussionsEnabled
+      commFunding: object(expression: "HEAD:.github/FUNDING.yml") { ... on Blob { oid } }
+      commIssueTemplateLegacyRoot: object(expression: "HEAD:ISSUE_TEMPLATE.md") { ... on Blob { oid } }
+      commIssueTemplateLegacyGithub: object(expression: "HEAD:.github/ISSUE_TEMPLATE.md") { ... on Blob { oid } }
+      commIssueTemplateDir: object(expression: "HEAD:.github/ISSUE_TEMPLATE") {
+        ... on Tree {
+          entries { name }
+        }
+      }
+      commPrTemplateRoot: object(expression: "HEAD:PULL_REQUEST_TEMPLATE.md") { ... on Blob { oid } }
+      commPrTemplateGithub: object(expression: "HEAD:.github/PULL_REQUEST_TEMPLATE.md") { ... on Blob { oid } }
+      commPrTemplateDocs: object(expression: "HEAD:docs/PULL_REQUEST_TEMPLATE.md") { ... on Blob { oid } }
+      commDiscussionsRecent: discussions(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+        nodes { createdAt }
+      }
+      commGovernanceRoot: object(expression: "HEAD:GOVERNANCE.md") { ... on Blob { oid } }
+      commGovernanceGithub: object(expression: "HEAD:.github/GOVERNANCE.md") { ... on Blob { oid } }
+      commGovernanceDocs: object(expression: "HEAD:docs/GOVERNANCE.md") { ... on Blob { oid } }
       workflowDir: object(expression: "HEAD:.github/workflows") {
         ... on Tree {
           entries {
