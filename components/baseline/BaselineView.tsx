@@ -189,47 +189,44 @@ export function BaselineView() {
         </p>
       </section>
 
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-900">Community</h3>
-        <p className="mt-2 text-sm text-emerald-900">
-          Community is a <strong>cross-cutting lens</strong>, not a weighted composite bucket. It does <strong>not</strong> feed the OSS Health Score. Instead, its seven signals are hosted inside the existing buckets, and a small completeness readout surfaces how many are present.
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-900">Cross-Cutting Lenses</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          <strong>Community</strong> and <strong>Governance</strong> are cross-cutting lenses, not weighted composite buckets. They do not feed the OSS Health Score. Their signals live inside the existing buckets and surface as small pills on individual rows, so you can see how a repo stacks up on each lens without reshaping the composite.
         </p>
-        <dl className="mt-3 space-y-1.5 text-sm text-emerald-900">
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-mono text-xs text-emerald-800">CODE_OF_CONDUCT.md</dt>
-            <dd className="text-emerald-800">&rarr; Documentation</dd>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Community</h4>
+            <p className="mt-1 text-xs text-slate-600">Seven signals, hosted across Documentation, Contributors, and Activity:</p>
+            <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
+              <li><span className="font-mono">CODE_OF_CONDUCT.md</span> &rarr; Documentation</li>
+              <li>Issue templates &rarr; Documentation</li>
+              <li>PR template &rarr; Documentation</li>
+              <li>CODEOWNERS / maintainer file &rarr; Contributors</li>
+              <li><span className="font-mono">GOVERNANCE.md</span> &rarr; Documentation</li>
+              <li><span className="font-mono">FUNDING.yml</span> &rarr; Contributors</li>
+              <li>Discussions &rarr; Activity</li>
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">
+              Completeness is <strong>count-based</strong> (signals present / signals known), not a weighted percentile.
+            </p>
           </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-mono text-xs text-emerald-800">Issue templates</dt>
-            <dd className="text-emerald-800">&rarr; Documentation</dd>
+
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Governance</h4>
+            <p className="mt-1 text-xs text-slate-600">Signals that indicate project stewardship, hosted across Documentation, Security, and Contributors:</p>
+            <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
+              <li>LICENSE, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CHANGELOG, GOVERNANCE &rarr; Documentation</li>
+              <li>Branch protection, Code review, Security policy, License checks &rarr; Security</li>
+              <li>Maintainer count &rarr; Contributors</li>
+              <li>Licensing compliance pane &rarr; Documentation</li>
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">
+              Individual rows tagged as governance show a small pill; there is no separate completeness score.
+            </p>
           </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-mono text-xs text-emerald-800">PR template</dt>
-            <dd className="text-emerald-800">&rarr; Documentation</dd>
-          </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-mono text-xs text-emerald-800">CODEOWNERS / maintainer file</dt>
-            <dd className="text-emerald-800">&rarr; Contributors</dd>
-          </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-mono text-xs text-emerald-800">GOVERNANCE.md</dt>
-            <dd className="text-emerald-800">&rarr; Documentation</dd>
-          </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-mono text-xs text-emerald-800">FUNDING.yml</dt>
-            <dd className="text-emerald-800">&rarr; Contributors</dd>
-          </div>
-          <div className="flex flex-wrap gap-x-2">
-            <dt className="font-mono text-xs text-emerald-800">Discussions</dt>
-            <dd className="text-emerald-800">&rarr; Activity</dd>
-          </div>
-        </dl>
-        <p className="mt-3 text-sm text-emerald-900">
-          On a report, each signal appears as a small <em>lens pill</em> in the row below the score — a compact visual convention that keeps Community visible without reshaping the composite.
-        </p>
-        <p className="mt-2 text-xs text-emerald-800">
-          The completeness readout is <strong>count-based</strong> (signals present / signals known), not a percentile weighted against the composite.
-        </p>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
