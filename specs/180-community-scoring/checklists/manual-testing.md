@@ -64,7 +64,7 @@ Items landed during this session are marked done below. Items still deferred wil
 
 - [x] JSON export `community` field extension (data-model.md §4) — commit `7c042f8`
 - [x] Markdown export `### Community` section between Contributors and Activity (data-model.md §4)
-- [ ] Explicit recommendation emission paths for CTR-3 (funding) and ACT-5 (discussions) — catalog entries ship now; emission wiring is the follow-up
+- [x] Explicit recommendation emission paths for CTR-3 (funding) and ACT-5 (discussions)
 
 ### Deferred to a follow-up PR
 

@@ -97,6 +97,27 @@ export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
       tab: 'contributors',
     })
   }
+  // CTR-3 (community lens): emit when FUNDING.yml is verifiably absent.
+  // 'unknown' / 'unavailable' state intentionally skipped — never guess.
+  if (result.hasFundingConfig === false) {
+    recommendations.push({
+      bucket: 'Contributors',
+      key: 'file:funding',
+      percentile: contributorsPercentile ?? 0,
+      message: 'Add a .github/FUNDING.yml to disclose sponsorship or funding channels.',
+      tab: 'contributors',
+    })
+  }
+  // ACT-5 (community lens): emit when GitHub Discussions is verifiably disabled.
+  if (result.hasDiscussionsEnabled === false) {
+    recommendations.push({
+      bucket: 'Activity',
+      key: 'feature:discussions_enabled',
+      percentile: activityPercentile ?? 0,
+      message: 'Enable GitHub Discussions to give contributors a dedicated space for long-form conversation.',
+      tab: 'activity',
+    })
+  }
   if (documentation !== null) {
     for (const rec of documentation.recommendations) {
       recommendations.push({
