@@ -10,6 +10,21 @@ import {
   getCalibrationMeta,
   interpolatePercentile,
 } from '@/lib/scoring/config-loader'
+import {
+  GOVERNANCE_DOC_FILES,
+  GOVERNANCE_SCORECARD_CHECKS,
+  GOVERNANCE_DIRECT_CHECKS,
+  GOVERNANCE_CONTRIBUTORS_METRICS,
+  LICENSING_IS_GOVERNANCE,
+} from '@/lib/tags/governance'
+
+const COMMUNITY_SIGNAL_COUNT = 7
+const GOVERNANCE_SIGNAL_COUNT =
+  GOVERNANCE_DOC_FILES.size +
+  GOVERNANCE_SCORECARD_CHECKS.size +
+  GOVERNANCE_DIRECT_CHECKS.size +
+  GOVERNANCE_CONTRIBUTORS_METRICS.size +
+  (LICENSING_IS_GOVERNANCE ? 1 : 0)
 
 const ALL_BRACKETS: BracketKey[] = ['emerging', 'growing', 'established', 'popular']
 
@@ -187,6 +202,52 @@ export function BaselineView() {
           For full details on calibration data, metrics collected, and percentile thresholds, see{' '}
           <a href="https://github.com/arun-gupta/repo-pulse/blob/main/docs/scoring-and-calibration.md" className="text-sky-700 underline hover:text-sky-900" target="_blank" rel="noopener noreferrer">Scoring and Calibration</a>.
         </p>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-900">Cross-Cutting Lenses</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          <strong>Community</strong> and <strong>Governance</strong> are cross-cutting lenses, not weighted composite buckets. They do not feed the OSS Health Score. Their signals live inside the existing buckets and surface as small pills on individual rows, so you can see how a repo stacks up on each lens without reshaping the composite.
+        </p>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+              Community
+              <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">{COMMUNITY_SIGNAL_COUNT} signals</span>
+            </h4>
+            <p className="mt-1 text-xs text-slate-600">Hosted across Documentation, Contributors, and Activity:</p>
+            <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
+              <li><span className="font-mono">CODE_OF_CONDUCT.md</span> &rarr; Documentation</li>
+              <li>Issue templates &rarr; Documentation</li>
+              <li>PR template &rarr; Documentation</li>
+              <li>CODEOWNERS / maintainer file &rarr; Contributors</li>
+              <li><span className="font-mono">GOVERNANCE.md</span> &rarr; Documentation</li>
+              <li><span className="font-mono">FUNDING.yml</span> &rarr; Contributors</li>
+              <li>Discussions &rarr; Activity</li>
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">
+              Completeness is <strong>count-based</strong> (signals present / signals known), not a weighted percentile.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+              Governance
+              <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">{GOVERNANCE_SIGNAL_COUNT} signals</span>
+            </h4>
+            <p className="mt-1 text-xs text-slate-600">Signals that indicate project stewardship, hosted across Documentation, Security, and Contributors:</p>
+            <ul className="mt-2 space-y-0.5 text-xs text-slate-700">
+              <li>LICENSE, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CHANGELOG, GOVERNANCE &rarr; Documentation</li>
+              <li>Branch protection, Code review, Security policy, License checks &rarr; Security</li>
+              <li>Maintainer count &rarr; Contributors</li>
+              <li>Licensing compliance pane &rarr; Documentation</li>
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">
+              Individual rows tagged as governance show a small pill; there is no separate completeness score.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
