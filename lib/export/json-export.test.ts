@@ -139,6 +139,76 @@ describe('buildJsonExport', () => {
     expect(starsRow!.cells[1].repo).toBe('vercel/next.js')
   })
 
+  it('omits security, licensing, and inclusiveNaming when data is unavailable', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ security?: unknown; licensing?: unknown; inclusiveNaming?: unknown }> }
+    expect(parsed.results[0].security).toBeUndefined()
+    expect(parsed.results[0].licensing).toBeUndefined()
+  })
+
+  it('includes security data when securityResult is present', async () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{
+        ...MINIMAL_RESPONSE.results[0],
+        securityResult: {
+          scorecard: {
+            overallScore: 6.5,
+            checks: [{ name: 'Code-Review', score: 7, reason: 'Found' }],
+            scorecardVersion: '5.0.0',
+          },
+          directChecks: [
+            { name: 'security_policy', detected: true, details: null },
+            { name: 'dependabot', detected: false, details: null },
+          ],
+          branchProtectionEnabled: true,
+        },
+      }],
+    }
+    const result = buildJsonExport(response)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ security: { score: number; mode: string; scorecard: { overallScore: number; checks: Array<{ name: string }> }; directChecks: Array<{ name: string; detected: boolean }> }; scores: { security: { value: number; mode: string } } }> }
+    expect(parsed.results[0].security).toBeDefined()
+    expect(parsed.results[0].security.mode).toBe('scorecard')
+    expect(parsed.results[0].security.scorecard.overallScore).toBe(6.5)
+    expect(parsed.results[0].security.scorecard.checks[0].name).toBe('Code-Review')
+    expect(parsed.results[0].security.directChecks).toHaveLength(2)
+    expect(parsed.results[0].scores.security).toBeDefined()
+    expect(parsed.results[0].scores.security.mode).toBe('scorecard')
+  })
+
+  it('includes licensing data when licensingResult is present', async () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{
+        ...MINIMAL_RESPONSE.results[0],
+        licensingResult: {
+          license: { spdxId: 'Apache-2.0', name: 'Apache License 2.0', osiApproved: true, permissivenessTier: 'Permissive' },
+          additionalLicenses: [],
+          contributorAgreement: { signedOffByRatio: 0.5, dcoOrClaBot: true, enforced: true },
+        },
+      }],
+    }
+    const result = buildJsonExport(response)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ licensing: { license: { spdxId: string; osiApproved: boolean }; contributorAgreement: { enforced: boolean } } }> }
+    expect(parsed.results[0].licensing).toBeDefined()
+    expect(parsed.results[0].licensing.license.spdxId).toBe('Apache-2.0')
+    expect(parsed.results[0].licensing.license.osiApproved).toBe(true)
+    expect(parsed.results[0].licensing.contributorAgreement.enforced).toBe(true)
+  })
+
+  it('includes inclusiveNaming data when inclusiveNamingResult is present', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ inclusiveNaming: { branchScore: number; metadataScore: number; branchCheck: { passed: boolean } } }> }
+    expect(parsed.results[0].inclusiveNaming).toBeDefined()
+    expect(parsed.results[0].inclusiveNaming.branchCheck.passed).toBe(true)
+    expect(parsed.results[0].inclusiveNaming.branchScore).toBeDefined()
+    expect(parsed.results[0].inclusiveNaming.metadataScore).toBeDefined()
+  })
+
   it('includes all repos when multiple repos are present', async () => {
     const multiResponse: AnalyzeResponse = {
       ...MINIMAL_RESPONSE,
