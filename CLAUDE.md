@@ -44,6 +44,8 @@ When filling manual checklist signoff or similar metadata, use the authenticated
 - N/A (stateless, on-demand analysis) (128-licensing-compliance)
 - TypeScript 5.x (Next.js 16+) + React, Tailwind CSS (174-report-search)
 - N/A (stateless, in-memory only) (174-report-search)
+- TypeScript 5.x (Next.js 16+) + Next.js (App Router), React, Tailwind CSS (180-community-scoring)
+- N/A (stateless, on-demand analysis per the constitution) (180-community-scoring)
 
 ## Recent Changes
 - 032-doc-scoring: Added TypeScript 5.x (Next.js 16+) + Next.js (App Router), Tailwind CSS, Vitest, React Testing Library
