@@ -39,6 +39,22 @@ describe('MetricCard', () => {
     expect(screen.getByText('Insufficient verified public data')).toBeInTheDocument()
   })
 
+  it('renders repo description below header', () => {
+    const card = buildMetricCardViewModels([buildResult()])[0]!
+
+    render(<MetricCard card={card} />)
+
+    expect(screen.getByText('The library for web and native user interfaces.')).toBeInTheDocument()
+  })
+
+  it('shows fallback for unavailable description', () => {
+    const card = buildMetricCardViewModels([buildResult({ description: 'unavailable' })])[0]!
+
+    render(<MetricCard card={card} />)
+
+    expect(screen.getByText('No description found')).toBeInTheDocument()
+  })
+
   it('handles unavailable ecosystem metrics gracefully', () => {
     const card = buildMetricCardViewModels([
       buildResult({ stars: 'unavailable', forks: 'unavailable', watchers: 'unavailable' }),
