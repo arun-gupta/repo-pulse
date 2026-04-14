@@ -160,6 +160,15 @@ export interface AnalysisResult {
   topics: string[]
   inclusiveNamingResult: InclusiveNamingResult | Unavailable
   securityResult: SecurityResult | Unavailable
+  // Community signals (P2-F05 / #70). Optional — absent on fixtures predating
+  // this feature. Set by the analyzer to either the resolved value or
+  // 'unavailable' per Constitution §II (no estimation).
+  hasIssueTemplates?: boolean | Unavailable
+  hasPullRequestTemplate?: boolean | Unavailable
+  hasFundingConfig?: boolean | Unavailable
+  hasDiscussionsEnabled?: boolean | Unavailable
+  discussionsCountWindow?: number | Unavailable
+  discussionsWindowDays?: ActivityWindowDays | Unavailable
   missingFields: string[]
 }
 
