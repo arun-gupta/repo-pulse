@@ -72,7 +72,7 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for Vercel deployment instruction
 | Phase | Focus | Status |
 |-------|-------|--------|
 | 1 | Web app + core scoring (Activity, Responsiveness, Contributors, Documentation) | :white_check_mark: Done |
-| 2 | Expand scoring — Security, Licensing & Compliance, Inclusive Naming :white_check_mark:; Community, Release Health, Governance & more upcoming | In progress |
+| 2 | Expand scoring — Security, Licensing & Compliance, Inclusive Naming, Governance :white_check_mark:; Community, Release Health & more upcoming | In progress |
 | 3 | Integrations (GitHub Action, MCP Server, CLI, PR bot, VS Code, Badge, Webhook) | Planned |
 | 4 | Git provider support (GitLab, Bitbucket, Gitea) | Planned |
 
