@@ -32,7 +32,12 @@ export const LOADING_QUOTES: LoadingQuote[] = [
   {
     text: 'Open source is not about free software, it\'s about freedom.',
     author: 'Richard Stallman',
-    context: 'Founder, Free Software Foundation',
+    context: 'Founder, Free Software Foundation; creator of GNU',
+  },
+  {
+    text: 'Open source is a development methodology; free software is a social movement.',
+    author: 'Richard Stallman',
+    context: 'Founder, Free Software Foundation; creator of GNU',
   },
   {
     text: 'Empowerment of individuals is a key part of what makes open source work, since in the end, innovations tend to come from small groups, not from large, structured efforts.',
@@ -64,6 +69,26 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     author: 'Brian Behlendorf',
     context: 'Co-founder, Apache Software Foundation',
   },
+  {
+    text: 'The most reliable indication of the future of open source is its past: in just a few years, we have gone from nothing to a robust body of software that solves many different problems. There\'s no reason for us to slow down now.',
+    author: 'Bruce Perens',
+    context: 'Co-founder, Open Source Initiative; author of the Open Source Definition',
+  },
+  {
+    text: 'Nobody \'manages\' the open source contributors.',
+    author: 'Daniel H. Pink',
+    context: 'Author of Drive and To Sell Is Human',
+  },
+  {
+    text: 'Open source is already a masterpiece, it doesn\'t need editing. But we do need more diversity and could be nicer to each other.',
+    author: 'Danese Cooper',
+    context: 'Former board chair, Open Source Initiative; former Chief Open Source Evangelist, Sun Microsystems',
+  },
+  {
+    text: 'The open source community has been one of the most collaborative and supportive communities I have ever been a part of.',
+    author: 'Nithya Ruff',
+    context: 'Chair, Linux Foundation Board; former Head of Open Source Program Office, Amazon',
+  },
 
   // Women in open source & tech
   {
@@ -74,7 +99,22 @@ export const LOADING_QUOTES: LoadingQuote[] = [
   {
     text: 'The open source revolution has been carried on the backs of some very weary people.',
     author: 'Nadia Eghbal',
-    context: 'Author of Working in Public',
+    context: 'Author of Working in Public: The Making and Maintenance of Open Source Software',
+  },
+  {
+    text: 'In more than 85% of the open source projects examined on GitHub, less than 5% of developers were responsible for over 95% of code and social interactions.',
+    author: 'Nadia Eghbal',
+    context: 'Author of Working in Public: The Making and Maintenance of Open Source Software',
+  },
+  {
+    text: 'Open source is about collaborating; not competing.',
+    author: 'Stormy Peters',
+    context: 'FOSS advocate; ex-GNOME Foundation, HP, Mozilla',
+  },
+  {
+    text: 'Open source offers a greenfield advantage for policymakers and Europe has the chance to lead.',
+    author: 'Sachiko Muto',
+    context: 'CEO, OpenForum Europe',
   },
   {
     text: 'Remember that open source has room for everyone. It can be daunting, but in my experience, people want to help.',
@@ -100,16 +140,6 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     text: 'Paying attention to how to use your words more effectively will make you a more productive communicator overall. Contributing to open source provides that training.',
     author: 'VM Brasseur',
     context: 'Author of Forge Your Future with Open Source',
-  },
-  {
-    text: 'You can\'t be what you can\'t see. Open source communities need visible role models.',
-    author: 'Reshma Saujani',
-    context: 'Founder, Girls Who Code',
-  },
-  {
-    text: 'We\'re raising our girls to be perfect, and we\'re raising our boys to be brave. We have to teach girls to be comfortable with imperfection.',
-    author: 'Reshma Saujani',
-    context: 'Founder, Girls Who Code',
   },
   {
     text: 'The quality, relevance, and impact of the products output by the technology sector can only be improved by having the people building them be representative of the people using them.',
@@ -158,17 +188,22 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     author: 'Nanjira Sambuli',
     context: 'Digital equality advocate, World Wide Web Foundation, Kenya',
   },
+  {
+    text: 'In the region, the use of open source has increased considerably as it is the most accessible option in terms of time and costs for companies to continue sharing information and generating new developments.',
+    author: 'Luciano Alves',
+    context: 'President, Zabbix Latin America, Brazil',
+  },
+  {
+    text: 'Latin America uses a lot of open source tools, but we still need to make the jump to contribute to and create them.',
+    author: 'Gonzalo Peña-Castellanos',
+    context: 'JupyterLab core developer; Python Software Foundation, Colombia',
+  },
 
   // Developer experience & craftsmanship
   {
     text: 'Any fool can write code that a computer can understand. Good programmers write code that humans can understand.',
     author: 'Martin Fowler',
     context: 'Software engineer, author of Refactoring',
-  },
-  {
-    text: 'The hottest new programming language is English.',
-    author: 'Andrej Karpathy',
-    context: 'AI researcher, former Tesla / OpenAI',
   },
   {
     text: 'I want to make Ruby users free. I want to give them the freedom to choose.',
@@ -234,33 +269,11 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     context: 'Founder, O\'Reilly Media',
   },
 
-  // Security & trust
-  {
-    text: 'Security is a process, not a product.',
-    author: 'Bruce Schneier',
-    context: 'Cryptographer, author of Applied Cryptography',
-  },
-  {
-    text: 'The only truly secure system is one that is powered off, cast in a block of concrete and sealed in a lead-lined room with armed guards.',
-    author: 'Gene Spafford',
-    context: 'Professor of Computer Science, Purdue University',
-  },
-
   // Civic tech & humanitarian
-  {
-    text: 'Technology is not just a set of tools. It is the means by which people participate in their democracies.',
-    author: 'Nnenna Nwakanma',
-    context: 'Chief Web Advocate, World Wide Web Foundation, Nigeria',
-  },
   {
     text: 'Fostering an open source culture in an enterprise sustains innovation.',
     author: 'Arun Gupta',
     context: 'Author of Fostering Open Source Culture',
-  },
-  {
-    text: 'Code is law.',
-    author: 'Lawrence Lessig',
-    context: 'Professor, Harvard Law School; founder, Creative Commons',
   },
 ]
 
