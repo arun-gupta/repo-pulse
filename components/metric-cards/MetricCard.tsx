@@ -36,6 +36,7 @@ export function MetricCard({ card }: MetricCardProps) {
         <h3 className="font-semibold text-slate-900">{card.repo}</h3>
         <p className="text-xs text-slate-400">Created: {card.createdAtLabel}</p>
       </div>
+      <p className={`mt-1 line-clamp-2 text-xs italic text-slate-400 ${card.description === '—' ? '' : 'not-italic text-slate-500'}`}>{card.description === '—' ? 'No description found' : card.description}</p>
 
       <div className={`mt-3 flex items-center justify-between rounded-lg border px-3 py-2 ${scoreToneClass(hs.tone)}`} title={`Composite health score from Activity (25%), Responsiveness (25%), Contributors (23%), Security (15%), and Documentation (12%, includes licensing, compliance & inclusive naming) — scored relative to ${hs.bracketLabel} repositories.`}>
         <div>
