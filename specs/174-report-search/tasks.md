@@ -19,8 +19,8 @@
 
 **Purpose**: Create directory structure and shared types for report search
 
-- [ ] T001 Create directories `components/search/` and `lib/search/`
-- [ ] T002 [P] Create search type exports in lib/search/types.ts based on specs/174-report-search/contracts/report-search-props.ts (SearchIndex, SearchResult, TabMatchCounts)
+- [x] T001 Create directories `components/search/` and `lib/search/`
+- [x] T002 [P] Create search type exports in lib/search/types.ts based on specs/174-report-search/contracts/report-search-props.ts (SearchIndex, SearchResult, TabMatchCounts)
 
 ---
 
@@ -32,14 +32,14 @@
 
 ### Tests
 
-- [ ] T003 [P] Write tests for search engine in __tests__/lib/search/search-engine.test.ts — case-insensitive substring matching, empty query returns zero matches, special characters treated as literals, match counting per tab
-- [ ] T004 [P] Write tests for search index builder in __tests__/lib/search/search-index.test.ts — extracts correct text per tab from mock AnalysisResult[], covers all 8 tabs, handles empty results
+- [x] T003 [P] Write tests for search engine in __tests__/lib/search/search-engine.test.ts — case-insensitive substring matching, empty query returns zero matches, special characters treated as literals, match counting per tab
+- [x] T004 [P] Write tests for search index builder in __tests__/lib/search/search-index.test.ts — extracts correct text per tab from mock AnalysisResult[], covers all 8 tabs, handles empty results
 
 ### Implementation
 
-- [ ] T005 [P] Implement search engine in lib/search/search-engine.ts — executeSearch(index, query) returns SearchResult with matchCounts, totalMatches, matchedTabCount; case-insensitive substring matching; empty/whitespace query returns zero matches
-- [ ] T006 [P] Implement search index builder in lib/search/search-index.ts — buildSearchIndex(results: AnalysisResult[]) returns Record<ResultTabId, string[]>; one extractor per tab covering repo names, metric labels, values, recommendation IDs, risk levels, license info, contributor names, scorecard checks, documentation file names
-- [ ] T007 Verify T003 and T004 tests pass with implementations from T005 and T006
+- [x] T005 [P] Implement search engine in lib/search/search-engine.ts — executeSearch(index, query) returns SearchResult with matchCounts, totalMatches, matchedTabCount; case-insensitive substring matching; empty/whitespace query returns zero matches
+- [x] T006 [P] Implement search index builder in lib/search/search-index.ts — buildSearchIndex(results: AnalysisResult[]) returns Record<ResultTabId, string[]>; one extractor per tab covering repo names, metric labels, values, recommendation IDs, risk levels, license info, contributor names, scorecard checks, documentation file names
+- [x] T007 Verify T003 and T004 tests pass with implementations from T005 and T006
 
 **Checkpoint**: Search logic is complete and tested. UI work can begin.
 
@@ -53,19 +53,19 @@
 
 ### Tests
 
-- [ ] T008 [P] [US1] Write tests for ReportSearchBar in __tests__/components/search/ReportSearchBar.test.tsx — renders search input, calls onQueryChange on typing, displays match summary ("N matches across M tabs"), shows nothing when totalMatches is 0, input has placeholder text
-- [ ] T009 [P] [US1] Write tests for SearchHighlighter in __tests__/components/search/SearchHighlighter.test.tsx — splits text and wraps matches in mark element, handles no match (renders plain text), handles multiple matches, case-insensitive highlighting, empty query renders plain text
-- [ ] T010 [P] [US1] Write tests for ResultsTabs badge rendering in __tests__/components/app-shell/ResultsTabs.test.tsx — renders badge counts when matchCounts prop provided, no badge when count is 0 or matchCounts not provided, badge visible in overflow dropdown tabs
+- [x] T008 [P] [US1] Write tests for ReportSearchBar in __tests__/components/search/ReportSearchBar.test.tsx — renders search input, calls onQueryChange on typing, displays match summary ("N matches across M tabs"), shows nothing when totalMatches is 0, input has placeholder text
+- [x] T009 [P] [US1] Write tests for SearchHighlighter in __tests__/components/search/SearchHighlighter.test.tsx — splits text and wraps matches in mark element, handles no match (renders plain text), handles multiple matches, case-insensitive highlighting, empty query renders plain text
+- [x] T010 [P] [US1] Write tests for ResultsTabs badge rendering in __tests__/components/app-shell/ResultsTabs.test.tsx — renders badge counts when matchCounts prop provided, no badge when count is 0 or matchCounts not provided, badge visible in overflow dropdown tabs
 
 ### Implementation
 
-- [ ] T011 [P] [US1] Implement ReportSearchBar component in components/search/ReportSearchBar.tsx — search input with magnifying glass icon, match summary text, clear button when query is non-empty, Tailwind styling consistent with ExportControls
-- [ ] T012 [P] [US1] Implement SearchHighlighter component in components/search/SearchHighlighter.tsx — splits text on case-insensitive query match, wraps matched substrings in `<mark>` with yellow highlight styling, returns plain text when query is empty
-- [ ] T013 [US1] Add optional matchCounts prop to ResultsTabs in components/app-shell/ResultsTabs.tsx — display badge count next to tab label in TabButton when count > 0, show badge in overflow dropdown menu items
-- [ ] T014 [US1] Wire search state into RepoInputClient in components/repo-input/RepoInputClient.tsx — add query/setQuery state, implement 300ms debounce with useEffect+setTimeout, build search index from analysisResponse.results via useMemo, execute search on debounced query, pass matchCounts to ResultsShell
-- [ ] T015 [US1] Update ResultsShell in components/app-shell/ResultsShell.tsx — accept optional matchCounts prop, pass it through to ResultsTabs; accept optional searchQuery prop for tab content highlighting
-- [ ] T016 [US1] Compose toolbar in RepoInputClient — render ReportSearchBar alongside ExportControls in the toolbar slot, only when analysisResponse is present
-- [ ] T017 [US1] Verify T008, T009, T010 tests pass with implementations
+- [x] T011 [P] [US1] Implement ReportSearchBar component in components/search/ReportSearchBar.tsx — search input with magnifying glass icon, match summary text, clear button when query is non-empty, Tailwind styling consistent with ExportControls
+- [x] T012 [P] [US1] Implement SearchHighlighter component in components/search/SearchHighlighter.tsx — splits text on case-insensitive query match, wraps matched substrings in `<mark>` with yellow highlight styling, returns plain text when query is empty
+- [x] T013 [US1] Add optional matchCounts prop to ResultsTabs in components/app-shell/ResultsTabs.tsx — display badge count next to tab label in TabButton when count > 0, show badge in overflow dropdown menu items
+- [x] T014 [US1] Wire search state into RepoInputClient in components/repo-input/RepoInputClient.tsx — add query/setQuery state, implement 300ms debounce with useEffect+setTimeout, build search index from analysisResponse.results via useMemo, execute search on debounced query, pass matchCounts to ResultsShell
+- [x] T015 [US1] Update ResultsShell in components/app-shell/ResultsShell.tsx — accept optional matchCounts prop, pass it through to ResultsTabs; accept optional searchQuery prop for tab content highlighting
+- [x] T016 [US1] Compose toolbar in RepoInputClient — render ReportSearchBar alongside ExportControls in the toolbar slot, only when analysisResponse is present
+- [x] T017 [US1] Verify T008, T009, T010 tests pass with implementations
 
 **Checkpoint**: Core search is functional — search bar visible, badge counts on tabs, text highlighting works. User Story 1 is independently testable.
 
@@ -79,12 +79,12 @@
 
 ### Tests
 
-- [ ] T018 [US2] Write test in __tests__/lib/search/search-index.test.ts — verify search index includes risk level text (Critical, High, Medium, Low) from security and recommendation data
+- [x] T018 [US2] Write test in __tests__/lib/search/search-index.test.ts — verify search index includes risk level text (Critical, High, Medium, Low) from security and recommendation data
 
 ### Implementation
 
-- [ ] T019 [US2] Ensure search index extractors for security and recommendations tabs in lib/search/search-index.ts include risk/severity level text, recommendation descriptions, and category labels
-- [ ] T020 [US2] Verify case-insensitive matching works for risk levels (e.g., `critical` matches `Critical`) — should pass with existing engine logic from T005
+- [x] T019 [US2] Ensure search index extractors for security and recommendations tabs in lib/search/search-index.ts include risk/severity level text, recommendation descriptions, and category labels
+- [x] T020 [US2] Verify case-insensitive matching works for risk levels (e.g., `critical` matches `Critical`) — should pass with existing engine logic from T005
 
 **Checkpoint**: Risk-level search produces correct matches in Security and Recommendations tabs.
 
@@ -98,12 +98,12 @@
 
 ### Tests
 
-- [ ] T021 [US3] Write test in __tests__/lib/search/search-index.test.ts — verify index includes metric labels and values from activity, responsiveness, and overview data
+- [x] T021 [US3] Write test in __tests__/lib/search/search-index.test.ts — verify index includes metric labels and values from activity, responsiveness, and overview data
 
 ### Implementation
 
-- [ ] T022 [US3] Ensure search index extractors for activity, responsiveness, and overview tabs in lib/search/search-index.ts include metric labels (e.g., "PR merge rate", "Stale issue ratio", "Commits"), formatted values, and score labels
-- [ ] T023 [US3] Verify multi-word phrase matching works (e.g., `stale issues` as a substring) — should pass with existing engine logic
+- [x] T022 [US3] Ensure search index extractors for activity, responsiveness, and overview tabs in lib/search/search-index.ts include metric labels (e.g., "PR merge rate", "Stale issue ratio", "Commits"), formatted values, and score labels
+- [x] T023 [US3] Verify multi-word phrase matching works (e.g., `stale issues` as a substring) — should pass with existing engine logic
 
 **Checkpoint**: Metric search produces correct matches across relevant tabs.
 
@@ -117,12 +117,12 @@
 
 ### Tests
 
-- [ ] T024 [US4] Write test in __tests__/lib/search/search-index.test.ts — verify index includes repo names (owner/repo format) in every tab's entries
+- [x] T024 [US4] Write test in __tests__/lib/search/search-index.test.ts — verify index includes repo names (owner/repo format) in every tab's entries
 
 ### Implementation
 
-- [ ] T025 [US4] Ensure all tab extractors in lib/search/search-index.ts include the repo name string (e.g., `kubernetes/kubernetes`) in their searchable text entries
-- [ ] T026 [US4] Verify repo name search returns matches across all tabs that display per-repo data
+- [x] T025 [US4] Ensure all tab extractors in lib/search/search-index.ts include the repo name string (e.g., `kubernetes/kubernetes`) in their searchable text entries
+- [x] T026 [US4] Verify repo name search returns matches across all tabs that display per-repo data
 
 **Checkpoint**: Repo-specific search works across all tabs for multi-repo analysis.
 
@@ -136,12 +136,12 @@
 
 ### Tests
 
-- [ ] T027 [US5] Write test in __tests__/components/search/ReportSearchBar.test.tsx — verify search bar renders correctly in narrow container, input and summary stack vertically on small widths
+- [x] T027 [US5] Write test in __tests__/components/search/ReportSearchBar.test.tsx — verify search bar renders correctly in narrow container, input and summary stack vertically on small widths
 
 ### Implementation
 
-- [ ] T028 [US5] Update ReportSearchBar responsive styling in components/search/ReportSearchBar.tsx — ensure search input and export controls wrap correctly on mobile using flex-wrap, input takes full width on small screens
-- [ ] T029 [US5] Update toolbar layout in components/repo-input/RepoInputClient.tsx — ensure search bar and export controls stack vertically on mobile (flex-col on sm:flex-row)
+- [x] T028 [US5] Update ReportSearchBar responsive styling in components/search/ReportSearchBar.tsx — ensure search input and export controls wrap correctly on mobile using flex-wrap, input takes full width on small screens
+- [x] T029 [US5] Update toolbar layout in components/repo-input/RepoInputClient.tsx — ensure search bar and export controls stack vertically on mobile (flex-col on sm:flex-row)
 
 **Checkpoint**: Search is fully functional on mobile viewports.
 
@@ -151,12 +151,12 @@
 
 **Purpose**: Final validation, edge cases, and cleanup
 
-- [ ] T030 [P] Add SearchHighlighter wrapping to tab view content — integrate into recommendation cards, security checks, metric cards, documentation items, contributor entries, and comparison table cells where text highlighting should appear
-- [ ] T031 Run all tests (`npm test`) and fix any failures
-- [ ] T032 Run linter (`npm run lint`) and fix any issues
-- [ ] T033 Run build (`npm run build`) and verify no type errors
-- [ ] T034 Manual testing: verify all 8 usage examples from issue #172 produce correct matches
-- [ ] T035 Create manual testing checklist at specs/174-report-search/checklists/manual-testing.md
+- [x] T030 [P] Add SearchHighlighter wrapping to tab view content — integrate into recommendation cards, security checks, metric cards, documentation items, contributor entries, and comparison table cells where text highlighting should appear
+- [x] T031 Run all tests (`npm test`) and fix any failures
+- [x] T032 Run linter (`npm run lint`) and fix any issues
+- [x] T033 Run build (`npm run build`) and verify no type errors
+- [x] T034 Manual testing: verify all 8 usage examples from issue #172 produce correct matches
+- [x] T035 Create manual testing checklist at specs/174-report-search/checklists/manual-testing.md
 
 ---
 
