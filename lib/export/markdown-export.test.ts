@@ -209,6 +209,108 @@ describe('buildMarkdownReport', () => {
     expect(md).toContain('## Failed Repositories')
     expect(md).toContain('bad/repo')
   })
+
+  it('omits Security section when securityResult is unavailable', () => {
+    const md = buildMarkdownReport(MINIMAL_RESPONSE)
+    expect(md).not.toContain('### Security')
+    expect(md).not.toContain('OpenSSF Scorecard')
+    expect(md).not.toContain('Direct Security Checks')
+  })
+
+  it('omits Licensing & Compliance section when licensingResult is unavailable', () => {
+    const md = buildMarkdownReport(MINIMAL_RESPONSE)
+    expect(md).not.toContain('### Licensing & Compliance')
+  })
+
+  it('omits Inclusive Naming section when inclusiveNamingResult is unavailable', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{ ...MINIMAL_RESPONSE.results[0], inclusiveNamingResult: 'unavailable' }],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).not.toContain('### Inclusive Naming')
+  })
+
+  it('renders Security section when securityResult has data', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{
+        ...MINIMAL_RESPONSE.results[0],
+        securityResult: {
+          scorecard: {
+            overallScore: 7.5,
+            checks: [
+              { name: 'Code-Review', score: 8, reason: 'Found' },
+              { name: 'Branch-Protection', score: -1, reason: 'Internal error' },
+            ],
+            scorecardVersion: '5.0.0',
+          },
+          directChecks: [
+            { name: 'security_policy', detected: true, details: null },
+            { name: 'dependabot', detected: false, details: null },
+            { name: 'ci_cd', detected: 'unavailable', details: null },
+            { name: 'branch_protection', detected: true, details: null },
+          ],
+          branchProtectionEnabled: true,
+        },
+      }],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).toContain('### Security')
+    expect(md).toContain('Scorecard + direct checks')
+    expect(md).toContain('OpenSSF Scorecard (v5.0.0)')
+    expect(md).toContain('7.5 / 10')
+    expect(md).toContain('Code-Review')
+    expect(md).toContain('8 / 10')
+    expect(md).toContain('Indeterminate')
+    expect(md).toContain('Security Policy')
+    expect(md).toContain('Detected')
+    expect(md).toContain('Not detected')
+    expect(md).toContain('Unavailable')
+  })
+
+  it('renders Licensing & Compliance section when licensingResult has data', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{
+        ...MINIMAL_RESPONSE.results[0],
+        licensingResult: {
+          license: { spdxId: 'MIT', name: 'MIT License', osiApproved: true, permissivenessTier: 'Permissive' },
+          additionalLicenses: [],
+          contributorAgreement: { signedOffByRatio: 0, dcoOrClaBot: false, enforced: false },
+        },
+      }],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).toContain('### Licensing & Compliance')
+    expect(md).toContain('MIT License (MIT)')
+    expect(md).toContain('Yes')
+    expect(md).toContain('Permissive')
+  })
+
+  it('renders Inclusive Naming section with findings', () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{
+        ...MINIMAL_RESPONSE.results[0],
+        inclusiveNamingResult: {
+          defaultBranchName: 'master',
+          branchCheck: { checkType: 'branch', term: 'master', passed: false, tier: 1, severity: 'Replace immediately', replacements: ['main', 'trunk'], context: null },
+          metadataChecks: [
+            { checkType: 'description', term: 'whitelist', passed: false, tier: 2, severity: 'Recommended to replace', replacements: ['allowlist'], context: null },
+          ],
+        },
+      }],
+    }
+    const md = buildMarkdownReport(response)
+    expect(md).toContain('### Inclusive Naming')
+    expect(md).toContain('Fail')
+    expect(md).toContain('`master`')
+    expect(md).toContain('Replace immediately')
+    expect(md).toContain('main, trunk')
+    expect(md).toContain('whitelist')
+    expect(md).toContain('allowlist')
+  })
 })
 
 describe('buildMarkdownExport', () => {
