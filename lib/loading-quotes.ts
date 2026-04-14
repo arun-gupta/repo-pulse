@@ -188,6 +188,11 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     author: 'Nanjira Sambuli',
     context: 'Digital equality advocate, World Wide Web Foundation, Kenya',
   },
+  {
+    text: 'In the region, the use of open source has increased considerably as it is the most accessible option in terms of time and costs for companies to continue sharing information and generating new developments.',
+    author: 'Luciano Alves',
+    context: 'President, Zabbix Latin America, Brazil',
+  },
 
   // Developer experience & craftsmanship
   {
