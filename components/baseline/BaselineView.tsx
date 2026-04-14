@@ -189,6 +189,49 @@ export function BaselineView() {
         </p>
       </section>
 
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-900">Community</h3>
+        <p className="mt-2 text-sm text-emerald-900">
+          Community is a <strong>cross-cutting lens</strong>, not a weighted composite bucket. It does <strong>not</strong> feed the OSS Health Score. Instead, its seven signals are hosted inside the existing buckets, and a small completeness readout surfaces how many are present.
+        </p>
+        <dl className="mt-3 space-y-1.5 text-sm text-emerald-900">
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-mono text-xs text-emerald-800">CODE_OF_CONDUCT.md</dt>
+            <dd className="text-emerald-800">&rarr; Documentation</dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-mono text-xs text-emerald-800">Issue templates</dt>
+            <dd className="text-emerald-800">&rarr; Documentation</dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-mono text-xs text-emerald-800">PR template</dt>
+            <dd className="text-emerald-800">&rarr; Documentation</dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-mono text-xs text-emerald-800">CODEOWNERS / maintainer file</dt>
+            <dd className="text-emerald-800">&rarr; Contributors</dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-mono text-xs text-emerald-800">GOVERNANCE.md</dt>
+            <dd className="text-emerald-800">&rarr; Documentation</dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-mono text-xs text-emerald-800">FUNDING.yml</dt>
+            <dd className="text-emerald-800">&rarr; Contributors</dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="font-mono text-xs text-emerald-800">Discussions</dt>
+            <dd className="text-emerald-800">&rarr; Activity</dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-sm text-emerald-900">
+          On a report, each signal appears as a small <em>lens pill</em> in the row below the score — a compact visual convention that keeps Community visible without reshaping the composite.
+        </p>
+        <p className="mt-2 text-xs text-emerald-800">
+          The completeness readout is <strong>count-based</strong> (signals present / signals known), not a percentile weighted against the composite.
+        </p>
+      </section>
+
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-900">Scoring Methodology</h3>
         <p className="mt-1 text-sm text-slate-600">
