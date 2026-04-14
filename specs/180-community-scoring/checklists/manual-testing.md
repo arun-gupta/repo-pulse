@@ -70,9 +70,9 @@ Items landed during this session are marked done below. Items still deferred wil
 
 ### Deferred to a follow-up PR
 
-- Dedicated `e2e/community-scoring.spec.ts` Playwright coverage
-- `/baseline` methodology page copy describing the Community lens
-- Governance lens pill in the Lenses row ([#191](https://github.com/arun-gupta/repo-pulse/issues/191))
+- Dedicated `e2e/community-scoring.spec.ts` Playwright coverage — tracked as [#196](https://github.com/arun-gupta/repo-pulse/issues/196)
+- `/baseline` methodology page copy describing the Community lens — tracked as [#197](https://github.com/arun-gupta/repo-pulse/issues/197)
+- Governance lens pill in the Lenses row — tracked as [#191](https://github.com/arun-gupta/repo-pulse/issues/191)
 
 ---
 
