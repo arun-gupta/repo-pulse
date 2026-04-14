@@ -139,6 +139,55 @@ describe('buildJsonExport', () => {
     expect(starsRow!.cells[1].repo).toBe('vercel/next.js')
   })
 
+  it('includes community data with seven signal keys and nested discussions/completeness', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as {
+      results: Array<{
+        community: {
+          signals: Record<string, { present: boolean | 'unknown' }>
+          completeness: { ratio: number | null; percentile: number | null; tone: string; presentCount: number; missingCount: number; unknownCount: number }
+          discussions: { enabled: boolean | 'unknown'; windowDays: number | null; windowCount: number | null }
+        }
+      }>
+    }
+    const community = parsed.results[0].community
+    expect(community).toBeDefined()
+    expect(Object.keys(community.signals).sort()).toEqual([
+      'code_of_conduct',
+      'codeowners',
+      'discussions_enabled',
+      'funding',
+      'governance',
+      'issue_templates',
+      'pull_request_template',
+    ])
+    expect(community.completeness).toHaveProperty('ratio')
+    expect(community.completeness).toHaveProperty('percentile')
+    expect(community.completeness).toHaveProperty('presentCount')
+    expect(community.discussions).toHaveProperty('enabled')
+    expect(community.discussions).toHaveProperty('windowDays')
+    expect(community.discussions).toHaveProperty('windowCount')
+  })
+
+  it('community.discussions has null window fields when Discussions is disabled (FR-008 / SC-003)', async () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{
+        ...MINIMAL_RESPONSE.results[0],
+        hasDiscussionsEnabled: false,
+        // windowDays/windowCount omitted — analyzer leaves them 'unavailable' when disabled
+      }],
+    }
+    const result = buildJsonExport(response)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as { results: Array<{ community: { discussions: { enabled: boolean; windowDays: number | null; windowCount: number | null } } }> }
+    const discussions = parsed.results[0].community.discussions
+    expect(discussions.enabled).toBe(false)
+    expect(discussions.windowDays).toBeNull()
+    expect(discussions.windowCount).toBeNull()
+  })
+
   it('omits security, licensing, and inclusiveNaming when data is unavailable', async () => {
     const result = buildJsonExport(MINIMAL_RESPONSE)
     const text = await result.blob.text()

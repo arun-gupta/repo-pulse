@@ -10,6 +10,7 @@ import { getResponsivenessScore } from '@/lib/responsiveness/score-config'
 import { getHealthScore } from '@/lib/scoring/health-score'
 import { getInclusiveNamingScore } from '@/lib/inclusive-naming/score-config'
 import { getSecurityScore } from '@/lib/security/score-config'
+import { computeCommunityCompleteness } from '@/lib/community/completeness'
 
 export interface JsonExportResult {
   blob: Blob
@@ -189,6 +190,50 @@ function computeInclusiveNaming(result: AnalysisResult) {
   }
 }
 
+function computeCommunity(result: AnalysisResult) {
+  const completeness = computeCommunityCompleteness(result)
+
+  // Signals map — one entry per CommunitySignalKey, present state is
+  // 'unknown' when the signal couldn't be determined (FR-016).
+  type PresentState = boolean | 'unknown'
+  const makeSignal = (key: (typeof completeness.present)[number]): { present: PresentState } => {
+    if (completeness.present.includes(key)) return { present: true }
+    if (completeness.missing.includes(key)) return { present: false }
+    return { present: 'unknown' }
+  }
+
+  return {
+    signals: {
+      code_of_conduct: makeSignal('code_of_conduct'),
+      issue_templates: makeSignal('issue_templates'),
+      pull_request_template: makeSignal('pull_request_template'),
+      codeowners: makeSignal('codeowners'),
+      governance: makeSignal('governance'),
+      funding: makeSignal('funding'),
+      discussions_enabled: makeSignal('discussions_enabled'),
+    },
+    completeness: {
+      ratio: completeness.ratio,
+      percentile: completeness.percentile,
+      tone: completeness.tone,
+      presentCount: completeness.present.length,
+      missingCount: completeness.missing.length,
+      unknownCount: completeness.unknown.length,
+    },
+    discussions: {
+      enabled: result.hasDiscussionsEnabled === true
+        ? true
+        : result.hasDiscussionsEnabled === false
+          ? false
+          : 'unknown' as const,
+      // Per FR-008 / SC-003: windowDays and windowCount are null when Discussions is
+      // disabled — the analyzer never claims an activity measurement it didn't make.
+      windowDays: typeof result.discussionsWindowDays === 'number' ? result.discussionsWindowDays : null,
+      windowCount: typeof result.discussionsCountWindow === 'number' ? result.discussionsCountWindow : null,
+    },
+  }
+}
+
 function computeComparison(results: AnalysisResult[]) {
   if (results.length < 2) return undefined
   return buildComparisonSections(results).map((section) => ({
@@ -222,6 +267,7 @@ export function buildJsonExport(response: AnalyzeResponse): JsonExportResult {
       security: computeSecurity(result),
       licensing: computeLicensing(result),
       inclusiveNaming: computeInclusiveNaming(result),
+      community: computeCommunity(result),
     })),
     comparison: computeComparison(response.results),
   }
