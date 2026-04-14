@@ -29,7 +29,7 @@ describe('lib/tags/community', () => {
   })
 
   it('classifies Contributors community signals', () => {
-    expect(isCommunityItem('CODEOWNERS', 'contributors_metric')).toBe(true)
+    expect(isCommunityItem('Maintainer count', 'contributors_metric')).toBe(true)
     expect(isCommunityItem('Funding disclosure', 'contributors_metric')).toBe(true)
   })
 

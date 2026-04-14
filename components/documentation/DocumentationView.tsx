@@ -7,6 +7,7 @@ import { TagPill, ActiveFilterBar } from '@/components/tags/TagPill'
 import type { AnalysisResult, InclusiveNamingResult, LicensingResult } from '@/lib/analyzer/analysis-result'
 import { getDocumentationScore } from '@/lib/documentation/score-config'
 import { GOVERNANCE_DOC_FILES, LICENSING_IS_GOVERNANCE } from '@/lib/tags/governance'
+import { COMMUNITY_DOC_FILES } from '@/lib/tags/community'
 import { getDocFileTags, getReadmeSectionTags, LICENSING_IS_COMPLIANCE } from '@/lib/tags/tag-mappings'
 
 interface DocumentationViewProps {
@@ -35,6 +36,7 @@ const SECTION_LABELS: Record<string, string> = {
 function getDocFileAllTags(name: string): string[] {
   const tags: string[] = []
   if (GOVERNANCE_DOC_FILES.has(name)) tags.push('governance')
+  if (COMMUNITY_DOC_FILES.has(name)) tags.push('community')
   tags.push(...getDocFileTags(name))
   return tags
 }

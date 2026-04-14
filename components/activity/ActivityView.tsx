@@ -10,6 +10,7 @@ import { type ActivityWindowDays, type AnalysisResult } from '@/lib/analyzer/ana
 import { buildActivitySections, getActivityWindowOptions } from '@/lib/activity/view-model'
 import { CONTRIB_EX_ACTIVITY_CARDS } from '@/lib/tags/tag-mappings'
 import { ActivityScoreHelp } from './ActivityScoreHelp'
+import { DiscussionsCard } from './DiscussionsCard'
 
 interface ActivityViewProps {
   results: AnalysisResult[]
@@ -141,6 +142,9 @@ export function ActivityView({ results, activeTag: externalTag, onTagChange }: A
                     </div>
                       )
                     })}
+                  {!activeTag || activeTag === 'community' ? (
+                    <DiscussionsCard result={result} activeTag={activeTag} onTagClick={handleTagClick} />
+                  ) : null}
                 </div>
                 <ActivityScoreHelp score={score} />
               </>

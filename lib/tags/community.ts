@@ -19,7 +19,7 @@ export const COMMUNITY_DOC_FILES = new Set<string>([
 
 /** Contributors tab metric labels that are community signals. */
 export const COMMUNITY_CONTRIBUTORS_METRICS = new Set<string>([
-  'CODEOWNERS',
+  'Maintainer count',   // also governance — dual-tagged in UI
   'Funding disclosure',
 ])
 
