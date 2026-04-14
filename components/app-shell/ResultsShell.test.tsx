@@ -124,8 +124,8 @@ describe('ResultsShell', () => {
 
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Organization content')).toBeInTheDocument()
-    // Comparison content is in the DOM but hidden (parent has `hidden` class)
-    expect(screen.getByText('Comparison content').closest('[data-tab-content="comparison"]')).toHaveClass('hidden')
+    // Comparison content is in the DOM but hidden (parent has display: none)
+    expect(screen.getByText('Comparison content').closest('[data-tab-content="comparison"]')).toHaveStyle('display: none')
   })
 
   it('supports opening on an initial active tab', async () => {

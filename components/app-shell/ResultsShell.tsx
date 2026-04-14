@@ -200,15 +200,15 @@ export function ResultsShell({
           <section aria-label="Result workspace" className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             {toolbar ? <div className="mb-4">{toolbar}</div> : null}
             <ResultsTabs tabs={tabs} activeTab={currentActiveTab} onChange={setActiveTab} matchCounts={domMatchCounts} />
-            <div className="mt-6 min-w-0" ref={containerRef}>
-              <div data-tab-content="overview" className={currentActiveTab !== 'overview' ? 'hidden' : 'min-w-0'}>{overview}</div>
-              <div data-tab-content="contributors" className={currentActiveTab !== 'contributors' ? 'hidden' : 'min-w-0'}>{contributors}</div>
-              <div data-tab-content="activity" className={currentActiveTab !== 'activity' ? 'hidden' : 'min-w-0'}>{activity}</div>
-              <div data-tab-content="responsiveness" className={currentActiveTab !== 'responsiveness' ? 'hidden' : 'min-w-0'}>{responsiveness}</div>
-              <div data-tab-content="documentation" className={currentActiveTab !== 'documentation' ? 'hidden' : 'min-w-0'}>{documentation}</div>
-              <div data-tab-content="security" className={currentActiveTab !== 'security' ? 'hidden' : 'min-w-0'}>{security}</div>
-              <div data-tab-content="recommendations" className={currentActiveTab !== 'recommendations' ? 'hidden' : 'min-w-0'}>{recommendations}</div>
-              <div data-tab-content="comparison" className={currentActiveTab !== 'comparison' ? 'hidden' : 'min-w-0'}>{comparison}</div>
+            <div className="mt-6" ref={containerRef}>
+              <div data-tab-content="overview" style={{ display: currentActiveTab === 'overview' ? 'contents' : 'none' }}>{overview}</div>
+              <div data-tab-content="contributors" style={{ display: currentActiveTab === 'contributors' ? 'contents' : 'none' }}>{contributors}</div>
+              <div data-tab-content="activity" style={{ display: currentActiveTab === 'activity' ? 'contents' : 'none' }}>{activity}</div>
+              <div data-tab-content="responsiveness" style={{ display: currentActiveTab === 'responsiveness' ? 'contents' : 'none' }}>{responsiveness}</div>
+              <div data-tab-content="documentation" style={{ display: currentActiveTab === 'documentation' ? 'contents' : 'none' }}>{documentation}</div>
+              <div data-tab-content="security" style={{ display: currentActiveTab === 'security' ? 'contents' : 'none' }}>{security}</div>
+              <div data-tab-content="recommendations" style={{ display: currentActiveTab === 'recommendations' ? 'contents' : 'none' }}>{recommendations}</div>
+              <div data-tab-content="comparison" style={{ display: currentActiveTab === 'comparison' ? 'contents' : 'none' }}>{comparison}</div>
             </div>
           </section>
         </section>
