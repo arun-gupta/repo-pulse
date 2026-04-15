@@ -51,3 +51,4 @@ scripts/calibrate-checkpoint.json
 .claude.pid
 dev.log
 claude.log
+.claude/
