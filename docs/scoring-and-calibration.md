@@ -206,6 +206,24 @@ The full list of sampled repos is in [`docs/calibrate-repos.md`](calibrate-repos
 
 ---
 
+## Recommendation gate
+
+Bucket sub-factor recommendations (Activity, Responsiveness, Contributors, Documentation, Security) are gated by percentile. A sub-factor recommendation is emitted only when the sub-factor's percentile is **strictly below** the gate. At or above the gate, the recommendation is suppressed — silent-when-good.
+
+The threshold lives in configuration at `lib/scoring/config-loader.ts`:
+
+```ts
+export const RECOMMENDATION_PERCENTILE_GATE = 50
+```
+
+Documentation and Security recommendations are gated by the bucket percentile (since each rec is tied to a missing file/section). Activity, Responsiveness, and Contributors recommendations are gated per sub-factor (PR flow, Issue flow, etc.), so a repo with a strong PR flow won't be told to "reduce PR backlog" even if another Activity sub-factor is weak.
+
+Presence-based community-lens signals (`FUNDING.yml`, Discussions disabled, missing `CODEOWNERS`) are not percentile-gated — they fire on verified absence of a specific artifact.
+
+Rationale: issue #230. Top performers should not be scolded about the dimension they are already strong on.
+
+---
+
 ## Staleness policy
 
 Calibration data is refreshed **quarterly**. If the `generated` date in `calibration-data.json` is more than **6 months old**, the RepoPulse UI surfaces a visible staleness warning:
