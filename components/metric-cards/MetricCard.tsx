@@ -59,12 +59,12 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
     : `Composite health score from Contributors (23%), Activity (25%), Responsiveness (25%), Documentation (12%, includes licensing, compliance & inclusive naming), and Security (15%) — scored relative to ${hs.bracketLabel} repositories.`
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm" data-testid={`metric-card-${card.repo}`}>
+    <article className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900" data-testid={`metric-card-${card.repo}`}>
       <div className="flex items-baseline justify-between">
-        <h3 className="font-semibold text-slate-900">{card.repo}</h3>
-        <p className="text-xs text-slate-400">Created: {card.createdAtLabel}</p>
+        <h3 className="font-semibold text-slate-900 dark:text-slate-100">{card.repo}</h3>
+        <p className="text-xs text-slate-400 dark:text-slate-500">Created: {card.createdAtLabel}</p>
       </div>
-      <p className={`mt-1 line-clamp-2 text-xs italic text-slate-400 ${card.description === '—' ? '' : 'not-italic text-slate-500'}`}>{card.description === '—' ? 'No description found' : card.description}</p>
+      <p className={`mt-1 line-clamp-2 text-xs italic text-slate-400 dark:text-slate-500 ${card.description === '—' ? '' : 'not-italic text-slate-500 dark:text-slate-400'}`}>{card.description === '—' ? 'No description found' : card.description}</p>
 
       {showOverrideToggle ? (
         <div
@@ -128,7 +128,7 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
           className={`mt-2 flex flex-wrap items-center gap-1.5 ${isSolo ? 'opacity-50' : ''}`}
           title={isSolo ? 'Community-shape lenses — structurally low for solo-maintained projects. Dimmed, not scored.' : undefined}
         >
-          <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400">Lenses</span>
+          <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Lenses</span>
           {card.lenses.map((lens) => (
             <LensPill
               key={lens.key}
@@ -141,13 +141,13 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       ) : null}
 
       {hs.recommendations.length > 0 ? (
-        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
-          <p className="text-xs text-slate-600">
-            <span className="font-medium text-slate-800">{hs.recommendations.length} recommendation{hs.recommendations.length !== 1 ? 's' : ''}</span>
+        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center dark:border-slate-700 dark:bg-slate-800/60">
+          <p className="text-xs text-slate-600 dark:text-slate-300">
+            <span className="font-medium text-slate-800 dark:text-slate-100">{hs.recommendations.length} recommendation{hs.recommendations.length !== 1 ? 's' : ''}</span>
             {' — '}
             <button
               type="button"
-              className="font-medium text-blue-600 underline underline-offset-2 hover:text-blue-800"
+              className="font-medium text-blue-600 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
               onClick={() => {
                 const tab = document.querySelector<HTMLButtonElement>('[role="tab"][data-tab-id="recommendations"]')
                 tab?.click()
