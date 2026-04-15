@@ -27,7 +27,7 @@ All scores are computed relative to repositories in the same **star bracket**, n
 
 **Solo brackets (issue #229):** When a repo is classified as solo by `detectSoloProjectProfile` (the 3-of-4 heuristic in `lib/scoring/solo-profile.ts`), it is routed to the matching solo bracket based on stars. Solo-classified repos with ≥ 100 stars fall back to the nearest community bracket — the population above that threshold is too sparse to calibrate independently. The scorecard bracket label carries a "limited solo sample" note in that case. The community-scoring override toggle always routes to the normal star-tier bracket, regardless of detection.
 
-**Solo sampling:** `npm run calibrate -- --profile=solo` samples only repos that satisfy a lightweight solo heuristic at fetch time (≤ 2 recent commit authors, ≤ 2 contributors, no GOVERNANCE file — 2-of-3 required). Results are written into `lib/scoring/calibration-data.json` alongside community brackets, not in place of them.
+**Solo sampling:** `npm run calibrate:solo` samples only repos that satisfy a lightweight solo heuristic at fetch time (≤ 2 recent commit authors, ≤ 2 contributors, no GOVERNANCE file — 2-of-3 required). Results are written into `lib/scoring/calibration-data.json` alongside community brackets, not in place of them. Solo runs drop the org cap (solo repos are individual-account single-maintainers, so org concentration is a no-op) and relax the language cap to 40 per popular language / 20 per other (up from 15/8), so the solo cohort's natural language distribution is preserved.
 
 **Known limitation:** Stars correlate with maturity but are also influenced by marketing and virality. A single anchor metric will never be perfect. This is a pragmatic simplification chosen for explainability. Future calibration may stratify by additional dimensions such as repo age or domain.
 
@@ -283,7 +283,7 @@ npm run calibrate -- --profile=solo            # full run
 
 Solo runs use a separate checkpoint (`scripts/calibrate-solo-checkpoint.json`) and a separate repo list (`docs/calibrate-solo-repos.md`). Results are **merged** into `lib/scoring/calibration-data.json`: only the `solo-tiny` and `solo-small` entries are updated; community brackets are left alone.
 
-Each solo candidate is verified at sample time via three additional REST calls (contributors, recent commits, GOVERNANCE.md), so solo runs are slower per-candidate than community runs. Target sample size is ~200 per bracket (100 × 2 strata for `solo-tiny`, 80/70/50 for `solo-small`).
+Each solo candidate is verified at sample time via three additional REST calls (contributors, recent commits, GOVERNANCE.md), so solo runs are slower per-candidate than community runs. Target sample size is 400 per bracket: `solo-tiny` uses 2 strata × 200 (1–4 stars, 5–9 stars); `solo-small` uses 160+140+100 across 10–29, 30–59, 60–99 stars. Expect ~3 hours with 5 tokens for a full run.
 
 ### Legacy script
 
