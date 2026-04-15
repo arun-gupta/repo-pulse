@@ -226,6 +226,25 @@ This replaces the Phase 1 pattern where PRODUCT.md contained inline acceptance c
 
 ---
 
+## Adding a new scoring signal — integration checklist
+
+There is no central signal registry. When adding a new signal to an existing lens (e.g. community, licensing, docs), update every touchpoint below or the signal will be invisible on one of the surfaces:
+
+- [ ] **GraphQL query alias** — `lib/analyzer/queries.ts` + `RepoOverviewResponse` type
+- [ ] **Signal extraction** — `extract<Lens>Signals()` in `lib/analyzer/analyze.ts`
+- [ ] **Analysis result type** — `lib/analyzer/analysis-result.ts` (the `*SignalSet` interface)
+- [ ] **Completeness / signal key union** — `lib/<lens>/completeness.ts` (`*SignalKey`, `extractSignalPresence()`)
+- [ ] **Tag registry** — `lib/tags/<lens>.ts` (the `*_DOC_FILES` / `*_METRICS` / `*_ACTIVITY_ITEMS` Sets)
+- [ ] **Tab count logic** — `lib/tags/tab-counts.ts`
+- [ ] **Metric card / lens readout** — `buildLensReadouts()` in `lib/metric-cards/view-model.ts`
+- [ ] **Tooltip copy** — `lib/metric-cards/view-model.ts`
+- [ ] **Rendering components** — whichever views surface the signal (`components/activity/*`, `components/documentation/*`, etc.)
+- [ ] **Comparison** — `lib/comparison/sections.ts`
+- [ ] **Export** — `lib/export/json-export.ts` and `lib/export/markdown-export.ts`
+- [ ] **Recommendations catalog** — `lib/recommendations/catalog.ts` (if the signal's absence should trigger advice)
+
+---
+
 ## Notes
 
 - `.specify/` is managed by SpecKit. Do not manually edit files inside it outside of the workflows above.
