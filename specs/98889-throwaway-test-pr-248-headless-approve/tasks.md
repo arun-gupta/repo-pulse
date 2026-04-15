@@ -53,7 +53,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T002 [US2] Push branch and open PR on GitHub with a test plan section in the body, referencing issue #250
+- [x] T002 [US2] Push branch and open PR on GitHub with a test plan section in the body, referencing issue #250
 
 **Checkpoint**: PR exists on GitHub, branch is pushed, test plan section present.
 
@@ -73,7 +73,7 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T003 Verify all spec artifacts are committed (spec.md, plan.md, research.md, data-model.md, quickstart.md, tasks.md, checklists/requirements.md, placeholder.md)
+- [x] T003 Verify all spec artifacts are committed (spec.md, plan.md, research.md, data-model.md, quickstart.md, tasks.md, checklists/requirements.md, placeholder.md)
 
 ---
 
