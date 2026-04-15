@@ -92,7 +92,7 @@ describe('CoreContributorsPane', () => {
       />,
     )
 
-    const toggle = screen.getByRole('button', { name: /hide chart/i })
+    const toggle = screen.getByRole('button', { name: /collapse contribution chart/i })
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('list', { name: /contribution activity bars/i })).toBeInTheDocument()
@@ -102,7 +102,7 @@ describe('CoreContributorsPane', () => {
 
     await userEvent.click(toggle)
 
-    const reopen = screen.getByRole('button', { name: /show chart/i })
+    const reopen = screen.getByRole('button', { name: /expand contribution chart/i })
     expect(reopen).toHaveAttribute('aria-pressed', 'false')
     expect(reopen).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByRole('list', { name: /contribution activity bars/i })).not.toBeInTheDocument()
@@ -113,7 +113,7 @@ describe('CoreContributorsPane', () => {
 
     await userEvent.click(reopen)
 
-    expect(screen.getByRole('button', { name: /hide chart/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /collapse contribution chart/i })).toBeInTheDocument()
     expect(screen.getByRole('list', { name: /contribution activity bars/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /include bots in chart/i })).toBeInTheDocument()
   })

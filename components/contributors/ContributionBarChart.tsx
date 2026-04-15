@@ -16,6 +16,8 @@ interface ContributionBarChartProps {
   collapsed?: boolean
   showLabels?: boolean
   showValues?: boolean
+  onToggleCollapsed?: () => void
+  collapseToggleLabel?: string
 }
 
 export function ContributionBarChart({
@@ -31,6 +33,8 @@ export function ContributionBarChart({
   collapsed = false,
   showLabels = true,
   showValues = true,
+  onToggleCollapsed,
+  collapseToggleLabel,
 }: ContributionBarChartProps) {
   const [expanded, setExpanded] = useState(false)
   const visibleItems = useMemo(() => {
@@ -53,9 +57,31 @@ export function ContributionBarChart({
   return (
     <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 sm:max-w-2xl">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
-          <p className="mt-1 text-xs text-slate-500">{description}</p>
+        <div className="flex min-w-0 items-start gap-2 sm:max-w-2xl">
+          {onToggleCollapsed ? (
+            <button
+              type="button"
+              onClick={onToggleCollapsed}
+              aria-pressed={!collapsed}
+              aria-expanded={!collapsed}
+              aria-label={collapseToggleLabel ?? (collapsed ? 'Expand chart' : 'Collapse chart')}
+              className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className={`h-4 w-4 transition-transform ${collapsed ? '' : 'rotate-90'}`}
+                aria-hidden="true"
+              >
+                <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L10.94 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.25 4.25a.75.75 0 0 1 0 1.08l-4.25 4.25a.75.75 0 0 1-1.06-.02Z" clipRule="evenodd" />
+              </svg>
+            </button>
+          ) : null}
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
+            <p className="mt-1 text-xs text-slate-500">{description}</p>
+          </div>
         </div>
         {actions ? <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">{actions}</div> : null}
       </div>

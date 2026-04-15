@@ -86,17 +86,10 @@ export function CoreContributorsPane({ metrics, heatmap, windowDays, includeBots
         collapsed={!showChart}
         showLabels={showNames}
         showValues={showNumbers}
+        onToggleCollapsed={() => setShowChart((current) => !current)}
+        collapseToggleLabel={showChart ? 'Collapse contribution chart' : 'Expand contribution chart'}
         actions={
           <>
-            <button
-              type="button"
-              onClick={() => setShowChart((current) => !current)}
-              className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900 sm:w-auto"
-              aria-pressed={showChart}
-              aria-expanded={showChart}
-            >
-              {showChart ? 'Hide chart' : 'Show chart'}
-            </button>
             {showChart ? (
               <>
                 <button
