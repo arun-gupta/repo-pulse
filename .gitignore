@@ -49,6 +49,7 @@ scripts/calibrate-checkpoint.json
 # claude-worktree.sh runtime artifacts
 .dev.pid
 .claude.pid
+.claude.session-id
 dev.log
 claude.log
 .claude/
