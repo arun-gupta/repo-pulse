@@ -30,8 +30,8 @@ describe('getBracket', () => {
 
 describe('getBracketLabel', () => {
   it('labels solo brackets cleanly when solo calibration data is present', () => {
-    expect(getBracketLabel(5, 'solo')).toBe('Solo (< 10 stars)')
-    expect(getBracketLabel(50, 'solo')).toBe('Solo (10–99 stars)')
+    expect(getBracketLabel(5, 'solo')).toBe('Solo Tiny (< 10 stars)')
+    expect(getBracketLabel(50, 'solo')).toBe('Solo Small (10–99 stars)')
   })
 
   it('adds fallback note for solo repos above 100 stars', () => {

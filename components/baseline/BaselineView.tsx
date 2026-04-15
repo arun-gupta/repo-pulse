@@ -37,8 +37,8 @@ const ALL_BRACKETS: BracketKey[] = CANDIDATE_BRACKETS.filter((b) => {
 })
 
 const BRACKET_LABELS: Record<BracketKey, string> = {
-  'solo-tiny': 'Solo (< 10 stars)',
-  'solo-small': 'Solo (10-99 stars)',
+  'solo-tiny': 'Solo Tiny (< 10 stars)',
+  'solo-small': 'Solo Small (10-99 stars)',
   emerging: 'Emerging (10-99 stars)',
   growing: 'Growing (100-999 stars)',
   established: 'Established (1k-10k stars)',

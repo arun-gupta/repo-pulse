@@ -104,14 +104,14 @@ interface Stratum {
 // community brackets at runtime, so no solo-medium / solo-large is defined.
 const SOLO_BRACKETS: Record<string, { label: string; strata: Stratum[] }> = {
   'solo-tiny': {
-    label: 'Solo (< 10 stars)',
+    label: 'Solo Tiny (< 10 stars)',
     strata: [
       { label: 'S1 (1–4)', min: 1, max: 4, pushedAfter: monthsAgo(12), target: 200 },
       { label: 'S2 (5–9)', min: 5, max: 9, pushedAfter: monthsAgo(12), target: 200 },
     ],
   },
   'solo-small': {
-    label: 'Solo (10–99 stars)',
+    label: 'Solo Small (10–99 stars)',
     strata: [
       { label: 'S1 (10–29)', min: 10, max: 29, pushedAfter: monthsAgo(12), target: 160 },
       { label: 'S2 (30–59)', min: 30, max: 59, pushedAfter: monthsAgo(12), target: 140 },
@@ -1200,8 +1200,8 @@ function readRepoListFile(): Record<BracketKey, string[]> | null {
 
   const bracketPatterns: Array<{ key: BracketKey; pattern: RegExp }> = SOLO_PROFILE
     ? [
-        { key: 'solo-tiny', pattern: /^## Solo \(< 10/i },
-        { key: 'solo-small', pattern: /^## Solo \(10/i },
+        { key: 'solo-tiny', pattern: /^## Solo Tiny/i },
+        { key: 'solo-small', pattern: /^## Solo Small/i },
       ]
     : [
         { key: 'emerging', pattern: /^## Emerging/i },

@@ -18,8 +18,8 @@ All scores are computed relative to repositories in the same **star bracket**, n
 
 | Bracket | Star range | Description |
 |---|---|---|
-| Solo (tiny) | < 10 | Solo-maintained projects with minimal external visibility |
-| Solo (small) | 10 – 99 | Solo-maintained projects with modest external interest |
+| Solo Tiny | < 10 | Solo-maintained projects with minimal external visibility |
+| Solo Small | 10 – 99 | Solo-maintained projects with modest external interest |
 | Emerging | 10 – 99 | Early-stage or niche projects with some external interest |
 | Growing | 100 – 999 | Projects with meaningful adoption |
 | Established | 1,000 – 9,999 | Well-known projects with active communities |
