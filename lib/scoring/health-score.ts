@@ -4,7 +4,7 @@ import { getResponsivenessScore, type ResponsivenessScoreDefinition } from '@/li
 import { getContributorsScore, type ContributorsScoreDefinition } from '@/lib/contributors/score-config'
 import { getDocumentationScore, type DocumentationRecommendation } from '@/lib/documentation/score-config'
 import { getSecurityScore } from '@/lib/security/score-config'
-import { formatPercentileLabel, formatPercentileOrdinal, getBracketLabel, percentileToTone } from '@/lib/scoring/config-loader'
+import { RECOMMENDATION_PERCENTILE_GATE, formatPercentileLabel, formatPercentileOrdinal, getBracketLabel, percentileToTone } from '@/lib/scoring/config-loader'
 import { SOLO_WEIGHTS, detectSoloProjectProfile, type SoloProjectDetection } from '@/lib/scoring/solo-profile'
 import type { ScoreTone } from '@/specs/008-metric-cards/contracts/metric-card-props'
 
@@ -100,9 +100,11 @@ export function getHealthScore(result: AnalysisResult, options: HealthScoreOptio
     compositePercentile = Math.min(99, Math.max(0, Math.round(weightedSum)))
   }
 
-  // Generate recommendations for all buckets — no percentile gate.
-  // Solo profile suppresses Contributors and Responsiveness recommendations
-  // since those buckets are hidden from the score.
+  // Sub-factor recommendations are gated by RECOMMENDATION_PERCENTILE_GATE
+  // (issue #230): only emit when the sub-factor is below the gate so
+  // top performers are not scolded. Solo profile additionally suppresses
+  // Contributors and Responsiveness recommendations since those buckets
+  // are hidden from the score.
   const recommendations: HealthScoreRecommendation[] = []
   if (activityPercentile !== null) {
     recommendations.push(...getActivityRecommendations(activity))
@@ -144,7 +146,7 @@ export function getHealthScore(result: AnalysisResult, options: HealthScoreOptio
       tab: 'activity',
     })
   }
-  if (documentation !== null) {
+  if (documentation !== null && (documentationPercentile ?? 0) < RECOMMENDATION_PERCENTILE_GATE) {
     for (const rec of documentation.recommendations) {
       recommendations.push({
         bucket: 'Documentation',
@@ -155,7 +157,7 @@ export function getHealthScore(result: AnalysisResult, options: HealthScoreOptio
       })
     }
   }
-  if (security !== null) {
+  if (security !== null && (securityPercentile ?? 0) < RECOMMENDATION_PERCENTILE_GATE) {
     for (const rec of security.recommendations) {
       recommendations.push({
         bucket: 'Security',
@@ -187,109 +189,113 @@ export function getHealthScore(result: AnalysisResult, options: HealthScoreOptio
   }
 }
 
-function getActivityRecommendations(score: ActivityScoreDefinition): HealthScoreRecommendation[] {
+function isBelowGate(percentile: number | undefined): percentile is number {
+  return percentile !== undefined && percentile < RECOMMENDATION_PERCENTILE_GATE
+}
+
+export function getActivityRecommendations(score: ActivityScoreDefinition): HealthScoreRecommendation[] {
   const recs: HealthScoreRecommendation[] = []
   const factors = score.weightedFactors
 
   const prFlow = factors.find((f) => f.label === 'PR flow')
-  if (prFlow?.percentile !== undefined) {
-    recs.push({ bucket: 'Activity', key: 'pr_flow', percentile: prFlow.percentile, message: 'Reduce PR backlog and speed up review throughput to improve merge rate.', tab: 'activity' })
+  if (isBelowGate(prFlow?.percentile)) {
+    recs.push({ bucket: 'Activity', key: 'pr_flow', percentile: prFlow!.percentile!, message: 'Reduce PR backlog and speed up review throughput to improve merge rate.', tab: 'activity' })
   }
 
   const issueFlow = factors.find((f) => f.label === 'Issue flow')
-  if (issueFlow?.percentile !== undefined) {
-    recs.push({ bucket: 'Activity', key: 'issue_flow', percentile: issueFlow.percentile, message: 'Triage and close stale issues to improve issue flow.', tab: 'activity' })
+  if (isBelowGate(issueFlow?.percentile)) {
+    recs.push({ bucket: 'Activity', key: 'issue_flow', percentile: issueFlow!.percentile!, message: 'Triage and close stale issues to improve issue flow.', tab: 'activity' })
   }
 
   const completionSpeed = factors.find((f) => f.label === 'Completion speed')
-  if (completionSpeed?.percentile !== undefined) {
-    recs.push({ bucket: 'Activity', key: 'completion_speed', percentile: completionSpeed.percentile, message: 'Reduce time to merge PRs and close issues to improve completion speed.', tab: 'activity' })
+  if (isBelowGate(completionSpeed?.percentile)) {
+    recs.push({ bucket: 'Activity', key: 'completion_speed', percentile: completionSpeed!.percentile!, message: 'Reduce time to merge PRs and close issues to improve completion speed.', tab: 'activity' })
   }
 
   const sustained = factors.find((f) => f.label === 'Sustained activity')
-  if (sustained?.percentile !== undefined) {
-    recs.push({ bucket: 'Activity', key: 'sustained_activity', percentile: sustained.percentile, message: 'Increase commit frequency to show sustained development momentum.', tab: 'activity' })
+  if (isBelowGate(sustained?.percentile)) {
+    recs.push({ bucket: 'Activity', key: 'sustained_activity', percentile: sustained!.percentile!, message: 'Increase commit frequency to show sustained development momentum.', tab: 'activity' })
   }
 
   return recs
 }
 
-function getResponsivenessRecommendations(score: ResponsivenessScoreDefinition): HealthScoreRecommendation[] {
+export function getResponsivenessRecommendations(score: ResponsivenessScoreDefinition): HealthScoreRecommendation[] {
   const recs: HealthScoreRecommendation[] = []
   const categories = score.weightedCategories
 
   const responseTime = categories.find((c) => c.label === 'Issue & PR response time')
-  if (responseTime?.percentile !== undefined) {
-    recs.push({ bucket: 'Responsiveness', key: 'response_time', percentile: responseTime.percentile, message: 'Reduce issue and PR first-response times — contributors are waiting longer than most repos in this bracket.', tab: 'responsiveness' })
+  if (isBelowGate(responseTime?.percentile)) {
+    recs.push({ bucket: 'Responsiveness', key: 'response_time', percentile: responseTime!.percentile!, message: 'Reduce issue and PR first-response times — contributors are waiting longer than most repos in this bracket.', tab: 'responsiveness' })
   }
 
   const resolution = categories.find((c) => c.label === 'Resolution metrics')
-  if (resolution?.percentile !== undefined) {
-    recs.push({ bucket: 'Responsiveness', key: 'resolution', percentile: resolution.percentile, message: 'Speed up issue resolution and PR merge times to improve throughput.', tab: 'responsiveness' })
+  if (isBelowGate(resolution?.percentile)) {
+    recs.push({ bucket: 'Responsiveness', key: 'resolution', percentile: resolution!.percentile!, message: 'Speed up issue resolution and PR merge times to improve throughput.', tab: 'responsiveness' })
   }
 
   const backlog = categories.find((c) => c.label === 'Volume & backlog health')
-  if (backlog?.percentile !== undefined) {
-    recs.push({ bucket: 'Responsiveness', key: 'backlog_health', percentile: backlog.percentile, message: 'Address stale issues and PRs to improve backlog health.', tab: 'responsiveness' })
+  if (isBelowGate(backlog?.percentile)) {
+    recs.push({ bucket: 'Responsiveness', key: 'backlog_health', percentile: backlog!.percentile!, message: 'Address stale issues and PRs to improve backlog health.', tab: 'responsiveness' })
   }
 
   return recs
 }
 
-function getContributorsRecommendations(score: ContributorsScoreDefinition): HealthScoreRecommendation[] {
+export function getContributorsRecommendations(score: ContributorsScoreDefinition): HealthScoreRecommendation[] {
   const recs: HealthScoreRecommendation[] = []
   const factors = score.weightedFactors
 
   const concentration = factors.find((f) => f.label === 'Contributor concentration')
-  if (concentration?.percentile !== undefined) {
+  if (isBelowGate(concentration?.percentile)) {
     recs.push({
       bucket: 'Contributors',
       key: 'contributor_diversity',
-      percentile: concentration.percentile,
+      percentile: concentration!.percentile!,
       message: 'Onboard more contributors to reduce single-maintainer risk. The top 20% of contributors account for a disproportionate share of commits.',
       tab: 'contributors',
     })
   }
 
   const maintainerDepth = factors.find((f) => f.label === 'Maintainer depth')
-  if (maintainerDepth?.percentile !== undefined) {
+  if (isBelowGate(maintainerDepth?.percentile)) {
     recs.push({
       bucket: 'Contributors',
       key: 'maintainer_depth',
-      percentile: maintainerDepth.percentile,
+      percentile: maintainerDepth!.percentile!,
       message: 'Grow maintainer depth by documenting additional owners in CODEOWNERS, MAINTAINERS.md, or GOVERNANCE.md so responsibility is not concentrated in a single person.',
       tab: 'contributors',
     })
   }
 
   const repeatRatio = factors.find((f) => f.label === 'Repeat-contributor ratio')
-  if (repeatRatio?.percentile !== undefined) {
+  if (isBelowGate(repeatRatio?.percentile)) {
     recs.push({
       bucket: 'Contributors',
       key: 'repeat_contributor_ratio',
-      percentile: repeatRatio.percentile,
+      percentile: repeatRatio!.percentile!,
       message: 'Invest in contributor retention — a higher share of repeat contributors signals durable engagement beyond one-time drive-bys.',
       tab: 'contributors',
     })
   }
 
   const newInflow = factors.find((f) => f.label === 'New-contributor inflow')
-  if (newInflow?.percentile !== undefined) {
+  if (isBelowGate(newInflow?.percentile)) {
     recs.push({
       bucket: 'Contributors',
       key: 'new_contributor_inflow',
-      percentile: newInflow.percentile,
+      percentile: newInflow!.percentile!,
       message: 'Surface good-first-issues and contributor onboarding so new contributors keep arriving alongside the returning base.',
       tab: 'contributors',
     })
   }
 
   const breadth = factors.find((f) => f.label === 'Contribution breadth')
-  if (breadth?.percentile !== undefined) {
+  if (isBelowGate(breadth?.percentile)) {
     recs.push({
       bucket: 'Contributors',
       key: 'contribution_breadth',
-      percentile: breadth.percentile,
+      percentile: breadth!.percentile!,
       message: 'Encourage contributions across commits, pull requests, and issues so engagement is not limited to a single surface.',
       tab: 'contributors',
     })

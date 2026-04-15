@@ -1,6 +1,13 @@
 import calibrationData from './calibration-data.json'
 import type { Unavailable } from '@/lib/analyzer/analysis-result'
 
+/**
+ * Percentile gate below which sub-factor recommendations are emitted. At or
+ * above this threshold a sub-factor is considered to be doing fine and the
+ * recommendation is suppressed — silent-when-good. See issue #230.
+ */
+export const RECOMMENDATION_PERCENTILE_GATE = 50
+
 export type BracketKey = 'emerging' | 'growing' | 'established' | 'popular'
 
 export interface PercentileSet {

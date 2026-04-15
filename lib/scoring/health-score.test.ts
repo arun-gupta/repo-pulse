@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
-import { WEIGHTS, getHealthScore } from './health-score'
+import {
+  WEIGHTS,
+  getActivityRecommendations,
+  getContributorsRecommendations,
+  getHealthScore,
+  getResponsivenessRecommendations,
+} from './health-score'
+import type { ActivityScoreDefinition } from '@/lib/activity/score-config'
+import type { ResponsivenessScoreDefinition } from '@/lib/responsiveness/score-config'
+import type { ContributorsScoreDefinition } from '@/lib/contributors/score-config'
 
 function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
   return {
@@ -105,6 +114,148 @@ describe('health-score community-lens recommendations', () => {
     const result = buildResult({})
     const recs = getHealthScore(result).recommendations
     expect(recs.find((r) => r.key === 'feature:discussions_enabled')).toBeUndefined()
+  })
+})
+
+describe('health-score sub-factor recommendation gate (#230)', () => {
+  function makeActivity(factors: Record<string, number>): ActivityScoreDefinition {
+    return {
+      value: 50,
+      tone: 'warning',
+      description: '',
+      summary: '',
+      percentile: 50,
+      bracketLabel: '',
+      weightedFactors: Object.entries(factors).map(([label, percentile]) => ({
+        label,
+        weightLabel: '25%',
+        description: '',
+        percentile,
+      })),
+      missingInputs: [],
+    }
+  }
+
+  function makeResponsiveness(cats: Record<string, number>): ResponsivenessScoreDefinition {
+    return {
+      value: 50,
+      tone: 'warning',
+      description: '',
+      summary: '',
+      percentile: 50,
+      bracketLabel: '',
+      weightedCategories: Object.entries(cats).map(([label, percentile]) => ({
+        label,
+        weightLabel: '33%',
+        description: '',
+        percentile,
+      })),
+      missingInputs: [],
+    }
+  }
+
+  function makeContributors(factors: Record<string, number>): ContributorsScoreDefinition {
+    return {
+      value: 50,
+      tone: 'warning',
+      description: '',
+      summary: '',
+      percentile: 50,
+      bracketLabel: '',
+      weightedFactors: Object.entries(factors).map(([label, percentile]) => ({
+        label,
+        weightLabel: '20%',
+        description: '',
+        percentile,
+      })),
+      missingInputs: [],
+    }
+  }
+
+  it('suppresses Activity sub-factor recommendations at/above the 50th percentile', () => {
+    const keys = getActivityRecommendations(makeActivity({
+      'PR flow': 95,
+      'Issue flow': 30,
+      'Completion speed': 50,
+      'Sustained activity': 20,
+    })).map((r) => r.key)
+    expect(keys).not.toContain('pr_flow')
+    expect(keys).toContain('issue_flow')
+    expect(keys).not.toContain('completion_speed') // boundary: 50 suppressed
+    expect(keys).toContain('sustained_activity')
+  })
+
+  it('suppresses Responsiveness sub-factor recommendations at/above the 50th percentile', () => {
+    const keys = getResponsivenessRecommendations(makeResponsiveness({
+      'Issue & PR response time': 90,
+      'Resolution metrics': 49,
+      'Volume & backlog health': 50,
+    })).map((r) => r.key)
+    expect(keys).not.toContain('response_time')
+    expect(keys).toContain('resolution')
+    expect(keys).not.toContain('backlog_health')
+  })
+
+  it('suppresses Contributors sub-factor recommendations at/above the 50th percentile', () => {
+    const keys = getContributorsRecommendations(makeContributors({
+      'Contributor concentration': 85,
+      'Maintainer depth': 10,
+      'Repeat-contributor ratio': 55,
+      'New-contributor inflow': 49,
+      'Contribution breadth': 50,
+    })).map((r) => r.key)
+    expect(keys).not.toContain('contributor_diversity')
+    expect(keys).toContain('maintainer_depth')
+    expect(keys).not.toContain('repeat_contributor_ratio')
+    expect(keys).toContain('new_contributor_inflow')
+    expect(keys).not.toContain('contribution_breadth')
+  })
+
+  it('still emits every recommendation when every sub-factor is below the gate', () => {
+    const keys = getActivityRecommendations(makeActivity({
+      'PR flow': 5,
+      'Issue flow': 10,
+      'Completion speed': 15,
+      'Sustained activity': 20,
+    })).map((r) => r.key)
+    expect(keys).toEqual(expect.arrayContaining(['pr_flow', 'issue_flow', 'completion_speed', 'sustained_activity']))
+  })
+
+  it('suppresses Documentation and Security bucket recommendations when bucket percentile is at/above the gate', () => {
+    // Build a result that scores Documentation above the gate. The
+    // healthy-everywhere repo in the `popular` bracket has all files
+    // present and a long README, which produces a high doc percentile.
+    const docResult: AnalysisResult['documentationResult'] = {
+      fileChecks: [
+        { name: 'readme', found: true, path: 'README.md' },
+        { name: 'license', found: true, path: 'LICENSE' },
+        { name: 'contributing', found: true, path: 'CONTRIBUTING.md' },
+        { name: 'code_of_conduct', found: true, path: 'CODE_OF_CONDUCT.md' },
+        { name: 'security', found: true, path: 'SECURITY.md' },
+        { name: 'governance', found: true, path: 'GOVERNANCE.md' },
+        { name: 'changelog', found: true, path: 'CHANGELOG.md' },
+        { name: 'issue_templates', found: true, path: '.github/ISSUE_TEMPLATE' },
+        { name: 'pull_request_template', found: true, path: '.github/PULL_REQUEST_TEMPLATE.md' },
+      ],
+      readmeSections: [
+        { name: 'description', detected: true },
+        { name: 'installation', detected: true },
+        { name: 'usage', detected: true },
+        { name: 'contributing', detected: true },
+        { name: 'license', detected: true },
+      ],
+      readmeContent: 'a'.repeat(5000),
+    }
+
+    const high = getHealthScore(buildResult({
+      stars: 50000,
+      totalContributors: 50,
+      uniqueCommitAuthors90d: 30,
+      maintainerCount: 5,
+      documentationResult: docResult,
+    }))
+    // At/above gate: no per-file documentation recs emitted.
+    expect(high.recommendations.find((r) => r.bucket === 'Documentation')).toBeUndefined()
   })
 })
 
