@@ -106,16 +106,16 @@ const SOLO_BRACKETS: Record<string, { label: string; strata: Stratum[] }> = {
   'solo-tiny': {
     label: 'Solo (< 10 stars)',
     strata: [
-      { label: 'S1 (1–4)', min: 1, max: 4, pushedAfter: monthsAgo(12), target: 100 },
-      { label: 'S2 (5–9)', min: 5, max: 9, pushedAfter: monthsAgo(12), target: 100 },
+      { label: 'S1 (1–4)', min: 1, max: 4, pushedAfter: monthsAgo(12), target: 200 },
+      { label: 'S2 (5–9)', min: 5, max: 9, pushedAfter: monthsAgo(12), target: 200 },
     ],
   },
   'solo-small': {
     label: 'Solo (10–99 stars)',
     strata: [
-      { label: 'S1 (10–29)', min: 10, max: 29, pushedAfter: monthsAgo(12), target: 80 },
-      { label: 'S2 (30–59)', min: 30, max: 59, pushedAfter: monthsAgo(12), target: 70 },
-      { label: 'S3 (60–99)', min: 60, max: 99, pushedAfter: monthsAgo(12), target: 50 },
+      { label: 'S1 (10–29)', min: 10, max: 29, pushedAfter: monthsAgo(12), target: 160 },
+      { label: 'S2 (30–59)', min: 30, max: 59, pushedAfter: monthsAgo(12), target: 140 },
+      { label: 'S3 (60–99)', min: 60, max: 99, pushedAfter: monthsAgo(12), target: 100 },
     ],
   },
 }
@@ -481,10 +481,23 @@ async function sampleStratum(
         if (!isGenuineSoftwareProject(repo, stratum.min, stratum.max)) continue
 
         const lang = repo.language!
-        if ((langCount.get(lang) ?? 0) >= maxForLanguage(lang)) continue
+        // Solo runs loosen the language cap — the solo cohort's natural
+        // language distribution differs from the general population and a
+        // strict cap would under-sample languages that solo maintainers
+        // favor. Still capped so no single language can dominate.
+        const langCap = SOLO_PROFILE
+          ? (POPULAR_LANGUAGES.has(lang) ? 40 : 20)
+          : maxForLanguage(lang)
+        if ((langCount.get(lang) ?? 0) >= langCap) continue
 
+        // Org cap only applies to community runs. Solo repos are by
+        // definition single-maintainer individual accounts, so org
+        // concentration is effectively a no-op for solo sampling.
+        if (!SOLO_PROFILE) {
+          const org = repo.full_name.split('/')[0]!
+          if ((orgCount.get(org) ?? 0) >= MAX_PER_ORG) continue
+        }
         const org = repo.full_name.split('/')[0]!
-        if ((orgCount.get(org) ?? 0) >= MAX_PER_ORG) continue
 
         if (SOLO_PROFILE) {
           // Verify solo criteria before admitting the candidate. Marks the
