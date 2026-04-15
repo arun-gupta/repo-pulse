@@ -8,6 +8,7 @@ When starting new feature work, follow this order exactly:
 2. Read `docs/PRODUCT.md` next to find the canonical product definition, acceptance criteria, and out-of-scope boundaries for that feature.
 3. Then run the SpecKit lifecycle in order:
    - `/speckit.specify`
+   - **Pause for spec review (mandatory).** After `/speckit.specify` completes, report the generated spec file path and stop. Do not proceed to `/speckit.plan` until the user replies with an explicit approval phrase: `"proceed"`, `"approved"`, or `"go to plan"`. If the user replies with revisions instead, apply them, re-report the spec path, and re-enter the paused state. Rationale: human-in-the-loop at the highest-leverage artifact — the spec encodes intent, scope, and acceptance, and must be validated before autonomous downstream work compounds on top of it.
    - `/speckit.plan`
    - `/speckit.tasks`
    - `/speckit.implement`

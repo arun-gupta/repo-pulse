@@ -188,7 +188,13 @@ echo "PORT=$port" >> "$WT_PATH/.env.local"
 echo "Dev server: http://localhost:$port (log: $WT_PATH/dev.log)"
 
 # 5. Launch Claude with a kickoff prompt
-KICKOFF="Work on GitHub issue #${ISSUE}. Follow CLAUDE.md (read constitution, DEVELOPMENT.md, PRODUCT.md, then run the SpecKit lifecycle: /speckit.specify, /speckit.plan, /speckit.tasks, /speckit.implement). Dev server is already running on port ${port}. When done, push the branch and open a PR; do not merge."
+KICKOFF="Work on GitHub issue #${ISSUE}. Follow CLAUDE.md (read constitution, DEVELOPMENT.md, PRODUCT.md). Run the SpecKit lifecycle in two stages with a mandatory human-in-the-loop pause in between:
+
+STAGE 1: Run /speckit.specify. When it completes, report the generated spec file path and STOP. Do NOT proceed to /speckit.plan. Wait for explicit user approval — one of the phrases \"proceed\", \"approved\", or \"go to plan\". If the user replies with spec revisions instead of an approval phrase, update the spec and re-enter the paused state (report the updated spec path and wait again). Only an explicit approval phrase releases the pause.
+
+STAGE 2: After approval, run /speckit.plan, then /speckit.tasks, then /speckit.implement in sequence. When done, push the branch and open a PR; do not merge.
+
+Dev server is already running on port ${port}."
 
 cd "$WT_PATH"
 if (( HEADLESS )); then

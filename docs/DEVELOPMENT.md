@@ -141,6 +141,16 @@ for i in 210 211 212; do scripts/claude-worktree.sh --headless "$i"; done
 
 The script creates `../forkprint-<issue>-<slug>/` on a new branch, picks the next free port in `3010–3100`, runs `npm install`, starts `next dev` in the background (log: `dev.log`, PID: `.dev.pid`), and launches `claude` with a prompt that runs the SpecKit lifecycle and opens a PR (never merges — see CLAUDE.md).
 
+**Mandatory pause after `/speckit.specify`.** Both interactive and `--headless` spawns halt after `/speckit.specify` and wait for your explicit approval before continuing to `/speckit.plan`. The kickoff prompt tells Claude to report the generated spec path and wait for one of the phrases `"proceed"`, `"approved"`, or `"go to plan"`. Spec revisions re-enter the paused state; only an approval phrase releases it. This exists because the spec is the highest-leverage artifact — revisions applied after plan/tasks are generated force Claude to re-derive everything downstream.
+
+**Releasing a paused headless session.** For `--headless` spawns:
+
+1. Tail the claude log to confirm the pause: `tail -f ../forkprint-<issue>-<slug>/claude.log`. You should see the spec path and a notice that Claude is waiting for approval.
+2. Open the spec file (`specs/NNN-feature-name/spec.md` inside the worktree) and review it.
+3. Release the session by resuming the `claude` CLI for that worktree (e.g. `cd ../forkprint-<issue>-<slug> && claude --resume`) and replying with `"proceed"` (or request revisions, then reply `"proceed"` once satisfied).
+
+The pause is per-worktree: in a batch spawn (`for i in 210 211 212; do scripts/claude-worktree.sh --headless "$i"; done`) you will need to review and release each worktree independently.
+
 **Cleanup:**
 
 ```bash
