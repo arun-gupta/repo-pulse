@@ -60,7 +60,7 @@ export function ResultsTabs({ tabs, activeTab, onChange, matchCounts }: ResultsT
       {expanded && hasOverflow && (
         <button
           type="button"
-          className="px-1 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700"
+          className="px-1 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           onClick={() => setExpanded(false)}
         >
           Show less
@@ -76,8 +76,8 @@ export function ResultsTabs({ tabs, activeTab, onChange, matchCounts }: ResultsT
             title={activeOverflowTab ? activeOverflowTab.description : undefined}
             className={
               activeOverflowTab
-                ? 'inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1.5 text-sm font-medium text-white'
-                : 'inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700'
+                ? 'inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1.5 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900'
+                : 'inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
             }
             onClick={() => setMenuOpen((o) => !o)}
           >
@@ -88,7 +88,7 @@ export function ResultsTabs({ tabs, activeTab, onChange, matchCounts }: ResultsT
           </button>
 
           {menuOpen && (
-            <div className="absolute left-0 top-full z-10 mt-1 min-w-[10rem] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+            <div className="absolute left-0 top-full z-10 mt-1 min-w-[10rem] rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
               {overflowTabs.map((tab) => {
                 const count = matchCounts?.[tab.id]
                 return (
@@ -101,8 +101,8 @@ export function ResultsTabs({ tabs, activeTab, onChange, matchCounts }: ResultsT
                     title={tab.description}
                     className={
                       tab.id === activeTab
-                        ? 'block w-full px-4 py-2 text-left text-sm font-medium text-slate-900 bg-slate-100'
-                        : 'block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50'
+                        ? 'block w-full px-4 py-2 text-left text-sm font-medium text-slate-900 bg-slate-100 dark:bg-slate-800 dark:text-slate-100'
+                        : 'block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
                     }
                     onClick={() => {
                       onChange(tab.id)
@@ -114,10 +114,10 @@ export function ResultsTabs({ tabs, activeTab, onChange, matchCounts }: ResultsT
                   </button>
                 )
               })}
-              <div className="my-1 border-t border-slate-100" />
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
               <button
                 type="button"
-                className="block w-full px-4 py-2 text-left text-xs font-medium text-slate-500 hover:bg-slate-50"
+                className="block w-full px-4 py-2 text-left text-xs font-medium text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800"
                 onClick={() => {
                   setExpanded(true)
                   setMenuOpen(false)
@@ -143,8 +143,8 @@ function TabButton({ tab, active, onClick, badgeCount }: { tab: ResultTabDefinit
       title={tab.description}
       className={
         active
-          ? 'whitespace-nowrap rounded-full bg-slate-900 px-2.5 py-1.5 text-sm font-medium text-white'
-          : 'whitespace-nowrap rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700'
+          ? 'whitespace-nowrap rounded-full bg-slate-900 px-2.5 py-1.5 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900'
+          : 'whitespace-nowrap rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
       }
       onClick={onClick}
     >
