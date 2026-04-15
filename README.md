@@ -25,8 +25,8 @@ RepoPulse analyzes any public GitHub repository and produces a composite **OSS H
 
 RepoPulse is built for **community-oriented projects** — multi-contributor repositories with users, maintainers, and a growth story. The primary audience is:
 
-- OSPOs and program managers evaluating OSS health across a portfolio
 - Maintainers of projects with 3+ active contributors looking to close specific gaps
+- OSPOs and program managers evaluating OSS health across a portfolio
 - Foundation-track projects (CNCF, Apache, Linux Foundation, etc.) preparing for stage reviews
 
 **Not the right fit at this time** for solo-maintainer projects or 1–2 person dependencies. Those projects will see low Contributors and Responsiveness scores with the current scoring surface — not a judgment, just a poor match between today's signals and the project's shape. A dedicated solo-project profile with re-weighted scoring (Activity / Security / Documentation emphasized) is planned in [#214](https://github.com/arun-gupta/repo-pulse/issues/214).
