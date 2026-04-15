@@ -107,3 +107,64 @@ describe('health-score community-lens recommendations', () => {
     expect(recs.find((r) => r.key === 'feature:discussions_enabled')).toBeUndefined()
   })
 })
+
+describe('health-score solo-project profile (#214)', () => {
+  function buildSoloResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
+    return buildResult({
+      // Trips all 4 solo criteria
+      totalContributors: 1,
+      uniqueCommitAuthors90d: 1,
+      maintainerCount: 'unavailable',
+      documentationResult: 'unavailable',
+      ...overrides,
+    })
+  }
+
+  it('classifies a 1-contributor repo as solo profile', () => {
+    const hs = getHealthScore(buildSoloResult())
+    expect(hs.profile).toBe('solo')
+    expect(hs.soloDetection.isSolo).toBe(true)
+  })
+
+  it('marks Contributors and Responsiveness buckets as hidden in solo mode', () => {
+    const hs = getHealthScore(buildSoloResult())
+    const contributors = hs.buckets.find((b) => b.name === 'Contributors')
+    const responsiveness = hs.buckets.find((b) => b.name === 'Responsiveness')
+    expect(contributors?.hidden).toBe(true)
+    expect(responsiveness?.hidden).toBe(true)
+  })
+
+  it('applies SOLO_WEIGHTS to Activity, Security, Documentation buckets', () => {
+    const hs = getHealthScore(buildSoloResult())
+    expect(hs.buckets.find((b) => b.name === 'Activity')?.weight).toBeCloseTo(0.30, 10)
+    expect(hs.buckets.find((b) => b.name === 'Security')?.weight).toBeCloseTo(0.35, 10)
+    expect(hs.buckets.find((b) => b.name === 'Documentation')?.weight).toBeCloseTo(0.35, 10)
+  })
+
+  it('suppresses Contributors and Responsiveness recommendations in solo mode', () => {
+    const hs = getHealthScore(buildSoloResult({ hasFundingConfig: false }))
+    expect(hs.recommendations.find((r) => r.tab === 'contributors')).toBeUndefined()
+    expect(hs.recommendations.find((r) => r.tab === 'responsiveness')).toBeUndefined()
+    // FUNDING.yml recommendation is community-shaped; suppressed in solo
+    expect(hs.recommendations.find((r) => r.key === 'file:funding')).toBeUndefined()
+  })
+
+  it('honors explicit mode: "community" override even when auto-detected solo', () => {
+    const hs = getHealthScore(buildSoloResult(), { mode: 'community' })
+    expect(hs.profile).toBe('community')
+    expect(hs.buckets.find((b) => b.name === 'Contributors')?.hidden).toBeFalsy()
+    expect(hs.buckets.find((b) => b.name === 'Activity')?.weight).toBeCloseTo(0.25, 10)
+  })
+
+  it('honors explicit mode: "solo" override even when not auto-detected', () => {
+    const community = buildResult({ totalContributors: 50, uniqueCommitAuthors90d: 30, maintainerCount: 4 })
+    const hs = getHealthScore(community, { mode: 'solo' })
+    expect(hs.profile).toBe('solo')
+    expect(hs.buckets.find((b) => b.name === 'Contributors')?.hidden).toBe(true)
+  })
+
+  it('community repos remain in community profile by default', () => {
+    const hs = getHealthScore(buildResult({ totalContributors: 50, uniqueCommitAuthors90d: 20, maintainerCount: 3 }))
+    expect(hs.profile).toBe('community')
+  })
+})

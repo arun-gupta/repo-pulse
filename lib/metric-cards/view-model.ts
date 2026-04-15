@@ -39,6 +39,12 @@ export interface MetricCardViewModel {
   scoreBadges: ScoreBadgeDefinition[]
   healthScore: HealthScoreDefinition
   lenses: LensReadout[]
+  /**
+   * Raw analysis result retained so the scorecard can recompute the health
+   * score when the user toggles the solo/community override. Session-scoped
+   * — never persisted.
+   */
+  analysisResult: AnalysisResult
 }
 
 export function buildMetricCardViewModels(results: AnalysisResult[]): MetricCardViewModel[] {
@@ -75,6 +81,7 @@ export function buildMetricCardViewModels(results: AnalysisResult[]): MetricCard
       scoreBadges: getScoreBadges(result),
       healthScore: getHealthScore(result),
       lenses: buildLensReadouts(result),
+      analysisResult: result,
     }
   })
 }

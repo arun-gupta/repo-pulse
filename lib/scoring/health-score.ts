@@ -5,6 +5,7 @@ import { getContributorsScore, type ContributorsScoreDefinition } from '@/lib/co
 import { getDocumentationScore, type DocumentationRecommendation } from '@/lib/documentation/score-config'
 import { getSecurityScore } from '@/lib/security/score-config'
 import { formatPercentileLabel, formatPercentileOrdinal, getBracketLabel, percentileToTone } from '@/lib/scoring/config-loader'
+import { SOLO_WEIGHTS, detectSoloProjectProfile, type SoloProjectDetection } from '@/lib/scoring/solo-profile'
 import type { ScoreTone } from '@/specs/008-metric-cards/contracts/metric-card-props'
 
 export interface HealthScoreRecommendation {
@@ -16,18 +17,25 @@ export interface HealthScoreRecommendation {
   tab: 'activity' | 'responsiveness' | 'contributors' | 'documentation' | 'security'
 }
 
+export type HealthScoreProfile = 'community' | 'solo'
+
+export interface HealthScoreBucket {
+  name: string
+  percentile: number | null
+  weight: number
+  label: string
+  hidden?: boolean
+}
+
 export interface HealthScoreDefinition {
   percentile: number | null
   label: string
   tone: ScoreTone
   bracketLabel: string
-  buckets: Array<{
-    name: string
-    percentile: number | null
-    weight: number
-    label: string
-  }>
+  buckets: HealthScoreBucket[]
   recommendations: HealthScoreRecommendation[]
+  profile: HealthScoreProfile
+  soloDetection: SoloProjectDetection
 }
 
 export const WEIGHTS = {
@@ -38,7 +46,23 @@ export const WEIGHTS = {
   security: 0.15,
 } as const
 
-export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
+export interface HealthScoreOptions {
+  /**
+   * 'auto' (default) — classify via detectSoloProjectProfile
+   * 'community' — force community weights (user override)
+   * 'solo' — force solo weights (user override)
+   */
+  mode?: 'auto' | HealthScoreProfile
+}
+
+export function getHealthScore(result: AnalysisResult, options: HealthScoreOptions = {}): HealthScoreDefinition {
+  const soloDetection = detectSoloProjectProfile(result)
+  const profile: HealthScoreProfile = options.mode === 'solo'
+    ? 'solo'
+    : options.mode === 'community'
+      ? 'community'
+      : soloDetection.isSolo ? 'solo' : 'community'
+
   const activity = getActivityScore(result)
   const responsiveness = getResponsivenessScore(result)
   const contributors = getContributorsScore(result)
@@ -56,13 +80,18 @@ export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
   const documentationPercentile = documentation !== null && typeof documentation.value === 'number' ? documentation.percentile : null
   const securityPercentile = security !== null && typeof security.value === 'number' ? security.percentile : null
 
-  // Compute weighted average from available buckets
+  // Compute weighted average from available buckets. Solo profile hides
+  // Contributors and Responsiveness and re-weights the remaining three.
   const bucketValues: Array<{ percentile: number; weight: number }> = []
-  if (activityPercentile !== null) bucketValues.push({ percentile: activityPercentile, weight: WEIGHTS.activity })
-  if (responsivenessPercentile !== null) bucketValues.push({ percentile: responsivenessPercentile, weight: WEIGHTS.responsiveness })
-  if (contributorsPercentile !== null) bucketValues.push({ percentile: contributorsPercentile, weight: WEIGHTS.contributors })
-  if (documentationPercentile !== null) bucketValues.push({ percentile: documentationPercentile, weight: WEIGHTS.documentation })
-  if (securityPercentile !== null) bucketValues.push({ percentile: securityPercentile, weight: WEIGHTS.security })
+  const activityWeight = profile === 'solo' ? SOLO_WEIGHTS.activity : WEIGHTS.activity
+  const documentationWeight = profile === 'solo' ? SOLO_WEIGHTS.documentation : WEIGHTS.documentation
+  const securityWeight = profile === 'solo' ? SOLO_WEIGHTS.security : WEIGHTS.security
+
+  if (activityPercentile !== null) bucketValues.push({ percentile: activityPercentile, weight: activityWeight })
+  if (profile !== 'solo' && responsivenessPercentile !== null) bucketValues.push({ percentile: responsivenessPercentile, weight: WEIGHTS.responsiveness })
+  if (profile !== 'solo' && contributorsPercentile !== null) bucketValues.push({ percentile: contributorsPercentile, weight: WEIGHTS.contributors })
+  if (documentationPercentile !== null) bucketValues.push({ percentile: documentationPercentile, weight: documentationWeight })
+  if (securityPercentile !== null) bucketValues.push({ percentile: securityPercentile, weight: securityWeight })
 
   let compositePercentile: number | null = null
   if (bucketValues.length > 0) {
@@ -71,18 +100,20 @@ export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
     compositePercentile = Math.min(99, Math.max(0, Math.round(weightedSum)))
   }
 
-  // Generate recommendations for all buckets — no percentile gate
+  // Generate recommendations for all buckets — no percentile gate.
+  // Solo profile suppresses Contributors and Responsiveness recommendations
+  // since those buckets are hidden from the score.
   const recommendations: HealthScoreRecommendation[] = []
   if (activityPercentile !== null) {
     recommendations.push(...getActivityRecommendations(activity))
   }
-  if (responsivenessPercentile !== null) {
+  if (profile !== 'solo' && responsivenessPercentile !== null) {
     recommendations.push(...getResponsivenessRecommendations(responsiveness))
   }
-  if (contributorsPercentile !== null) {
+  if (profile !== 'solo' && contributorsPercentile !== null) {
     recommendations.push(...getContributorsRecommendations(contributors))
   }
-  if (result.maintainerCount === 'unavailable') {
+  if (profile !== 'solo' && result.maintainerCount === 'unavailable') {
     recommendations.push({
       bucket: 'Contributors',
       key: 'no_maintainers',
@@ -93,7 +124,8 @@ export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
   }
   // CTR-3 (community lens): emit when FUNDING.yml is verifiably absent.
   // 'unknown' / 'unavailable' state intentionally skipped — never guess.
-  if (result.hasFundingConfig === false) {
+  // Suppressed in solo profile — funding disclosure signals community shape.
+  if (profile !== 'solo' && result.hasFundingConfig === false) {
     recommendations.push({
       bucket: 'Contributors',
       key: 'file:funding',
@@ -135,19 +167,23 @@ export function getHealthScore(result: AnalysisResult): HealthScoreDefinition {
     }
   }
 
+  const buckets: HealthScoreBucket[] = [
+    { name: 'Activity', percentile: activityPercentile, weight: activityWeight, label: activityPercentile !== null ? formatPercentileLabel(activityPercentile) : 'N/A' },
+    { name: 'Responsiveness', percentile: responsivenessPercentile, weight: WEIGHTS.responsiveness, label: responsivenessPercentile !== null ? formatPercentileLabel(responsivenessPercentile) : 'N/A', hidden: profile === 'solo' },
+    { name: 'Contributors', percentile: contributorsPercentile, weight: WEIGHTS.contributors, label: contributorsPercentile !== null ? formatPercentileLabel(contributorsPercentile) : 'N/A', hidden: profile === 'solo' },
+    { name: 'Documentation', percentile: documentationPercentile, weight: documentationWeight, label: documentationPercentile !== null ? formatPercentileLabel(documentationPercentile) : 'N/A' },
+    { name: 'Security', percentile: securityPercentile, weight: securityWeight, label: securityPercentile !== null ? formatPercentileLabel(securityPercentile) : 'N/A' },
+  ]
+
   return {
     percentile: compositePercentile,
     label: compositePercentile !== null ? formatPercentileOrdinal(compositePercentile) : 'Insufficient data',
     tone: compositePercentile !== null ? percentileToTone(compositePercentile) : 'neutral',
     bracketLabel,
-    buckets: [
-      { name: 'Activity', percentile: activityPercentile, weight: WEIGHTS.activity, label: activityPercentile !== null ? formatPercentileLabel(activityPercentile) : 'N/A' },
-      { name: 'Responsiveness', percentile: responsivenessPercentile, weight: WEIGHTS.responsiveness, label: responsivenessPercentile !== null ? formatPercentileLabel(responsivenessPercentile) : 'N/A' },
-      { name: 'Contributors', percentile: contributorsPercentile, weight: WEIGHTS.contributors, label: contributorsPercentile !== null ? formatPercentileLabel(contributorsPercentile) : 'N/A' },
-      { name: 'Documentation', percentile: documentationPercentile, weight: WEIGHTS.documentation, label: documentationPercentile !== null ? formatPercentileLabel(documentationPercentile) : 'N/A' },
-      { name: 'Security', percentile: securityPercentile, weight: WEIGHTS.security, label: securityPercentile !== null ? formatPercentileLabel(securityPercentile) : 'N/A' },
-    ],
+    buckets,
     recommendations,
+    profile,
+    soloDetection,
   }
 }
 

@@ -116,6 +116,56 @@ describe('MetricCard', () => {
     }
   })
 
+  describe('solo-project profile (#214)', () => {
+    const soloOverrides: Partial<AnalysisResult> = {
+      totalContributors: 1,
+      uniqueCommitAuthors90d: 1,
+      maintainerCount: 'unavailable',
+      documentationResult: 'unavailable',
+    }
+
+    it('renders solo banner and hides Contributors + Responsiveness cells for a solo repo', () => {
+      const card = buildMetricCardViewModels([buildResult(soloOverrides)])[0]!
+
+      render(<MetricCard card={card} />)
+
+      expect(screen.getByTestId(`solo-profile-banner-${card.repo}`)).toBeInTheDocument()
+      expect(screen.getByText(/solo-maintained project/i)).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Open Contributors tab' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Open Responsiveness tab' })).not.toBeInTheDocument()
+      // Remaining scored dimensions still visible
+      expect(screen.getByRole('button', { name: 'Open Activity tab' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Open Documentation tab' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Open Security tab' })).toBeInTheDocument()
+    })
+
+    it('toggles back to community scoring when the override button is clicked', () => {
+      const card = buildMetricCardViewModels([buildResult(soloOverrides)])[0]!
+
+      render(<MetricCard card={card} />)
+
+      const toggle = screen.getByTestId(`solo-profile-toggle-${card.repo}`)
+      expect(toggle).toHaveTextContent(/use community scoring/i)
+
+      fireEvent.click(toggle)
+
+      // Contributors + Responsiveness cells return
+      expect(screen.getByRole('button', { name: 'Open Contributors tab' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Open Responsiveness tab' })).toBeInTheDocument()
+      // Banner flips copy
+      expect(screen.getByText(/community scoring override active/i)).toBeInTheDocument()
+      expect(screen.getByTestId(`solo-profile-toggle-${card.repo}`)).toHaveTextContent(/use solo scoring/i)
+    })
+
+    it('does not render solo banner for a community repo', () => {
+      const card = buildMetricCardViewModels([buildResult()])[0]!
+
+      render(<MetricCard card={card} />)
+
+      expect(screen.queryByTestId(`solo-profile-banner-${card.repo}`)).not.toBeInTheDocument()
+    })
+  })
+
   it('handles unavailable ecosystem metrics gracefully', () => {
     const card = buildMetricCardViewModels([
       buildResult({ stars: 'unavailable', forks: 'unavailable', watchers: 'unavailable' }),

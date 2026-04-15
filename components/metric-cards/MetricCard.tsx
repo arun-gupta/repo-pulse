@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import type { LensReadout, MetricCardViewModel } from '@/lib/metric-cards/view-model'
 import { formatPercentileLabel } from '@/lib/scoring/config-loader'
 import { scoreToneClass } from '@/lib/metric-cards/score-config'
+import { getHealthScore, type HealthScoreProfile } from '@/lib/scoring/health-score'
 
 interface MetricCardProps {
   card: MetricCardViewModel
@@ -15,6 +17,16 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
     if (!onTagChange) return
     onTagChange(activeTag === key ? null : key)
   }
+
+  // Session-scoped override for the solo-project scoring surface. null =
+  // use the auto-detected profile from the precomputed health score.
+  const [profileOverride, setProfileOverride] = useState<HealthScoreProfile | null>(null)
+  const hs = profileOverride === null
+    ? card.healthScore
+    : getHealthScore(card.analysisResult, { mode: profileOverride })
+  const isSolo = hs.profile === 'solo'
+  const autoSolo = card.healthScore.soloDetection.isSolo
+  const showOverrideToggle = autoSolo || profileOverride !== null
   const profileCells: ScorecardCellProps[] = card.profile
     ? [
         { label: 'Reach', percentileLabel: card.profile.reachLabel, detail: `${card.starsLabel} stars`, tooltip: 'Star count percentile. Measures visibility and adoption.', toneClass: percentileToneClass(card.profile.reachPercentile, 'emerald') },
@@ -23,7 +35,10 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       ]
     : []
 
-  const scoreCells: ScorecardCellProps[] = card.scoreBadges.map((badge) => {
+  const hiddenBucketNames = new Set(hs.buckets.filter((b) => b.hidden).map((b) => b.name))
+  const scoreCells: ScorecardCellProps[] = card.scoreBadges
+    .filter((badge) => !hiddenBucketNames.has(badge.category))
+    .map((badge) => {
     const tabId = badge.category.toLowerCase()
     return {
       label: badge.category,
@@ -39,7 +54,9 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
     }
   })
 
-  const hs = card.healthScore
+  const scoreTooltip = isSolo
+    ? `Solo-project scoring surface — composite health score from Activity (30%), Security (35%), and Documentation (35%). Contributors and Responsiveness are hidden because this project appears to be solo-maintained. Scored relative to ${hs.bracketLabel} repositories.`
+    : `Composite health score from Contributors (23%), Activity (25%), Responsiveness (25%), Documentation (12%, includes licensing, compliance & inclusive naming), and Security (15%) — scored relative to ${hs.bracketLabel} repositories.`
 
   return (
     <article className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm" data-testid={`metric-card-${card.repo}`}>
@@ -49,7 +66,37 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       </div>
       <p className={`mt-1 line-clamp-2 text-xs italic text-slate-400 ${card.description === '—' ? '' : 'not-italic text-slate-500'}`}>{card.description === '—' ? 'No description found' : card.description}</p>
 
-      <div className={`mt-3 flex items-center justify-between rounded-lg border px-3 py-2 ${scoreToneClass(hs.tone)}`} title={`Composite health score from Contributors (23%), Activity (25%), Responsiveness (25%), Documentation (12%, includes licensing, compliance & inclusive naming), and Security (15%) — scored relative to ${hs.bracketLabel} repositories.`}>
+      {showOverrideToggle ? (
+        <div
+          className={`mt-3 flex flex-wrap items-start justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${isSolo ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-sky-300 bg-sky-50 text-sky-900'}`}
+          data-testid={`solo-profile-banner-${card.repo}`}
+          role="status"
+        >
+          <p className="flex-1">
+            {isSolo ? (
+              <>
+                <span className="font-semibold">Solo-maintained project.</span>{' '}
+                Scoring emphasizes Activity, Security, and Documentation. Contributors and Responsiveness are hidden.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">Community scoring override active.</span>{' '}
+                This project was auto-classified as solo-maintained; you&apos;ve opted into the community surface for this session.
+              </>
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => setProfileOverride(isSolo ? 'community' : (autoSolo ? null : 'solo'))}
+            className="shrink-0 rounded border border-current px-2 py-0.5 font-medium hover:bg-white/50"
+            data-testid={`solo-profile-toggle-${card.repo}`}
+          >
+            {isSolo ? 'Use community scoring' : 'Use solo scoring'}
+          </button>
+        </div>
+      ) : null}
+
+      <div className={`mt-3 flex items-center justify-between rounded-lg border px-3 py-2 ${scoreToneClass(hs.tone)}`} title={scoreTooltip}>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide">OSS Health Score</p>
           {hs.bracketLabel ? <p className="text-[10px] opacity-60">{hs.bracketLabel}</p> : null}
@@ -58,14 +105,18 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       </div>
 
       {profileCells.length > 0 ? (
-        <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+        <div
+          className={`mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3 ${isSolo ? 'opacity-50' : ''}`}
+          title={isSolo ? 'Popularity signals — not health. Dimmed for solo-maintained projects.' : undefined}
+          data-testid={isSolo ? `ecosystem-dimmed-${card.repo}` : undefined}
+        >
           {profileCells.map((cell) => (
             <ScorecardCell key={cell.label} {...cell} />
           ))}
         </div>
       ) : null}
       {scoreCells.length > 0 ? (
-        <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+        <div className={`mt-1.5 grid grid-cols-2 gap-1.5 ${SCORECARD_GRID_COLS[scoreCells.length] ?? 'sm:grid-cols-5'}`}>
           {scoreCells.map((cell) => (
             <ScorecardCell key={cell.label} {...cell} />
           ))}
@@ -73,7 +124,10 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       ) : null}
 
       {card.lenses.length > 0 ? (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div
+          className={`mt-2 flex flex-wrap items-center gap-1.5 ${isSolo ? 'opacity-50' : ''}`}
+          title={isSolo ? 'Community-shape lenses — structurally low for solo-maintained projects. Dimmed, not scored.' : undefined}
+        >
           <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400">Lenses</span>
           {card.lenses.map((lens) => (
             <LensPill
@@ -116,6 +170,15 @@ interface ScorecardCellProps {
   toneClass: string
   onClick?: () => void
   ariaLabel?: string
+}
+
+// Static mapping so Tailwind's JIT scanner can see every class used.
+const SCORECARD_GRID_COLS: Record<number, string> = {
+  1: 'sm:grid-cols-1',
+  2: 'sm:grid-cols-2',
+  3: 'sm:grid-cols-3',
+  4: 'sm:grid-cols-4',
+  5: 'sm:grid-cols-5',
 }
 
 const LENS_RING_COLORS: Record<string, string> = {
