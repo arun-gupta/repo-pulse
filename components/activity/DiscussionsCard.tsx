@@ -35,12 +35,20 @@ export function DiscussionsCard({ result, activeTag, onTagClick, windowDays = 90
   const enabled = result.hasDiscussionsEnabled === true
   const computed = enabled ? countDiscussionsInWindow(result, windowDays) : 'unavailable'
   const count = typeof computed === 'number' ? computed : null
+  // GraphQL caps `commDiscussionsRecent` at 100 nodes — when the preserved
+  // raw array is saturated we cannot distinguish "exactly 100" from ">100",
+  // so annotate as `100+` rather than implying an exact count (issue #194).
+  const rawLength = Array.isArray(result.discussionsRecentCreatedAt)
+    ? result.discussionsRecentCreatedAt.length
+    : 0
+  const saturated = count !== null && count === 100 && rawLength >= 100
+  const countLabel = saturated ? '100+' : count !== null ? String(count) : ''
 
   let statusLine: string
   if (!enabled) {
     statusLine = 'Not enabled'
   } else if (count !== null && count > 0) {
-    statusLine = `Enabled · ${count} in last ${windowDays}d`
+    statusLine = `Enabled · ${countLabel} in last ${windowDays}d`
   } else if (count === 0) {
     statusLine = 'Enabled · no activity yet'
   } else {

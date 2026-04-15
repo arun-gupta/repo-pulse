@@ -128,6 +128,26 @@ describe('DiscussionsCard', () => {
     expect(screen.getByText(/enabled · 3 in last 365d/i)).toBeInTheDocument()
   })
 
+  // Issue #194: GraphQL caps commDiscussionsRecent at 100. When all 100
+  // fall inside the selected window, render `100+` to avoid implying an
+  // exact count — matches what users see on vercel/next.js today.
+  it('renders "100+" when the raw 100-node cap is saturated within the window', () => {
+    const now = Date.now()
+    const recent = new Date(now - 5 * 24 * 3600 * 1000).toISOString()
+    render(
+      <DiscussionsCard
+        result={buildResult({
+          hasDiscussionsEnabled: true,
+          discussionsRecentCreatedAt: Array.from({ length: 100 }, () => recent),
+        })}
+        activeTag={null}
+        onTagClick={noop}
+        windowDays={30}
+      />,
+    )
+    expect(screen.getByText(/enabled · 100\+ in last 30d/i)).toBeInTheDocument()
+  })
+
   it('carries a community tag pill', () => {
     render(
       <DiscussionsCard
