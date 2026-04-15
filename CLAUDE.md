@@ -51,6 +51,8 @@ When filling manual checklist signoff or similar metadata, use the authenticated
 - N/A (script operates on local git state and queries GitHub via `gh`) (243-cleanup-merged-fix)
 - Bash (script), JSON (settings), Markdown (docs). No application-code change in this feature. + Claude Code CLI (version installed on the maintainer's machine), `git`, `npm`, `gh`, `uuidgen` (macOS/Linux standard). (244-headless-worktree-permissions)
 - N/A — settings file committed to git; session ID recorded as a plain file inside the worktree (not persisted beyond worktree lifetime). (244-headless-worktree-permissions)
+- Bash (POSIX-compatible portions + bash-specific features already used: `[[ ... ]]`, `set -euo pipefail`) + `git`, `gh` (GitHub CLI) + Claude Code CLI, `git`, `gh`, `npm` (98889-throwaway-test-pr-248-headless-approve)
+- N/A — script operates on local git state and queries GitHub via `gh` (98889-throwaway-test-pr-248-headless-approve)
 
 ## Recent Changes
 - 032-doc-scoring: Added TypeScript 5.x (Next.js 16+) + Next.js (App Router), Tailwind CSS, Vitest, React Testing Library
