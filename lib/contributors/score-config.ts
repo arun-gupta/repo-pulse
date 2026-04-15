@@ -193,7 +193,7 @@ function computeContributorsScore(
   return {
     value: percentile,
     tone: percentileToTone(percentile),
-    description: `Contributors rank at the ${formatPercentileLabel(percentile)} percentile among ${bracketLabel} repositories.`,
+    description: `Contributors rank at the ${formatPercentileLabel(percentile)} among ${bracketLabel} repositories.`,
     summary: `Contributors combines contributor concentration, maintainer depth, repeat and new-contributor signals, and contribution breadth, scored relative to ${bracketLabel} repositories.`,
     percentile,
     bracketLabel,
