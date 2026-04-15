@@ -116,7 +116,7 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
         </div>
       ) : null}
       {scoreCells.length > 0 ? (
-        <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+        <div className={`mt-1.5 grid grid-cols-2 gap-1.5 ${SCORECARD_GRID_COLS[scoreCells.length] ?? 'sm:grid-cols-5'}`}>
           {scoreCells.map((cell) => (
             <ScorecardCell key={cell.label} {...cell} />
           ))}
@@ -167,6 +167,15 @@ interface ScorecardCellProps {
   toneClass: string
   onClick?: () => void
   ariaLabel?: string
+}
+
+// Static mapping so Tailwind's JIT scanner can see every class used.
+const SCORECARD_GRID_COLS: Record<number, string> = {
+  1: 'sm:grid-cols-1',
+  2: 'sm:grid-cols-2',
+  3: 'sm:grid-cols-3',
+  4: 'sm:grid-cols-4',
+  5: 'sm:grid-cols-5',
 }
 
 const LENS_RING_COLORS: Record<string, string> = {
