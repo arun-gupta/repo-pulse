@@ -1,12 +1,14 @@
 'use client'
 
 import { TagPill } from '@/components/tags/TagPill'
-import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+import type { ActivityWindowDays, AnalysisResult } from '@/lib/analyzer/analysis-result'
+import { countDiscussionsInWindow } from '@/lib/activity/score-config'
 
 interface DiscussionsCardProps {
   result: AnalysisResult
   activeTag: string | null
   onTagClick: (tag: string) => void
+  windowDays?: ActivityWindowDays
 }
 
 /**
@@ -20,20 +22,24 @@ interface DiscussionsCardProps {
  * When `hasDiscussionsEnabled === 'unavailable'` (undetermined), the card
  * is hidden and the signal belongs in the missing-data panel. Caller is
  * responsible for that gating — this component assumes a known state.
+ *
+ * The `windowDays` prop selects the recomputation window (issue #194). The
+ * count is derived client-side from the preserved raw `createdAt` array so
+ * flipping windows does not re-run analysis.
  */
-export function DiscussionsCard({ result, activeTag, onTagClick }: DiscussionsCardProps) {
+export function DiscussionsCard({ result, activeTag, onTagClick, windowDays = 90 }: DiscussionsCardProps) {
   if (result.hasDiscussionsEnabled === undefined || result.hasDiscussionsEnabled === 'unavailable') {
     return null
   }
 
   const enabled = result.hasDiscussionsEnabled === true
-  const count = typeof result.discussionsCountWindow === 'number' ? result.discussionsCountWindow : null
-  const windowDays = typeof result.discussionsWindowDays === 'number' ? result.discussionsWindowDays : null
+  const computed = enabled ? countDiscussionsInWindow(result, windowDays) : 'unavailable'
+  const count = typeof computed === 'number' ? computed : null
 
   let statusLine: string
   if (!enabled) {
     statusLine = 'Not enabled'
-  } else if (count !== null && count > 0 && windowDays !== null) {
+  } else if (count !== null && count > 0) {
     statusLine = `Enabled · ${count} in last ${windowDays}d`
   } else if (count === 0) {
     statusLine = 'Enabled · no activity yet'

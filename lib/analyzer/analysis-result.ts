@@ -178,6 +178,11 @@ export interface AnalysisResult {
   hasDiscussionsEnabled?: boolean | Unavailable
   discussionsCountWindow?: number | Unavailable
   discussionsWindowDays?: ActivityWindowDays | Unavailable
+  // Raw `createdAt` timestamps for the 100 most recent discussions (GraphQL cap).
+  // Preserved so the Activity-tab Discussions card can recompute counts per
+  // selected window without re-running analysis (issue #194). Gated on
+  // `hasDiscussionsEnabled === true`; otherwise 'unavailable'.
+  discussionsRecentCreatedAt?: string[] | Unavailable
   missingFields: string[]
 }
 

@@ -826,6 +826,7 @@ interface CommunitySignalSet {
   hasDiscussionsEnabled: boolean | Unavailable
   discussionsCountWindow: number | Unavailable
   discussionsWindowDays: ActivityWindowDays | Unavailable
+  discussionsRecentCreatedAt: string[] | Unavailable
 }
 
 /**
@@ -858,6 +859,7 @@ export function extractCommunitySignals(
       hasDiscussionsEnabled: 'unavailable',
       discussionsCountWindow: 'unavailable',
       discussionsWindowDays: 'unavailable',
+      discussionsRecentCreatedAt: 'unavailable',
     }
   }
 
@@ -881,11 +883,15 @@ export function extractCommunitySignals(
   const hasDiscussionsEnabled: boolean | Unavailable =
     typeof repo.hasDiscussionsEnabled === 'boolean' ? repo.hasDiscussionsEnabled : 'unavailable'
 
-  // Discussions count in window (gated on enablement)
+  // Discussions count in window (gated on enablement). The raw
+  // `createdAt` array is also preserved so the UI can recompute counts for
+  // other windows without re-fetching — see issue #194.
   let discussionsCountWindow: number | Unavailable = 'unavailable'
   let discussionsWindowDays: ActivityWindowDays | Unavailable = 'unavailable'
+  let discussionsRecentCreatedAt: string[] | Unavailable = 'unavailable'
   if (hasDiscussionsEnabled === true) {
     const nodes = repo.commDiscussionsRecent?.nodes ?? []
+    discussionsRecentCreatedAt = nodes.map((node) => node.createdAt)
     const sinceMs = Date.now() - windowDays * 24 * 60 * 60 * 1000
     discussionsCountWindow = nodes.filter((node) => {
       const created = Date.parse(node.createdAt)
@@ -901,6 +907,7 @@ export function extractCommunitySignals(
     hasDiscussionsEnabled,
     discussionsCountWindow,
     discussionsWindowDays,
+    discussionsRecentCreatedAt,
   }
 }
 
