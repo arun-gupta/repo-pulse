@@ -10,11 +10,9 @@ describe('getBracket', () => {
     expect(getBracket(50000)).toBe('popular')
   })
 
-  it('falls back to community bracket when solo bracket has no real sample yet', () => {
-    // With placeholder solo entries (sampleSize: 0) the router defers to
-    // the community star tier and isSoloFallback flags the caller.
-    expect(getBracket(5, 'solo')).toBe('emerging')
-    expect(getBracket(50, 'solo')).toBe('emerging')
+  it('routes solo profile to solo brackets when real solo calibration data is present', () => {
+    expect(getBracket(5, 'solo')).toBe('solo-tiny')
+    expect(getBracket(50, 'solo')).toBe('solo-small')
   })
 
   it('falls solo repos ≥ 100 stars back to community bracket', () => {
@@ -23,17 +21,17 @@ describe('getBracket', () => {
     expect(getBracket(50000, 'solo')).toBe('popular')
   })
 
-  it('defaults unavailable stars to emerging regardless of profile (placeholder solo)', () => {
-    expect(getBracket('unavailable', 'solo')).toBe('emerging')
+  it('defaults unavailable stars to solo-tiny under solo profile, emerging under community', () => {
+    expect(getBracket('unavailable', 'solo')).toBe('solo-tiny')
     expect(getBracket('unavailable', 'community')).toBe('emerging')
     expect(getBracket('unavailable')).toBe('emerging')
   })
 })
 
 describe('getBracketLabel', () => {
-  it('shows the solo label for solo repos < 100 stars with a fallback note while solo calibration is pending', () => {
-    expect(getBracketLabel(5, 'solo')).toBe('Solo (< 10 stars) — limited solo sample')
-    expect(getBracketLabel(50, 'solo')).toBe('Solo (10–99 stars) — limited solo sample')
+  it('labels solo brackets cleanly when solo calibration data is present', () => {
+    expect(getBracketLabel(5, 'solo')).toBe('Solo (< 10 stars)')
+    expect(getBracketLabel(50, 'solo')).toBe('Solo (10–99 stars)')
   })
 
   it('adds fallback note for solo repos above 100 stars', () => {
@@ -53,9 +51,9 @@ describe('isSoloFallback', () => {
     expect(isSoloFallback(500, 'community')).toBe(false)
   })
 
-  it('flags solo mode below 100 stars as a fallback when solo data is not yet collected', () => {
-    expect(isSoloFallback(5, 'solo')).toBe(true)
-    expect(isSoloFallback(50, 'solo')).toBe(true)
+  it('does not flag as fallback when solo calibration data is present', () => {
+    expect(isSoloFallback(5, 'solo')).toBe(false)
+    expect(isSoloFallback(50, 'solo')).toBe(false)
   })
 })
 
