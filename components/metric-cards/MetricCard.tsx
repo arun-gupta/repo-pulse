@@ -105,7 +105,11 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       </div>
 
       {profileCells.length > 0 ? (
-        <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+        <div
+          className={`mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3 ${isSolo ? 'opacity-50' : ''}`}
+          title={isSolo ? 'Popularity signals — not health. Dimmed for solo-maintained projects.' : undefined}
+          data-testid={isSolo ? `ecosystem-dimmed-${card.repo}` : undefined}
+        >
           {profileCells.map((cell) => (
             <ScorecardCell key={cell.label} {...cell} />
           ))}
