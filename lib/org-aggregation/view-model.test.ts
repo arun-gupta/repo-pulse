@@ -24,8 +24,17 @@ function setRepoState(run: OrgAggregationRun, state: RepoRunState) {
   run.perRepo.set(state.repo, state)
 }
 
-function analysisStub(repo: string, commitCountsByAuthor: Record<string, number> | 'unavailable' = { alice: 10 }): AnalysisResult {
-  return { repo, commitCountsByAuthor } as unknown as AnalysisResult
+function analysisStub(
+  repo: string,
+  commitCountsByAuthor: Record<string, number> | 'unavailable' = { alice: 10 },
+): AnalysisResult {
+  return {
+    repo,
+    commitCountsByAuthor,
+    contributorMetricsByWindow: {
+      90: { commitCountsByAuthor },
+    },
+  } as unknown as AnalysisResult
 }
 
 describe('computeRunStatusHeader', () => {

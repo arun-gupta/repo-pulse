@@ -1,15 +1,97 @@
-import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+import type { AnalysisResult, ContributorWindowMetrics } from '@/lib/analyzer/analysis-result'
 import type { AggregatePanel } from '../types'
-import type { Aggregator, ContributorDiversityValue } from './types'
+import type {
+  Aggregator,
+  ContributorDiversityValue,
+  ContributorDiversityWindow,
+  ContributorDiversityWindowValue,
+} from './types'
+import { CONTRIBUTOR_DIVERSITY_WINDOWS } from './types'
+
+function sumIfAvailable(values: Array<number | 'unavailable' | undefined>): number | null {
+  let sum: number | null = null
+  for (const v of values) {
+    if (typeof v === 'number') {
+      sum = (sum ?? 0) + v
+    }
+  }
+  return sum
+}
+
+function computeWindow(
+  results: AnalysisResult[],
+  window: ContributorDiversityWindow,
+): ContributorDiversityWindowValue {
+  const union = new Map<string, number>()
+  let contributingReposCount = 0
+
+  for (const r of results) {
+    const w = (r as AnalysisResult).contributorMetricsByWindow?.[window] as
+      | ContributorWindowMetrics
+      | undefined
+    if (!w) continue
+    const counts = w.commitCountsByAuthor
+    if (!counts || counts === 'unavailable') continue
+    contributingReposCount++
+    for (const [author, count] of Object.entries(counts)) {
+      union.set(author, (union.get(author) ?? 0) + count)
+    }
+  }
+
+  const sorted = Array.from(union.values()).sort((a, b) => b - a)
+  const total = sorted.reduce((s, n) => s + n, 0)
+  const uniqueAuthors = sorted.length
+
+  let topTwentyPercentShare: number | null = null
+  let elephantFactor: number | null = null
+  if (uniqueAuthors > 0 && total > 0) {
+    const topCount = Math.max(1, Math.ceil(uniqueAuthors * 0.2))
+    const topSum = sorted.slice(0, topCount).reduce((s, n) => s + n, 0)
+    topTwentyPercentShare = topSum / total
+    let covered = 0
+    let ef = 0
+    const half = total / 2
+    for (const count of sorted) {
+      ef++
+      covered += count
+      if (covered >= half) break
+    }
+    elephantFactor = ef
+  }
+
+  // Org-level composition: derived from the SAME windowed commitCountsByAuthor
+  // union used for uniqueAuthorsAcrossOrg, so repeat + oneTime reconciles to
+  // `uniqueAuthors` by construction.
+  let repeatContributors: number | null = null
+  let oneTimeContributors: number | null = null
+  if (uniqueAuthors > 0) {
+    repeatContributors = 0
+    oneTimeContributors = 0
+    for (const count of union.values()) {
+      if (count >= 2) repeatContributors++
+      else if (count === 1) oneTimeContributors++
+    }
+  }
+
+  return {
+    topTwentyPercentShare,
+    elephantFactor,
+    uniqueAuthorsAcrossOrg: uniqueAuthors > 0 ? uniqueAuthors : null,
+    composition: {
+      repeatContributors,
+      oneTimeContributors,
+      total: uniqueAuthors > 0 ? uniqueAuthors : null,
+    },
+    contributingReposCount,
+  }
+}
 
 /**
- * FR-008: Project-wide contributor diversity.
+ * FR-008: Project-wide contributor diversity across all five time windows
+ * (30 / 60 / 90 / 180 / 365 days). The panel UI picks one window to display.
  *
- * - Union of `commitCountsByAuthor` across repos (same author, summed).
- * - Top-20% share = sum of commits for the top-20% of authors (by count) ÷ total.
- * - Elephant factor = minimum number of authors needed to cover ≥ 50% of commits.
- *
- * Pure function. Repos with `unavailable` commitCountsByAuthor are excluded.
+ * Pure function. Repos with `unavailable` inputs for a window are excluded
+ * from that window's computation but remain available to others.
  */
 export const contributorDiversityAggregator: Aggregator<ContributorDiversityValue> = (
   results,
@@ -25,18 +107,14 @@ export const contributorDiversityAggregator: Aggregator<ContributorDiversityValu
     }
   }
 
-  const union = new Map<string, number>()
-  let contributingReposCount = 0
-  for (const r of results) {
-    const counts = (r as AnalysisResult & { commitCountsByAuthor?: unknown }).commitCountsByAuthor
-    if (!counts || counts === 'unavailable') continue
-    contributingReposCount++
-    for (const [author, count] of Object.entries(counts as Record<string, number>)) {
-      union.set(author, (union.get(author) ?? 0) + count)
-    }
-  }
+  const byWindow = Object.fromEntries(
+    CONTRIBUTOR_DIVERSITY_WINDOWS.map((w) => [w, computeWindow(results, w)]),
+  ) as Record<ContributorDiversityWindow, ContributorDiversityWindowValue>
 
-  if (contributingReposCount === 0) {
+  const anyContributing = CONTRIBUTOR_DIVERSITY_WINDOWS.some(
+    (w) => byWindow[w].contributingReposCount > 0,
+  )
+  if (!anyContributing) {
     return {
       panelId: 'contributor-diversity',
       contributingReposCount: 0,
@@ -46,32 +124,20 @@ export const contributorDiversityAggregator: Aggregator<ContributorDiversityValu
     }
   }
 
-  const sorted = Array.from(union.values()).sort((a, b) => b - a)
-  const total = sorted.reduce((s, n) => s + n, 0)
-  const uniqueAuthors = sorted.length
-
-  const topCount = Math.max(1, Math.ceil(uniqueAuthors * 0.2))
-  const topSum = sorted.slice(0, topCount).reduce((s, n) => s + n, 0)
-  const topTwentyPercentShare = total === 0 ? 0 : topSum / total
-
-  let covered = 0
-  let elephantFactor = 0
-  const half = total / 2
-  for (const count of sorted) {
-    elephantFactor++
-    covered += count
-    if (covered >= half) break
-  }
+  // The overall panel's contributingReposCount is the maximum across windows
+  // (the broadest coverage) so the "X of N" label reflects the best-case set.
+  const maxContributing = Math.max(
+    ...CONTRIBUTOR_DIVERSITY_WINDOWS.map((w) => byWindow[w].contributingReposCount),
+  )
 
   return {
     panelId: 'contributor-diversity',
-    contributingReposCount,
+    contributingReposCount: maxContributing,
     totalReposInRun: context.totalReposInRun,
     status: 'final',
     value: {
-      topTwentyPercentShare,
-      elephantFactor,
-      uniqueAuthorsAcrossOrg: uniqueAuthors,
+      defaultWindow: 90,
+      byWindow,
     },
   }
 }

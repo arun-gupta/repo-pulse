@@ -18,10 +18,12 @@ interface Props {
   org: string
   header: RunStatusHeaderData
   onCancel?: () => void
+  onPause?: () => void
+  onResume?: () => void
   notificationToggle?: React.ReactNode
 }
 
-export function RunStatusHeader({ org, header, onCancel, notificationToggle }: Props) {
+export function RunStatusHeader({ org, header, onCancel, onPause, onResume, notificationToggle }: Props) {
   const statusLabel =
     header.status === 'complete'
       ? `complete — ${header.succeeded} of ${header.total} succeeded, ${header.failed} failed`
@@ -32,6 +34,8 @@ export function RunStatusHeader({ org, header, onCancel, notificationToggle }: P
           : `in progress (${header.succeeded + header.failed} of ${header.total})`
 
   const showCancel = header.status === 'in-progress' || header.status === 'paused'
+  const showPause = header.status === 'in-progress' && Boolean(onPause)
+  const showResume = header.status === 'paused' && Boolean(onResume)
   const concurrencyLabel =
     header.concurrency.effective !== header.concurrency.chosen
       ? `${header.concurrency.chosen} (reduced to ${header.concurrency.effective})`
@@ -51,6 +55,24 @@ export function RunStatusHeader({ org, header, onCancel, notificationToggle }: P
         </div>
         <div className="flex items-center gap-3">
           {notificationToggle}
+          {showPause && onPause ? (
+            <button
+              type="button"
+              onClick={onPause}
+              className="rounded border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Pause
+            </button>
+          ) : null}
+          {showResume && onResume ? (
+            <button
+              type="button"
+              onClick={onResume}
+              className="rounded border border-sky-500 bg-sky-600 px-3 py-1 text-sm text-white hover:bg-sky-700 dark:border-sky-400 dark:bg-sky-500 dark:hover:bg-sky-600"
+            >
+              Resume
+            </button>
+          ) : null}
           {showCancel && onCancel ? (
             <button
               type="button"

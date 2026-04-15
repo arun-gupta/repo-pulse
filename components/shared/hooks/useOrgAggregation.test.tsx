@@ -8,6 +8,9 @@ function stub(repo: string, commits: Record<string, number> = { alice: 10 }): An
   return {
     repo,
     commitCountsByAuthor: commits,
+    contributorMetricsByWindow: {
+      90: { commitCountsByAuthor: commits },
+    },
   } as unknown as AnalysisResult
 }
 

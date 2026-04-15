@@ -39,6 +39,8 @@ export interface UseOrgAggregationReturn {
   view: OrgSummaryViewModel | null
   start: (input: StartRunInput) => Promise<void>
   cancel: () => void
+  pause: () => void
+  resume: () => void
   retry: (repo: string) => Promise<void>
 }
 
@@ -264,6 +266,14 @@ export function useOrgAggregation(options: UseOrgAggregationOptions = {}): UseOr
     queueRef.current?.cancel()
   }, [])
 
+  const pause = useCallback(() => {
+    queueRef.current?.pause()
+  }, [])
+
+  const resume = useCallback(() => {
+    queueRef.current?.resume()
+  }, [])
+
   const retry = useCallback(async (repo: string) => {
     await queueRef.current?.retry(repo)
   }, [])
@@ -274,5 +284,5 @@ export function useOrgAggregation(options: UseOrgAggregationOptions = {}): UseOr
     return buildOrgSummaryViewModel(run, Date.now())
   }, [run, tick])
 
-  return { run, view, start, cancel, retry }
+  return { run, view, start, cancel, pause, resume, retry }
 }

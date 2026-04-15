@@ -48,6 +48,7 @@ export class OrgAggregationQueue {
 
   private effectiveConcurrency: number
   private cancelled = false
+  private userPaused = false
   private activeCount = 0
   private pausedUntil: Date | null = null
   private runResolve: (() => void) | null = null
@@ -87,6 +88,42 @@ export class OrgAggregationQueue {
     this.finish()
   }
 
+  /**
+   * User-initiated pause: stop dispatching new work. In-flight requests
+   * continue to settle naturally. Does not affect the rate-limit auto-pause
+   * mechanism; this is an orthogonal user control.
+   */
+  pause(): void {
+    if (this.cancelled || this.userPaused) return
+    this.userPaused = true
+    this.emit({
+      type: 'paused',
+      pause: {
+        kind: 'secondary',
+        detectedAt: new Date(),
+        resumesAt: new Date(8640000000000000),
+        reposReDispatched: [],
+        appliedConcurrencyAfterResume: this.effectiveConcurrency,
+      },
+    })
+  }
+
+  resume(): void {
+    if (this.cancelled || !this.userPaused) return
+    this.userPaused = false
+    this.emit({
+      type: 'resumed',
+      resumedAt: new Date(),
+      effectiveConcurrency: this.effectiveConcurrency,
+    })
+    this.tryDispatch()
+    this.checkCompletion()
+  }
+
+  isUserPaused(): boolean {
+    return this.userPaused
+  }
+
   async retry(repo: string): Promise<void> {
     const s = this.state.get(repo)
     if (!s || s.status !== 'failed') return
@@ -109,6 +146,7 @@ export class OrgAggregationQueue {
   private tryDispatch(): void {
     if (this.cancelled) return
     if (this.pausedUntil) return
+    if (this.userPaused) return
 
     while (this.activeCount < this.effectiveConcurrency) {
       const next = this.pickNextQueuedRepo()

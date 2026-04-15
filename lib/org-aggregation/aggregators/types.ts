@@ -14,10 +14,33 @@ import type { AggregatePanel, FlagshipMarker } from '../types'
 // Per-panel value types
 // --------------------------------------------------------------------
 
+export const CONTRIBUTOR_DIVERSITY_WINDOWS = [30, 60, 90, 180, 365] as const
+export type ContributorDiversityWindow = (typeof CONTRIBUTOR_DIVERSITY_WINDOWS)[number]
+
+export type ContributorDiversityWindowValue = {
+  topTwentyPercentShare: number | null
+  elephantFactor: number | null
+  uniqueAuthorsAcrossOrg: number | null
+  /**
+   * Org-level composition derived from the windowed `commitCountsByAuthor`
+   * union. Total reconciles with `uniqueAuthorsAcrossOrg` by construction:
+   * repeat + oneTime === uniqueAuthorsAcrossOrg.
+   *
+   * No "inactive" category at org level — per-repo `totalContributors`
+   * (all-time, not deduped across repos) can't be summed into a meaningful
+   * project-wide denominator, so we don't try.
+   */
+  composition: {
+    repeatContributors: number | null
+    oneTimeContributors: number | null
+    total: number | null
+  }
+  contributingReposCount: number
+}
+
 export type ContributorDiversityValue = {
-  topTwentyPercentShare: number
-  elephantFactor: number
-  uniqueAuthorsAcrossOrg: number
+  defaultWindow: ContributorDiversityWindow
+  byWindow: Record<ContributorDiversityWindow, ContributorDiversityWindowValue>
 }
 
 export type MaintainerToken = {

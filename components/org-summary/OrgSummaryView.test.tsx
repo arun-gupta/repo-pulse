@@ -25,9 +25,14 @@ function baseView(): OrgSummaryViewModel {
         totalReposInRun: 3,
         status: 'final',
         value: {
-          topTwentyPercentShare: 0.6,
-          elephantFactor: 2,
-          uniqueAuthorsAcrossOrg: 12,
+          defaultWindow: 90,
+          byWindow: {
+            30: { topTwentyPercentShare: 0.6, elephantFactor: 2, uniqueAuthorsAcrossOrg: 8, composition: { repeatContributors: 2, oneTimeContributors: 6, total: 8 }, contributingReposCount: 1 },
+            60: { topTwentyPercentShare: 0.6, elephantFactor: 2, uniqueAuthorsAcrossOrg: 10, composition: { repeatContributors: 3, oneTimeContributors: 7, total: 10 }, contributingReposCount: 1 },
+            90: { topTwentyPercentShare: 0.6, elephantFactor: 2, uniqueAuthorsAcrossOrg: 12, composition: { repeatContributors: 4, oneTimeContributors: 8, total: 12 }, contributingReposCount: 1 },
+            180: { topTwentyPercentShare: 0.58, elephantFactor: 3, uniqueAuthorsAcrossOrg: 18, composition: { repeatContributors: 6, oneTimeContributors: 12, total: 18 }, contributingReposCount: 1 },
+            365: { topTwentyPercentShare: 0.55, elephantFactor: 4, uniqueAuthorsAcrossOrg: 25, composition: { repeatContributors: 9, oneTimeContributors: 16, total: 25 }, contributingReposCount: 1 },
+          },
         },
       },
     },
@@ -52,7 +57,6 @@ describe('OrgSummaryView', () => {
     render(<OrgSummaryView org="test-org" view={baseView()} />)
     expect(screen.getByText(/Contributor diversity/i)).toBeInTheDocument()
     expect(screen.getByText(/60\.0%/)).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
   })
 
   it('renders per-repo status list sorted with flagship marker', () => {

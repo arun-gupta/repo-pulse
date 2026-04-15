@@ -13,11 +13,13 @@ interface Props {
   org: string
   view: OrgSummaryViewModel
   onCancel?: () => void
+  onPause?: () => void
+  onResume?: () => void
   onRetry?: (repo: string) => void
   notificationToggle?: React.ReactNode
 }
 
-export function OrgSummaryView({ org, view, onCancel, onRetry, notificationToggle }: Props) {
+export function OrgSummaryView({ org, view, onCancel, onPause, onResume, onRetry, notificationToggle }: Props) {
   const contributorDiversity = view.panels['contributor-diversity'] as
     | AggregatePanel<ContributorDiversityValue>
     | undefined
@@ -28,6 +30,8 @@ export function OrgSummaryView({ org, view, onCancel, onRetry, notificationToggl
         org={org}
         header={view.status}
         onCancel={onCancel}
+        onPause={onPause}
+        onResume={onResume}
         notificationToggle={notificationToggle}
       />
 
