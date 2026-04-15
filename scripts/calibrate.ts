@@ -71,7 +71,6 @@ const BATCH_SIZE = 3             // repos per GraphQL alias query (kept at 3 to 
 const PR_WINDOW_DAYS = 90
 const ISSUE_WINDOW_DAYS = 90
 const STALE_DAYS = 30
-const CHECKPOINT_PATH = 'scripts/calibrate-checkpoint.json'
 const OUTPUT_PATH = 'lib/scoring/calibration-data.json'
 
 function monthsAgo(n: number): string {
@@ -100,7 +99,28 @@ interface Stratum {
   target: number
 }
 
-const BRACKETS: Record<string, { label: string; strata: Stratum[] }> = {
+// Solo profile brackets (issue #229). Solo repos above 100 stars are rare
+// enough that a calibrated bracket would be sparse — they fall back to
+// community brackets at runtime, so no solo-medium / solo-large is defined.
+const SOLO_BRACKETS: Record<string, { label: string; strata: Stratum[] }> = {
+  'solo-tiny': {
+    label: 'Solo Tiny (< 10 stars)',
+    strata: [
+      { label: 'S1 (1–4)', min: 1, max: 4, pushedAfter: monthsAgo(12), target: 200 },
+      { label: 'S2 (5–9)', min: 5, max: 9, pushedAfter: monthsAgo(12), target: 200 },
+    ],
+  },
+  'solo-small': {
+    label: 'Solo Small (10–99 stars)',
+    strata: [
+      { label: 'S1 (10–29)', min: 10, max: 29, pushedAfter: monthsAgo(12), target: 160 },
+      { label: 'S2 (30–59)', min: 30, max: 59, pushedAfter: monthsAgo(12), target: 140 },
+      { label: 'S3 (60–99)', min: 60, max: 99, pushedAfter: monthsAgo(12), target: 100 },
+    ],
+  },
+}
+
+const COMMUNITY_BRACKETS: Record<string, { label: string; strata: Stratum[] }> = {
   emerging: {
     label: 'Emerging (10–99 stars)',
     strata: [
@@ -142,7 +162,7 @@ const BRACKETS: Record<string, { label: string; strata: Stratum[] }> = {
   },
 }
 
-type BracketKey = keyof typeof BRACKETS
+type BracketKey = string
 
 // ─── Client-side quality filters ─────────────────────────────────────────────
 // Mirrors the filters in list-candidates.ts to exclude non-software repos.
@@ -397,10 +417,13 @@ function loadCheckpoint(): Checkpoint {
     console.log(`Resuming from checkpoint: ${CHECKPOINT_PATH}`)
     return JSON.parse(readFileSync(CHECKPOINT_PATH, 'utf8')) as Checkpoint
   }
-  return {
-    results: { emerging: [], growing: [], established: [], popular: [] },
-    sampledRepos: { emerging: [], growing: [], established: [], popular: [] },
+  const empty: Record<BracketKey, RepoMetrics[]> = {}
+  const emptySampled: Record<BracketKey, string[]> = {}
+  for (const key of Object.keys(BRACKETS)) {
+    empty[key] = []
+    emptySampled[key] = []
   }
+  return { results: empty, sampledRepos: emptySampled }
 }
 
 function saveCheckpoint(cp: Checkpoint) {
@@ -458,12 +481,33 @@ async function sampleStratum(
         if (!isGenuineSoftwareProject(repo, stratum.min, stratum.max)) continue
 
         const lang = repo.language!
-        if ((langCount.get(lang) ?? 0) >= maxForLanguage(lang)) continue
+        // Solo runs loosen the language cap — the solo cohort's natural
+        // language distribution differs from the general population and a
+        // strict cap would under-sample languages that solo maintainers
+        // favor. Still capped so no single language can dominate.
+        const langCap = SOLO_PROFILE
+          ? (POPULAR_LANGUAGES.has(lang) ? 40 : 20)
+          : maxForLanguage(lang)
+        if ((langCount.get(lang) ?? 0) >= langCap) continue
 
+        // Org cap only applies to community runs. Solo repos are by
+        // definition single-maintainer individual accounts, so org
+        // concentration is effectively a no-op for solo sampling.
+        if (!SOLO_PROFILE) {
+          const org = repo.full_name.split('/')[0]!
+          if ((orgCount.get(org) ?? 0) >= MAX_PER_ORG) continue
+        }
         const org = repo.full_name.split('/')[0]!
-        if ((orgCount.get(org) ?? 0) >= MAX_PER_ORG) continue
 
-        seen.add(repo.full_name)
+        if (SOLO_PROFILE) {
+          // Verify solo criteria before admitting the candidate. Marks the
+          // repo as seen either way so we don't re-check it across sorts.
+          seen.add(repo.full_name)
+          const isSolo = await isSoloCandidate(repo.full_name, nextToken()).catch(() => false)
+          if (!isSolo) continue
+        } else {
+          seen.add(repo.full_name)
+        }
         langCount.set(lang, (langCount.get(lang) ?? 0) + 1)
         orgCount.set(org, (orgCount.get(org) ?? 0) + 1)
         accepted.push(repo.full_name)
@@ -869,12 +913,131 @@ function computeBracketCalibration(results: RepoMetrics[]) {
   }
 }
 
+// ─── Profile flag (issue #229) ───────────────────────────────────────────────
+
+const SOLO_PROFILE = process.argv.includes('--profile=solo')
+const BRACKETS: Record<string, { label: string; strata: Stratum[] }> = SOLO_PROFILE ? SOLO_BRACKETS : COMMUNITY_BRACKETS
+const CHECKPOINT_PATH = SOLO_PROFILE ? 'scripts/calibrate-solo-checkpoint.json' : 'scripts/calibrate-checkpoint.json'
+
+// Lightweight solo verification. Mirrors the 3-of-4 heuristic in
+// lib/scoring/solo-profile.ts using only signals we can fetch cheaply.
+// Because we can't access the full AnalysisResult during sampling, we
+// require 2-of-3 of: ≤2 unique recent commit authors, ≤2 contributors,
+// no GOVERNANCE file. Maintainer-count isn't derivable lightweight, so
+// it's approximated by the contributor-count check. Candidates that
+// fail the filter are skipped.
+async function isSoloCandidate(fullName: string, token: string): Promise<boolean> {
+  const [contribRes, commitsRes, govRes] = await Promise.all([
+    fetchWithRetry(`https://api.github.com/repos/${fullName}/contributors?per_page=3&anon=1`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+    }),
+    fetchWithRetry(`https://api.github.com/repos/${fullName}/commits?per_page=100&since=${monthsAgo(3)}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+    }),
+    fetchWithRetry(`https://api.github.com/repos/${fullName}/contents/GOVERNANCE.md`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+    }),
+  ])
+
+  const contribs = contribRes.ok ? ((await contribRes.json()) as unknown[]) : []
+  const contributorsLowCount = Array.isArray(contribs) && contribs.length <= 2
+
+  let recentAuthorsLowCount = false
+  if (commitsRes.ok) {
+    const commits = (await commitsRes.json()) as Array<{ author?: { login?: string } | null; commit?: { author?: { email?: string } } }>
+    const authors = new Set<string>()
+    for (const c of commits ?? []) {
+      const id = c.author?.login ?? c.commit?.author?.email ?? ''
+      if (id) authors.add(id)
+    }
+    recentAuthorsLowCount = authors.size > 0 && authors.size <= 2
+  }
+
+  const noGovernance = govRes.status === 404
+
+  const tripped = [contributorsLowCount, recentAuthorsLowCount, noGovernance].filter(Boolean).length
+  return tripped >= 2
+}
+
 // ─── Dry-run support ─────────────────────────────────────────────────────────
 
 const DRY_RUN = process.argv.includes('--dry-run')
 const REPOS_OUTPUT_PATH = 'docs/calibrate-repos.md'
 
+// Read the existing repo file (if any) as a map of canonical header → section
+// text so a dry-run for one profile can replace only its own sections and
+// leave the other profile's sections intact. Section text starts at `## `
+// and includes all lines up to but not including the next `## ` or `---`.
+function readSectionsByHeader(): Map<string, string[]> {
+  const sections = new Map<string, string[]>()
+  if (!existsSync(REPOS_OUTPUT_PATH)) return sections
+  const content = readFileSync(REPOS_OUTPUT_PATH, 'utf8').split('\n')
+  let currentHeader: string | null = null
+  let currentLines: string[] = []
+  for (const line of content) {
+    if (line.startsWith('## ')) {
+      if (currentHeader) sections.set(currentHeader, currentLines)
+      currentHeader = line
+      currentLines = [line]
+    } else if (line.startsWith('---')) {
+      if (currentHeader) {
+        sections.set(currentHeader, currentLines)
+        currentHeader = null
+        currentLines = []
+      }
+    } else if (currentHeader) {
+      currentLines.push(line)
+    }
+  }
+  if (currentHeader) sections.set(currentHeader, currentLines)
+  return sections
+}
+
+// Canonical header order across both profiles. Sections not in this list
+// are preserved but pushed to the end.
+const CANONICAL_ORDER = [
+  'Solo Tiny',
+  'Solo Small',
+  'Emerging',
+  'Growing',
+  'Established',
+  'Popular',
+]
+
+function headerSortKey(header: string): number {
+  const stripped = header.replace(/^##\s+/, '').trim()
+  for (let i = 0; i < CANONICAL_ORDER.length; i++) {
+    if (stripped.toLowerCase().startsWith(CANONICAL_ORDER[i]!.toLowerCase())) return i
+  }
+  return CANONICAL_ORDER.length
+}
+
 function writeDryRunReport(sampledRepos: Record<BracketKey, string[]>) {
+  const existingSections = readSectionsByHeader()
+
+  // Replace the sections owned by the active profile.
+  for (const bracketKey of Object.keys(BRACKETS) as BracketKey[]) {
+    const bracket = BRACKETS[bracketKey]
+    const repos = sampledRepos[bracketKey]
+    const header = `## ${bracket.label} (${repos.length} repos)`
+    const sectionLines = [header, '']
+    for (const repo of repos) sectionLines.push(`- [${repo}](https://github.com/${repo})`)
+    sectionLines.push('')
+    // Drop any old section for this bracket (match by label prefix, since the
+    // count in parens may differ between runs).
+    for (const key of [...existingSections.keys()]) {
+      const stripped = key.replace(/^##\s+/, '').trim()
+      if (stripped.toLowerCase().startsWith(bracket.label.toLowerCase().split(' (')[0]!)) {
+        existingSections.delete(key)
+      }
+    }
+    existingSections.set(header, sectionLines)
+  }
+
+  const orderedHeaders = [...existingSections.keys()].sort(
+    (a, b) => headerSortKey(a) - headerSortKey(b),
+  )
+
   const lines: string[] = [
     '# Calibration Repos (dry-run)',
     '',
@@ -883,18 +1046,11 @@ function writeDryRunReport(sampledRepos: Record<BracketKey, string[]>) {
   ]
 
   let total = 0
-  for (const bracketKey of Object.keys(BRACKETS) as BracketKey[]) {
-    const bracket = BRACKETS[bracketKey]
-    const repos = sampledRepos[bracketKey]
-    total += repos.length
-
-    lines.push(`## ${bracket.label} (${repos.length} repos)`)
-    lines.push('')
-
-    for (const repo of repos) {
-      lines.push(`- [${repo}](https://github.com/${repo})`)
-    }
-    lines.push('')
+  for (const header of orderedHeaders) {
+    const section = existingSections.get(header)!
+    lines.push(...section)
+    // Count repos by counting lines starting with `- [`
+    total += section.filter((l) => l.startsWith('- [')).length
   }
 
   lines.push(`---`)
@@ -902,7 +1058,7 @@ function writeDryRunReport(sampledRepos: Record<BracketKey, string[]>) {
   lines.push('')
   lines.push('To proceed with full calibration using these repos, run:')
   lines.push('```')
-  lines.push('npm run calibrate')
+  lines.push(SOLO_PROFILE ? 'npm run calibrate:solo' : 'npm run calibrate')
   lines.push('```')
   lines.push('The checkpoint already contains the sampled repos — the full run will skip re-sampling.')
 
@@ -1105,14 +1261,20 @@ function readRepoListFile(): Record<BracketKey, string[]> | null {
   if (!existsSync(REPOS_OUTPUT_PATH)) return null
 
   const content = readFileSync(REPOS_OUTPUT_PATH, 'utf8')
-  const result: Record<BracketKey, string[]> = { emerging: [], growing: [], established: [], popular: [] }
+  const result: Record<BracketKey, string[]> = {}
+  for (const key of Object.keys(BRACKETS)) result[key] = []
 
-  const bracketPatterns: Array<{ key: BracketKey; pattern: RegExp }> = [
-    { key: 'emerging', pattern: /^## Emerging/i },
-    { key: 'growing', pattern: /^## Growing/i },
-    { key: 'established', pattern: /^## Established/i },
-    { key: 'popular', pattern: /^## Popular/i },
-  ]
+  const bracketPatterns: Array<{ key: BracketKey; pattern: RegExp }> = SOLO_PROFILE
+    ? [
+        { key: 'solo-tiny', pattern: /^## Solo Tiny/i },
+        { key: 'solo-small', pattern: /^## Solo Small/i },
+      ]
+    : [
+        { key: 'emerging', pattern: /^## Emerging/i },
+        { key: 'growing', pattern: /^## Growing/i },
+        { key: 'established', pattern: /^## Established/i },
+        { key: 'popular', pattern: /^## Popular/i },
+      ]
 
   let currentBracket: BracketKey | null = null
 
@@ -1228,24 +1390,42 @@ async function main() {
     return
   }
 
-  // Compute and write calibration data
+  // Compute and write calibration data. Solo runs MERGE into the existing
+  // community calibration file rather than overwriting it — they only touch
+  // the solo-tiny / solo-small entries.
   console.log('\n── Computing percentiles ──')
+
+  const newSampleSizes: Record<string, number> = {}
+  const newBrackets: Record<string, ReturnType<typeof computeBracketCalibration>> = {}
+  for (const key of Object.keys(BRACKETS)) {
+    newSampleSizes[key] = checkpoint.results[key].length
+    newBrackets[key] = computeBracketCalibration(checkpoint.results[key])
+  }
+
+  if (SOLO_PROFILE && existsSync(OUTPUT_PATH)) {
+    const existing = JSON.parse(readFileSync(OUTPUT_PATH, 'utf8')) as {
+      generated: string
+      source: string
+      sampleSizes: Record<string, number>
+      brackets: Record<string, unknown>
+    }
+    const merged = {
+      generated: new Date().toISOString().split('T')[0]!,
+      source: existing.source,
+      sampleSizes: { ...existing.sampleSizes, ...newSampleSizes },
+      brackets: { ...existing.brackets, ...newBrackets },
+    }
+    writeFileSync(OUTPUT_PATH, JSON.stringify(merged, null, 2))
+    console.log(`\nSolo calibration merged into ${OUTPUT_PATH}`)
+    console.log('Solo sample sizes:', newSampleSizes)
+    return
+  }
 
   const calibration = {
     generated: new Date().toISOString().split('T')[0]!,
     source: 'GitHub Search API + lightweight GraphQL',
-    sampleSizes: {
-      emerging:    checkpoint.results.emerging.length,
-      growing:     checkpoint.results.growing.length,
-      established: checkpoint.results.established.length,
-      popular:     checkpoint.results.popular.length,
-    },
-    brackets: {
-      emerging:    computeBracketCalibration(checkpoint.results.emerging),
-      growing:     computeBracketCalibration(checkpoint.results.growing),
-      established: computeBracketCalibration(checkpoint.results.established),
-      popular:     computeBracketCalibration(checkpoint.results.popular),
-    },
+    sampleSizes: newSampleSizes,
+    brackets: newBrackets,
   }
 
   writeFileSync(OUTPUT_PATH, JSON.stringify(calibration, null, 2))
