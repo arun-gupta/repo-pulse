@@ -52,7 +52,13 @@ export const REPO_OVERVIEW_QUERY = `
       docCodeOfConductTxt: object(expression: "HEAD:CODE_OF_CONDUCT.txt") { ... on Blob { oid } }
       docLicenseRst: object(expression: "HEAD:LICENSE.rst") { ... on Blob { oid text } }
       docSecurity: object(expression: "HEAD:SECURITY.md") { ... on Blob { oid } }
+      docSecurityLower: object(expression: "HEAD:security.md") { ... on Blob { oid } }
       docSecurityRst: object(expression: "HEAD:SECURITY.rst") { ... on Blob { oid } }
+      docSecurityGithub: object(expression: "HEAD:.github/SECURITY.md") { ... on Blob { oid } }
+      docSecurityGithubLower: object(expression: "HEAD:.github/security.md") { ... on Blob { oid } }
+      docSecurityDocs: object(expression: "HEAD:docs/SECURITY.md") { ... on Blob { oid } }
+      docSecurityDocsLower: object(expression: "HEAD:docs/security.md") { ... on Blob { oid } }
+      docSecurityContacts: object(expression: "HEAD:SECURITY_CONTACTS") { ... on Blob { oid } }
       docChangelog: object(expression: "HEAD:CHANGELOG.md") { ... on Blob { oid } }
       docChangelogPlain: object(expression: "HEAD:CHANGELOG") { ... on Blob { oid } }
       docChanges: object(expression: "HEAD:CHANGES.md") { ... on Blob { oid } }

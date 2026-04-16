@@ -64,7 +64,13 @@ interface RepoOverviewResponse {
     docCodeOfConductTxt?: DocBlob | null
     docLicenseRst?: DocBlob | null
     docSecurity?: DocBlob | null
+    docSecurityLower?: DocBlob | null
     docSecurityRst?: DocBlob | null
+    docSecurityGithub?: DocBlob | null
+    docSecurityGithubLower?: DocBlob | null
+    docSecurityDocs?: DocBlob | null
+    docSecurityDocsLower?: DocBlob | null
+    docSecurityContacts?: DocBlob | null
     docChangelog?: DocBlob | null
     docChangelogPlain?: DocBlob | null
     docChanges?: DocBlob | null
@@ -760,7 +766,7 @@ function buildAnalysisResult(
   }
 }
 
-function extractDocumentationResult(repo: RepoOverviewResponse['repository']): DocumentationResult | Unavailable {
+export function extractDocumentationResult(repo: RepoOverviewResponse['repository']): DocumentationResult | Unavailable {
   if (!repo) return 'unavailable'
 
   const findFirst = (...aliases: (DocBlob | null | undefined)[]): DocBlob | null =>
@@ -770,7 +776,12 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
   const licenseBlob = findFirst(repo.docLicense, repo.docLicenseMd, repo.docLicenseTxt, repo.docLicenseRst, repo.docCopying, repo.docLicenseMit, repo.docLicenseApache, repo.docLicenseBsd)
   const contributingBlob = findFirst(repo.docContributing, repo.docContributingRst, repo.docContributingTxt)
   const codeOfConductBlob = findFirst(repo.docCodeOfConduct, repo.docCodeOfConductRst, repo.docCodeOfConductTxt)
-  const securityBlob = findFirst(repo.docSecurity, repo.docSecurityRst)
+  const securityBlob = findFirst(
+    repo.docSecurity, repo.docSecurityLower, repo.docSecurityRst,
+    repo.docSecurityGithub, repo.docSecurityGithubLower,
+    repo.docSecurityDocs, repo.docSecurityDocsLower,
+    repo.docSecurityContacts,
+  )
   const changelogBlob = findFirst(repo.docChangelog, repo.docChangelogPlain, repo.docChanges, repo.docChangesRst, repo.docHistory, repo.docNews)
 
   const readmePathMap: [string, DocBlob | null | undefined][] = [
@@ -837,7 +848,12 @@ function extractDocumentationResult(repo: RepoOverviewResponse['repository']): D
     { name: 'license', found: licenseBlob !== null, path: foundPath(licensePathMap) },
     { name: 'contributing', found: contributingBlob !== null, path: foundPath(contributingPathMap) },
     { name: 'code_of_conduct', found: codeOfConductBlob !== null, path: foundPath([['CODE_OF_CONDUCT.md', repo.docCodeOfConduct], ['CODE_OF_CONDUCT.rst', repo.docCodeOfConductRst], ['CODE_OF_CONDUCT.txt', repo.docCodeOfConductTxt]]) },
-    { name: 'security', found: securityBlob !== null, path: foundPath([['SECURITY.md', repo.docSecurity], ['SECURITY.rst', repo.docSecurityRst]]) },
+    { name: 'security', found: securityBlob !== null, path: foundPath([
+      ['SECURITY.md', repo.docSecurity], ['security.md', repo.docSecurityLower], ['SECURITY.rst', repo.docSecurityRst],
+      ['.github/SECURITY.md', repo.docSecurityGithub], ['.github/security.md', repo.docSecurityGithubLower],
+      ['docs/SECURITY.md', repo.docSecurityDocs], ['docs/security.md', repo.docSecurityDocsLower],
+      ['SECURITY_CONTACTS', repo.docSecurityContacts],
+    ]) },
     { name: 'changelog', found: changelogBlob !== null, path: foundPath(changelogPathMap) },
     { name: 'issue_templates', found: hasIssueTemplates, path: issueTemplatePath },
     { name: 'pull_request_template', found: hasPullRequestTemplate, path: prTemplatePath },
@@ -952,20 +968,37 @@ export function extractCommunitySignals(
   }
 }
 
-function extractSecurityResult(repo: RepoOverviewResponse['repository']): SecurityResult | 'unavailable' {
+export function extractSecurityResult(repo: RepoOverviewResponse['repository']): SecurityResult | 'unavailable' {
   if (!repo) return 'unavailable'
 
   const hasDependabot = (repo.secDependabot != null) || (repo.secDependabotYaml != null)
   const hasRenovate = (repo.secRenovateRoot != null) || (repo.secRenovateGithub != null) ||
     (repo.secRenovateConfig != null) || (repo.secRenovateRc != null)
-  const hasSecurity = (repo.docSecurity != null) || (repo.docSecurityRst != null)
+  const securityPathMap: Array<[string, DocBlob | null | undefined]> = [
+    ['SECURITY.md', repo.docSecurity],
+    ['security.md', repo.docSecurityLower],
+    ['SECURITY.rst', repo.docSecurityRst],
+    ['.github/SECURITY.md', repo.docSecurityGithub],
+    ['.github/security.md', repo.docSecurityGithubLower],
+    ['docs/SECURITY.md', repo.docSecurityDocs],
+    ['docs/security.md', repo.docSecurityDocsLower],
+    ['SECURITY_CONTACTS', repo.docSecurityContacts],
+  ]
+  const securityPath = securityPathMap.find(([, blob]) => blob != null)?.[0] ?? null
+  const hasSecurity = securityPath !== null
   const hasWorkflows = repo.workflowDir?.entries != null && repo.workflowDir.entries.length > 0
+
+  const securityDetails = !hasSecurity
+    ? null
+    : securityPath === 'SECURITY_CONTACTS'
+      ? 'SECURITY_CONTACTS detected (Kubernetes/CNCF convention — consider promoting to SECURITY.md for GitHub-standard recognition)'
+      : `${securityPath} detected`
 
   const directChecks: DirectSecurityCheck[] = [
     {
       name: 'security_policy',
       detected: hasSecurity,
-      details: hasSecurity ? 'SECURITY.md detected' : null,
+      details: securityDetails,
     },
     {
       name: 'dependabot',
