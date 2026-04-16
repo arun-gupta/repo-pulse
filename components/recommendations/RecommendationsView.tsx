@@ -6,6 +6,7 @@ import { getHealthScore } from '@/lib/scoring/health-score'
 import { getSecurityScore } from '@/lib/security/score-config'
 import type { SecurityRecommendation } from '@/lib/security/analysis-result'
 import { CATEGORY_DEFINITIONS } from '@/lib/security/recommendation-catalog'
+import { CollapseChevron } from '@/components/shared/CollapseChevron'
 import { assignReferenceIds, resolveReferenceId } from '@/lib/recommendations/reference-id'
 import { getCatalogEntryByKey } from '@/lib/recommendations/catalog'
 import { getCatalogEntry as getSecurityCatalogEntry } from '@/lib/security/recommendation-catalog'
@@ -201,6 +202,7 @@ function SecurityRecommendationsGroup({
 }
 
 export function RecommendationsView({ results, activeTag: externalTag, onTagChange }: RecommendationsViewProps) {
+  const [collapsedRepos, setCollapsedRepos] = useState<Set<string>>(new Set())
   const [collapsedBuckets, setCollapsedBuckets] = useState<Record<string, boolean>>({})
   const [categoryCollapsed, setCategoryCollapsed] = useState<Record<string, boolean>>({})
   const [localTag, setLocalTag] = useState<string | null>(null)
@@ -215,6 +217,7 @@ export function RecommendationsView({ results, activeTag: externalTag, onTagChan
   return (
     <section aria-label="Recommendations view" className="space-y-6">
       {results.map((result) => {
+        const isRepoCollapsed = collapsedRepos.has(result.repo)
         const healthScore = getHealthScore(result)
 
         // Get enriched security recommendations directly
@@ -229,8 +232,16 @@ export function RecommendationsView({ results, activeTag: externalTag, onTagChan
         if (totalCount === 0) {
           return (
             <div key={result.repo} className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
-              <p className="mt-2 text-sm text-slate-500">No recommendations — this project scores well across all dimensions.</p>
+              <button
+                type="button"
+                onClick={() => setCollapsedRepos((prev) => { const next = new Set(prev); if (next.has(result.repo)) next.delete(result.repo); else next.add(result.repo); return next })}
+                className="flex w-full items-center gap-2 text-left"
+                aria-expanded={!isRepoCollapsed}
+              >
+                <CollapseChevron expanded={!isRepoCollapsed} />
+                <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
+              </button>
+              {!isRepoCollapsed ? <p className="mt-2 text-sm text-slate-500">No recommendations — this project scores well across all dimensions.</p> : null}
             </div>
           )
         }
@@ -287,35 +298,43 @@ export function RecommendationsView({ results, activeTag: externalTag, onTagChan
 
         return (
           <div key={result.repo} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {activeTag
-                    ? `${filteredTotal} of ${totalCount} recommendation${totalCount !== 1 ? 's' : ''} matching "${activeTag}"`
-                    : `${totalCount} recommendation${totalCount !== 1 ? 's' : ''} across ${bucketCount} dimension${bucketCount !== 1 ? 's' : ''}`}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleToggleAll}
-                className="shrink-0 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
-              >
-                {allExpanded ? 'Collapse all' : 'Expand all'}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setCollapsedRepos((prev) => { const next = new Set(prev); if (next.has(result.repo)) next.delete(result.repo); else next.add(result.repo); return next })}
+              className="flex w-full items-center gap-2 text-left"
+              aria-expanded={!isRepoCollapsed}
+            >
+              <CollapseChevron expanded={!isRepoCollapsed} />
+              <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
+            </button>
+            {!isRepoCollapsed ? (
+              <div className="mt-4">
+                <div className="flex items-start justify-between">
+                  <p className="text-sm text-slate-500">
+                    {activeTag
+                      ? `${filteredTotal} of ${totalCount} recommendation${totalCount !== 1 ? 's' : ''} matching "${activeTag}"`
+                      : `${totalCount} recommendation${totalCount !== 1 ? 's' : ''} across ${bucketCount} dimension${bucketCount !== 1 ? 's' : ''}`}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleToggleAll}
+                    className="shrink-0 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    {allExpanded ? 'Collapse all' : 'Expand all'}
+                  </button>
+                </div>
 
-            {activeTag ? (
-              <div className="mt-3">
-                <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
-              </div>
-            ) : null}
+                {activeTag ? (
+                  <div className="mt-3">
+                    <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
+                  </div>
+                ) : null}
 
-            {filteredTotal === 0 && activeTag ? (
-              <p className="mt-4 text-center text-sm text-slate-400">No recommendations match the "{activeTag}" tag.</p>
-            ) : null}
+                {filteredTotal === 0 && activeTag ? (
+                  <p className="mt-4 text-center text-sm text-slate-400">No recommendations match the "{activeTag}" tag.</p>
+                ) : null}
 
-            <div className="mt-4 space-y-4">
+                <div className="mt-4 space-y-4">
               {Array.from(bucketGroups.entries()).map(([bucket, recs]) => {
                 const isExpanded = !collapsedBuckets[bucket]
                 return (
@@ -366,7 +385,9 @@ export function RecommendationsView({ results, activeTag: externalTag, onTagChan
                   onTagClick={handleTagClick}
                 />
               ) : null}
-            </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         )
       })}

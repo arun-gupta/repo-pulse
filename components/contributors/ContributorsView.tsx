@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CollapseChevron } from '@/components/shared/CollapseChevron'
 import { CONTRIBUTOR_WINDOW_DAYS, type AnalysisResult, type ContributorWindowDays } from '@/lib/analyzer/analysis-result'
 import { buildContributorsViewModels } from '@/lib/contributors/view-model'
 import { CoreContributorsPane } from './CoreContributorsPane'
@@ -15,6 +16,7 @@ interface ContributorsViewProps {
 export function ContributorsView({ results, activeTag, onTagChange }: ContributorsViewProps) {
   const [includeBots, setIncludeBots] = useState(false)
   const [windowDays, setWindowDays] = useState<ContributorWindowDays>(90)
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const sections = buildContributorsViewModels(results, { includeBots, windowDays })
 
   return (
@@ -44,22 +46,35 @@ export function ContributorsView({ results, activeTag, onTagChange }: Contributo
           </div>
         </div>
       </div>
-      {sections.map((section) => (
-        <article key={section.repo} className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">{section.repo}</h2>
-            <p className="mt-1 text-sm text-slate-600">{`Contributor health and diversity signals derived from verified public repository activity over the last ${section.windowDays} days.`}</p>
-          </div>
-          <CoreContributorsPane
-            metrics={section.coreMetrics}
-            heatmap={section.heatmap}
-            windowDays={section.windowDays}
-            includeBots={includeBots}
-            onToggleIncludeBots={() => setIncludeBots((current) => !current)}
-          />
-          <ContributorsScorePane section={section} activeTag={activeTag} onTagChange={onTagChange} />
-        </article>
-      ))}
+      {sections.map((section) => {
+        const isCollapsed = collapsed.has(section.repo)
+        return (
+          <article key={section.repo} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setCollapsed((prev) => { const next = new Set(prev); if (next.has(section.repo)) next.delete(section.repo); else next.add(section.repo); return next })}
+              className="flex w-full items-center gap-2 text-left"
+              aria-expanded={!isCollapsed}
+            >
+              <CollapseChevron expanded={!isCollapsed} />
+              <h2 className="text-lg font-semibold text-slate-900">{section.repo}</h2>
+            </button>
+            {!isCollapsed ? (
+              <div className="mt-4 space-y-4">
+                <p className="text-sm text-slate-600">{`Contributor health and diversity signals derived from verified public repository activity over the last ${section.windowDays} days.`}</p>
+                <CoreContributorsPane
+                  metrics={section.coreMetrics}
+                  heatmap={section.heatmap}
+                  windowDays={section.windowDays}
+                  includeBots={includeBots}
+                  onToggleIncludeBots={() => setIncludeBots((current) => !current)}
+                />
+                <ContributorsScorePane section={section} activeTag={activeTag} onTagChange={onTagChange} />
+              </div>
+            ) : null}
+          </article>
+        )
+      })}
     </section>
   )
 }

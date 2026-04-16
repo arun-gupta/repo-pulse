@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CollapseChevron } from '@/components/shared/CollapseChevron'
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import { DocumentationScoreHelp } from '@/components/documentation/DocumentationScoreHelp'
 import { TagPill, ActiveFilterBar } from '@/components/tags/TagPill'
@@ -219,6 +220,7 @@ function InclusiveNamingPane({ inclusiveNamingResult }: { inclusiveNamingResult:
 }
 
 export function DocumentationView({ results, activeTag: externalTag, onTagChange }: DocumentationViewProps) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [localTag, setLocalTag] = useState<string | null>(null)
   const activeTag = externalTag !== undefined ? externalTag : localTag
   const handleTagClick = (tag: string) => {
@@ -230,11 +232,20 @@ export function DocumentationView({ results, activeTag: externalTag, onTagChange
   return (
     <section aria-label="Documentation view" className="space-y-6">
       {results.map((result) => {
+        const isCollapsed = collapsed.has(result.repo)
         if (result.documentationResult === 'unavailable') {
           return (
             <div key={result.repo} className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
-              <p className="mt-2 text-sm text-slate-500">Documentation data unavailable.</p>
+              <button
+                type="button"
+                onClick={() => setCollapsed((prev) => { const next = new Set(prev); if (next.has(result.repo)) next.delete(result.repo); else next.add(result.repo); return next })}
+                className="flex w-full items-center gap-2 text-left"
+                aria-expanded={!isCollapsed}
+              >
+                <CollapseChevron expanded={!isCollapsed} />
+                <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
+              </button>
+              {!isCollapsed ? <p className="mt-2 text-sm text-slate-500">Documentation data unavailable.</p> : null}
             </div>
           )
         }
@@ -246,27 +257,35 @@ export function DocumentationView({ results, activeTag: externalTag, onTagChange
 
         return (
           <div key={result.repo} className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {filesFound} of {fileChecks.length} files present · {sectionsDetected} of {readmeSections.length} README sections detected
-                </p>
-              </div>
-              <div className="w-full md:max-w-xs">
-                <ScoreBadge category="Documentation" value={score.value} tone={score.tone} />
-              </div>
-            </div>
-
-            <DocumentationScoreHelp score={score} />
-
-            {activeTag ? (
+            <button
+              type="button"
+              onClick={() => setCollapsed((prev) => { const next = new Set(prev); if (next.has(result.repo)) next.delete(result.repo); else next.add(result.repo); return next })}
+              className="flex w-full items-center gap-2 text-left"
+              aria-expanded={!isCollapsed}
+            >
+              <CollapseChevron expanded={!isCollapsed} />
+              <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
+            </button>
+            {!isCollapsed ? (
               <div className="mt-4">
-                <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
-              </div>
-            ) : null}
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <p className="text-sm text-slate-500">
+                    {filesFound} of {fileChecks.length} files present · {sectionsDetected} of {readmeSections.length} README sections detected
+                  </p>
+                  <div className="w-full md:max-w-xs">
+                    <ScoreBadge category="Documentation" value={score.value} tone={score.tone} />
+                  </div>
+                </div>
 
-            <div className="mt-6 grid gap-6 overflow-hidden md:grid-cols-2">
+                <DocumentationScoreHelp score={score} />
+
+                {activeTag ? (
+                  <div className="mt-4">
+                    <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
+                  </div>
+                ) : null}
+
+                <div className="mt-6 grid gap-6 overflow-hidden md:grid-cols-2">
               {/* File presence */}
               {!activeTag || fileChecks.some((c) => getDocFileAllTags(c.name).includes(activeTag)) ? (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -339,7 +358,9 @@ export function DocumentationView({ results, activeTag: externalTag, onTagChange
 
               {/* Inclusive Naming — hide when any tag is filtering */}
               {!activeTag ? <InclusiveNamingPane inclusiveNamingResult={result.inclusiveNamingResult} /> : null}
-            </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         )
       })}

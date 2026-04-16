@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CollapseChevron } from '@/components/shared/CollapseChevron'
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import { HelpLabel } from '@/components/shared/HelpLabel'
 import { MetricValue } from '@/components/shared/MetricValue'
@@ -32,6 +33,7 @@ export function ActivityView({ results, activeTag: externalTag, onTagChange }: A
     if (onTagChange) onTagChange(next)
     else setLocalTag(next)
   }
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const sections = buildActivitySections(results, windowDays)
   const windowOptions = getActivityWindowOptions()
   const staleIssueTooltip = `Share of currently open issues that were created more than ${windowDays === 365 ? '12 months' : `${windowDays} days`} ago. Lower is generally healthier.`
@@ -67,22 +69,28 @@ export function ActivityView({ results, activeTag: externalTag, onTagChange }: A
           </div>
         </div>
       </div>
-      {sections.map((section) => (
-        <article key={section.repo} className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          {(() => {
-            const result = results.find((candidate) => candidate.repo === section.repo)
-            if (!result) {
-              return null
-            }
+      {sections.map((section) => {
+        const isCollapsed = collapsed.has(section.repo)
+        const result = results.find((candidate) => candidate.repo === section.repo)
+        if (!result) return null
+        const score = getActivityScore(result, windowDays)
 
-            const score = getActivityScore(result, windowDays)
-
-            return (
-              <>
+        return (
+          <article key={section.repo} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setCollapsed((prev) => { const next = new Set(prev); if (next.has(section.repo)) next.delete(section.repo); else next.add(section.repo); return next })}
+              className="flex w-full items-center gap-2 text-left"
+              aria-expanded={!isCollapsed}
+            >
+              <CollapseChevron expanded={!isCollapsed} />
+              <h2 className="text-lg font-semibold text-slate-900">{section.repo}</h2>
+            </button>
+            {!isCollapsed ? (
+              <div className="mt-4 space-y-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900">{section.repo}</h2>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="text-sm text-slate-600">
                       Recent repository activity and delivery flow derived from verified public GitHub data.
                     </p>
                     <p className="mt-2 text-sm text-slate-700">{score.description}</p>
@@ -147,11 +155,11 @@ export function ActivityView({ results, activeTag: externalTag, onTagChange }: A
                   ) : null}
                 </div>
                 <ActivityScoreHelp score={score} />
-              </>
-            )
-          })()}
-        </article>
-      ))}
+              </div>
+            ) : null}
+          </article>
+        )
+      })}
     </section>
   )
 }
