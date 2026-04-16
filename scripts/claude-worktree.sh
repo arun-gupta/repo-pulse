@@ -9,7 +9,7 @@ print_usage() {
 Provision an isolated Claude worktree for an issue and launch Claude in it.
 
 Usage:
-  scripts/claude-worktree.sh [--headless] <issue-number> [slug]
+  scripts/claude-worktree.sh [--headless] [--no-speckit] <issue-number> [slug]
   scripts/claude-worktree.sh --approve-spec <issue-number>
   scripts/claude-worktree.sh --revise-spec <issue-number> <feedback>
   scripts/claude-worktree.sh --remove <issue-number>
@@ -17,6 +17,9 @@ Usage:
 
 Options:
   --headless          Run claude -p in background (log -> claude.log)
+  --no-speckit        Skip the SpecKit lifecycle; Claude works the issue
+                      directly and opens a PR. No spec-review pause, so
+                      --approve-spec / --revise-spec do not apply.
   --approve-spec      Release the spec-review pause for a paused headless
                       spawn; Stage 2 (plan/tasks/implement/PR) runs in the
                       background. Fire-and-forget; returns immediately.
@@ -191,13 +194,23 @@ if [[ "${1:-}" == "--revise-spec" ]]; then
 fi
 
 HEADLESS=0
-if [[ "${1:-}" == "--headless" ]]; then
-  HEADLESS=1
-  shift
-fi
+NO_SPECKIT=0
+while [[ "${1:-}" == --* ]]; do
+  case "$1" in
+    --headless) HEADLESS=1; shift ;;
+    --no-speckit) NO_SPECKIT=1; shift ;;
+    *) echo "Unknown option: $1" >&2; exit 1 ;;
+  esac
+done
 
-ISSUE="${1:?Usage: $0 [--headless] <issue-number> [slug]}"
+ISSUE="${1:?Usage: $0 [--headless] [--no-speckit] <issue-number> [slug]}"
 SLUG="${2:-}"
+
+if (( NO_SPECKIT )); then
+  echo "WARNING: --no-speckit skips the SpecKit lifecycle and the spec-review pause." >&2
+  echo "         This run is fully automated with NO human-in-the-loop checkpoint." >&2
+  echo "         Claude will make changes and open a PR without spec approval." >&2
+fi
 
 if [[ -z "$SLUG" ]]; then
   if ! command -v gh >/dev/null 2>&1; then
@@ -268,13 +281,19 @@ fi
 SESSION_ID="$(uuidgen | tr '[:upper:]' '[:lower:]')"
 echo "$SESSION_ID" > "$WT_PATH/.claude.session-id"
 
-KICKOFF="Work on GitHub issue #${ISSUE}. Follow CLAUDE.md (read constitution, DEVELOPMENT.md, PRODUCT.md). Run the SpecKit lifecycle in two stages with a mandatory human-in-the-loop pause in between:
+if (( NO_SPECKIT )); then
+  KICKOFF="Work on GitHub issue #${ISSUE}. Read CLAUDE.md for project conventions. Skip the SpecKit lifecycle — do NOT run /speckit.specify, /speckit.plan, /speckit.tasks, or /speckit.implement. Make the changes directly, then push the branch and open a PR; do not merge.
+
+Dev server is already running on port ${port}."
+else
+  KICKOFF="Work on GitHub issue #${ISSUE}. Follow CLAUDE.md (read constitution, DEVELOPMENT.md, PRODUCT.md). Run the SpecKit lifecycle in two stages with a mandatory human-in-the-loop pause in between:
 
 STAGE 1: Run /speckit.specify. When it completes, report the generated spec file path and STOP. Do NOT proceed to /speckit.plan. Wait for explicit user approval — one of the phrases \"proceed\", \"approved\", or \"go to plan\". If the user replies with spec revisions instead of an approval phrase, update the spec and re-enter the paused state (report the updated spec path and wait again). Only an explicit approval phrase releases the pause.
 
 STAGE 2: After approval, run /speckit.plan, then /speckit.tasks, then /speckit.implement in sequence. When done, push the branch and open a PR; do not merge.
 
 Dev server is already running on port ${port}."
+fi
 
 cd "$WT_PATH"
 if (( HEADLESS )); then
