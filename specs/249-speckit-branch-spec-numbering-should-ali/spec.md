@@ -7,105 +7,100 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Worktree-driven spec uses the issue number with a `gh` prefix (Priority: P1)
+### User Story 1 - Worktree-driven spec reuses the pre-created branch and issue number (Priority: P1)
 
-A maintainer runs `scripts/claude-worktree.sh 238` to spawn a worktree for GitHub issue #238. The worktree script creates the directory `../forkprint-gh238-<slug>/` and the branch `gh238-<slug>`. Claude launches inside the worktree and runs `/speckit.specify`. The generated spec directory is `specs/gh238-<slug>/` and Claude stays on the pre-created branch `gh238-<slug>`. No `243-*` (or any other) spec directory or branch appears, no renumbering takes place. The worktree path prefix (`forkprint-gh238-`), the checked-out branch prefix (`gh238-`), the spec directory prefix (`gh238-`), and the GitHub issue number (238) all agree.
+A maintainer runs `scripts/claude-worktree.sh 238` to spawn a worktree for GitHub issue #238. The worktree script creates the directory `../forkprint-238-<slug>/` and the branch `238-<slug>`. When Claude runs `/speckit.specify` inside that worktree, the SpecKit helper **detects the pre-existing `238-<slug>` branch, reuses it verbatim**, and writes the spec to `specs/238-<slug>/`. No `243-*` (or any other) spec directory is created. The branch the code lives on, the spec directory, and the GitHub issue number all agree.
 
-**Why this priority**: This is the core alignment bug. Every downstream artifact (PR branch name, commit prefixes, PR cross-references, `--cleanup-merged` lookup) inherits its identity from the prefix generated in this step. The `gh` prefix also establishes a disjoint namespace between issue-driven work (`gh<N>-`) and manual/legacy sequential work (`<NNN>-`) so the two can never collide, regardless of future growth in either namespace. One issue = one prefixed identifier, propagated from the worktree spawn through the spec, branch, and PR.
+**Why this priority**: This is the bug fix. Today, `/speckit.specify` inside a worktree scans `specs/` for the next free sequential number and creates a new branch with that number — decoupling everything from the GitHub issue. The fix is a one-line change in philosophy: if the current branch already has a recognised feature-prefix pattern, reuse it instead of renumbering.
 
-**Independent Test**: Spawn a fresh worktree for any issue number N (e.g. `scripts/claude-worktree.sh 999 demo-slug`), wait for `/speckit.specify` to complete, and verify four things in the worktree: (a) `git branch --show-current` returns `gh999-demo-slug`, (b) `specs/gh999-*/spec.md` exists, (c) the worktree directory is named `forkprint-gh999-demo-slug`, and (d) no `specs/<any-other-prefix>-*` directory was created by this run. Delivers value standalone because even without the manual-fallback or collision-handling stories, the worktree-driven path — the dominant path for new feature work — is correct and namespace-isolated.
+**Independent Test**: Spawn a worktree for any issue N (e.g. `scripts/claude-worktree.sh 999 demo`), run `/speckit.specify` inside, and verify three things: (a) `git branch --show-current` → `999-demo` (unchanged), (b) `specs/999-demo/spec.md` exists, (c) no other numbered spec directory was created by this run.
 
 **Acceptance Scenarios**:
 
-1. **Given** a worktree spawned by `scripts/claude-worktree.sh 238 some-slug` (so the branch `gh238-some-slug` is already checked out and no `specs/gh238-*` directory exists), **When** Claude runs `/speckit.specify` inside that worktree, **Then** the resulting spec directory is `specs/gh238-some-slug/`, the checked-out branch remains `gh238-some-slug`, and no other prefixed spec directory or branch is created by this invocation.
-2. **Given** the same worktree as above, **When** `/speckit.specify` completes, **Then** `git branch --show-current` inside the worktree equals `gh238-some-slug` (it was not switched to a freshly created branch).
-3. **Given** a worktree spawned for issue #238, **When** the downstream commands `/speckit.plan`, `/speckit.tasks`, and `/speckit.implement` run, **Then** they all operate against `specs/gh238-some-slug/` and the branch `gh238-some-slug` without ambiguity about which spec directory to use.
-4. **Given** the worktree has been merged, **When** the maintainer runs `scripts/claude-worktree.sh --cleanup-merged 238`, **Then** the script locates the worktree at `forkprint-gh238-*` and the branch `gh238-*`, verifies the PR is `MERGED`, and cleans both up — no manual prefix translation required.
+1. **Given** a worktree spawned for issue #238 (so branch `238-some-slug` is already checked out), **When** `/speckit.specify` runs inside, **Then** the spec directory `specs/238-some-slug/` is created, the checked-out branch remains `238-some-slug`, and no `NNN-*` decoy spec directory or branch is created.
+2. **Given** the same worktree, **When** downstream commands `/speckit.plan`, `/speckit.tasks`, `/speckit.implement` run, **Then** they resolve `specs/238-some-slug/` unambiguously.
+3. **Given** the worktree is merged, **When** the maintainer runs `scripts/claude-worktree.sh --cleanup-merged 238`, **Then** the script finds `forkprint-238-*` and `238-*`, verifies `MERGED`, and cleans both.
 
 ---
 
-### User Story 2 - Manual `/speckit.specify` outside the worktree flow keeps the existing sequential convention (Priority: P2)
+### User Story 2 - Manual `/speckit.specify` outside the worktree flow keeps auto-sequential numbering (Priority: P2)
 
-A maintainer runs `/speckit.specify` directly from the main checkout on a branch they created themselves (no worktree, no issue number in play). The sequential-numbering fallback still picks the next free number by scanning `specs/` and creates the spec directory and feature branch with the unprefixed `<NNN>-<slug>` form exactly as before.
+A maintainer runs `/speckit.specify` directly from `main` (no worktree, no issue number). The sequential-numbering fallback scans `specs/` and picks the next free number, creating `specs/<NNN>-<slug>/` and branch `<NNN>-<slug>` exactly as before.
 
-**Why this priority**: The worktree flow is the dominant path, but the manual path must keep working so contributors doing exploratory specs, pre-issue design work, or non-issue-driven refactors are not blocked. The `gh` prefix is added *only* to the issue-driven path — the manual path's `<NNN>-<slug>` shape is unchanged. This is a regression-prevention story.
+**Why this priority**: The manual path is a small but important fallback for non-issue-driven work (exploratory specs, pre-issue design). It must continue to work unchanged.
 
-**Independent Test**: From a clean checkout on `main`, invoke `/speckit.specify <description>` without any issue-number context and without the worktree wrapper. Verify that a spec directory with the next sequential prefix (e.g. `specs/230-<slug>/`) is created with no `gh` prefix, and a matching branch is checked out. Delivers value standalone because it protects an existing workflow from the Story 1 change.
+**Independent Test**: From `main`, invoke `/speckit.specify <description>` with no issue context. Verify a spec directory with the next free sequential number is created and a matching branch is checked out.
 
 **Acceptance Scenarios**:
 
-1. **Given** a checkout on `main` with no issue-number argument and no issue-number context, **When** `/speckit.specify` runs, **Then** the spec directory and branch use the next free sequential number computed from existing `specs/` and branches, in the unprefixed `<NNN>-<slug>` form, matching the pre-change behaviour.
-2. **Given** a manual invocation where the maintainer explicitly supplies a raw number override (e.g. `--number 350`), **When** `/speckit.specify` runs and no `specs/350-*` exists, **Then** the spec directory and branch both use the unprefixed `350-<slug>` form — the `gh` prefix is reserved for the issue-driven flow and is not added when the number comes from a raw override.
+1. **Given** checkout on `main`, no issue context, **When** `/speckit.specify` runs, **Then** the spec directory and branch use the next free sequential number, matching pre-change behaviour.
+2. **Given** explicit `--number 350` override and no existing `specs/350-*`, **When** `/speckit.specify` runs, **Then** both use the `350-<slug>` form, overriding auto-detection.
 
 ---
 
-### User Story 3 - Explicit, non-silent handling of spec/branch collisions (Priority: P2)
+### User Story 3 - Loud, non-silent collision handling (Priority: P2)
 
-When `/speckit.specify` is asked to use an issue-driven prefix whose spec directory already exists, or whose target branch already exists on a different HEAD, the tool either reuses the existing work or fails with a clear, actionable message. It never silently renumbers away from the requested issue number.
+When `/speckit.specify` is asked to use a number whose branch already exists on a different HEAD, or whose spec directory already contains a populated `spec.md`, it fails loudly with a clear error. It never silently renumbers. Reuse of a branch that is already the current HEAD is the expected case (worktree spawn) and proceeds without error. Invalid `--number` inputs (non-numeric, zero, negative) are rejected up front.
 
-**Why this priority**: The previous bug was a silent renumbering — the user asked for 238, got 243, with no warning. Any replacement must make the failure mode loud. "Silent success with the wrong prefix" is worse than "loud failure with instructions." Reuse is the expected case inside a `claude-worktree.sh` spawn (the branch is already checked out), so the tool must tolerate that without error. With the `gh` prefix in place, collisions between issue-driven and sequential namespaces are architecturally impossible — but collisions *within* the issue-driven namespace (e.g. two runs for the same issue, or leftover spec dir from a prior abandoned spawn) are still possible and must be handled clearly.
+**Why this priority**: The original bug was a silent renumbering (asked for 238, got 243, no warning). The loud-error contract replaces that. The rare remaining collision scenario — manual sequential claims slot N just before issue #N is filed — surfaces as a clear, actionable error rather than silent wrong behavior.
 
-**Independent Test**: Force both collision paths: (a) run the issue-driven flow for issue 238 when `specs/gh238-<other-slug>/` already exists, and (b) run it when the target branch `gh238-<slug>` is already checked out (the worktree case). Verify each path matches the contract: (a) the user sees a clear error pointing to the existing dir, (b) no error occurs and the existing branch is reused.
+**Independent Test**: Exercise each collision path in a sandbox: branch-already-HEAD (silent OK), populated spec.md (exit 1 with clear message), branch-exists-elsewhere (exit 1 with clear message), invalid `--number` (exit 1 with clear message).
 
 **Acceptance Scenarios**:
 
-1. **Given** a worktree where the target branch (e.g. `gh238-some-slug`) is already the currently checked-out HEAD, **When** `/speckit.specify` runs for issue 238 with matching slug, **Then** the command proceeds without error: the existing branch is reused (no `git checkout -b` attempted), and the spec directory `specs/gh238-some-slug/` is created (or reused if already present and `spec.md` is empty).
-2. **Given** a repo where `specs/gh238-existing-slug/` already exists with a populated `spec.md`, **When** `/speckit.specify` runs for issue 238 with a different slug, **Then** the command exits non-zero with an error that names the existing directory and instructs the user how to resolve the conflict (remove/rename the existing dir, or re-run the worktree flow with a matching slug). No silent fallback to a different prefix occurs.
-3. **Given** a repo where the target branch (e.g. `gh238-new-slug`) exists but is **not** the currently checked-out HEAD, **When** `/speckit.specify` runs for issue 238, **Then** the command exits non-zero with a clear error naming the conflicting branch. No silent fallback occurs.
+1. **Given** target branch equals current HEAD, **When** `/speckit.specify` runs, **Then** the branch is reused silently (no `git checkout -b` attempted), and the spec directory is created.
+2. **Given** `specs/238-existing-slug/` exists with populated `spec.md`, **When** `/speckit.specify` is asked to reuse that prefix, **Then** it exits non-zero with an error naming the directory and suggesting resolution.
+3. **Given** target branch exists but is not current HEAD, **When** `/speckit.specify` runs, **Then** it exits non-zero with an error naming the conflicting branch. No silent renumbering.
+4. **Given** `--number abc`, `--number 0`, or `--number -5`, **When** `/speckit.specify` runs, **Then** it exits non-zero with a clear "--number must be a positive integer" error before any filesystem or git mutation.
 
 ---
 
 ### Edge Cases
 
-- **Invalid issue numbers** (zero, negative, non-numeric): Rejected with a clear error before any filesystem or git mutation. GitHub issue numbers are positive integers starting at 1.
-- **Leading zeros on `--number` input**: Normalised — `--number 007` is treated as `7`, producing prefix `gh7`. No left-padding is applied to the `gh`-prefixed form (so issue #7 is `gh7-`, not `gh007-`). Rationale: issue numbers in `gh` CLI output and PR titles appear without padding (`#7`, not `#007`), and matching that visual form keeps searches and URLs intuitive.
-- **Worktree spawn uses a slug that differs from the spec's derived short-name**: The branch name is the source of truth (because the worktree already created and checked out the branch). `/speckit.specify` must derive the spec directory name from the currently checked-out branch when it matches `^gh[0-9]+-`, not from a separately computed short-name, to guarantee spec dir and branch agree.
-- **Maintainer runs `/speckit.specify` manually from inside a worktree** (not via the kickoff prompt): `/speckit.specify` detects the issue-driven context by matching the current branch against `^gh[0-9]+-` and uses that prefix automatically, even when no explicit issue argument is in the invocation.
-- **Existing orphan `specs/gh<N>-*` directory with no matching branch**: Treated as a real conflict per User Story 3, scenario 2 — the spec directory is the shared on-disk artifact, and overwriting it would destroy prior work.
-- **Legacy unprefixed branches/specs for issue-numbered work** (e.g. this feature's own branch, `249-speckit-…`): Out of scope for this feature. Legacy entries remain as-is; the new `gh`-prefix convention applies going forward. This feature itself completes on the legacy naming because its worktree was spawned before the fix shipped.
-- **A legacy unprefixed spec dir `238-<slug>/` exists from past work, and a new worktree for issue #238 is spawned**: No collision — `gh238-<slug>` and `238-<slug>` are distinct paths. The `gh`-prefix rule makes the namespaces disjoint, so old sequential entries do not interfere with new issue-driven ones.
+- **Leading zeros on `--number`**: `--number 007` is rejected (decodes to 0 in base 10 via the `[1-9][0-9]*` validator, ensuring consistency with "positive integer"). Users supply `7` without padding.
+- **Worktree slug differs from the spec's derived short-name**: The currently checked-out branch is the source of truth. `/speckit.specify` reuses it verbatim and ignores the `--short-name` flag when a recognised prefix is detected. This guarantees spec dir and branch always agree.
+- **Manual invocation inside a worktree** (not via the kickoff prompt): The helper auto-detects the branch pattern `^[0-9]+-` or `^[0-9]{8}-[0-9]{6}-` and reuses it. No explicit flag needed.
+- **Rare collision: manual spec claims slot N, issue #N later spawned**: This produces a branch-or-spec-dir collision that User Story 3's loud-error path handles cleanly. Resolution: rename/remove the conflicting entity, or pick a different `--number` / issue number. No silent fallback.
+- **Legacy entities** (`001-*`–`032-*` Phase 1 specs): unaffected; their sequential form is a valid recognised pattern and continues to work.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: The spec-generation entry point MUST accept an explicit GitHub issue number from the caller (either via an explicit flag or by deriving it from the currently checked-out branch when the branch matches `^gh[0-9]+-`) and use `gh<N>` as the spec-directory and branch-name prefix.
-- **FR-002**: When an issue number is supplied or derived, the spec-generation entry point MUST NOT scan `specs/` or `git branch -a` to pick a different number. Auto-increment logic applies only to the manual sequential fallback path.
-- **FR-003**: When no issue-number context is available (no flag AND current branch does not match `^gh[0-9]+-`), the spec-generation entry point MUST fall back to the pre-existing sequential numbering behaviour using the unprefixed `<NNN>-<slug>` form — no change to that path.
-- **FR-004**: The worktree spawn script (`scripts/claude-worktree.sh`) MUST create the worktree directory as `forkprint-gh<N>-<slug>` and the branch as `gh<N>-<slug>` for every issue-driven spawn, and MUST propagate the issue number into the `/speckit.specify` kickoff prompt so the downstream spec directory matches.
-- **FR-005**: When the target branch already matches the currently checked-out branch, the spec-generation entry point MUST reuse that branch (no attempt to `git checkout -b` an existing branch) and proceed to create the spec directory.
-- **FR-006**: When the target branch exists but is not the currently checked-out branch, the spec-generation entry point MUST exit non-zero with a clear error naming the conflicting branch. It MUST NOT silently fall back to a different prefix.
-- **FR-007**: When a spec directory with the same `gh<N>-` prefix already exists and contains a populated `spec.md` with a different slug, the spec-generation entry point MUST exit non-zero with a clear error naming the existing directory and suggesting resolution options. It MUST NOT silently fall back to a different prefix.
-- **FR-008**: Invalid issue-number inputs (non-numeric, zero, negative) MUST be rejected with a clear error before any filesystem or git mutation occurs.
-- **FR-009**: `scripts/claude-worktree.sh --cleanup-merged <N>` MUST locate worktrees and branches using the `gh<N>-` pattern (not the old `<N>-` pattern). Legacy unprefixed worktrees that pre-date this feature MAY remain findable via the old pattern as a compatibility fallback, but new worktrees spawned by the fixed script MUST use only the `gh` prefix. *(See Assumption below on whether the compatibility fallback is retained.)*
-- **FR-010**: `docs/DEVELOPMENT.md` MUST document the new naming convention: issue-driven spec/branch/worktree identifiers use `gh<N>-<slug>`; manual sequential fallback uses `<NNN>-<slug>`; the two namespaces are disjoint by construction.
-- **FR-011**: The `/speckit.specify` command definition (under `.claude/commands/`) MUST either pass the issue number through to `create-new-feature.sh` when one can be derived from context, or instruct Claude to do so — so that the prefix contract is enforced regardless of how the command is invoked.
-- **FR-012**: The prefix contract MUST be preserved end-to-end through `/speckit.plan`, `/speckit.tasks`, and `/speckit.implement` — none of these downstream commands may create or move the spec to a differently prefixed directory.
+- **FR-001**: When the currently checked-out branch matches `^[0-9]+-.+$` or `^[0-9]{8}-[0-9]{6}-.+$`, the spec-generation helper MUST reuse that branch verbatim (no `git checkout -b`) and derive the spec directory name from it. This is the core "don't renumber an issue-driven branch" behavior.
+- **FR-002**: When reusing the current branch, the helper MUST NOT scan `specs/` or `git branch -a` to pick a different number.
+- **FR-003**: When the current branch does NOT match a recognised feature-prefix pattern AND no `--number` is supplied, the helper MUST fall back to the pre-existing sequential-numbering behaviour (compute next free `<NNN>-<slug>`, `git checkout -b`).
+- **FR-004**: When `--number N` is explicitly supplied, the helper MUST use `<NNN>-<slug>` (zero-padded to 3 digits for `N < 1000`, verbatim for `N >= 1000`), regardless of current branch.
+- **FR-005**: Invalid `--number` inputs (non-numeric, zero, negative, or any value that decodes to < 1) MUST be rejected with a clear error before any filesystem or git mutation.
+- **FR-006**: When the target branch exists but is not the currently checked-out branch, the helper MUST exit non-zero with an error that names the conflicting branch and lists accepted feature-branch forms.
+- **FR-007**: When `specs/<target>/spec.md` already exists and is non-empty, the helper MUST exit non-zero with an error naming the existing path. It MUST NOT overwrite authored spec content. Empty or missing `spec.md` is treated as a fresh run (allows worktree-spawn reuse after a partial prior run).
+- **FR-008**: `.specify/scripts/bash/common.sh` helpers (`find_feature_dir_by_prefix`, `check_feature_branch`, `get_current_branch`) MUST recognise the broader `^[0-9]+-` pattern (not just the legacy `^[0-9]{3}-`) so issue numbers of any width (1-digit, 4+ digit) resolve correctly downstream. Timestamp and legacy 3-digit forms remain accepted.
+- **FR-009**: `docs/DEVELOPMENT.md` MUST document the numbering rule: branches pre-created by `claude-worktree.sh` are reused by `/speckit.specify`; manual invocations without a recognised branch prefix fall back to sequential auto-numbering.
+- **FR-010**: The `/speckit.specify` command template (`.claude/commands/speckit.specify.md`) MUST reflect that the helper auto-detects feature-prefix branches — Claude does not need to pass `--number` explicitly.
 
 ### Key Entities
 
-- **Spec Directory**: The filesystem location under `specs/` that holds `spec.md`, `plan.md`, `tasks.md`, and checklists for a feature. Its name has the form `gh<N>-<slug>` (issue-driven) or `<NNN>-<slug>` (manual sequential).
-- **Feature Branch**: The git branch on which the feature work lives. Its name has the same `gh<N>-<slug>` or `<NNN>-<slug>` shape as the spec directory, and the prefix must match the spec directory's prefix for the same feature.
-- **Worktree Directory**: The sibling-of-repo directory where parallel feature work lives. Named `forkprint-gh<N>-<slug>` for issue-driven spawns (matches branch and spec directory prefixes).
-- **Issue Number**: The GitHub issue number (a positive integer, no leading zeros) that motivates the feature. When present, it becomes the `<N>` in `gh<N>-` across all three entities above.
+- **Spec Directory**: Filesystem location under `specs/` holding `spec.md`, `plan.md`, `tasks.md`, and checklists. Named `<prefix>-<slug>` where `<prefix>` is the GitHub issue number (issue-driven flow) or the next sequential number (manual flow).
+- **Feature Branch**: Git branch for the feature; same `<prefix>-<slug>` shape as the spec directory. The prefix is the shared identifier that binds the two together.
+- **Issue Number**: Positive integer issued by GitHub when an issue is filed. When a worktree is spawned for it, the issue number becomes the branch/spec-dir prefix.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: For 100% of worktrees spawned by `scripts/claude-worktree.sh <N>`, the resulting spec directory prefix, checked-out branch prefix, and worktree path prefix all equal `gh<N>` after `/speckit.specify` completes. Verifiable by scripted check across any sample of post-spawn worktrees.
-- **SC-002**: 0 instances of silent renumbering or silent prefix change occur in the issue-driven flow. Every deviation from the caller-supplied issue number is either (a) explicitly raised as a non-zero-exit error with a named cause, or (b) a deliberate reuse of an existing branch whose prefix already matches `gh<N>`.
-- **SC-003**: Manual `/speckit.specify` invocations with no issue-number context continue to produce spec directories and branches with the unprefixed `<NNN>-<slug>` form — verified by a no-regression invocation on a clean checkout.
-- **SC-004**: Issue-driven (`gh<N>-`) and manual sequential (`<NNN>-`) namespaces are disjoint by structure: there exists no string that is simultaneously a valid issue-driven prefix and a valid sequential prefix. Verifiable by inspection of the grammars; no test scenario can construct a colliding name.
-- **SC-005**: A maintainer reading `docs/DEVELOPMENT.md` can, in under 60 seconds, identify the rule that governs which prefix appears on a spec directory and why, without opening `create-new-feature.sh` or `claude-worktree.sh`.
-- **SC-006**: `scripts/claude-worktree.sh --cleanup-merged <N>` successfully locates and cleans a worktree created by `scripts/claude-worktree.sh <N>` followed by `/speckit.specify`, with no manual prefix translation required.
+- **SC-001**: For 100% of worktrees spawned by `scripts/claude-worktree.sh <N>`, the resulting spec directory prefix, checked-out branch prefix, and worktree path prefix all equal `<N>` after `/speckit.specify` completes.
+- **SC-002**: 0 instances of silent renumbering in the issue-driven flow. Every deviation from the pre-created branch is either a loud non-zero-exit error or deliberate silent reuse of the matching HEAD.
+- **SC-003**: Manual `/speckit.specify` on `main` without issue context continues to produce the next sequential `<NNN>-<slug>`.
+- **SC-004**: `scripts/claude-worktree.sh --cleanup-merged <N>` successfully locates and cleans a worktree created by `scripts/claude-worktree.sh <N>` followed by `/speckit.specify`, with no manual prefix translation.
+- **SC-005**: Invalid `--number` inputs fail in under 1 second with a clear, actionable error before mutating anything.
+- **SC-006**: A maintainer reading `docs/DEVELOPMENT.md` can, in under 60 seconds, identify the rule that governs which number appears on a spec directory and why.
 
 ## Assumptions
 
-- GitHub issue numbers for this project are positive integers of any width. The `gh<N>` prefix works for any `N ≥ 1` with no padding (e.g. `gh7`, `gh249`, `gh12345`).
-- The GitHub issue number is known at worktree-spawn time — `scripts/claude-worktree.sh` already takes it as its first positional argument, so propagating it through is a wiring change, not a lookup.
-- `/speckit.specify` is the only code path that creates a new spec directory and feature branch. No other SpecKit command generates numbered directories.
-- Legacy Phase 1 spec directories (`001-*` through `032-*`) and legacy unprefixed issue-driven entries (e.g. `128-licensing-compliance`, `249-speckit-…` — including this feature's own branch and spec dir) are historical and out of scope. The new `gh<N>-` convention applies to spec/branch/worktree entities created after this feature ships. No retroactive rename is required.
-- **Compatibility fallback for `--cleanup-merged`**: since some in-flight worktrees (this feature, and possibly others spawned before the fix ships) use the old unprefixed form, the cleanup command's lookup pattern SHOULD accept both `gh<N>-` and the legacy `<N>-` pattern during a transition period. The plan phase may choose to drop the legacy-match path once all pre-fix worktrees are cleaned up.
-- The fix is scoped to `scripts/claude-worktree.sh`, `.specify/scripts/bash/create-new-feature.sh`, `.claude/commands/speckit.specify.md`, and `docs/DEVELOPMENT.md`. No application-code (Next.js, analyzer, UI) changes are required, and no user-facing product behaviour changes. The constitution's accuracy, data-source, and scoring rules are not affected.
-- The change to PR branch names (from `<N>-` to `gh<N>-`) does not break any existing automation in this repo — `gh pr view <branch>` accepts arbitrary branch names, and no CI workflow greps for a specific branch-name pattern. If any such automation is discovered during the plan phase, it becomes an in-scope update.
+- GitHub issue numbers are positive integers; issue number 0 does not exist.
+- The GitHub issue number is known at worktree-spawn time — `scripts/claude-worktree.sh` already takes it as its first positional argument.
+- `/speckit.specify` is the only code path that creates numbered spec directories and branches. Fixing it end-to-end covers the lifecycle.
+- Branch naming stays on the upstream SpecKit convention (`<N>-<slug>`) — no custom prefix. Adoption portability and future upstream alignment outweigh the marginal protection a custom prefix would add against the rare manual-vs-issue collision scenario (which the loud-error contract handles).
+- The rare collision case (manual sequential claims slot N just before issue #N is filed) surfaces as a loud error and is resolved by the maintainer renaming/removing the conflicting entity. Acceptable tradeoff given its low frequency.
+- Legacy 3-digit-padded sequential specs (`001-*`–`032-*`) and issue-number specs of any width (`128-*`, `249-*`) coexist via the same `<N>-<slug>` grammar — no migration needed.
+- The fix is scoped to `scripts/claude-worktree.sh`, `.specify/scripts/bash/create-new-feature.sh`, `.specify/scripts/bash/common.sh`, `.claude/commands/speckit.specify.md`, and `docs/DEVELOPMENT.md`. No application-code, analyzer, scoring, or UI changes.

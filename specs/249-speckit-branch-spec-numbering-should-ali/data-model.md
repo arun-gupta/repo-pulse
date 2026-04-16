@@ -1,76 +1,47 @@
 # Phase 1 Data Model: Naming grammar
 
-This feature introduces no runtime data structures. The "model" is the grammar of the three filesystem/git entities that must agree on their prefix.
+No runtime data structures. The "model" is the grammar of the three filesystem/git entities that must agree.
 
 ## Entity grammars
 
-### Issue-driven triple (NEW)
+### Feature triple
 
 ```
-worktree-dir  := "forkprint-" issue-prefix "-" slug
-branch        := issue-prefix "-" slug
-spec-dir      := "specs/" issue-prefix "-" slug
-issue-prefix  := "gh" positive-int
-positive-int  := [1-9] [0-9]*
-slug          := [a-z0-9] ([a-z0-9-]* [a-z0-9])?        ; kebab-case, 1-40 chars
+worktree-dir  := "forkprint-" prefix "-" slug
+branch        := prefix "-" slug
+spec-dir      := "specs/" prefix "-" slug
+
+prefix        := sequential | timestamp
+sequential    := [0-9]+                                     ; issue number or legacy padded
+timestamp     := [0-9]{8} "-" [0-9]{6}                      ; YYYYMMDD-HHMMSS
+slug          := [a-z0-9] ([a-z0-9-]* [a-z0-9])?            ; kebab-case, 1-40 chars
 ```
 
-All three entities for a single feature use the **same** `issue-prefix` and the **same** `slug`.
+All three entities for a single feature share the same `prefix` and same `slug`.
 
 Examples:
-- `forkprint-gh249-align-spec-numbering`, `gh249-align-spec-numbering`, `specs/gh249-align-spec-numbering/`
-- `forkprint-gh7-fix-bug`, `gh7-fix-bug`, `specs/gh7-fix-bug/`
+- Issue-driven (new): `forkprint-238-align-numbering`, `238-align-numbering`, `specs/238-align-numbering/`
+- Legacy sequential (unchanged): `015-responsiveness`, `specs/015-responsiveness/` (worktree-dir not applicable)
+- Timestamp (opt-in, unchanged): `20260416-143022-exploratory`, `specs/20260416-143022-exploratory/`
 
-### Manual sequential triple (UNCHANGED)
+## Why one `sequential` grammar for both issue-driven and manual
 
-```
-branch       := seq-prefix "-" slug
-spec-dir     := "specs/" seq-prefix "-" slug
-seq-prefix   := [0-9]{3}                                ; zero-padded, legacy form
-```
+Both paths produce the same shape: `<digits>-<slug>`. The distinction is where `<digits>` comes from:
 
-No worktree entity is produced for manual sequential work — those feature branches live in the main checkout.
+| Source | Digits |
+|---|---|
+| `scripts/claude-worktree.sh <N>` | The GitHub issue number (`<N>` as passed, any width) |
+| `/speckit.specify` manual (sequential mode) | Next free `max+1` across existing `specs/` and branches, zero-padded to 3 digits for legacy readability |
 
-Examples (existing, unchanged): `001-repo-input`, `032-doc-scoring`, `230-<next-manual-spec>`.
-
-### Timestamp-based triple (UNCHANGED, opt-in)
-
-```
-branch       := ts-prefix "-" slug
-spec-dir     := "specs/" ts-prefix "-" slug
-ts-prefix    := [0-9]{8} "-" [0-9]{6}                   ; YYYYMMDD-HHMMSS
-```
-
-Used only when `.specify/init-options.json` has `"branch_numbering": "timestamp"`.
-
-## Disjoint-namespace proof
-
-Three prefix forms, each characterised by its first 1-2 characters:
-
-| Form | First-char regex | Example |
-|---|---|---|
-| Issue-driven | `^gh` (letters) | `gh249-` |
-| Sequential | `^[0-9]{3}-` (three digits then hyphen) | `001-`, `249-` |
-| Timestamp | `^[0-9]{8}-` (eight digits then hyphen) | `20260416-` |
-
-A string matching `^gh` cannot match `^[0-9]`, and vice versa. Sequential (3 digits) and timestamp (8 digits) are disambiguated by the position of the first hyphen (4th char for sequential, 9th for timestamp). All three forms are mutually exclusive grammars, so no string can be ambiguously classified.
-
-## Legacy entities (in-flight)
-
-During the transition, the filesystem will contain some legacy entities that predate this feature:
-
-- Legacy unprefixed branches for issue-numbered work: e.g. `249-speckit-branch-spec-numbering-should-ali` (this feature's own branch). These match the `seq-prefix` grammar by structure and keep working unchanged.
-- Legacy `forkprint-<N>-<slug>/` worktree directories: matched by the compat-fallback awk pattern in `--cleanup-merged` and `--remove`.
-
-No retroactive rename is performed. These entities are cleaned up naturally as their features merge.
-
-## State transitions
-
-None. These entities are created once per feature and do not change state during a feature's lifetime (beyond normal git operations: commits, pushes, merges).
+They share a namespace — collisions are possible in principle but rare in practice, and handled by the loud-error contract (see contracts/cli-contracts.md).
 
 ## Validation rules
 
-1. **Issue number input**: positive integer, no leading zero. Validated in `create-new-feature.sh` before any filesystem mutation.
-2. **Slug input**: `[a-z0-9-]+`, 1-40 characters, no leading or trailing hyphens. Validated in `claude-worktree.sh` (existing) and `create-new-feature.sh` (existing `clean_branch_name` logic).
-3. **Branch prefix derivation from current HEAD**: if the current branch matches `^(gh[0-9]+|[0-9]{3}|[0-9]{8}-[0-9]{6})-`, the entire prefix is extracted verbatim and reused. Otherwise the sequential fallback applies.
-4. **Prefix-to-spec-dir consistency**: the spec directory name must equal the branch name (same prefix, same slug) for `find_feature_dir_by_prefix()` to resolve correctly without ambiguity.
+1. **Issue / `--number` input**: positive integer (`^[0-9]+$` AND decodes to ≥ 1). Validated up front.
+2. **Slug input**: `[a-z0-9-]+`, 1-40 chars, no leading/trailing hyphens. Enforced by existing `clean_branch_name` logic in `create-new-feature.sh` and the slug derivation in `claude-worktree.sh`.
+3. **Prefix derivation from current HEAD**: if `^[0-9]{8}-[0-9]{6}-` or `^[0-9]+-`, extract the full prefix literally. Otherwise use sequential fallback.
+4. **Prefix-to-spec-dir consistency**: spec directory name must equal branch name (same prefix, same slug) for `find_feature_dir_by_prefix()` to resolve without ambiguity. Enforced by the branch-reuse path (spec dir derived from branch) and the creation path (branch derived from spec dir target).
+
+## State transitions
+
+None. Entities are created once per feature and do not change state during a feature's lifetime.

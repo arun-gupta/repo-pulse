@@ -251,26 +251,21 @@ fi
 
 # Detect whether the currently checked-out branch already has a recognised
 # feature prefix — if so, reuse it verbatim instead of creating a new branch.
-# This is what aligns spec dir + branch with the GitHub issue number when
-# claude-worktree.sh has already created the gh<N>-<slug> branch for us.
-# Recognised prefixes (order matters — gh<N>- is checked first so it isn't
-# mistakenly consumed by the sequential <NNN>- regex):
-#   gh<N>-<slug>   — issue-driven work (e.g. gh249-align-spec-numbering)
-#   <NNN>-<slug>   — sequential/manual (e.g. 001-repo-input)
-#   <YYYYMMDD>-<HHMMSS>-<slug> — timestamp mode
+# This is what aligns spec dir + branch + GitHub issue number when
+# claude-worktree.sh has already created the <N>-<slug> branch for us.
+# Recognised prefixes (order matters — timestamp is checked first so its
+# leading digit-run isn't greedily consumed by the sequential regex):
+#   <YYYYMMDD>-<HHMMSS>-<slug>  — timestamp mode
+#   <N>-<slug>                  — issue-driven or legacy sequential (any width)
 REUSE_CURRENT_BRANCH=false
 CURRENT_BRANCH=""
 if [ "$HAS_GIT" = true ] && [ "$USE_TIMESTAMP" = false ] && [ -z "$BRANCH_NUMBER" ]; then
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-    if [[ "$CURRENT_BRANCH" =~ ^gh([0-9]+)-.+$ ]]; then
+    if [[ "$CURRENT_BRANCH" =~ ^([0-9]{8}-[0-9]{6})-.+$ ]]; then
         REUSE_CURRENT_BRANCH=true
         BRANCH_NAME="$CURRENT_BRANCH"
         FEATURE_NUM="${BASH_REMATCH[1]}"
-    elif [[ "$CURRENT_BRANCH" =~ ^([0-9]{8}-[0-9]{6})-.+$ ]]; then
-        REUSE_CURRENT_BRANCH=true
-        BRANCH_NAME="$CURRENT_BRANCH"
-        FEATURE_NUM="${BASH_REMATCH[1]}"
-    elif [[ "$CURRENT_BRANCH" =~ ^([0-9]{3,})-.+$ ]]; then
+    elif [[ "$CURRENT_BRANCH" =~ ^([0-9]+)-.+$ ]]; then
         REUSE_CURRENT_BRANCH=true
         BRANCH_NAME="$CURRENT_BRANCH"
         FEATURE_NUM="${BASH_REMATCH[1]}"
@@ -335,7 +330,7 @@ if [ "$HAS_GIT" = true ]; then
                 >&2 echo "Error: Branch '$BRANCH_NAME' already exists. Rerun to get a new timestamp or use a different --short-name."
             else
                 >&2 echo "Error: Branch '$BRANCH_NAME' already exists but is not the currently checked-out branch."
-                >&2 echo "Accepted feature-branch forms: gh<N>-<slug>, <NNN>-<slug>, <YYYYMMDD>-<HHMMSS>-<slug>."
+                >&2 echo "Accepted feature-branch forms: <N>-<slug>, <YYYYMMDD>-<HHMMSS>-<slug>."
                 >&2 echo "Resolution: check out '$BRANCH_NAME' to reuse it, delete it, or pick a different --number/--short-name."
             fi
             exit 1

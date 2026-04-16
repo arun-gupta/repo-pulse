@@ -78,17 +78,8 @@ get_current_branch() {
                         latest_timestamp="$ts"
                         latest_feature=$dirname
                     fi
-                elif [[ "$dirname" =~ ^gh([0-9]+)- ]]; then
-                    # Issue-driven branch (GitHub issue number): rank numerically with sequential.
-                    local number=${BASH_REMATCH[1]}
-                    number=$((10#$number))
-                    if [[ "$number" -gt "$highest" ]]; then
-                        highest=$number
-                        if [[ -z "$latest_timestamp" ]]; then
-                            latest_feature=$dirname
-                        fi
-                    fi
-                elif [[ "$dirname" =~ ^([0-9]{3})- ]]; then
+                elif [[ "$dirname" =~ ^([0-9]+)- ]]; then
+                    # Sequential / issue-driven: rank numerically (any width).
                     local number=${BASH_REMATCH[1]}
                     number=$((10#$number))
                     if [[ "$number" -gt "$highest" ]]; then
@@ -134,9 +125,9 @@ check_feature_branch() {
         return 0
     fi
 
-    if [[ ! "$branch" =~ ^gh[0-9]+- ]] && [[ ! "$branch" =~ ^[0-9]{3}- ]] && [[ ! "$branch" =~ ^[0-9]{8}-[0-9]{6}- ]]; then
+    if [[ ! "$branch" =~ ^[0-9]+- ]] && [[ ! "$branch" =~ ^[0-9]{8}-[0-9]{6}- ]]; then
         echo "ERROR: Not on a feature branch. Current branch: $branch" >&2
-        echo "Feature branches should be named like: gh249-feature-name, 001-feature-name, or 20260319-143022-feature-name" >&2
+        echo "Feature branches should be named like: 249-feature-name or 20260319-143022-feature-name" >&2
         return 1
     fi
 
@@ -153,15 +144,14 @@ find_feature_dir_by_prefix() {
     local specs_dir="$repo_root/specs"
 
     # Extract prefix from branch. Recognised forms:
-    #   - Issue-driven: "gh249-whatever" → prefix "gh249" (GitHub issue #249)
-    #   - Sequential:   "004-whatever"   → prefix "004"
-    #   - Timestamp:    "20260319-143022-whatever" → prefix "20260319-143022"
+    #   - Timestamp:  "20260319-143022-whatever" → prefix "20260319-143022"
+    #   - Sequential: "249-whatever" / "004-whatever" → prefix "249" / "004"
+    # Timestamp must be checked first (more specific) so its leading digit-run
+    # isn't greedily consumed by the sequential regex.
     local prefix=""
-    if [[ "$branch_name" =~ ^(gh[0-9]+)- ]]; then
+    if [[ "$branch_name" =~ ^([0-9]{8}-[0-9]{6})- ]]; then
         prefix="${BASH_REMATCH[1]}"
-    elif [[ "$branch_name" =~ ^([0-9]{8}-[0-9]{6})- ]]; then
-        prefix="${BASH_REMATCH[1]}"
-    elif [[ "$branch_name" =~ ^([0-9]{3})- ]]; then
+    elif [[ "$branch_name" =~ ^([0-9]+)- ]]; then
         prefix="${BASH_REMATCH[1]}"
     else
         # If branch doesn't have a recognized prefix, fall back to exact match
