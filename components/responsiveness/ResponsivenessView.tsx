@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CollapseChevron } from '@/components/shared/CollapseChevron'
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import { HelpLabel } from '@/components/shared/HelpLabel'
 import { MetricValue } from '@/components/shared/MetricValue'
@@ -30,6 +31,7 @@ export function ResponsivenessView({ results, activeTag: externalTag, onTagChang
     if (onTagChange) onTagChange(next)
     else setLocalTag(next)
   }
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const sections = buildResponsivenessSections(results, windowDays)
   const windowOptions = getResponsivenessWindowOptions()
 
@@ -64,56 +66,71 @@ export function ResponsivenessView({ results, activeTag: externalTag, onTagChang
           </div>
         </div>
       </div>
-      {sections.map((section) => (
-        <article key={section.repo} className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
+      {sections.map((section) => {
+        const isCollapsed = collapsed.has(section.repo)
+        return (
+          <article key={section.repo} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setCollapsed((prev) => { const next = new Set(prev); if (next.has(section.repo)) next.delete(section.repo); else next.add(section.repo); return next })}
+              className="flex w-full items-center gap-2 text-left"
+              aria-expanded={!isCollapsed}
+            >
+              <CollapseChevron expanded={!isCollapsed} />
               <h2 className="text-lg font-semibold text-slate-900">{section.repo}</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Public GitHub issue and pull-request event history summarized into responsiveness signals.
-              </p>
-              <p className="mt-2 text-sm text-slate-700">{section.score.description}</p>
-            </div>
-            <div className="w-full md:max-w-xs">
-              <ScoreBadge category="Responsiveness" value={section.score.value} tone={section.score.tone} />
-            </div>
-          </div>
-
-          {activeTag ? (
-            <div className="mt-4">
-              <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
-            </div>
-          ) : null}
-
-          <div className="grid gap-3 xl:grid-cols-2">
-            {section.panes
-              .filter((pane) => !activeTag || getResponsivenessPaneTags(pane.title).includes(activeTag))
-              .map((pane) => {
-                const tags = getResponsivenessPaneTags(pane.title)
-                return (
-              <div key={pane.title} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{pane.title}</p>
-                  {tags.map((tag) => <TagPill key={tag} tag={tag} active={activeTag === tag} onClick={handleTagClick} />)}
+            </button>
+            {!isCollapsed ? (
+              <div className="mt-4 space-y-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">
+                      Public GitHub issue and pull-request event history summarized into responsiveness signals.
+                    </p>
+                    <p className="mt-2 text-sm text-slate-700">{section.score.description}</p>
+                  </div>
+                  <div className="w-full md:max-w-xs">
+                    <ScoreBadge category="Responsiveness" value={section.score.value} tone={section.score.tone} />
+                  </div>
                 </div>
-                <dl className="mt-3 space-y-2">
-                  {pane.metrics.map((metric) => (
-                    <div key={metric.label} className="flex items-baseline justify-between gap-4">
-                      <dt className="text-sm text-slate-600">
-                        <HelpLabel label={metric.label} helpText={metric.helpText} />
-                      </dt>
-                      <dd className="text-base"><MetricValue value={metric.value} /></dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-                )
-              })}
-          </div>
 
-          <ResponsivenessScoreHelp score={section.score} />
-        </article>
-      ))}
+                {activeTag ? (
+                  <div className="mt-4">
+                    <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
+                  </div>
+                ) : null}
+
+                <div className="grid gap-3 xl:grid-cols-2">
+                  {section.panes
+                    .filter((pane) => !activeTag || getResponsivenessPaneTags(pane.title).includes(activeTag))
+                    .map((pane) => {
+                      const tags = getResponsivenessPaneTags(pane.title)
+                      return (
+                    <div key={pane.title} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{pane.title}</p>
+                        {tags.map((tag) => <TagPill key={tag} tag={tag} active={activeTag === tag} onClick={handleTagClick} />)}
+                      </div>
+                      <dl className="mt-3 space-y-2">
+                        {pane.metrics.map((metric) => (
+                          <div key={metric.label} className="flex items-baseline justify-between gap-4">
+                            <dt className="text-sm text-slate-600">
+                              <HelpLabel label={metric.label} helpText={metric.helpText} />
+                            </dt>
+                            <dd className="text-base"><MetricValue value={metric.value} /></dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                      )
+                    })}
+                </div>
+
+                <ResponsivenessScoreHelp score={section.score} />
+              </div>
+            ) : null}
+          </article>
+        )
+      })}
     </section>
   )
 }

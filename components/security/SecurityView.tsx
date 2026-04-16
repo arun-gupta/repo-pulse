@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CollapseChevron } from '@/components/shared/CollapseChevron'
 import { ScoreBadge } from '@/components/metric-cards/ScoreBadge'
 import { TagPill, ActiveFilterBar } from '@/components/tags/TagPill'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
@@ -147,6 +148,7 @@ function SecuritySummary({
 }
 
 export function SecurityView({ results, activeTag: externalTag, onTagChange }: SecurityViewProps) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [localTag, setLocalTag] = useState<string | null>(null)
   const activeTag = externalTag !== undefined ? externalTag : localTag
   const handleTagClick = (tag: string) => {
@@ -160,11 +162,20 @@ export function SecurityView({ results, activeTag: externalTag, onTagChange }: S
   return (
     <div className="space-y-6">
       {results.map((result) => {
+        const isCollapsed = collapsed.has(result.repo)
         if (result.securityResult === 'unavailable') {
           return (
             <div key={result.repo} className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
-              <p className="mt-2 text-sm text-slate-400">Security data unavailable.</p>
+              <button
+                type="button"
+                onClick={() => setCollapsed((prev) => { const next = new Set(prev); if (next.has(result.repo)) next.delete(result.repo); else next.add(result.repo); return next })}
+                className="flex w-full items-center gap-2 text-left"
+                aria-expanded={!isCollapsed}
+              >
+                <CollapseChevron expanded={!isCollapsed} />
+                <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
+              </button>
+              {!isCollapsed ? <p className="mt-2 text-sm text-slate-400">Security data unavailable.</p> : null}
             </div>
           )
         }
@@ -177,35 +188,43 @@ export function SecurityView({ results, activeTag: externalTag, onTagChange }: S
 
         return (
           <div key={result.repo} className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
-
-            <div className="mt-4">
-              <SecuritySummary score={score} scorecardOverallScore={scorecardOverallScore} />
-            </div>
-
-            {activeTag ? (
+            <button
+              type="button"
+              onClick={() => setCollapsed((prev) => { const next = new Set(prev); if (next.has(result.repo)) next.delete(result.repo); else next.add(result.repo); return next })}
+              className="flex w-full items-center gap-2 text-left"
+              aria-expanded={!isCollapsed}
+            >
+              <CollapseChevron expanded={!isCollapsed} />
+              <h2 className="text-lg font-semibold text-slate-900">{result.repo}</h2>
+            </button>
+            {!isCollapsed ? (
               <div className="mt-4">
-                <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
+                <SecuritySummary score={score} scorecardOverallScore={scorecardOverallScore} />
+
+                {activeTag ? (
+                  <div className="mt-4">
+                    <ActiveFilterBar tag={activeTag} onClear={() => handleTagClick(activeTag)} />
+                  </div>
+                ) : null}
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {hasScorecard ? (
+                    <ScorecardChecksTable
+                      checks={(result.securityResult.scorecard as Exclude<typeof result.securityResult.scorecard, 'unavailable'>).checks}
+                      activeTag={activeTag}
+                      onTagClick={handleTagClick}
+                    />
+                  ) : !activeTag ? (
+                    <section aria-label="OpenSSF Scorecard" className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <h3 className="text-xs font-medium uppercase tracking-wide text-slate-500">OpenSSF Scorecard</h3>
+                      <p className="mt-3 text-sm text-slate-400">Scorecard data not available for this repository.</p>
+                    </section>
+                  ) : null}
+
+                  <DirectChecksSection checks={result.securityResult.directChecks} activeTag={activeTag} onTagClick={handleTagClick} />
+                </div>
               </div>
             ) : null}
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {hasScorecard ? (
-                <ScorecardChecksTable
-                  checks={(result.securityResult.scorecard as Exclude<typeof result.securityResult.scorecard, 'unavailable'>).checks}
-                  activeTag={activeTag}
-                  onTagClick={handleTagClick}
-                />
-              ) : !activeTag ? (
-                <section aria-label="OpenSSF Scorecard" className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-xs font-medium uppercase tracking-wide text-slate-500">OpenSSF Scorecard</h3>
-                  <p className="mt-3 text-sm text-slate-400">Scorecard data not available for this repository.</p>
-                </section>
-              ) : null}
-
-              <DirectChecksSection checks={result.securityResult.directChecks} activeTag={activeTag} onTagClick={handleTagClick} />
-            </div>
-
           </div>
         )
       })}
