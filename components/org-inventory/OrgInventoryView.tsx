@@ -178,7 +178,23 @@ export function OrgInventoryView({
 
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-slate-500 dark:text-slate-400">{selectedRepos.length} selected · {activeRunRepos.length} after filters · {visibleRangeStart}–{visibleRangeEnd} of {sortedRows.length}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{selectedRepos.length} selected · {activeRunRepos.length} after filters</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRepos(sortedRows.map((r) => r.repo))}
+                  className="text-xs text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
+                >
+                  Select all
+                </button>
+                {selectedRepos.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRepos([])}
+                    className="text-xs text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
+                  >
+                    Clear
+                  </button>
+                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 {onAnalyzeAllActive ? (

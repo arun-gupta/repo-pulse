@@ -42,6 +42,12 @@ export type ReleaseCadenceValue = {
 export type SecurityRollupValue = {
   perRepo: { repo: string; score: number | 'unavailable' }[]
   worstScore: number | null
+  directChecks: {
+    securityPolicy: { present: number; total: number }
+    dependabot: { present: number; total: number }
+    ciCd: { present: number; total: number }
+    branchProtection: { present: number; total: number }
+  } | null
 }
 
 export type GovernanceValue = {

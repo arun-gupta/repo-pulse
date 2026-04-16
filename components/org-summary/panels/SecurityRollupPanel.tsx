@@ -9,40 +9,36 @@ interface Props {
   panel: AggregatePanel<SecurityRollupValue>
 }
 
+function scoreTone(score: number): string {
+  if (score >= 7) return 'text-emerald-700 dark:text-emerald-400'
+  if (score >= 4) return 'text-amber-700 dark:text-amber-400'
+  return 'text-rose-700 dark:text-rose-400'
+}
+
+function pct(present: number, total: number): string {
+  if (total === 0) return '—'
+  return `${Math.round((present / total) * 100)}%`
+}
+
 export function SecurityRollupPanel({ panel }: Props) {
   return (
-    <section
-      aria-label="Security rollup"
-      className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-    >
+    <section aria-label="Security rollup" className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Security (OpenSSF Scorecard)
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Security (OpenSSF Scorecard)</h3>
         {panel.lastUpdatedAt ? (
-          <span className="text-xs text-slate-400 dark:text-slate-500">
-            updated {panel.lastUpdatedAt.toLocaleTimeString()}
-          </span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">updated {panel.lastUpdatedAt.toLocaleTimeString()}</span>
         ) : null}
       </header>
 
       {panel.status === 'in-progress' && !panel.value ? (
         <EmptyState />
       ) : panel.status === 'unavailable' || !panel.value ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          No OpenSSF Scorecard data available across this run.
-        </p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">No security data available across this run.</p>
       ) : (
         <Body value={panel.value} />
       )}
     </section>
   )
-}
-
-function scoreTone(score: number): string {
-  if (score >= 7) return 'text-emerald-700 dark:text-emerald-400'
-  if (score >= 4) return 'text-amber-700 dark:text-amber-400'
-  return 'text-rose-700 dark:text-rose-400'
 }
 
 function Body({ value }: { value: SecurityRollupValue }) {
@@ -53,7 +49,7 @@ function Body({ value }: { value: SecurityRollupValue }) {
       <dl className="mb-4 grid grid-cols-2 gap-3">
         <div>
           <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            <HelpLabel label="Worst score" helpText="Lowest OpenSSF Scorecard score across the repo set. Highlights the weakest link." />
+            <HelpLabel label="Worst score" helpText="Lowest OpenSSF Scorecard score across the repo set." />
           </dt>
           <dd className={`text-2xl font-semibold ${value.worstScore !== null ? scoreTone(value.worstScore) : 'text-slate-400'}`}>
             {value.worstScore !== null ? value.worstScore.toFixed(1) : '—'}
@@ -66,6 +62,18 @@ function Body({ value }: { value: SecurityRollupValue }) {
           </dd>
         </div>
       </dl>
+
+      {value.directChecks ? (
+        <div className="mb-4">
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Direct security checks</h4>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <DirectCheckCard label="Security policy" present={value.directChecks.securityPolicy.present} total={value.directChecks.securityPolicy.total} />
+            <DirectCheckCard label="Dependabot" present={value.directChecks.dependabot.present} total={value.directChecks.dependabot.total} />
+            <DirectCheckCard label="CI/CD" present={value.directChecks.ciCd.present} total={value.directChecks.ciCd.total} />
+            <DirectCheckCard label="Branch protection" present={value.directChecks.branchProtection.present} total={value.directChecks.branchProtection.total} />
+          </div>
+        </div>
+      ) : null}
 
       <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Per-repo scores</h4>
       <ul role="list" className="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
@@ -81,5 +89,19 @@ function Body({ value }: { value: SecurityRollupValue }) {
         ))}
       </ul>
     </>
+  )
+}
+
+function DirectCheckCard({ label, present, total }: { label: string; present: number; total: number }) {
+  const ratio = total > 0 ? present / total : 0
+  const tone = ratio >= 0.8 ? 'text-emerald-700 dark:text-emerald-400' : ratio >= 0.5 ? 'text-amber-700 dark:text-amber-400' : 'text-rose-700 dark:text-rose-400'
+  return (
+    <div className="rounded border border-slate-200 p-2 dark:border-slate-700">
+      <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={`text-lg font-semibold ${total > 0 ? tone : 'text-slate-400'}`}>
+        {pct(present, total)}
+      </p>
+      <p className="text-[10px] text-slate-400 dark:text-slate-500">{present} of {total}</p>
+    </div>
   )
 }
