@@ -132,6 +132,7 @@ describe('RepoInputClient', () => {
           openIssues: 5,
           pushedAt: '2026-04-02T00:00:00Z',
           archived: false,
+          isFork: false,
           url: 'https://github.com/facebook/react',
         },
       ],
@@ -178,6 +179,7 @@ describe('RepoInputClient', () => {
           openIssues: 5,
           pushedAt: '2026-04-02T00:00:00Z',
           archived: false,
+          isFork: false,
           url: 'https://github.com/facebook/react',
         },
       ],
@@ -209,6 +211,86 @@ describe('RepoInputClient', () => {
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.queryByRole('tab', { name: 'Contributors' })).not.toBeInTheDocument()
     expect(screen.getByText(/enter a github organization slug or org url above/i)).toBeInTheDocument()
+  })
+
+  it('starts org aggregation from the inventory and auto-shows the org summary', async () => {
+    const onAnalyzeOrg = vi.fn().mockResolvedValue({
+      org: 'facebook',
+      summary: {
+        totalPublicRepos: 3,
+        totalStars: 180,
+        mostStarredRepos: [{ repo: 'facebook/react', stars: 100 }],
+        mostRecentlyActiveRepos: [{ repo: 'facebook/react', pushedAt: '2026-04-02T00:00:00Z' }],
+        languageDistribution: [{ language: 'TypeScript', repoCount: 3 }],
+        archivedRepoCount: 1,
+        activeRepoCount: 2,
+      },
+      results: [
+        {
+          repo: 'facebook/react',
+          name: 'react',
+          description: 'A UI library',
+          primaryLanguage: 'TypeScript',
+          stars: 100,
+          forks: 25,
+          watchers: 10,
+          openIssues: 5,
+          pushedAt: '2026-04-02T00:00:00Z',
+          archived: false,
+          isFork: false,
+          url: 'https://github.com/facebook/react',
+        },
+        {
+          repo: 'facebook/jest',
+          name: 'jest',
+          description: 'Testing framework',
+          primaryLanguage: 'TypeScript',
+          stars: 80,
+          forks: 20,
+          watchers: 9,
+          openIssues: 4,
+          pushedAt: '2026-04-01T00:00:00Z',
+          archived: false,
+          isFork: false,
+          url: 'https://github.com/facebook/jest',
+        },
+        {
+          repo: 'facebook/old',
+          name: 'old',
+          description: 'Archived repo',
+          primaryLanguage: 'TypeScript',
+          stars: 5,
+          forks: 1,
+          watchers: 1,
+          openIssues: 0,
+          pushedAt: '2025-01-01T00:00:00Z',
+          archived: true,
+          isFork: false,
+          url: 'https://github.com/facebook/old',
+        },
+      ],
+      rateLimit: null,
+      failure: null,
+    })
+    const onAnalyze = vi
+      .fn()
+      .mockResolvedValueOnce({ results: [buildAnalysisResult('facebook/react')], failures: [], rateLimit: null })
+      .mockResolvedValueOnce({ results: [buildAnalysisResult('facebook/jest')], failures: [], rateLimit: null })
+
+    renderWithAuth(<RepoInputClient onAnalyzeOrg={onAnalyzeOrg} onAnalyze={onAnalyze} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /organization/i }))
+    await userEvent.type(screen.getByRole('textbox', { name: /organization input/i }), 'facebook')
+    await userEvent.click(screen.getByRole('button', { name: /^analyze$/i }))
+
+    await screen.findByRole('region', { name: /org inventory view/i })
+    await userEvent.click(screen.getByRole('button', { name: /analyze all/i }))
+
+    await vi.waitFor(() => {
+      expect(onAnalyze).toHaveBeenCalledWith(['facebook/react'], 'gho_test_token')
+      expect(onAnalyze).toHaveBeenCalledWith(['facebook/jest'], 'gho_test_token')
+      expect(onAnalyze).toHaveBeenCalledTimes(2)
+    })
   })
 
   it('shows the comparison tab in the overflow menu before any analysis results exist', async () => {

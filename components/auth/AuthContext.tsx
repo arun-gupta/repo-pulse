@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useState } from 'react'
 
 export interface AuthSession {
   token: string
@@ -28,13 +28,13 @@ export function AuthProvider({
 }) {
   const [session, setSession] = useState<AuthSession | null>(initialSession)
 
-  function signIn(newSession: AuthSession) {
+  const signIn = useCallback((newSession: AuthSession) => {
     setSession(newSession)
-  }
+  }, [])
 
-  function signOut() {
+  const signOut = useCallback(() => {
     setSession(null)
-  }
+  }, [])
 
   return <AuthContext.Provider value={{ session, signIn, signOut }}>{children}</AuthContext.Provider>
 }
