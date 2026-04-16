@@ -11,7 +11,7 @@ export const ORG_AGGREGATION_CONFIG = {
   updateCadenceDefault: { kind: 'every-n-percent', percentStep: 10 } as UpdateCadence,
   // Valid percent-step options for the pre-run dialog dropdown (US3).
   updateCadencePercentOptions: [5, 10, 20, 25] as const,
-  quoteRotationIntervalMs: 6_000,
+  quoteRotationIntervalMs: 10_000,
   wallClockTickIntervalMs: 1_000,
   inactiveRepoWindowMonths: 12,
   preFilters: {
