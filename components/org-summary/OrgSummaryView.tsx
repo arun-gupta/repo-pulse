@@ -257,9 +257,9 @@ function InlineOrgSummary({
           <div>
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Analysis Run ({view.status.succeeded + view.status.failed} of {view.status.total})
-              {view.status.status === 'complete' ? (
+              {expanded && view.status.status === 'complete' ? (
                 <span className="ml-2 text-xs font-normal text-emerald-600 dark:text-emerald-400">Complete</span>
-              ) : view.status.status === 'cancelled' ? (
+              ) : expanded && view.status.status === 'cancelled' ? (
                 <span className="ml-2 text-xs font-normal text-amber-600 dark:text-amber-400">Cancelled</span>
               ) : view.status.status === 'in-progress' ? (
                 <span className="ml-2 text-xs font-normal text-sky-600 dark:text-sky-400">In Progress</span>
