@@ -124,7 +124,8 @@ print_stranded_shell_notice_if_needed() {
 
 remove_worktree() {
   local issue="$1"
-  local caller_cwd="$PWD"
+  local caller_cwd
+  caller_cwd="$(pwd -P)"  # physical path so we match git's canonical worktree paths (macOS /tmp -> /private/tmp)
   local wt
   wt="$(git -C "$REPO_ROOT" worktree list --porcelain \
     | awk -v i="-${issue}-" '/^worktree/ && $2 ~ i {print $2; exit}')"
@@ -145,7 +146,8 @@ remove_worktree() {
 
 cleanup_merged() {
   local issue="$1"
-  local caller_cwd="$PWD"
+  local caller_cwd
+  caller_cwd="$(pwd -P)"  # physical path so we match git's canonical worktree paths (macOS /tmp -> /private/tmp)
   local wt branch current_branch pr_state
   wt="$(git -C "$REPO_ROOT" worktree list --porcelain \
     | awk -v i="-${issue}-" '/^worktree/ && $2 ~ i {print $2; exit}')"
