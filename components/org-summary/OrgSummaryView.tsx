@@ -214,12 +214,12 @@ function InlineOrgSummary({
 
   const statusLabel =
     view.status.status === 'complete'
-      ? 'Complete'
+      ? null
       : view.status.status === 'cancelled'
-        ? 'Cancelled'
+        ? null
         : view.status.status === 'paused'
           ? `Rate-limited — auto-resumes at ${view.status.pause?.resumesAt.toLocaleTimeString() ?? ''}`
-          : `In progress (${view.status.succeeded + view.status.failed} of ${view.status.total})`
+          : null
 
   const showCancel = view.status.status === 'in-progress' || view.status.status === 'paused'
   const showPause = view.status.status === 'in-progress' && Boolean(onPause)
@@ -255,8 +255,17 @@ function InlineOrgSummary({
             </svg>
           </button>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Analysis run ({view.status.succeeded + view.status.failed} of {view.status.total})</p>
-            <p className="text-sm text-slate-600 dark:text-slate-400">{statusLabel}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Analysis Run ({view.status.succeeded + view.status.failed} of {view.status.total})
+              {view.status.status === 'complete' ? (
+                <span className="ml-2 text-xs font-normal text-emerald-600 dark:text-emerald-400">Complete</span>
+              ) : view.status.status === 'cancelled' ? (
+                <span className="ml-2 text-xs font-normal text-amber-600 dark:text-amber-400">Cancelled</span>
+              ) : view.status.status === 'in-progress' ? (
+                <span className="ml-2 text-xs font-normal text-sky-600 dark:text-sky-400">In Progress</span>
+              ) : null}
+            </p>
+            {statusLabel ? <p className="text-xs text-slate-500 dark:text-slate-400">{statusLabel}</p> : null}
           </div>
         </div>
         <div className="flex items-center gap-3">
