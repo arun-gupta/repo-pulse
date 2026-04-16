@@ -43,7 +43,10 @@ Cleanup from inside a worktree:
 
 Behavior:
   1. Creates ../forkprint-<issue>-<slug> as a git worktree on a new branch
-     (slug auto-derived from the issue title via gh when omitted).
+     named <issue>-<slug> (slug auto-derived from the issue title via gh
+     when omitted). /speckit.specify inside the worktree reuses this branch
+     verbatim so branch, spec directory, and issue number all agree — see
+     docs/DEVELOPMENT.md for the numbering rule.
   2. Picks the next free port >= 3010 and writes it to .env.local as PORT.
   3. Runs npm install in the worktree.
   4. Starts `npm run dev` on that port in the background (log -> dev.log).

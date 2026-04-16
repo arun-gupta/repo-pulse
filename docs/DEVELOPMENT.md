@@ -139,7 +139,21 @@ scripts/claude-worktree.sh --headless 207
 for i in 210 211 212; do scripts/claude-worktree.sh --headless "$i"; done
 ```
 
-The script creates `../forkprint-<issue>-<slug>/` on a new branch, picks the next free port in `3010–3100`, runs `npm install`, starts `next dev` in the background (log: `dev.log`, PID: `.dev.pid`), and launches `claude` with a prompt that runs the SpecKit lifecycle and opens a PR (never merges — see CLAUDE.md).
+The script creates `../forkprint-<issue>-<slug>/` on a new branch named `<issue>-<slug>`, picks the next free port in `3010–3100`, runs `npm install`, starts `next dev` in the background (log: `dev.log`, PID: `.dev.pid`), and launches `claude` with a prompt that runs the SpecKit lifecycle and opens a PR (never merges — see CLAUDE.md).
+
+### Numbering rule
+
+The branch, worktree, and spec directory for a feature always share the same numeric prefix. Two paths, one convention:
+
+| Flow | Worktree path | Branch | Spec directory |
+|---|---|---|---|
+| Worktree-driven (issue) | `../forkprint-249-align-numbering` | `249-align-numbering` | `specs/249-align-numbering/` |
+| Manual sequential | *(none)* | `230-some-refactor` | `specs/230-some-refactor/` |
+| Timestamp (opt-in) | *(none)* | `20260416-143022-refactor` | `specs/20260416-143022-refactor/` |
+
+When `scripts/claude-worktree.sh <N>` pre-creates the branch `<N>-<slug>`, `/speckit.specify` inside the worktree detects the `^[0-9]+-` prefix on the current HEAD and reuses it verbatim — it does not scan `specs/` for the next free sequential number. Outside the worktree flow (a manual `/speckit.specify` on `main`), the sequential-scan fallback applies unchanged.
+
+The rare collision — manual sequential claims slot N just before issue #N is filed and worktree-spawned — surfaces as a loud error naming the conflicting branch or spec directory. Resolution: rename/remove the colliding entity, or pick a different issue number. `/speckit.specify` never silently renumbers.
 
 **Mandatory pause after `/speckit.specify`.** Both interactive and `--headless` spawns halt after `/speckit.specify` and wait for your explicit approval before continuing to `/speckit.plan`. The kickoff prompt tells Claude to report the generated spec path and wait for one of the phrases `"proceed"`, `"approved"`, or `"go to plan"`. Spec revisions re-enter the paused state; only an approval phrase releases it. This exists because the spec is the highest-leverage artifact — revisions applied after plan/tasks are generated force Claude to re-derive everything downstream.
 
