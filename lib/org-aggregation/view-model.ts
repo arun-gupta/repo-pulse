@@ -1,9 +1,13 @@
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import { contributorDiversityAggregator } from './aggregators/contributor-diversity'
+import { activityRollupAggregator } from './aggregators/activity-rollup'
+import { adoptersAggregator } from './aggregators/adopters'
 import { governanceAggregator } from './aggregators/governance'
 import { maintainersAggregator } from './aggregators/maintainers'
 import { orgAffiliationsAggregator } from './aggregators/org-affiliations'
+import { projectFootprintAggregator } from './aggregators/project-footprint'
 import { releaseCadenceAggregator } from './aggregators/release-cadence'
+import { responsivenessRollupAggregator } from './aggregators/responsiveness-rollup'
 import { securityRollupAggregator } from './aggregators/security-rollup'
 import { composeMissingData, type PanelMissingRecord } from './missing-data'
 import type {
@@ -131,6 +135,10 @@ export function buildOrgSummaryViewModel(
     'release-cadence': stamp(releaseCadenceAggregator(completedResults, context)),
     'security-rollup': stamp(securityRollupAggregator(completedResults, context)),
     governance: stamp(governanceAggregator(completedResults, context)),
+    adopters: stamp(adoptersAggregator(completedResults, context)),
+    'project-footprint': stamp(projectFootprintAggregator(completedResults, context)),
+    'activity-rollup': stamp(activityRollupAggregator(completedResults, context)),
+    'responsiveness-rollup': stamp(responsivenessRollupAggregator(completedResults, context)),
   }
 
   const missingRecords: PanelMissingRecord[] = []

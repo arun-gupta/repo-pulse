@@ -2,12 +2,16 @@
 
 import type { ComponentType } from 'react'
 import type { AggregatePanel, PanelId } from '@/lib/org-aggregation/types'
+import { ActivityRollupPanel } from './ActivityRollupPanel'
+import { AdoptersPanel } from './AdoptersPanel'
 import { ContributorDiversityPanel } from './ContributorDiversityPanel'
 import { GovernancePanel } from './GovernancePanel'
 import { MaintainersPanel } from './MaintainersPanel'
 import { OrgAffiliationsPanel } from './OrgAffiliationsPanel'
 import { PlaceholderPanel } from './PlaceholderPanel'
+import { ProjectFootprintPanel } from './ProjectFootprintPanel'
 import { ReleaseCadencePanel } from './ReleaseCadencePanel'
+import { ResponsivenessRollupPanel } from './ResponsivenessRollupPanel'
 import { SecurityRollupPanel } from './SecurityRollupPanel'
 
 // Bucket groupings mirror the per-repo ResultsShell tabs (overview /
@@ -122,6 +126,10 @@ const REAL_PANELS: Partial<Record<PanelId, ComponentType<{ panel: AggregatePanel
   'release-cadence': ReleaseCadencePanel as ComponentType<{ panel: AggregatePanel<never> }>,
   'security-rollup': SecurityRollupPanel as ComponentType<{ panel: AggregatePanel<never> }>,
   governance: GovernancePanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  adopters: AdoptersPanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  'project-footprint': ProjectFootprintPanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  'activity-rollup': ActivityRollupPanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  'responsiveness-rollup': ResponsivenessRollupPanel as ComponentType<{ panel: AggregatePanel<never> }>,
 }
 
 export function isRealPanel(panelId: PanelId): boolean {

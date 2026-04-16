@@ -444,23 +444,6 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
             </section>
           ) : (
             <>
-              {orgAggregation.view && orgAggregation.view.status.status !== 'complete' && orgAggregation.view.status.status !== 'cancelled' ? (
-                <section className="flex items-center gap-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 flex-shrink-0 text-sky-600 dark:text-sky-400">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
-                  </svg>
-                  <span>
-                    Analyzing {orgAggregation.view.status.total} repos — detailed per-repo analysis is available in the <strong>Repositories</strong> tab.
-                  </span>
-                </section>
-              ) : null}
-              {orgAggregation.view && (orgAggregation.view.status.status === 'complete' || orgAggregation.view.status.status === 'cancelled') ? (
-                <OrgSummaryView
-                  org={orgInventoryResponse.org}
-                  view={orgAggregation.view}
-                  showRunStatus={false}
-                />
-              ) : null}
               <OrgInventoryView
                 org={orgInventoryResponse.org}
                 summary={orgInventoryResponse.summary}
@@ -479,6 +462,23 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
                   })
                 }}
               />
+              {orgAggregation.view && orgAggregation.view.status.status !== 'complete' && orgAggregation.view.status.status !== 'cancelled' ? (
+                <section className="flex items-center gap-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 flex-shrink-0 text-sky-600 dark:text-sky-400">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
+                  </svg>
+                  <span>
+                    Analyzing {orgAggregation.view.status.total} repos — detailed per-repo analysis is available in the <strong>Repositories</strong> tab.
+                  </span>
+                </section>
+              ) : null}
+              {orgAggregation.view && (orgAggregation.view.status.status === 'complete' || orgAggregation.view.status.status === 'cancelled') ? (
+                <OrgSummaryView
+                  org={orgInventoryResponse.org}
+                  view={orgAggregation.view}
+                  showRunStatus={false}
+                />
+              ) : null}
             </>
           )}
         </section>
