@@ -22,6 +22,7 @@ import { OrgSummaryView } from '@/components/org-summary/OrgSummaryView'
 import { OrgBucketContent } from '@/components/org-summary/OrgBucketContent'
 import { OrgWindowSelector } from '@/components/org-summary/OrgWindowSelector'
 import type { ContributorDiversityWindow } from '@/lib/org-aggregation/aggregators/types'
+import { RepoSelector } from '@/components/shared/RepoSelector'
 import { useOrgAggregation } from '@/components/shared/hooks/useOrgAggregation'
 import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
@@ -51,6 +52,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [quoteIndex, setQuoteIndex] = useState<number | null>(null)
   const [activeTag, setActiveTag] = useState<string | null>(null)
+  const [selectedRepoIndex, setSelectedRepoIndex] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -337,6 +339,21 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
 
   const orgAnalysisComplete = orgAggregation.view && (orgAggregation.view.status.status === 'complete' || orgAggregation.view.status.status === 'cancelled')
 
+  // Repo selector: sorted repo names from org analysis results (alphabetical)
+  const isOrgOriginatedRepoView = inputMode === 'repos' && !!orgInventoryResponse && !!orgAggregation.view && !!analysisResponse && analysisResponse.results.length > 1
+  const sortedRepoNames = isOrgOriginatedRepoView
+    ? [...analysisResponse.results].sort((a, b) => a.repo.localeCompare(b.repo)).map((r) => r.repo)
+    : []
+  const clampedRepoIndex = sortedRepoNames.length > 0 ? Math.min(selectedRepoIndex, sortedRepoNames.length - 1) : 0
+  const filteredResults = isOrgOriginatedRepoView
+    ? analysisResponse.results.filter((r) => r.repo === sortedRepoNames[clampedRepoIndex])
+    : analysisResponse?.results ?? []
+
+  // Reset selected repo when results change
+  useEffect(() => {
+    setSelectedRepoIndex(0)
+  }, [analysisResponse])
+
   const orgInventoryTabs: ResultTabDefinition[] = orgAnalysisComplete
     ? [
         { id: 'overview', label: 'Overview', status: 'implemented', description: 'Organization inventory and footprint.' },
@@ -526,7 +543,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="contributors" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <ContributorsView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <>
+            {isOrgOriginatedRepoView ? <RepoSelector repos={sortedRepoNames} selectedIndex={clampedRepoIndex} onSelect={setSelectedRepoIndex} /> : null}
+            <ContributorsView results={filteredResults} activeTag={activeTag} onTagChange={setActiveTag} />
+          </>
         ) : (
           <p className="text-sm text-slate-500">
             Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
@@ -537,7 +557,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="activity" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <ActivityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <>
+            {isOrgOriginatedRepoView ? <RepoSelector repos={sortedRepoNames} selectedIndex={clampedRepoIndex} onSelect={setSelectedRepoIndex} /> : null}
+            <ActivityView results={filteredResults} activeTag={activeTag} onTagChange={setActiveTag} />
+          </>
         ) : (
           <p className="text-sm text-slate-500">
             Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
@@ -548,7 +571,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="responsiveness" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <ResponsivenessView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <>
+            {isOrgOriginatedRepoView ? <RepoSelector repos={sortedRepoNames} selectedIndex={clampedRepoIndex} onSelect={setSelectedRepoIndex} /> : null}
+            <ResponsivenessView results={filteredResults} activeTag={activeTag} onTagChange={setActiveTag} />
+          </>
         ) : (
           <p className="text-sm text-slate-500">
             Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
@@ -559,7 +585,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="documentation" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <DocumentationView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <>
+            {isOrgOriginatedRepoView ? <RepoSelector repos={sortedRepoNames} selectedIndex={clampedRepoIndex} onSelect={setSelectedRepoIndex} /> : null}
+            <DocumentationView results={filteredResults} activeTag={activeTag} onTagChange={setActiveTag} />
+          </>
         ) : (
           <p className="text-sm text-slate-500">
             Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
@@ -570,7 +599,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="security" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <SecurityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <>
+            {isOrgOriginatedRepoView ? <RepoSelector repos={sortedRepoNames} selectedIndex={clampedRepoIndex} onSelect={setSelectedRepoIndex} /> : null}
+            <SecurityView results={filteredResults} activeTag={activeTag} onTagChange={setActiveTag} />
+          </>
         ) : (
           <p className="text-sm text-slate-500">
             Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
@@ -579,7 +611,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       }
       recommendations={
         analysisResponse ? (
-          <RecommendationsView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <>
+            {isOrgOriginatedRepoView ? <RepoSelector repos={sortedRepoNames} selectedIndex={clampedRepoIndex} onSelect={setSelectedRepoIndex} /> : null}
+            <RecommendationsView results={filteredResults} activeTag={activeTag} onTagChange={setActiveTag} />
+          </>
         ) : (
           <p className="text-sm text-slate-500">
             Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
