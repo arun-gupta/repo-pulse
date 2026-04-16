@@ -55,6 +55,8 @@ When filling manual checklist signoff or similar metadata, use the authenticated
 - N/A (stateless — in-browser memory only for the duration of the run, per constitution §I) (231-org-aggregation)
 - Bash (POSIX-compatible for portable bits, bash-specific features already in use: `[[ ... ]]`, `set -euo pipefail`, `${BASH_REMATCH}`) + `git`, `gh` (GitHub CLI, already required by the surrounding tooling), `uuidgen` (macOS/Linux standard) (249-speckit-branch-spec-numbering-should-ali)
 - N/A (all state lives in git + local filesystem: spec dirs under `specs/`, worktrees as siblings of the repo) (249-speckit-branch-spec-numbering-should-ali)
+- TypeScript 5.x on Node 20+ (Next.js 16+, App Router) + React, `@testing-library/react` (`renderHook`, `act`, `waitFor`), Vitest — all already in `package.json` (264-investigate-skipped-test-per-repo-status)
+- N/A (stateless hook; test uses injected deferred promises) (264-investigate-skipped-test-per-repo-status)
 
 ## Recent Changes
 - 032-doc-scoring: Added TypeScript 5.x (Next.js 16+) + Next.js (App Router), Tailwind CSS, Vitest, React Testing Library
