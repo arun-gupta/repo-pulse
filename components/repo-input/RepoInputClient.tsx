@@ -58,6 +58,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [preRunDialogRepos, setPreRunDialogRepos] = useState<string[] | null>(null)
   const [notificationOptIn, setNotificationOptIn] = useState(false)
+  const orgFetchAbortRef = useRef<AbortController | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const quoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -293,6 +294,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   async function handleOrgSubmit(org: string) {
     if (!session?.token) return
 
+    orgFetchAbortRef.current?.abort()
+    const controller = new AbortController()
+    orgFetchAbortRef.current = controller
+
     setSubmissionError(null)
     setAnalysisResponse(null)
     setOrgInventoryResponse(null)
@@ -305,17 +310,25 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     try {
       const response = onAnalyzeOrg
         ? await onAnalyzeOrg(org, session.token)
-        : await submitOrgInventoryRequest(org, session.token)
+        : await submitOrgInventoryRequest(org, session.token, controller.signal)
 
-      if (response) {
+      if (response && !controller.signal.aborted) {
         setOrgInventoryResponse(response)
       }
     } catch (error) {
+      if (controller.signal.aborted) return
       const message = error instanceof Error ? error.message : 'Organization inventory request failed.'
       setSubmissionError(message)
     } finally {
-      setLoadingOrg(null)
+      if (!controller.signal.aborted) setLoadingOrg(null)
+      orgFetchAbortRef.current = null
     }
+  }
+
+  function handleCancelOrgFetch() {
+    orgFetchAbortRef.current?.abort()
+    orgFetchAbortRef.current = null
+    setLoadingOrg(null)
   }
 
   const analysisPanel = (
@@ -410,7 +423,16 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         <section aria-label="Org inventory loading state" className="rounded border border-blue-200 bg-blue-50 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-blue-900">Loading org inventory for:</h2>
-            <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+              <button
+                type="button"
+                onClick={handleCancelOrgFetch}
+                className="rounded border border-blue-300 bg-white px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
           <p className="mt-2 text-sm text-blue-900">{loadingOrg}</p>
           {elapsedSeconds >= 10 ? (
@@ -686,11 +708,12 @@ async function submitAnalysisRequest(repos: string[], token: string): Promise<An
   return payload
 }
 
-async function submitOrgInventoryRequest(org: string, token: string): Promise<OrgInventoryResponse> {
+async function submitOrgInventoryRequest(org: string, token: string, signal?: AbortSignal): Promise<OrgInventoryResponse> {
   const response = await fetch('/api/analyze-org', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ org, token }),
+    signal,
   })
   const payload = (await response.json()) as OrgInventoryResponse & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? 'Organization inventory request failed.')
