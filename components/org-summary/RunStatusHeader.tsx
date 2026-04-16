@@ -22,9 +22,10 @@ interface Props {
   onPause?: () => void
   onResume?: () => void
   notificationToggle?: React.ReactNode
+  hideHeading?: boolean
 }
 
-export function RunStatusHeader({ org, header, onCancel, onPause, onResume, notificationToggle }: Props) {
+export function RunStatusHeader({ org, header, onCancel, onPause, onResume, notificationToggle, hideHeading }: Props) {
   const [expanded, setExpanded] = useState(true)
   const statusLabel =
     header.status === 'complete'
@@ -61,9 +62,11 @@ export function RunStatusHeader({ org, header, onCancel, onPause, onResume, noti
             <ChevronIcon expanded={expanded} />
           </button>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Org summary — {org}
-            </h2>
+            {hideHeading ? null : (
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Org summary — {org}
+              </h2>
+            )}
             <p className="text-sm text-slate-600 dark:text-slate-400">{statusLabel}</p>
           </div>
         </div>

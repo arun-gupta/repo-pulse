@@ -57,6 +57,7 @@ export function OrgSummaryView({ org, view, startedAt, onCancel, onPause, onResu
           onPause={onPause}
           onResume={onResume}
           notificationToggle={notificationToggle}
+          hideHeading={!showPanels}
         />
       ) : null}
 
@@ -69,6 +70,25 @@ export function OrgSummaryView({ org, view, startedAt, onCancel, onPause, onResu
           startedAt={startedAt}
           etaMs={view.status.etaMs}
         />
+      ) : null}
+
+      {showRunStatus && (view.status.status === 'complete' || view.status.status === 'cancelled') ? (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => triggerDownload(buildOrgSummaryJsonExport(org, view))}
+            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            Export JSON
+          </button>
+          <button
+            type="button"
+            onClick={() => triggerDownload(buildOrgSummaryMarkdownExport(org, view))}
+            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            Export Markdown
+          </button>
+        </div>
       ) : null}
 
       {showRunStatus && view.status.pause && view.status.status === 'paused' ? (
@@ -146,24 +166,6 @@ export function OrgSummaryView({ org, view, startedAt, onCancel, onPause, onResu
             </section>
           ) : null}
 
-          {(view.status.status === 'complete' || view.status.status === 'cancelled') ? (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => triggerDownload(buildOrgSummaryJsonExport(org, view))}
-                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              >
-                Export JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => triggerDownload(buildOrgSummaryMarkdownExport(org, view))}
-                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              >
-                Export Markdown
-              </button>
-            </div>
-          ) : null}
         </>
       ) : null}
     </div>
