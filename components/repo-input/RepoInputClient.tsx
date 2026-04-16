@@ -18,6 +18,8 @@ import { SearchProvider } from '@/components/search/SearchContext'
 import type { TabMatchCounts } from '@/lib/search/types'
 import { computeTabTagCounts } from '@/lib/tags/tab-counts'
 import { useAuth } from '@/components/auth/AuthContext'
+import { OrgSummaryView } from '@/components/org-summary/OrgSummaryView'
+import { useOrgAggregation } from '@/components/shared/hooks/useOrgAggregation'
 import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
 import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/results-shell-props'
@@ -106,6 +108,51 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   // Search: DOM-based match counts (populated by ResultsShell after highlighting)
   const [domTotalMatches, setDomTotalMatches] = useState(0)
   const [domMatchedTabCount, setDomMatchedTabCount] = useState(0)
+  const orgAggregation = useOrgAggregation({
+    dispatch: async (repo) => {
+      if (!session?.token) {
+        return {
+          kind: 'error',
+          error: { reason: 'Authentication required.', kind: 'other' },
+        }
+      }
+
+      try {
+        const response = onAnalyze
+          ? await onAnalyze([repo], session.token)
+          : await submitAnalysisRequest([repo], session.token)
+        const first = response?.results?.[0]
+        if (!first) {
+          return {
+            kind: 'error',
+            error: { reason: 'Repository could not be analyzed.', kind: 'other' },
+          }
+        }
+        return { kind: 'ok', result: first }
+      } catch (error) {
+        return {
+          kind: 'error',
+          error: {
+            reason: error instanceof Error ? error.message : 'Analysis request failed.',
+            kind: 'transient',
+          },
+        }
+      }
+    },
+    fetchPinned: async (org) => {
+      if (!session?.token) return []
+      const response = await fetch(`/api/org/pinned?org=${encodeURIComponent(org)}`, {
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      })
+      if (!response.ok) return []
+      const payload = (await response.json()) as { pinned?: Array<{ owner: string; name: string; stars: number | 'unavailable'; rank: number }> }
+      return payload.pinned ?? []
+    },
+    starsForRepo: (repo) =>
+      orgInventoryResponse?.results.find((result) => result.repo === repo)?.stars ?? 'unavailable',
+  })
   const handleDomMatchCounts = useRef((counts: { domMatchCounts: TabMatchCounts; domTotalMatches: number; domMatchedTabCount: number }) => {
     setDomTotalMatches(counts.domTotalMatches)
     setDomMatchedTabCount(counts.domMatchedTabCount)
@@ -343,18 +390,38 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
               <p>{orgInventoryResponse.failure.message}</p>
             </section>
           ) : (
-            <OrgInventoryView
-              org={orgInventoryResponse.org}
-              summary={orgInventoryResponse.summary}
-              results={orgInventoryResponse.results}
-              rateLimit={orgInventoryResponse.rateLimit}
-              onAnalyzeRepo={(repo) => {
-                void handleSubmit([repo])
-              }}
-              onAnalyzeSelected={(repos) => {
-                void handleSubmit(repos)
-              }}
-            />
+            <>
+              {orgAggregation.view ? (
+                <OrgSummaryView
+                  org={orgInventoryResponse.org}
+                  view={orgAggregation.view}
+                  onCancel={orgAggregation.cancel}
+                  onPause={orgAggregation.pause}
+                  onResume={orgAggregation.resume}
+                  onRetry={(repo) => {
+                    void orgAggregation.retry(repo)
+                  }}
+                />
+              ) : null}
+              <OrgInventoryView
+                org={orgInventoryResponse.org}
+                summary={orgInventoryResponse.summary}
+                results={orgInventoryResponse.results}
+                rateLimit={orgInventoryResponse.rateLimit}
+                onAnalyzeRepo={(repo) => {
+                  void handleSubmit([repo])
+                }}
+                onAnalyzeSelected={(repos) => {
+                  void handleSubmit(repos)
+                }}
+                onAnalyzeAllActive={(repos) => {
+                  void orgAggregation.start({
+                    org: orgInventoryResponse.org,
+                    repos,
+                  })
+                }}
+              />
+            </>
           )}
         </section>
       ) : null}

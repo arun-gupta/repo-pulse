@@ -7,6 +7,7 @@ export interface OrgRepoNode {
   primaryLanguage: { name: string } | null
   stargazerCount: number
   forkCount: number
+  isFork: boolean
   watchers: { totalCount: number }
   issues: { totalCount: number }
   pushedAt: string | null
@@ -25,6 +26,7 @@ export interface OrgRepoSummary {
   openIssues: number | 'unavailable'
   pushedAt: string | 'unavailable'
   archived: boolean
+  isFork: boolean
   url: string
 }
 
@@ -97,6 +99,7 @@ export function buildOrgRepoSummary(owner: string, node: OrgRepoNode): OrgRepoSu
     openIssues: node.issues.totalCount,
     pushedAt: node.pushedAt ?? 'unavailable',
     archived: node.isArchived,
+    isFork: node.isFork,
     url: node.url,
   }
 }
@@ -201,6 +204,7 @@ const ORG_INVENTORY_QUERY = `
           }
           stargazerCount
           forkCount
+          isFork
           watchers {
             totalCount
           }

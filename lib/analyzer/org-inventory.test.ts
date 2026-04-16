@@ -37,6 +37,7 @@ describe('analyzer/org-inventory', () => {
       issues: { totalCount: 5 },
       pushedAt: '2026-04-02T00:00:00Z',
       isArchived: false,
+      isFork: false,
       url: 'https://github.com/facebook/react',
     })
 
@@ -51,6 +52,7 @@ describe('analyzer/org-inventory', () => {
       openIssues: 5,
       pushedAt: '2026-04-02T00:00:00Z',
       archived: false,
+      isFork: false,
       url: 'https://github.com/facebook/react',
     })
   })
@@ -98,6 +100,7 @@ function buildNode(name: string) {
     issues: { totalCount: 5 },
     pushedAt: '2026-04-02T00:00:00Z',
     isArchived: false,
+    isFork: false,
     url: `https://github.com/facebook/${name}`,
   }
 }

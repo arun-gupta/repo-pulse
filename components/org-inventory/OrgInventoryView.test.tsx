@@ -263,6 +263,69 @@ describe('OrgInventoryView', () => {
     expect(screen.queryByText('Bulk selection limit')).not.toBeInTheDocument()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
+
+  it('shows archived and fork pre-filters checked by default and analyzes only active non-fork repos', async () => {
+    const onAnalyzeAllActive = vi.fn()
+
+    render(
+      <OrgInventoryView
+        org="facebook"
+        summary={{
+          totalPublicRepos: 4,
+          totalStars: 180,
+          mostStarredRepos: [{ repo: 'facebook/react', stars: 100 }],
+          mostRecentlyActiveRepos: [{ repo: 'facebook/react', pushedAt: '2026-04-02T00:00:00Z' }],
+          languageDistribution: [{ language: 'TypeScript', repoCount: 4 }],
+          archivedRepoCount: 1,
+          activeRepoCount: 3,
+        }}
+        results={[
+          buildRepo('facebook/react'),
+          buildRepo('facebook/jest', { archived: true }),
+          buildRepo('facebook/relay', { isFork: true }),
+          buildRepo('facebook/rocksdb'),
+        ]}
+        rateLimit={null}
+        onAnalyzeRepo={vi.fn()}
+        onAnalyzeSelected={vi.fn()}
+        onAnalyzeAllActive={onAnalyzeAllActive}
+      />,
+    )
+
+    expect(screen.getByLabelText('Exclude archived repos')).toBeChecked()
+    expect(screen.getByLabelText('Exclude forks')).toBeChecked()
+
+    await userEvent.click(screen.getByRole('button', { name: /analyze all active repos/i }))
+
+    expect(onAnalyzeAllActive).toHaveBeenCalledWith(['facebook/react', 'facebook/rocksdb'])
+  })
+
+  it('disables analyze-all when the pre-filters exclude every repo', () => {
+    render(
+      <OrgInventoryView
+        org="facebook"
+        summary={{
+          totalPublicRepos: 2,
+          totalStars: 180,
+          mostStarredRepos: [{ repo: 'facebook/react', stars: 100 }],
+          mostRecentlyActiveRepos: [{ repo: 'facebook/react', pushedAt: '2026-04-02T00:00:00Z' }],
+          languageDistribution: [{ language: 'TypeScript', repoCount: 2 }],
+          archivedRepoCount: 1,
+          activeRepoCount: 1,
+        }}
+        results={[
+          buildRepo('facebook/jest', { archived: true }),
+          buildRepo('facebook/relay', { isFork: true }),
+        ]}
+        rateLimit={null}
+        onAnalyzeRepo={vi.fn()}
+        onAnalyzeSelected={vi.fn()}
+        onAnalyzeAllActive={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /analyze all active repos/i })).toBeDisabled()
+  })
 })
 
 function buildRepo(repo: string, overrides: Record<string, unknown> = {}) {
@@ -277,6 +340,7 @@ function buildRepo(repo: string, overrides: Record<string, unknown> = {}) {
     openIssues: 2,
     pushedAt: '2026-03-31T00:00:00Z',
     archived: false,
+    isFork: false,
     url: `https://github.com/${repo}`,
     ...overrides,
   }

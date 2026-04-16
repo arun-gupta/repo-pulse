@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
+import { ORG_AGGREGATION_CONFIG } from '@/lib/config/org-aggregation'
 import { clampOrgInventoryPageSize, ORG_INVENTORY_CONFIG } from '@/lib/config/org-inventory'
 import {
   applySelectionLimit,
@@ -28,9 +29,18 @@ interface OrgInventoryViewProps {
   rateLimit: OrgInventoryResponse['rateLimit']
   onAnalyzeRepo: (repo: string) => void
   onAnalyzeSelected: (repos: string[]) => void
+  onAnalyzeAllActive?: (repos: string[]) => void
 }
 
-export function OrgInventoryView({ org, summary, results, rateLimit, onAnalyzeRepo, onAnalyzeSelected }: OrgInventoryViewProps) {
+export function OrgInventoryView({
+  org,
+  summary,
+  results,
+  rateLimit,
+  onAnalyzeRepo,
+  onAnalyzeSelected,
+  onAnalyzeAllActive,
+}: OrgInventoryViewProps) {
   const [filters, setFilters] = useState<OrgInventoryFilters>({
     repoQuery: '',
     language: 'all',
@@ -46,6 +56,12 @@ export function OrgInventoryView({ org, summary, results, rateLimit, onAnalyzeRe
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedRepos, setSelectedRepos] = useState<string[]>([])
   const [selectionError, setSelectionError] = useState<string | null>(null)
+  const [excludeArchivedRepos, setExcludeArchivedRepos] = useState(
+    ORG_AGGREGATION_CONFIG.preFilters.excludeArchivedByDefault,
+  )
+  const [excludeForks, setExcludeForks] = useState(
+    ORG_AGGREGATION_CONFIG.preFilters.excludeForksByDefault,
+  )
 
   const columnLabels: Record<OrgInventoryVisibleColumn, string> = {
     description: 'Description',
@@ -79,6 +95,12 @@ export function OrgInventoryView({ org, summary, results, rateLimit, onAnalyzeRe
   const languageOptions = useMemo(() => {
     return [...new Set(results.map((result) => result.primaryLanguage).filter((value): value is string => value !== 'unavailable'))].sort()
   }, [results])
+  const activeRunRepos = useMemo(() => {
+    return sortedRows
+      .filter((row) => (excludeArchivedRepos ? !row.archived : true))
+      .filter((row) => (excludeForks ? !row.isFork : true))
+      .map((row) => row.repo)
+  }, [excludeArchivedRepos, excludeForks, sortedRows])
 
   return (
     <section aria-label="Org inventory view" className="space-y-6">
@@ -167,6 +189,32 @@ export function OrgInventoryView({ org, summary, results, rateLimit, onAnalyzeRe
                 />
                 <p className="text-sm text-slate-600">Select up to {selectionLimit} repositories for bulk analysis.</p>
               </label>
+              <div className="space-y-2">
+                <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Org aggregation pre-filters</span>
+                <div className="space-y-2">
+                  <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={excludeArchivedRepos}
+                      onChange={(event) => setExcludeArchivedRepos(event.target.checked)}
+                      aria-label="Exclude archived repos"
+                    />
+                    Exclude archived repos
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={excludeForks}
+                      onChange={(event) => setExcludeForks(event.target.checked)}
+                      aria-label="Exclude forks"
+                    />
+                    Exclude forks
+                  </label>
+                </div>
+                <p className="text-sm text-slate-600">
+                  Analyze-all will use {activeRunRepos.length} repo{activeRunRepos.length === 1 ? '' : 's'} after pre-filters.
+                </p>
+              </div>
             </div>
 
             <div className="mt-4 space-y-2">
@@ -193,14 +241,26 @@ export function OrgInventoryView({ org, summary, results, rateLimit, onAnalyzeRe
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-slate-600">{selectedRepos.length} selected</p>
-              <button
-                type="button"
-                disabled={selectedRepos.length === 0}
-                className="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition enabled:hover:border-slate-400 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={() => onAnalyzeSelected(selectedRepos)}
-              >
-                Analyze selected
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                {onAnalyzeAllActive ? (
+                  <button
+                    type="button"
+                    disabled={activeRunRepos.length === 0}
+                    className="rounded border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-800 transition enabled:hover:border-sky-400 enabled:hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => onAnalyzeAllActive(activeRunRepos)}
+                  >
+                    Analyze all active repos
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={selectedRepos.length === 0}
+                  className="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition enabled:hover:border-slate-400 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => onAnalyzeSelected(selectedRepos)}
+                >
+                  Analyze selected
+                </button>
+              </div>
             </div>
             {selectionError ? <p className="mt-2 text-sm text-amber-700">{selectionError}</p> : null}
 
