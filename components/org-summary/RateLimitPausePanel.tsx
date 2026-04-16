@@ -54,9 +54,13 @@ export function RateLimitPausePanel({ kind, resumesAt, reposToReDispatch, pauses
             <button
               type="button"
               onClick={onCancel}
-              className="mt-3 rounded border border-amber-300 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50 dark:border-amber-700 dark:bg-amber-900/50 dark:text-amber-200 dark:hover:bg-amber-900"
+              aria-label="Cancel run"
+              title="Cancel run"
+              className="mt-3 inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
             >
-              Cancel run
+              <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+                <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
+              </svg>
             </button>
           ) : null}
         </div>

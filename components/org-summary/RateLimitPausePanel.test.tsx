@@ -32,14 +32,14 @@ describe('RateLimitPausePanel', () => {
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
     const onCancel = vi.fn()
     render(<RateLimitPausePanel kind="primary" resumesAt={new Date('2026-01-01T00:01:00Z')} reposToReDispatch={5} pausesSoFar={1} onCancel={onCancel} />)
-    screen.getByText('Cancel run').click()
+    screen.getByLabelText('Cancel run').click()
     expect(onCancel).toHaveBeenCalledOnce()
   })
 
   it('hides cancel button when onCancel is not provided', () => {
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
     render(<RateLimitPausePanel kind="primary" resumesAt={new Date('2026-01-01T00:01:00Z')} reposToReDispatch={5} pausesSoFar={1} />)
-    expect(screen.queryByText('Cancel run')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Cancel run')).not.toBeInTheDocument()
   })
 
   it('has aria-label for accessibility', () => {

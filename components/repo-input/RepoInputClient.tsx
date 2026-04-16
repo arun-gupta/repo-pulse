@@ -57,6 +57,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [preRunDialogRepos, setPreRunDialogRepos] = useState<string[] | null>(null)
   const [notificationOptIn, setNotificationOptIn] = useState(false)
+  const repoFetchAbortRef = useRef<AbortController | null>(null)
   const orgFetchAbortRef = useRef<AbortController | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const quoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -265,6 +266,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   async function handleSubmit(repos: string[]) {
     if (!session?.token) return
 
+    repoFetchAbortRef.current?.abort()
+    const controller = new AbortController()
+    repoFetchAbortRef.current = controller
+
     setSubmissionError(null)
     setAnalysisResponse(null)
     setOrgInventoryResponse(null)
@@ -276,18 +281,26 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     try {
       const response = onAnalyze
         ? await onAnalyze(repos, session.token)
-        : await submitAnalysisRequest(repos, session.token)
+        : await submitAnalysisRequest(repos, session.token, controller.signal)
 
-      if (response) {
+      if (response && !controller.signal.aborted) {
         setAnalysisResponse(response)
         setAnalyzedRepos(repos)
       }
     } catch (error) {
+      if (controller.signal.aborted) return
       const message = error instanceof Error ? error.message : 'Analysis request failed.'
       setSubmissionError(message)
     } finally {
-      setLoadingRepos([])
+      if (!controller.signal.aborted) setLoadingRepos([])
+      repoFetchAbortRef.current = null
     }
+  }
+
+  function handleCancelRepoFetch() {
+    repoFetchAbortRef.current?.abort()
+    repoFetchAbortRef.current = null
+    setLoadingRepos([])
   }
 
   async function handleOrgSubmit(org: string) {
@@ -394,7 +407,20 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         <section aria-label="Analysis loading state" className="rounded border border-blue-200 bg-blue-50 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-blue-900">Analyzing repositories...</h2>
-            <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+              <button
+                type="button"
+                onClick={handleCancelRepoFetch}
+                aria-label="Cancel"
+                title="Cancel"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
+              >
+                <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+                  <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
+                </svg>
+              </button>
+            </div>
           </div>
           <ul className="mt-2 list-disc pl-5 text-sm text-blue-900">
             {loadingRepos.map((repo) => (
@@ -427,9 +453,13 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
               <button
                 type="button"
                 onClick={handleCancelOrgFetch}
-                className="rounded border border-blue-300 bg-white px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+                aria-label="Cancel"
+                title="Cancel"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
               >
-                Cancel
+                <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+                  <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
+                </svg>
               </button>
             </div>
           </div>
@@ -688,11 +718,12 @@ function formatElapsedTime(seconds: number) {
   return `${seconds}s`
 }
 
-async function submitAnalysisRequest(repos: string[], token: string): Promise<AnalyzeResponse> {
+async function submitAnalysisRequest(repos: string[], token: string, signal?: AbortSignal): Promise<AnalyzeResponse> {
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repos, token }),
+    signal,
   })
   const payload = (await response.json()) as AnalyzeResponse & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? 'Analysis request failed.')
