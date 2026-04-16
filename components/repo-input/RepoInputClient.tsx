@@ -18,9 +18,11 @@ import { SearchProvider } from '@/components/search/SearchContext'
 import type { TabMatchCounts } from '@/lib/search/types'
 import { computeTabTagCounts } from '@/lib/tags/tab-counts'
 import { useAuth } from '@/components/auth/AuthContext'
+import { NotificationToggle } from '@/components/org-summary/NotificationToggle'
 import { OrgSummaryView } from '@/components/org-summary/OrgSummaryView'
 import { OrgBucketContent } from '@/components/org-summary/OrgBucketContent'
 import { OrgWindowSelector } from '@/components/org-summary/OrgWindowSelector'
+import { PreRunWarningDialog } from '@/components/org-summary/PreRunWarningDialog'
 import type { ContributorDiversityWindow } from '@/lib/org-aggregation/aggregators/types'
 import { useOrgAggregation } from '@/components/shared/hooks/useOrgAggregation'
 import { isRateLimitLow, type AnalysisResult, type AnalyzeResponse } from '@/lib/analyzer/analysis-result'
@@ -53,6 +55,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [preRunDialogRepos, setPreRunDialogRepos] = useState<string[] | null>(null)
+  const [notificationOptIn, setNotificationOptIn] = useState(false)
+  const repoFetchAbortRef = useRef<AbortController | null>(null)
+  const orgFetchAbortRef = useRef<AbortController | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const quoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -260,6 +266,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   async function handleSubmit(repos: string[]) {
     if (!session?.token) return
 
+    repoFetchAbortRef.current?.abort()
+    const controller = new AbortController()
+    repoFetchAbortRef.current = controller
+
     setSubmissionError(null)
     setAnalysisResponse(null)
     setOrgInventoryResponse(null)
@@ -271,22 +281,34 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     try {
       const response = onAnalyze
         ? await onAnalyze(repos, session.token)
-        : await submitAnalysisRequest(repos, session.token)
+        : await submitAnalysisRequest(repos, session.token, controller.signal)
 
-      if (response) {
+      if (response && !controller.signal.aborted) {
         setAnalysisResponse(response)
         setAnalyzedRepos(repos)
       }
     } catch (error) {
+      if (controller.signal.aborted) return
       const message = error instanceof Error ? error.message : 'Analysis request failed.'
       setSubmissionError(message)
     } finally {
-      setLoadingRepos([])
+      if (!controller.signal.aborted) setLoadingRepos([])
+      repoFetchAbortRef.current = null
     }
+  }
+
+  function handleCancelRepoFetch() {
+    repoFetchAbortRef.current?.abort()
+    repoFetchAbortRef.current = null
+    setLoadingRepos([])
   }
 
   async function handleOrgSubmit(org: string) {
     if (!session?.token) return
+
+    orgFetchAbortRef.current?.abort()
+    const controller = new AbortController()
+    orgFetchAbortRef.current = controller
 
     setSubmissionError(null)
     setAnalysisResponse(null)
@@ -300,17 +322,25 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     try {
       const response = onAnalyzeOrg
         ? await onAnalyzeOrg(org, session.token)
-        : await submitOrgInventoryRequest(org, session.token)
+        : await submitOrgInventoryRequest(org, session.token, controller.signal)
 
-      if (response) {
+      if (response && !controller.signal.aborted) {
         setOrgInventoryResponse(response)
       }
     } catch (error) {
+      if (controller.signal.aborted) return
       const message = error instanceof Error ? error.message : 'Organization inventory request failed.'
       setSubmissionError(message)
     } finally {
-      setLoadingOrg(null)
+      if (!controller.signal.aborted) setLoadingOrg(null)
+      orgFetchAbortRef.current = null
     }
+  }
+
+  function handleCancelOrgFetch() {
+    orgFetchAbortRef.current?.abort()
+    orgFetchAbortRef.current = null
+    setLoadingOrg(null)
   }
 
   const analysisPanel = (
@@ -377,7 +407,20 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         <section aria-label="Analysis loading state" className="rounded border border-blue-200 bg-blue-50 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-blue-900">Analyzing repositories...</h2>
-            <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+              <button
+                type="button"
+                onClick={handleCancelRepoFetch}
+                aria-label="Cancel"
+                title="Cancel"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
+              >
+                <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+                  <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
+                </svg>
+              </button>
+            </div>
           </div>
           <ul className="mt-2 list-disc pl-5 text-sm text-blue-900">
             {loadingRepos.map((repo) => (
@@ -405,7 +448,20 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         <section aria-label="Org inventory loading state" className="rounded border border-blue-200 bg-blue-50 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-blue-900">Loading org inventory for:</h2>
-            <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs tabular-nums text-blue-700">{formatElapsedTime(elapsedSeconds)}</span>
+              <button
+                type="button"
+                onClick={handleCancelOrgFetch}
+                aria-label="Cancel"
+                title="Cancel"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
+              >
+                <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+                  <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
+                </svg>
+              </button>
+            </div>
           </div>
           <p className="mt-2 text-sm text-blue-900">{loadingOrg}</p>
           {elapsedSeconds >= 10 ? (
@@ -464,18 +520,6 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
             </section>
           ) : (
             <>
-              {orgAggregation.view ? (
-                <section className="flex items-center gap-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
-                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 flex-shrink-0 text-sky-600 dark:text-sky-400">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
-                  </svg>
-                  <span>
-                    {orgAggregation.view.status.status === 'complete' || orgAggregation.view.status.status === 'cancelled'
-                      ? <>Analysis complete — detailed per-repo results are in the <strong>Repositories</strong> tab.</>
-                      : <>Analyzing {orgAggregation.view.status.total} repos — detailed per-repo analysis is available in the <strong>Repositories</strong> tab.</>}
-                  </span>
-                </section>
-              ) : null}
               <OrgInventoryView
                 org={orgInventoryResponse.org}
                 summary={orgInventoryResponse.summary}
@@ -485,14 +529,31 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
                   void handleSubmit([repo])
                 }}
                 onAnalyzeSelected={(repos) => {
-                  void handleSubmit(repos)
+                  setPreRunDialogRepos(repos)
                 }}
                 onAnalyzeAllActive={(repos) => {
-                  void orgAggregation.start({
-                    org: orgInventoryResponse.org,
-                    repos,
-                  })
+                  setPreRunDialogRepos(repos)
                 }}
+                afterSummary={orgAggregation.view ? (
+                  <div ref={orgSummaryRef}>
+                    <OrgSummaryView
+                      org={orgInventoryResponse.org}
+                      view={orgAggregation.view}
+                      startedAt={orgAggregation.run?.startedAt}
+                      onCancel={orgAggregation.cancel}
+                      onPause={orgAggregation.pause}
+                      onResume={orgAggregation.resume}
+                      onRetry={orgAggregation.retry}
+                      showPanels={false}
+                      notificationToggle={
+                        <NotificationToggle
+                          enabled={notificationOptIn}
+                          onChange={setNotificationOptIn}
+                        />
+                      }
+                    />
+                  </div>
+                ) : undefined}
               />
             </>
           )}
@@ -511,6 +572,23 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
 
   return (
     <SearchProvider query={debouncedQuery}>
+    {preRunDialogRepos && orgInventoryResponse ? (
+      <PreRunWarningDialog
+        repoCount={preRunDialogRepos.length}
+        onConfirm={({ concurrency, notificationOptIn: notifOpt }) => {
+          const repos = preRunDialogRepos
+          setPreRunDialogRepos(null)
+          setNotificationOptIn(notifOpt)
+          void orgAggregation.start({
+            org: orgInventoryResponse.org,
+            repos,
+            concurrency,
+            notificationOptIn: notifOpt,
+          })
+        }}
+        onCancel={() => setPreRunDialogRepos(null)}
+      />
+    ) : null}
     <ResultsShell
       resetKey={resultsResetKey}
       initialActiveTab="overview"
@@ -641,22 +719,24 @@ function formatElapsedTime(seconds: number) {
   return `${seconds}s`
 }
 
-async function submitAnalysisRequest(repos: string[], token: string): Promise<AnalyzeResponse> {
+async function submitAnalysisRequest(repos: string[], token: string, signal?: AbortSignal): Promise<AnalyzeResponse> {
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repos, token }),
+    signal,
   })
   const payload = (await response.json()) as AnalyzeResponse & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? 'Analysis request failed.')
   return payload
 }
 
-async function submitOrgInventoryRequest(org: string, token: string): Promise<OrgInventoryResponse> {
+async function submitOrgInventoryRequest(org: string, token: string, signal?: AbortSignal): Promise<OrgInventoryResponse> {
   const response = await fetch('/api/analyze-org', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ org, token }),
+    signal,
   })
   const payload = (await response.json()) as OrgInventoryResponse & { error?: string }
   if (!response.ok) throw new Error(payload.error ?? 'Organization inventory request failed.')

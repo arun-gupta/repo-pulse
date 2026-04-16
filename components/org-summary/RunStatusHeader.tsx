@@ -22,18 +22,19 @@ interface Props {
   onPause?: () => void
   onResume?: () => void
   notificationToggle?: React.ReactNode
+  hideHeading?: boolean
 }
 
-export function RunStatusHeader({ org, header, onCancel, onPause, onResume, notificationToggle }: Props) {
+export function RunStatusHeader({ org, header, onCancel, onPause, onResume, notificationToggle, hideHeading }: Props) {
   const [expanded, setExpanded] = useState(true)
   const statusLabel =
     header.status === 'complete'
-      ? `complete — ${header.succeeded} of ${header.total} succeeded, ${header.failed} failed`
+      ? 'Complete'
       : header.status === 'cancelled'
-        ? `cancelled (${header.succeeded + header.failed} of ${header.total} completed)`
+        ? 'Cancelled'
         : header.status === 'paused'
-          ? `rate-limited — auto-resumes at ${header.pause?.resumesAt.toLocaleTimeString() ?? ''}`
-          : `in progress (${header.succeeded + header.failed} of ${header.total})`
+          ? `Rate-limited — auto-resumes at ${header.pause?.resumesAt.toLocaleTimeString() ?? ''}`
+          : `In progress (${header.succeeded + header.failed} of ${header.total})`
 
   const showCancel = header.status === 'in-progress' || header.status === 'paused'
   const showPause = header.status === 'in-progress' && Boolean(onPause)
@@ -61,9 +62,13 @@ export function RunStatusHeader({ org, header, onCancel, onPause, onResume, noti
             <ChevronIcon expanded={expanded} />
           </button>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Org summary — {org}
-            </h2>
+            {hideHeading ? (
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Analysis run</p>
+            ) : (
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Org summary — {org}
+              </h2>
+            )}
             <p className="text-sm text-slate-600 dark:text-slate-400">{statusLabel}</p>
           </div>
         </div>
