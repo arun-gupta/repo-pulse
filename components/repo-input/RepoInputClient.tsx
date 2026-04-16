@@ -20,7 +20,7 @@ import { computeTabTagCounts } from '@/lib/tags/tab-counts'
 import { useAuth } from '@/components/auth/AuthContext'
 import { OrgSummaryView } from '@/components/org-summary/OrgSummaryView'
 import { useOrgAggregation } from '@/components/shared/hooks/useOrgAggregation'
-import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
+import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
 import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/results-shell-props'
 import { resultTabs } from '@/lib/results-shell/tabs'
@@ -108,6 +108,9 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   // Search: DOM-based match counts (populated by ResultsShell after highlighting)
   const [domTotalMatches, setDomTotalMatches] = useState(0)
   const [domMatchedTabCount, setDomMatchedTabCount] = useState(0)
+  const orgSummaryRef = useRef<HTMLDivElement>(null)
+  const hasScrolledToSummary = useRef(false)
+
   const orgAggregation = useOrgAggregation({
     dispatch: async (repo) => {
       if (!session?.token) {
@@ -153,6 +156,55 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     starsForRepo: (repo) =>
       orgInventoryResponse?.results.find((result) => result.repo === repo)?.stars ?? 'unavailable',
   })
+  useEffect(() => {
+    if (orgAggregation.view && !hasScrolledToSummary.current) {
+      hasScrolledToSummary.current = true
+      setTimeout(() => {
+        orgSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 50)
+    }
+    if (!orgAggregation.view) {
+      hasScrolledToSummary.current = false
+    }
+  }, [orgAggregation.view])
+
+
+  // Sync org aggregation state into the Repositories tab:
+  // - loadingRepos: shows "Analyzing repositories..." UI during the run
+  // - analysisResponse: populates per-repo detail tabs when run completes
+  useEffect(() => {
+    if (!orgAggregation.run) return
+    const run = orgAggregation.run
+    const status = run.status
+
+    if (status === 'in-progress' || status === 'paused') {
+      const active: string[] = []
+      for (const [, s] of run.perRepo) {
+        if (s.status === 'in-progress' || s.status === 'queued') active.push(s.repo)
+      }
+      setLoadingRepos(active)
+
+      const completed: AnalysisResult[] = []
+      for (const [, s] of run.perRepo) {
+        if (s.status === 'done' && s.result) completed.push(s.result)
+      }
+      if (completed.length > 0) {
+        setAnalysisResponse({ results: completed, failures: [], rateLimit: null })
+      }
+    }
+
+    if (status === 'complete' || status === 'cancelled') {
+      setLoadingRepos([])
+      const completed: AnalysisResult[] = []
+      for (const [, s] of run.perRepo) {
+        if (s.status === 'done' && s.result) completed.push(s.result)
+      }
+      if (completed.length > 0) {
+        setAnalysisResponse({ results: completed, failures: [], rateLimit: null })
+      }
+    }
+  }, [orgAggregation.run, orgAggregation.run?.status])
+
   const handleDomMatchCounts = useRef((counts: { domMatchCounts: TabMatchCounts; domTotalMatches: number; domMatchedTabCount: number }) => {
     setDomTotalMatches(counts.domTotalMatches)
     setDomMatchedTabCount(counts.domMatchedTabCount)
@@ -239,6 +291,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     setInputMode('org')
     setLoadingRepos([])
     setLoadingOrg(org)
+    orgAggregation.reset()
 
     try {
       const response = onAnalyzeOrg
@@ -287,13 +340,13 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     },
   ]
 
-  const showOrgWorkspace = inputMode === 'org' && !analysisResponse
+  const showOrgWorkspace = inputMode === 'org'
   const successfulRepoCount = analysisResponse?.results.length ?? 0
   const repoTabs: ResultTabDefinition[] = resultTabs
 
   const overviewContent = (
     <div className="space-y-4">
-      {isEmptyState ? (
+      {isEmptyState && inputMode === 'repos' ? (
         <div className="space-y-3">
           <p className="text-sm text-slate-500">
             Enter repositories and click <span className="font-medium text-slate-700">Analyze</span> to get started.
@@ -310,7 +363,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
           {submissionError}
         </p>
       ) : null}
-      {loadingRepos.length > 0 ? (
+      {loadingRepos.length > 0 && inputMode === 'repos' ? (
         <section aria-label="Analysis loading state" className="rounded border border-blue-200 bg-blue-50 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-blue-900">Analyzing repositories...</h2>
@@ -391,16 +444,21 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
             </section>
           ) : (
             <>
-              {orgAggregation.view ? (
+              {orgAggregation.view && orgAggregation.view.status.status !== 'complete' && orgAggregation.view.status.status !== 'cancelled' ? (
+                <section className="flex items-center gap-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 flex-shrink-0 text-sky-600 dark:text-sky-400">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
+                  </svg>
+                  <span>
+                    Analyzing {orgAggregation.view.status.total} repos — detailed per-repo analysis is available in the <strong>Repositories</strong> tab.
+                  </span>
+                </section>
+              ) : null}
+              {orgAggregation.view && (orgAggregation.view.status.status === 'complete' || orgAggregation.view.status.status === 'cancelled') ? (
                 <OrgSummaryView
                   org={orgInventoryResponse.org}
                   view={orgAggregation.view}
-                  onCancel={orgAggregation.cancel}
-                  onPause={orgAggregation.pause}
-                  onResume={orgAggregation.resume}
-                  onRetry={(repo) => {
-                    void orgAggregation.retry(repo)
-                  }}
+                  showRunStatus={false}
                 />
               ) : null}
               <OrgInventoryView

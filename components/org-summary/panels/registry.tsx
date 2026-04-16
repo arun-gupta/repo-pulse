@@ -3,8 +3,12 @@
 import type { ComponentType } from 'react'
 import type { AggregatePanel, PanelId } from '@/lib/org-aggregation/types'
 import { ContributorDiversityPanel } from './ContributorDiversityPanel'
+import { GovernancePanel } from './GovernancePanel'
 import { MaintainersPanel } from './MaintainersPanel'
+import { OrgAffiliationsPanel } from './OrgAffiliationsPanel'
 import { PlaceholderPanel } from './PlaceholderPanel'
+import { ReleaseCadencePanel } from './ReleaseCadencePanel'
+import { SecurityRollupPanel } from './SecurityRollupPanel'
 
 // Bucket groupings mirror the per-repo ResultsShell tabs (overview /
 // contributors / activity / responsiveness / documentation / security).
@@ -114,6 +118,14 @@ export const PANEL_LABELS: Record<PanelId, string> = {
 const REAL_PANELS: Partial<Record<PanelId, ComponentType<{ panel: AggregatePanel<never> }>>> = {
   'contributor-diversity': ContributorDiversityPanel as ComponentType<{ panel: AggregatePanel<never> }>,
   maintainers: MaintainersPanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  'org-affiliations': OrgAffiliationsPanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  'release-cadence': ReleaseCadencePanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  'security-rollup': SecurityRollupPanel as ComponentType<{ panel: AggregatePanel<never> }>,
+  governance: GovernancePanel as ComponentType<{ panel: AggregatePanel<never> }>,
+}
+
+export function isRealPanel(panelId: PanelId): boolean {
+  return panelId in REAL_PANELS
 }
 
 export function renderPanel(panelId: PanelId, panel: AggregatePanel<unknown>) {

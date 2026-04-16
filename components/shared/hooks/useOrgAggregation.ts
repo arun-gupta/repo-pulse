@@ -93,9 +93,11 @@ async function defaultFetchPinned(org: string): Promise<PinnedRepoApiEntry[]> {
 
 type RunAction =
   | { type: 'init'; run: OrgAggregationRun }
+  | { type: 'reset' }
   | { type: 'apply'; mutate: (r: OrgAggregationRun) => OrgAggregationRun }
 
 function runReducer(state: OrgAggregationRun | null, action: RunAction): OrgAggregationRun | null {
+  if (action.type === 'reset') return null
   if (action.type === 'init') return action.run
   if (!state) return state
   return action.mutate(state)
@@ -301,5 +303,11 @@ export function useOrgAggregation(options: UseOrgAggregationOptions = {}): UseOr
     return buildOrgSummaryViewModel(run, Date.now())
   }, [run, tick])
 
-  return { run, view, start, cancel, pause, resume, retry }
+  const reset = useCallback(() => {
+    queueRef.current?.cancel()
+    queueRef.current = null
+    dispatchReducer({ type: 'reset' })
+  }, [])
+
+  return { run, view, start, cancel, pause, resume, retry, reset }
 }

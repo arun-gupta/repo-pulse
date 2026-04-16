@@ -170,25 +170,27 @@ export function OrgInventoryView({
                   <option value="archived">Archived only</option>
                 </select>
               </label>
-              <label className="space-y-2">
-                <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Bulk selection limit</span>
-                <input
-                  type="range"
-                  min={1}
-                  max={ORG_INVENTORY_CONFIG.maxBulkSelectionLimit}
-                  value={selectionLimit}
-                  onChange={(event) => {
-                    const nextLimit = Number(event.target.value)
-                    const validation = validateSelectionLimit(selectedRepos, nextLimit)
-                    const nextSelection = applySelectionLimit(selectedRepos, nextLimit)
-                    setSelectedRepos(nextSelection.selectedRepos)
-                    setSelectionError(nextSelection.error ?? validation.error)
-                    setSelectionLimit(nextLimit)
-                  }}
-                  aria-label="Bulk selection limit"
-                />
-                <p className="text-sm text-slate-600">Select up to {selectionLimit} repositories for bulk analysis.</p>
-              </label>
+              {!onAnalyzeAllActive ? (
+                <label className="space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Bulk selection limit</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={ORG_INVENTORY_CONFIG.maxBulkSelectionLimit}
+                    value={selectionLimit}
+                    onChange={(event) => {
+                      const nextLimit = Number(event.target.value)
+                      const validation = validateSelectionLimit(selectedRepos, nextLimit)
+                      const nextSelection = applySelectionLimit(selectedRepos, nextLimit)
+                      setSelectedRepos(nextSelection.selectedRepos)
+                      setSelectionError(nextSelection.error ?? validation.error)
+                      setSelectionLimit(nextLimit)
+                    }}
+                    aria-label="Bulk selection limit"
+                  />
+                  <p className="text-sm text-slate-600">Select up to {selectionLimit} repositories for bulk analysis.</p>
+                </label>
+              ) : null}
               <div className="space-y-2">
                 <span className="text-xs font-medium uppercase tracking-wide text-slate-500">Org aggregation pre-filters</span>
                 <div className="space-y-2">

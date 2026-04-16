@@ -20,6 +20,10 @@ export function OrgInventorySummary({ summary }: OrgInventorySummaryProps) {
         <SummaryCard label="Archived repos" value={String(summary.archivedRepoCount)} />
       </div>
 
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        High-level stats from GitHub metadata. Run <strong>Analyze all active repos</strong> for deeper org-level insights — contributor diversity, maintainers, security rollup, and more.
+      </p>
+
       <div className="grid gap-4 lg:grid-cols-3">
         <SummaryListCard
           title="Most starred repos"

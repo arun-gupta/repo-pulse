@@ -1,6 +1,10 @@
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import { contributorDiversityAggregator } from './aggregators/contributor-diversity'
+import { governanceAggregator } from './aggregators/governance'
 import { maintainersAggregator } from './aggregators/maintainers'
+import { orgAffiliationsAggregator } from './aggregators/org-affiliations'
+import { releaseCadenceAggregator } from './aggregators/release-cadence'
+import { securityRollupAggregator } from './aggregators/security-rollup'
 import { composeMissingData, type PanelMissingRecord } from './missing-data'
 import type {
   AggregatePanelMap,
@@ -123,6 +127,10 @@ export function buildOrgSummaryViewModel(
   const panels: AggregatePanelMap = {
     'contributor-diversity': stamp(contributorDiversityAggregator(completedResults, context)),
     maintainers: stamp(maintainersAggregator(completedResults, context)),
+    'org-affiliations': stamp(orgAffiliationsAggregator(completedResults, context)),
+    'release-cadence': stamp(releaseCadenceAggregator(completedResults, context)),
+    'security-rollup': stamp(securityRollupAggregator(completedResults, context)),
+    governance: stamp(governanceAggregator(completedResults, context)),
   }
 
   const missingRecords: PanelMissingRecord[] = []

@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import type { AggregatePanel } from '@/lib/org-aggregation/types'
 import type { MaintainersValue } from '@/lib/org-aggregation/aggregators/types'
 import { HelpLabel } from '@/components/shared/HelpLabel'
@@ -80,19 +81,7 @@ function Body({ value }: { value: MaintainersValue }) {
       </h4>
       <ul role="list" className="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
         {topEntries.map((e) => (
-          <li key={e.token} className="flex items-center justify-between gap-3 py-2">
-            <span className="flex items-center gap-2 truncate text-sm text-slate-800 dark:text-slate-200">
-              <span className="truncate font-mono">{e.token}</span>
-              {e.kind === 'team' ? (
-                <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
-                  team
-                </span>
-              ) : null}
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {e.reposListed.length} {e.reposListed.length === 1 ? 'repo' : 'repos'}
-            </span>
-          </li>
+          <MaintainerRow key={e.token} entry={e} />
         ))}
       </ul>
       {remaining > 0 ? (
@@ -101,6 +90,64 @@ function Body({ value }: { value: MaintainersValue }) {
         </p>
       ) : null}
     </>
+  )
+}
+
+function MaintainerRow({
+  entry,
+}: {
+  entry: MaintainersValue['projectWide'][number]
+}) {
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef<HTMLLIElement>(null)
+
+  return (
+    <li ref={wrapperRef} className="relative py-2">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 rounded px-1 -mx-1 hover:bg-slate-50 dark:hover:bg-slate-800"
+      >
+        <span className="flex items-center gap-2 truncate text-sm text-slate-800 dark:text-slate-200">
+          <span className="truncate font-mono">{entry.token}</span>
+          {entry.kind === 'team' ? (
+            <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
+              team
+            </span>
+          ) : null}
+        </span>
+        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+          {entry.reposListed.length} {entry.reposListed.length === 1 ? 'repo' : 'repos'}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`h-3 w-3 transition-transform ${open ? '' : '-rotate-90'}`}
+          >
+            <path d="M4 6l4 4 4-4" />
+          </svg>
+        </span>
+      </button>
+      {open ? (
+        <div className="mt-1.5 ml-1 rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800/60">
+          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Listed in
+          </p>
+          <ul className="space-y-1">
+            {entry.reposListed.map((repo) => (
+              <li key={repo} className="text-xs text-slate-700 dark:text-slate-300 font-mono">
+                {repo}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </li>
   )
 }
 

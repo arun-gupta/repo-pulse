@@ -286,11 +286,11 @@ describe('RepoInputClient', () => {
     await screen.findByRole('region', { name: /org inventory view/i })
     await userEvent.click(screen.getByRole('button', { name: /analyze all active repos/i }))
 
-    expect(await screen.findByRole('region', { name: /org aggregation run status/i })).toBeInTheDocument()
-    expect(await screen.findByText(/org summary — facebook/i)).toBeInTheDocument()
-    expect(onAnalyze).toHaveBeenCalledWith(['facebook/react'], 'gho_test_token')
-    expect(onAnalyze).toHaveBeenCalledWith(['facebook/jest'], 'gho_test_token')
-    expect(onAnalyze).toHaveBeenCalledTimes(2)
+    await vi.waitFor(() => {
+      expect(onAnalyze).toHaveBeenCalledWith(['facebook/react'], 'gho_test_token')
+      expect(onAnalyze).toHaveBeenCalledWith(['facebook/jest'], 'gho_test_token')
+      expect(onAnalyze).toHaveBeenCalledTimes(2)
+    })
   })
 
   it('shows the comparison tab in the overflow menu before any analysis results exist', async () => {
