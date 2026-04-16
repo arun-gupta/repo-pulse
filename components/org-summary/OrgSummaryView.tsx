@@ -255,12 +255,11 @@ function InlineOrgSummary({
             </svg>
           </button>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Analysis run</p>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Analysis run ({view.status.succeeded + view.status.failed} of {view.status.total})</p>
             <p className="text-sm text-slate-600 dark:text-slate-400">{statusLabel}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {notificationToggle}
           {showPause && onPause ? (
             <button type="button" onClick={onPause} aria-label="Pause run" title="Pause run"
               className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
@@ -279,18 +278,6 @@ function InlineOrgSummary({
               <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor"><rect x="3.5" y="3.5" width="9" height="9" rx="1" /></svg>
             </button>
           ) : null}
-          {isTerminal ? (
-            <div className="flex gap-2">
-              <button type="button" onClick={() => triggerDownload(buildOrgSummaryJsonExport(org, view))}
-                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                Export JSON
-              </button>
-              <button type="button" onClick={() => triggerDownload(buildOrgSummaryMarkdownExport(org, view))}
-                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                Export Markdown
-              </button>
-            </div>
-          ) : null}
         </div>
       </div>
 
@@ -306,10 +293,27 @@ function InlineOrgSummary({
             <Stat label="Queued" value={view.status.queued} />
           </dl>
 
-          <div className="flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
-            <span>Elapsed: {formatDuration(view.status.elapsedMs)}</span>
-            {view.status.etaMs !== null ? <span>ETA: {formatDuration(view.status.etaMs)}</span> : null}
-            <span>Concurrency: {view.status.concurrency.chosen}</span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-4 text-xs text-slate-600 dark:text-slate-400">
+              <span>Elapsed: {formatDuration(view.status.elapsedMs)}</span>
+              {view.status.etaMs !== null ? <span>ETA: {formatDuration(view.status.etaMs)}</span> : null}
+              <span>Concurrency: {view.status.concurrency.chosen}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {notificationToggle}
+              {isTerminal ? (
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => triggerDownload(buildOrgSummaryJsonExport(org, view))}
+                    className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                    Export JSON
+                  </button>
+                  <button type="button" onClick={() => triggerDownload(buildOrgSummaryMarkdownExport(org, view))}
+                    className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                    Export Markdown
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {/* Progress bar */}
