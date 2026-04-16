@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>A single score that tells you how healthy your open source project really is.</strong><br/>
-  Calibrated against 1,600+ real GitHub repositories.
+  Calibrated against 2,400+ real GitHub repositories.
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@ RepoPulse is built for **community-oriented projects** — multi-contributor rep
 |---|---------|-------------|
 | :bar_chart: | **OSS Health Score** | Composite percentile with actionable recommendations |
 | :card_index_dividers: | **8-Dimension Scorecard** | Quick signals (Reach, Attention, Engagement) plus deep-dive dimensions |
-| :chart_with_upwards_trend: | **Percentile Scoring** | Every metric shows where the repo ranks vs. 1,600+ calibrated repos |
+| :chart_with_upwards_trend: | **Percentile Scoring** | Every metric shows where the repo ranks vs. 2,400+ calibrated repos |
 | :busts_in_silhouette: | **Multi-Repo Comparison** | Side-by-side analysis of up to 4 repositories |
 | :office: | **Org Inventory** | Browse and analyze all repos within a GitHub organization |
 | :bulb: | **Unified Recommendations** | Actionable improvement suggestions across all scoring dimensions |

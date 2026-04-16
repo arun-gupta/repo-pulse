@@ -27,7 +27,7 @@ Measuring open source health is harder than scanning a README. A few of the top 
 - **Health is multidimensional** — Activity, responsiveness, **Contributors** (read through a sustainability lens), documentation, and security overlap but are not interchangeable; collapsing them without structure hides tradeoffs.
 - **Trust requires transparency** — Any score is only useful if people can see what it is built from and what was left out because the data is not publicly verifiable.
 
-[RepoPulse](https://repopulse-arun-gupta.vercel.app) tackles those constraints directly: it analyzes a public GitHub repository and returns a composite **OSS Health Score** — percentile-based, calibrated against 1,600+ repositories, with dimensions and recommendations tied to explicit signals.
+[RepoPulse](https://repopulse-arun-gupta.vercel.app) tackles those constraints directly: it analyzes a public GitHub repository and returns a composite **OSS Health Score** — percentile-based, calibrated against 2,400+ repositories, with dimensions and recommendations tied to explicit signals.
 
 <p align="center">
   <a href="https://repopulse-arun-gupta.vercel.app">
@@ -335,7 +335,7 @@ Each repo is evaluated across these health **dimensions**; each contributes the 
 
 This section expands on **strata** and **diversity caps** from [The Scoring Framework](#the-scoring-framework).
 
-RepoPulse does not use arbitrary "good/bad" thresholds. Every score is a **percentile ranking** against 1,600+ calibrated GitHub repositories. Filters, sort strategy, and stratum boundaries are documented in [Scoring and calibration](../scoring-and-calibration.md); bracket-level language and organization mix is in [Calibration diversity](../calibrate-diversity.md). Comparisons are layered so percentiles stay interpretable:
+RepoPulse does not use arbitrary "good/bad" thresholds. Every score is a **percentile ranking** against 2,400+ calibrated GitHub repositories. Filters, sort strategy, and stratum boundaries are documented in [Scoring and calibration](../scoring-and-calibration.md); bracket-level language and organization mix is in [Calibration diversity](../calibrate-diversity.md). Comparisons are layered so percentiles stay interpretable:
 
 - **Star bracket** — You are ranked against similar-sized projects, not the whole of GitHub.
 - **Strata within the bracket** — Each bracket is split into sub-ranges (with linear or log boundaries depending on scale). Targets are drawn per stratum so skewed star distributions do not collapse the baseline to “only the crowded low end.”
