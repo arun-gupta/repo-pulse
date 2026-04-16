@@ -23,6 +23,7 @@ export type RunStatus =
 export type UpdateCadence =
   | { kind: 'per-completion' }
   | { kind: 'every-n-completions'; n: number }
+  | { kind: 'every-n-percent'; percentStep: number }
   | { kind: 'on-completion-only' }
 
 export interface OrgAggregationRun {
@@ -147,6 +148,10 @@ export interface AggregatePanel<T> {
   totalReposInRun: number
   status: 'in-progress' | 'final' | 'unavailable'
   value: T | null
+  // Wall-clock time of the most recent repo completion that contributed
+  // to this panel. Set by the view-model builder, not the aggregator
+  // (aggregators have no timestamp data). Optional so fixtures may omit.
+  lastUpdatedAt?: Date | null
 }
 
 // --------------------------------------------------------------------

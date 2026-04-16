@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
 import { OrgSummaryView } from './OrgSummaryView'
@@ -53,14 +53,16 @@ describe('OrgSummaryView', () => {
     expect(screen.getByText(/Succeeded/i)).toBeInTheDocument()
   })
 
-  it('renders the contributor-diversity panel when present', () => {
+  it('renders the contributor-diversity panel when the Contributors tab is active', () => {
     render(<OrgSummaryView org="test-org" view={baseView()} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Contributors' }))
     expect(screen.getByText(/Contributor diversity/i)).toBeInTheDocument()
     expect(screen.getByText(/60\.0%/)).toBeInTheDocument()
   })
 
-  it('renders per-repo status list sorted with flagship marker', () => {
+  it('renders per-repo status list under the Repos tab with flagship marker', () => {
     render(<OrgSummaryView org="test-org" view={baseView()} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Repos' }))
     const items = screen.getAllByRole('listitem')
     expect(items.length).toBeGreaterThanOrEqual(3)
     expect(screen.getByText('flagship')).toBeInTheDocument()
@@ -68,6 +70,7 @@ describe('OrgSummaryView', () => {
 
   it('hides missing-data panel when there are no missing entries', () => {
     render(<OrgSummaryView org="test-org" view={baseView()} />)
+    fireEvent.click(screen.getByRole('tab', { name: 'Repos' }))
     expect(screen.queryByText(/Missing data/i)).not.toBeInTheDocument()
   })
 })

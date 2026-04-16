@@ -117,6 +117,9 @@ export function useOrgAggregation(options: UseOrgAggregationOptions = {}): UseOr
   const [run, dispatchReducer] = useReducer(runReducer, null)
   const queueRef = useRef<OrgAggregationQueue | null>(null)
   const completedSinceRerenderRef = useRef(0)
+  const completedCountRef = useRef(0)
+  const totalReposRef = useRef(0)
+  const lastTickBucketRef = useRef(-1)
   const [tick, setTick] = useState(0)
 
   // Wall-clock tick so elapsed/remaining keep updating between completions (FR-017d).
@@ -170,6 +173,7 @@ export function useOrgAggregation(options: UseOrgAggregationOptions = {}): UseOr
       // reducer update.
       if (event.type === 'done' || event.type === 'failed') {
         completedSinceRerenderRef.current++
+        completedCountRef.current++
         if (cadence.kind === 'per-completion') {
           setTick((n) => n + 1)
         } else if (cadence.kind === 'every-n-completions') {
@@ -177,7 +181,15 @@ export function useOrgAggregation(options: UseOrgAggregationOptions = {}): UseOr
             completedSinceRerenderRef.current = 0
             setTick((n) => n + 1)
           }
+        } else if (cadence.kind === 'every-n-percent' && totalReposRef.current > 0) {
+          const percentComplete = (completedCountRef.current / totalReposRef.current) * 100
+          const bucket = Math.floor(percentComplete / cadence.percentStep)
+          if (bucket > lastTickBucketRef.current) {
+            lastTickBucketRef.current = bucket
+            setTick((n) => n + 1)
+          }
         }
+        // 'on-completion-only' deliberately omits mid-run ticks.
       }
       if (event.type === 'complete' || event.type === 'cancelled') {
         setTick((n) => n + 1)
@@ -218,6 +230,11 @@ export function useOrgAggregation(options: UseOrgAggregationOptions = {}): UseOr
   const start = useCallback(
     async (input: StartRunInput) => {
       const concurrency = clampConcurrency(input.concurrency ?? ORG_AGGREGATION_CONFIG.concurrency.default)
+      // Reset cadence gate counters for this run.
+      completedSinceRerenderRef.current = 0
+      completedCountRef.current = 0
+      totalReposRef.current = input.repos.length
+      lastTickBucketRef.current = -1
 
       const pinned = await fetchPinned(input.org).catch(() => [])
       const starsMap = new Map<string, number | 'unavailable'>()

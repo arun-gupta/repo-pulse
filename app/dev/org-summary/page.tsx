@@ -1,13 +1,39 @@
 'use client'
 
 import { useState } from 'react'
-import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
+import type {
+  AggregatePanel,
+  AggregatePanelMap,
+  OrgSummaryViewModel,
+} from '@/lib/org-aggregation/types'
 import type {
   ContributorDiversityValue,
   ContributorDiversityWindow,
 } from '@/lib/org-aggregation/aggregators/types'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import { OrgSummaryView } from '@/components/org-summary/OrgSummaryView'
+import { PANEL_ORDER } from '@/components/org-summary/panels/registry'
+
+function placeholderPanels(
+  totalReposInRun: number,
+  contributingReposCount: number,
+  status: AggregatePanel<unknown>['status'],
+  lastUpdatedAt: Date | null = contributingReposCount > 0 ? new Date() : null,
+): AggregatePanelMap {
+  const map: AggregatePanelMap = {}
+  for (const id of PANEL_ORDER) {
+    if (id === 'contributor-diversity') continue // real fixture added by caller
+    map[id] = {
+      panelId: id,
+      contributingReposCount,
+      totalReposInRun,
+      status,
+      value: status === 'final' || status === 'in-progress' ? ({} as never) : null,
+      lastUpdatedAt,
+    }
+  }
+  return map
+}
 
 function buildContributorDiversityValue(
   byWindow: Record<
@@ -70,6 +96,7 @@ function viewForScenario(scenario: Scenario): OrgSummaryViewModel {
         },
         flagshipRepos: [],
         panels: {
+          ...placeholderPanels(8, 0, 'in-progress'),
           'contributor-diversity': {
             panelId: 'contributor-diversity',
             contributingReposCount: 0,
@@ -106,11 +133,13 @@ function viewForScenario(scenario: Scenario): OrgSummaryViewModel {
         },
         flagshipRepos: [{ repo: 'konveyor/konveyor', source: 'pinned', rank: 0 }],
         panels: {
+          ...placeholderPanels(8, 3, 'in-progress'),
           'contributor-diversity': {
             panelId: 'contributor-diversity',
             contributingReposCount: 3,
             totalReposInRun: 8,
             status: 'in-progress',
+            lastUpdatedAt: new Date(),
             value: buildContributorDiversityValue({
               30: { top: 0.62, elephant: 2, unique: 9, repeat: 3, oneTime: 6 },
               60: { top: 0.6, elephant: 3, unique: 16, repeat: 6, oneTime: 10 },
@@ -148,11 +177,13 @@ function viewForScenario(scenario: Scenario): OrgSummaryViewModel {
         },
         flagshipRepos: [{ repo: 'konveyor/konveyor', source: 'pinned', rank: 0 }],
         panels: {
+          ...placeholderPanels(8, 8, 'final'),
           'contributor-diversity': {
             panelId: 'contributor-diversity',
             contributingReposCount: 8,
             totalReposInRun: 8,
             status: 'final',
+            lastUpdatedAt: new Date(),
             value: buildContributorDiversityValue({
               30: { top: 0.58, elephant: 3, unique: 14, repeat: 5, oneTime: 9 },
               60: { top: 0.55, elephant: 4, unique: 26, repeat: 10, oneTime: 16 },
@@ -193,11 +224,13 @@ function viewForScenario(scenario: Scenario): OrgSummaryViewModel {
         },
         flagshipRepos: [],
         panels: {
+          ...placeholderPanels(5, 3, 'in-progress'),
           'contributor-diversity': {
             panelId: 'contributor-diversity',
             contributingReposCount: 3,
             totalReposInRun: 5,
             status: 'in-progress',
+            lastUpdatedAt: new Date(),
             value: buildContributorDiversityValue({
               30: { top: 0.65, elephant: 2, unique: 7, repeat: 2, oneTime: 5 },
               60: { top: 0.63, elephant: 2, unique: 12, repeat: 4, oneTime: 8 },
@@ -236,11 +269,13 @@ function viewForScenario(scenario: Scenario): OrgSummaryViewModel {
         },
         flagshipRepos: [],
         panels: {
+          ...placeholderPanels(10, 4, 'in-progress'),
           'contributor-diversity': {
             panelId: 'contributor-diversity',
             contributingReposCount: 4,
             totalReposInRun: 10,
             status: 'in-progress',
+            lastUpdatedAt: new Date(),
             value: buildContributorDiversityValue({
               30: { top: 0.5, elephant: 3, unique: 9, repeat: 3, oneTime: 6 },
               60: { top: 0.48, elephant: 4, unique: 14, repeat: 5, oneTime: 9 },

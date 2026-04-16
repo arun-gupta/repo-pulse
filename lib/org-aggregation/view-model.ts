@@ -96,8 +96,14 @@ export function buildOrgSummaryViewModel(
   const status = computeRunStatusHeader(run, now)
 
   const completedResults: AnalysisResult[] = []
+  let latestCompletedAt: Date | null = null
   for (const [, s] of run.perRepo) {
-    if (s.status === 'done' && s.result) completedResults.push(s.result)
+    if (s.status === 'done' && s.result) {
+      completedResults.push(s.result)
+      if (s.finishedAt && (!latestCompletedAt || s.finishedAt > latestCompletedAt)) {
+        latestCompletedAt = s.finishedAt
+      }
+    }
   }
 
   const context = {
@@ -106,8 +112,15 @@ export function buildOrgSummaryViewModel(
     inactiveRepoWindowMonths: 12,
   }
 
+  function stamp<P extends { contributingReposCount: number }>(panel: P): P & { lastUpdatedAt: Date | null } {
+    return {
+      ...panel,
+      lastUpdatedAt: panel.contributingReposCount > 0 ? latestCompletedAt : null,
+    }
+  }
+
   const panels: AggregatePanelMap = {
-    'contributor-diversity': contributorDiversityAggregator(completedResults, context),
+    'contributor-diversity': stamp(contributorDiversityAggregator(completedResults, context)),
   }
 
   const missingRecords: PanelMissingRecord[] = []

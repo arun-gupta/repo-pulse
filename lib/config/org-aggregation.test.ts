@@ -37,8 +37,15 @@ describe('ORG_AGGREGATION_CONFIG', () => {
     expect(ORG_AGGREGATION_CONFIG.preFilters.excludeForksByDefault).toBe(true)
   })
 
-  it('defaults update cadence to per-completion per FR-016a', () => {
-    expect(ORG_AGGREGATION_CONFIG.updateCadenceDefault).toEqual({ kind: 'per-completion' })
+  it('defaults update cadence to every 10% completion per FR-016a', () => {
+    expect(ORG_AGGREGATION_CONFIG.updateCadenceDefault).toEqual({
+      kind: 'every-n-percent',
+      percentStep: 10,
+    })
+  })
+
+  it('exposes the percent-step options offered in the pre-run dialog', () => {
+    expect(ORG_AGGREGATION_CONFIG.updateCadencePercentOptions).toContain(10)
   })
 })
 

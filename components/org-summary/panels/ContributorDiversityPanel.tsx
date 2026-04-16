@@ -56,13 +56,21 @@ export function ContributorDiversityPanel({ panel }: Props) {
           Contributor diversity
         </h3>
         <div className="flex items-center gap-3">
-          {panel.status === 'final' && panel.value ? (
+          {panel.value ? (
             <WindowSelector selected={selectedWindow} onChange={setSelectedWindow} />
           ) : null}
           {panel.status === 'unavailable' ? (
             <span className="text-xs text-slate-500 dark:text-slate-400">unavailable</span>
           ) : partialCoverageLabel ? (
             <span className="text-xs text-slate-500 dark:text-slate-400">{partialCoverageLabel}</span>
+          ) : null}
+          {panel.lastUpdatedAt ? (
+            <span
+              className="text-xs text-slate-400 dark:text-slate-500"
+              title={`Last updated ${panel.lastUpdatedAt.toLocaleTimeString()}`}
+            >
+              updated {panel.lastUpdatedAt.toLocaleTimeString()}
+            </span>
           ) : null}
         </div>
       </header>

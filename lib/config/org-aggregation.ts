@@ -8,7 +8,9 @@ export const ORG_AGGREGATION_CONFIG = {
     secondaryRateLimitBackoffFactor: 0.5,
   },
   largeOrgWarningThreshold: 25,
-  updateCadenceDefault: { kind: 'per-completion' } as UpdateCadence,
+  updateCadenceDefault: { kind: 'every-n-percent', percentStep: 10 } as UpdateCadence,
+  // Valid percent-step options for the pre-run dialog dropdown (US3).
+  updateCadencePercentOptions: [5, 10, 20, 25] as const,
   quoteRotationIntervalMs: 6_000,
   wallClockTickIntervalMs: 1_000,
   inactiveRepoWindowMonths: 12,
