@@ -63,6 +63,7 @@ export function OrgInventoryView({
   const [excludeForks, setExcludeForks] = useState<boolean>(
     ORG_AGGREGATION_CONFIG.preFilters.excludeForksByDefault,
   )
+  const [repoTableExpanded, setRepoTableExpanded] = useState(true)
 
   const columnLabels: Record<OrgInventoryVisibleColumn, string> = {
     description: 'Description',
@@ -120,7 +121,30 @@ export function OrgInventoryView({
       ) : (
         <>
           <OrgInventorySummary summary={summary} />
-          <section className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+          <section className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+            <button
+              type="button"
+              onClick={() => setRepoTableExpanded((e) => !e)}
+              aria-expanded={repoTableExpanded}
+              className="flex w-full items-center gap-2 p-3 text-left"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`h-4 w-4 text-slate-500 transition-transform dark:text-slate-400 ${repoTableExpanded ? '' : '-rotate-90'}`}
+              >
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Repositories ({sortedRows.length})
+              </span>
+            </button>
+            {repoTableExpanded ? <div className="px-3 pb-3">
             <div className="flex flex-wrap items-end gap-2">
               <label className="flex-1 min-w-[140px]">
                 <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Filter</span>
@@ -243,10 +267,11 @@ export function OrgInventoryView({
                 </select>
               </label>
             </div>
+          </div> : null}
           </section>
         </>
       )}
-      {results.length > 0 && sortedRows.length === 0 ? (
+      {repoTableExpanded && results.length > 0 && sortedRows.length === 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <h3 className="text-lg font-semibold text-slate-900">No matching repositories</h3>
           <p className="mt-2 text-sm text-slate-600">
@@ -254,7 +279,7 @@ export function OrgInventoryView({
           </p>
         </section>
       ) : null}
-      {results.length > 0 && sortedRows.length > 0 ? (
+      {repoTableExpanded && results.length > 0 && sortedRows.length > 0 ? (
         <div className="space-y-4">
           <OrgInventoryTable
             results={paginatedRows}

@@ -545,6 +545,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
                     onPause={orgAggregation.pause}
                     onResume={orgAggregation.resume}
                     onRetry={orgAggregation.retry}
+                    showPanels={false}
                     notificationToggle={
                       <NotificationToggle
                         enabled={notificationOptIn}

@@ -24,11 +24,12 @@ interface Props {
   onRetry?: (repo: string) => void
   notificationToggle?: React.ReactNode
   showRunStatus?: boolean
+  showPanels?: boolean
 }
 
 const SHOW_PROGRESS_STATUSES: RunStatus[] = ['in-progress', 'paused', 'complete', 'cancelled']
 
-export function OrgSummaryView({ org, view, startedAt, onCancel, onPause, onResume, onRetry, notificationToggle, showRunStatus = true }: Props) {
+export function OrgSummaryView({ org, view, startedAt, onCancel, onPause, onResume, onRetry, notificationToggle, showRunStatus = true, showPanels = true }: Props) {
   const visibleBuckets = PANEL_BUCKETS
     .filter((b) => b.id !== 'repos' && b.id !== 'recommendations')
     .map((bucket) => ({
@@ -80,7 +81,7 @@ export function OrgSummaryView({ org, view, startedAt, onCancel, onPause, onResu
         />
       ) : null}
 
-      {visibleBuckets.length > 0 ? (
+      {showPanels && visibleBuckets.length > 0 ? (
         <>
           <div
             role="tablist"
