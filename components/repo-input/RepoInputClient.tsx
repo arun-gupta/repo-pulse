@@ -516,14 +516,14 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       initialActiveTab="overview"
       onReset={handleReset}
       analysisPanel={analysisPanel}
-      toolbar={orgAnalysisComplete ? <OrgWindowSelector selected={orgWindow} onChange={setOrgWindow} /> : exportToolbar}
+      toolbar={inputMode === 'org' && orgAnalysisComplete ? <OrgWindowSelector selected={orgWindow} onChange={setOrgWindow} /> : exportToolbar}
       tabs={showOrgWorkspace ? orgInventoryTabs : repoTabs}
       searchQuery={debouncedQuery}
       onDomMatchCounts={handleDomMatchCounts}
       tagMatchCounts={analysisResponse ? computeTabTagCounts(analysisResponse.results, activeTag) : undefined}
       overview={overviewContent}
       contributors={
-        orgAnalysisComplete && orgAggregation.view ? (
+        inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="contributors" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
           <ContributorsView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
@@ -534,7 +534,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         )
       }
       activity={
-        orgAnalysisComplete && orgAggregation.view ? (
+        inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="activity" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
           <ActivityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
@@ -545,7 +545,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         )
       }
       responsiveness={
-        orgAnalysisComplete && orgAggregation.view ? (
+        inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="responsiveness" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
           <ResponsivenessView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
@@ -556,7 +556,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         )
       }
       documentation={
-        orgAnalysisComplete && orgAggregation.view ? (
+        inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="documentation" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
           <DocumentationView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
@@ -567,7 +567,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         )
       }
       security={
-        orgAnalysisComplete && orgAggregation.view ? (
+        inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="security" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
           <SecurityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
