@@ -18,7 +18,7 @@ import type {
 import { CONTRIBUTOR_WINDOW_DAYS } from './analysis-result'
 import { queryGitHubGraphQL } from './github-graphql'
 import { fetchContributorCount, fetchMaintainerCount, fetchPublicUserOrganizations, type MaintainerToken } from './github-rest'
-import { REPO_COMMIT_AND_RELEASES_QUERY, REPO_ACTIVITY_COUNTS_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_DISCUSSIONS_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
+import { REPO_COMMIT_AND_RELEASES_QUERY, REPO_ACTIVITY_COUNTS_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_DISCUSSIONS_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_README_BLOB_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
 import { extractLicensingResult, type LicenseFileInfo } from './extract-licensing'
 import { extractInclusiveNamingResult } from '@/lib/inclusive-naming/checker'
 import { detectReleaseHealth } from '@/lib/release-health/detect'
@@ -29,6 +29,48 @@ import { fetchBranchProtection } from '@/lib/security/direct-checks'
 interface DocBlob {
   text?: string
   oid?: string
+}
+
+interface ResolvedReadme {
+  path: string
+  text: string | null
+}
+
+// GitHub GraphQL `object(expression: "HEAD:<path>")` is case-sensitive on the
+// filename, so the README is detected via a case-insensitive match on the root
+// tree's entries instead of a fixed set of path probes (issue #351). Matches
+// README, README.md, README.rst, README.txt, README.markdown, etc. regardless
+// of casing.
+const README_FILENAME_PATTERN = /^readme(\.[a-z0-9]+)?$/i
+
+function findReadmeEntry(
+  rootTree: { entries: Array<{ name: string; type: string }> } | null | undefined,
+): { name: string } | null {
+  const entries = rootTree?.entries ?? []
+  const match = entries.find((entry) => entry.type === 'blob' && README_FILENAME_PATTERN.test(entry.name))
+  return match ? { name: match.name } : null
+}
+
+async function resolveReadme(
+  token: string,
+  owner: string,
+  name: string,
+  rootTree: { entries: Array<{ name: string; type: string }> } | null | undefined,
+): Promise<{ readme: ResolvedReadme | null; rateLimit: RateLimitState | null }> {
+  const match = findReadmeEntry(rootTree)
+  if (!match) return { readme: null, rateLimit: null }
+
+  const response = await queryGitHubGraphQL<{
+    repository: { object: { text: string | null } | null } | null
+  }>(token, REPO_README_BLOB_QUERY, {
+    owner,
+    name,
+    expression: `HEAD:${match.name}`,
+  })
+  return {
+    readme: { path: match.name, text: response.data.repository?.object?.text ?? null },
+    rateLimit: response.rateLimit ?? null,
+  }
 }
 
 interface RepoOverviewResponse {
@@ -45,11 +87,7 @@ interface RepoOverviewResponse {
     defaultBranchRef?: { name: string } | null
     repositoryTopics?: { nodes: Array<{ topic: { name: string } }> } | null
     licenseInfo?: { spdxId: string | null; name: string | null } | null
-    docReadmeMd?: DocBlob | null
-    docReadmeLower?: DocBlob | null
-    docReadmeRst?: DocBlob | null
-    docReadmeTxt?: DocBlob | null
-    docReadmePlain?: DocBlob | null
+    rootTree?: { entries: Array<{ name: string; type: string }> } | null
     docLicense?: DocBlob | null
     docLicenseMd?: DocBlob | null
     docLicenseTxt?: DocBlob | null
@@ -542,6 +580,14 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
       const experimentalOrgAttribution = await buildExperimentalOrganizationCommitCountsByWindow(input.token, commitHistory.nodes, now)
       latestRateLimit = experimentalOrgAttribution.rateLimit ?? latestRateLimit
 
+      console.log(`[analyzer] ${repo} — resolving README (case-insensitive)`)
+      const readmeResolution = await resolveReadme(input.token, owner!, name!, overview.data.repository?.rootTree).catch((error) => {
+        latestRateLimit = extractRateLimitFromError(error) ?? latestRateLimit
+        diagnostics.push(buildDiagnostic(repo, 'github-graphql:readme-blob', error))
+        return { readme: null, rateLimit: null }
+      })
+      latestRateLimit = readmeResolution.rateLimit ?? latestRateLimit
+
       const analysisResult = buildAnalysisResult(
         repo,
         overview.data,
@@ -554,6 +600,7 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         maintainers.data.tokens,
         experimentalOrgAttribution.data,
         commitHistory.nodes,
+        readmeResolution.readme,
         discussionTimestamps,
         discussionsTruncated,
         now,
@@ -625,6 +672,7 @@ function buildAnalysisResult(
   maintainerTokens: MaintainerToken[] | Unavailable,
   experimentalMetricsByWindow: Record<ContributorWindowDays, ContributorWindowMetrics>,
   recentCommitNodes: CommitNode[],
+  readmeResolved: ResolvedReadme | null,
   discussionTimestamps?: string[],
   discussionsTruncated?: boolean,
   now: Date = new Date(),
@@ -742,7 +790,7 @@ function buildAnalysisResult(
     staleIssueRatio: activityMetricsByWindow[90].staleIssueRatio,
     medianTimeToMergeHours: activityMetricsByWindow[90].medianTimeToMergeHours,
     medianTimeToCloseHours: activityMetricsByWindow[90].medianTimeToCloseHours,
-    documentationResult: extractDocumentationResult(overview.repository),
+    documentationResult: extractDocumentationResult(overview.repository, readmeResolved),
     licensingResult: overview.repository
       ? (() => {
           const repo = overview.repository
@@ -813,13 +861,15 @@ function extractReleaseHealthResult(
   })
 }
 
-export function extractDocumentationResult(repo: RepoOverviewResponse['repository']): DocumentationResult | Unavailable {
+export function extractDocumentationResult(
+  repo: RepoOverviewResponse['repository'],
+  readmeResolved: ResolvedReadme | null = null,
+): DocumentationResult | Unavailable {
   if (!repo) return 'unavailable'
 
   const findFirst = (...aliases: (DocBlob | null | undefined)[]): DocBlob | null =>
     aliases.find((a) => a != null) ?? null
 
-  const readmeBlob = findFirst(repo.docReadmeMd, repo.docReadmeLower, repo.docReadmeRst, repo.docReadmeTxt, repo.docReadmePlain)
   const licenseBlob = findFirst(repo.docLicense, repo.docLicenseMd, repo.docLicenseTxt, repo.docLicenseRst, repo.docCopying, repo.docLicenseMit, repo.docLicenseApache, repo.docLicenseBsd)
   const contributingBlob = findFirst(repo.docContributing, repo.docContributingRst, repo.docContributingTxt, repo.docContributingLower, repo.docContributingDocs, repo.docContributingGithub)
   const codeOfConductBlob = findFirst(repo.docCodeOfConduct, repo.docCodeOfConductRst, repo.docCodeOfConductTxt, repo.docCodeOfConductHyphenLower, repo.docCodeOfConductUnderscoreLower, repo.docCodeOfConductDocs, repo.docCodeOfConductGithub)
@@ -831,10 +881,15 @@ export function extractDocumentationResult(repo: RepoOverviewResponse['repositor
   )
   const changelogBlob = findFirst(repo.docChangelog, repo.docChangelogPlain, repo.docChangelogDocs, repo.docChanges, repo.docChangesRst, repo.docHistory, repo.docNews)
 
-  const readmePathMap: [string, DocBlob | null | undefined][] = [
-    ['README.md', repo.docReadmeMd], ['readme.md', repo.docReadmeLower], ['README.rst', repo.docReadmeRst],
-    ['README.txt', repo.docReadmeTxt], ['README', repo.docReadmePlain],
-  ]
+  // README is resolved via case-insensitive match on the root tree (issue #351).
+  // If the caller didn't run that async resolution (e.g., unit tests), fall back
+  // to matching the repo fixture's own rootTree synchronously so unit tests can
+  // still exercise detection without mocking a second GraphQL round-trip.
+  const readme: ResolvedReadme | null = readmeResolved ?? (() => {
+    const entry = findReadmeEntry(repo.rootTree)
+    return entry ? { path: entry.name, text: null } : null
+  })()
+
   const licensePathMap: [string, DocBlob | null | undefined][] = [
     ['LICENSE', repo.docLicense], ['LICENSE.md', repo.docLicenseMd], ['LICENSE.txt', repo.docLicenseTxt], ['LICENSE.rst', repo.docLicenseRst], ['COPYING', repo.docCopying],
     ['LICENSE-MIT', repo.docLicenseMit], ['LICENSE-APACHE', repo.docLicenseApache], ['LICENSE-BSD', repo.docLicenseBsd],
@@ -860,7 +915,7 @@ export function extractDocumentationResult(repo: RepoOverviewResponse['repositor
     return null
   }
 
-  const readmeContent = readmeBlob?.text ?? null
+  const readmeContent = readme?.text ?? null
 
   // Community-signal file checks (P2-F05). Issue templates: directory with at
   // least one .md/.yml/.yaml entry OR a legacy ISSUE_TEMPLATE.md. PR template:
@@ -897,7 +952,7 @@ export function extractDocumentationResult(repo: RepoOverviewResponse['repositor
   const hasGovernance = governancePath !== null
 
   const fileChecks: DocumentationFileCheck[] = [
-    { name: 'readme', found: readmeBlob !== null, path: foundPath(readmePathMap) },
+    { name: 'readme', found: readme !== null, path: readme?.path ?? null },
     { name: 'license', found: licenseBlob !== null, path: foundPath(licensePathMap) },
     { name: 'contributing', found: contributingBlob !== null, path: foundPath(contributingPathMap) },
     { name: 'code_of_conduct', found: codeOfConductBlob !== null, path: foundPath(codeOfConductPathMap) },

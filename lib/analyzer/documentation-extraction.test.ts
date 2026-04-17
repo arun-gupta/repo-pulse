@@ -75,3 +75,62 @@ describe('extractDocumentationResult — non-security governance variants', () =
     expect(extractDocumentationResult(null)).toBe('unavailable')
   })
 })
+
+describe('extractDocumentationResult — README case-insensitive detection (issue #351)', () => {
+  it.each([
+    'README.md',
+    'readme.md',
+    'Readme.md',
+    'ReadMe.md',
+    'readMe.md',
+    'README.MD',
+    'README',
+    'readme',
+    'README.rst',
+    'README.txt',
+    'README.markdown',
+    'README.adoc',
+  ])('detects %s via rootTree', (filename) => {
+    const result = extractDocumentationResult(repoFixture({
+      rootTree: { entries: [{ name: filename, type: 'blob' }] },
+    }))
+    const readme = check(result, 'readme')
+    expect(readme.found).toBe(true)
+    expect(readme.path).toBe(filename)
+  })
+
+  it('prefers explicit readmeResolved over rootTree fallback', () => {
+    const result = extractDocumentationResult(
+      repoFixture({ rootTree: { entries: [{ name: 'Readme.md', type: 'blob' }] } }),
+      { path: 'Readme.md', text: '# Project\n' },
+    )
+    const readme = check(result, 'readme')
+    expect(readme.found).toBe(true)
+    expect(readme.path).toBe('Readme.md')
+    expect(result === 'unavailable' ? null : result.readmeContent).toBe('# Project\n')
+  })
+
+  it('reports not found when rootTree has no README variant', () => {
+    const result = extractDocumentationResult(repoFixture({
+      rootTree: { entries: [{ name: 'src', type: 'tree' }, { name: 'package.json', type: 'blob' }] },
+    }))
+    const readme = check(result, 'readme')
+    expect(readme.found).toBe(false)
+    expect(readme.path).toBeNull()
+  })
+
+  it('ignores README-named directories (type: tree)', () => {
+    const result = extractDocumentationResult(repoFixture({
+      rootTree: { entries: [{ name: 'README', type: 'tree' }] },
+    }))
+    const readme = check(result, 'readme')
+    expect(readme.found).toBe(false)
+  })
+
+  it('reports not found when rootTree is absent', () => {
+    const result = extractDocumentationResult(repoFixture({}))
+    const readme = check(result, 'readme')
+    expect(readme.found).toBe(false)
+    expect(readme.path).toBeNull()
+  })
+})
