@@ -149,7 +149,7 @@ function PanelChevron({ expanded }: { expanded: boolean }) {
 }
 
 function AdminCountSummary({ section }: { section: StaleAdminsSection | null }) {
-  if (!section || section.applicability !== 'admins-available') return null
+  if (!section || section.applicability !== 'applicable') return null
   const stale = section.admins.filter((a) => a.classification === 'stale').length
   const unavailable = section.admins.filter((a) => a.classification === 'unavailable').length
   if (stale === 0 && unavailable === 0) {
