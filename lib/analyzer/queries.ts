@@ -141,13 +141,13 @@ export const REPO_COMMIT_AND_RELEASES_QUERY = `
         nodes {
           tagName
           name
-          body
+          description
           isPrerelease
           createdAt
           publishedAt
         }
       }
-      refs(refPrefix: "refs/tags/", first: 0) {
+      refs(refPrefix: "refs/tags/", first: 1) {
         totalCount
       }
       defaultBranchRef {

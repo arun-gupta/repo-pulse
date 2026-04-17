@@ -124,7 +124,7 @@ interface RepoCommitAndReleasesResponse {
       nodes: Array<{
         tagName: string
         name: string | null
-        body: string | null
+        description: string | null
         isPrerelease: boolean
         createdAt: string
         publishedAt: string | null
@@ -802,7 +802,7 @@ function extractReleaseHealthResult(
     releases: rawNodes.map((r) => ({
       tagName: r.tagName,
       name: r.name,
-      body: r.body,
+      body: r.description,
       isPrerelease: r.isPrerelease,
       createdAt: r.createdAt,
       publishedAt: r.publishedAt,
