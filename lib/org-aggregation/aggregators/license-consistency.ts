@@ -27,6 +27,7 @@ export const licenseConsistencyAggregator: Aggregator<LicenseConsistencyValue> =
   }
 
   const counts = new Map<string, { count: number; osiApproved: boolean }>()
+  const perRepo: { repo: string; spdxId: string; osiApproved: boolean }[] = []
   let contributingReposCount = 0
   let nonOsiCount = 0
 
@@ -38,6 +39,8 @@ export const licenseConsistencyAggregator: Aggregator<LicenseConsistencyValue> =
 
     const spdxId = lr.license.spdxId ?? 'Unknown'
     const osiApproved = lr.license.osiApproved
+
+    perRepo.push({ repo: r.repo, spdxId, osiApproved })
 
     const existing = counts.get(spdxId)
     if (existing) {
@@ -65,11 +68,13 @@ export const licenseConsistencyAggregator: Aggregator<LicenseConsistencyValue> =
     .map(([spdxId, { count, osiApproved }]) => ({ spdxId, count, osiApproved }))
     .sort((a, b) => b.count - a.count || a.spdxId.localeCompare(b.spdxId))
 
+  perRepo.sort((a, b) => a.repo.localeCompare(b.repo))
+
   return {
     panelId: 'license-consistency',
     contributingReposCount,
     totalReposInRun: context.totalReposInRun,
     status: 'final',
-    value: { perLicense, nonOsiCount },
+    value: { perLicense, perRepo, nonOsiCount },
   }
 }

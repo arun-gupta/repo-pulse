@@ -77,6 +77,11 @@ describe('licenseConsistencyAggregator — FR-022', () => {
       { spdxId: 'Apache-2.0', count: 2, osiApproved: true },
       { spdxId: 'MIT', count: 1, osiApproved: true },
     ])
+    expect(panel.value!.perRepo).toEqual([
+      { repo: 'o/alpha', spdxId: 'Apache-2.0', osiApproved: true },
+      { repo: 'o/bravo', spdxId: 'MIT', osiApproved: true },
+      { repo: 'o/charlie', spdxId: 'Apache-2.0', osiApproved: true },
+    ])
     expect(panel.value!.nonOsiCount).toBe(0)
   })
 
@@ -115,6 +120,10 @@ describe('licenseConsistencyAggregator — FR-022', () => {
     expect(panel.value!.perLicense).toEqual([
       { spdxId: 'MIT', count: 1, osiApproved: true },
       { spdxId: 'Unknown', count: 1, osiApproved: false },
+    ])
+    expect(panel.value!.perRepo).toEqual([
+      { repo: 'o/alpha', spdxId: 'MIT', osiApproved: true },
+      { repo: 'o/charlie', spdxId: 'Unknown', osiApproved: false },
     ])
     expect(panel.value!.nonOsiCount).toBe(1)
   })
