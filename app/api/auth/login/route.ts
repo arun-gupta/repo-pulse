@@ -38,10 +38,14 @@ export async function GET(request: Request) {
   // without requiring OAuth App reconfiguration.
   const devPat = getDevPat()
   if (devPat) {
-    const username = await fetchGithubUsername(devPat)
-    if (username) {
+    const probe = await probeDevPat(devPat)
+    if (probe) {
+      // The user's tier selection is only a request; in dev, the PAT's *actual*
+      // scopes are what the session can do. Surface those (not the request),
+      // so the UI doesn't misrepresent the access rights.
+      const effectiveScopes = probe.actualScopes ?? scope
       const base = new URL('/', request.url)
-      const fragment = `token=${encodeURIComponent(devPat)}&username=${encodeURIComponent(username)}&scopes=${encodeURIComponent(scope)}`
+      const fragment = `token=${encodeURIComponent(devPat)}&username=${encodeURIComponent(probe.username)}&scopes=${encodeURIComponent(effectiveScopes)}`
       return Response.redirect(`${base.toString()}#${fragment}`, 302)
     }
     return Response.json(
@@ -76,7 +80,19 @@ export async function GET(request: Request) {
   return Response.redirect(`https://github.com/login/oauth/authorize?${params.toString()}`, 302)
 }
 
-async function fetchGithubUsername(token: string): Promise<string | null> {
+interface DevPatProbe {
+  username: string
+  /**
+   * Space-separated scope list reflecting what the PAT actually carries.
+   * Null if GitHub did not return X-OAuth-Scopes (fine-grained PATs omit it).
+   * When null, callers should fall back to the requested tier — the session
+   * is then optimistic and individual API calls will fail honestly if the
+   * fine-grained PAT lacks the needed permission.
+   */
+  actualScopes: string | null
+}
+
+async function probeDevPat(token: string): Promise<DevPatProbe | null> {
   try {
     const res = await fetch('https://api.github.com/user', {
       headers: {
@@ -86,8 +102,26 @@ async function fetchGithubUsername(token: string): Promise<string | null> {
     })
     if (!res.ok) return null
     const body = (await res.json()) as { login?: string }
-    return body.login ?? null
+    if (!body.login) return null
+
+    const scopesHeader = res.headers.get('x-oauth-scopes')
+    const actualScopes = normalizeScopesHeader(scopesHeader)
+
+    return { username: body.login, actualScopes }
   } catch {
     return null
   }
+}
+
+function normalizeScopesHeader(header: string | null): string | null {
+  if (!header) return null
+  const trimmed = header.trim()
+  if (!trimmed) return null
+  // GitHub returns comma-separated; we store space-separated for parity with
+  // OAuth responses.
+  return trimmed
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(' ')
 }

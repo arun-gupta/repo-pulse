@@ -157,21 +157,68 @@ describe('GET /api/auth/login', () => {
     expect(scope).toBe('public_repo admin:org')
   })
 
-  it('dev-PAT short-circuit also encodes scope on the redirect fragment', async () => {
+  it('dev-PAT session reports the PAT\'s real scopes from X-OAuth-Scopes, not the requested tier', async () => {
     vi.stubEnv('DEV_GITHUB_PAT', 'ghp_devtesttoken')
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ login: 'dev-user' }), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            // PAT actually has only public_repo + read:org, even though the
+            // user asked for admin-org below — the session should reflect
+            // reality, not the request.
+            'x-oauth-scopes': 'public_repo, read:org',
+          },
         }),
       ),
     )
 
-    const response = await GET(mockRequest('http://localhost:3010/api/auth/login?elevated=1'))
+    const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=admin-org'))
     const location = response.headers.get('location') ?? ''
-    expect(location).toContain('scopes=')
+    const decoded = decodeURIComponent(location)
+    expect(decoded).toContain('scopes=public_repo read:org')
+    expect(decoded).not.toContain('admin:org')
+  })
+
+  it('dev-PAT falls back to the requested tier when X-OAuth-Scopes is absent (fine-grained PATs do not report it)', async () => {
+    vi.stubEnv('DEV_GITHUB_PAT', 'github_pat_finegrained')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ login: 'dev-user' }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            // No x-oauth-scopes header — fine-grained PATs omit it.
+          },
+        }),
+      ),
+    )
+
+    const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=admin-org'))
+    const location = response.headers.get('location') ?? ''
+    expect(decodeURIComponent(location)).toContain('scopes=public_repo admin:org')
+  })
+
+  it('dev-PAT treats an empty X-OAuth-Scopes header (legacy GitHub responses) as absent', async () => {
+    vi.stubEnv('DEV_GITHUB_PAT', 'ghp_test')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ login: 'dev-user' }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'x-oauth-scopes': '',
+          },
+        }),
+      ),
+    )
+
+    const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=read-org'))
+    const location = response.headers.get('location') ?? ''
     expect(decodeURIComponent(location)).toContain('scopes=public_repo read:org')
   })
 })
