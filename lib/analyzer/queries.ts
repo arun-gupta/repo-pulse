@@ -137,10 +137,18 @@ export const REPO_COMMIT_AND_RELEASES_QUERY = `
   ) {
     repository(owner: $owner, name: $name) {
       releases(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+        totalCount
         nodes {
+          tagName
+          name
+          description
+          isPrerelease
           createdAt
           publishedAt
         }
+      }
+      refs(refPrefix: "refs/tags/", first: 1) {
+        totalCount
       }
       defaultBranchRef {
         target {

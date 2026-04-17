@@ -4,6 +4,7 @@ import { getScoreBadges, type ScoreBadgeDefinition } from './score-config'
 import { getHealthScore, type HealthScoreDefinition } from '@/lib/scoring/health-score'
 import { computeCommunityCompleteness } from '@/lib/community/completeness'
 import { computeGovernanceCompleteness } from '@/lib/governance/completeness'
+import { computeReleaseHealthCompleteness } from '@/lib/release-health/completeness'
 import type { ScoreTone } from '@/specs/008-metric-cards/contracts/metric-card-props'
 
 /**
@@ -114,6 +115,27 @@ function buildLensReadouts(result: AnalysisResult): LensReadout[] {
       detail: `${governance.present.length} of ${governance.present.length + governance.missing.length} signals`,
       tooltip: 'Governance is a cross-cutting lens — count of governance signals present (license, contributing, CoC, security, changelog, branch protection, code review, maintainers). Does not feed the composite OSS Health Score.',
       tone: governance.tone,
+    })
+  }
+
+  // Release Health lens renders even when ratio is null, so users can see
+  // the analyzer evaluated the signals (and that there was nothing verifiable
+  // to score). Hiding the readout would falsely suggest the lens doesn't
+  // apply to this repo.
+  if (result.releaseHealthResult !== undefined) {
+    const releaseHealth = computeReleaseHealthCompleteness(result)
+    const hasData = releaseHealth.ratio !== null
+    lenses.push({
+      key: 'release-health',
+      label: 'Release Health',
+      percentileLabel: hasData && releaseHealth.percentile !== null
+        ? `${releaseHealth.percentile}th percentile`
+        : 'Insufficient verified public data',
+      detail: hasData
+        ? `${releaseHealth.present.length} of ${releaseHealth.present.length + releaseHealth.missing.length} signals`
+        : 'No verified release-health signals',
+      tooltip: 'Release Health is a cross-cutting lens — count of release-health signals present (release frequency, time since last release, semver compliance, release notes quality, tag-to-release promotion). Linear fallback until per-bracket calibration lands in #152. Does not feed the composite OSS Health Score.',
+      tone: releaseHealth.tone,
     })
   }
 
