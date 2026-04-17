@@ -124,17 +124,24 @@ describe('StaleAdminsPanel — baseline rendering', () => {
     expect(within(strip).getByTestId('stale-admins-count-active').textContent).toMatch(/2 active/i)
   })
 
-  it('keeps the header summary strip visible when the panel is collapsed', () => {
+  it('hides the description, summary strip, and group list when the panel is collapsed', () => {
     const section = makeSection({
       admins: [mkAdmin('s1', 'stale'), mkAdmin('a1', 'active')],
     })
     renderWithSession(<StaleAdminsPanel org="acme" ownerType="Organization" sectionOverride={section} />)
 
+    // Expanded by default — strip and description are visible.
+    expect(screen.getByTestId('stale-admins-count-strip')).toBeInTheDocument()
+    expect(screen.getByText(/stale admin detection/i)).toBeInTheDocument()
+
     const toggle = screen.getByTestId('stale-admins-panel-toggle')
     fireEvent.click(toggle)
 
     expect(screen.queryByTestId('stale-admins-group-stale')).not.toBeInTheDocument()
-    expect(screen.getByTestId('stale-admins-count-strip')).toBeInTheDocument()
+    expect(screen.queryByTestId('stale-admins-count-strip')).not.toBeInTheDocument()
+    expect(screen.queryByText(/stale admin detection/i)).not.toBeInTheDocument()
+    // Title stays visible.
+    expect(screen.getByRole('heading', { name: /org admin activity/i })).toBeInTheDocument()
   })
 
   it('omits the header summary strip when applicability is not applicable', () => {

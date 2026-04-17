@@ -113,14 +113,16 @@ export function StaleAdminsPanel({ org, ownerType, sectionOverride, loadingOverr
                 </h3>
                 <ScoringHelp section={section} />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Stale admin detection — an inactive admin is a privilege-escalation risk.
-              </p>
+              {expanded ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Stale admin detection — an inactive admin is a privilege-escalation risk.
+                </p>
+              ) : null}
             </div>
           </div>
           {section ? <ModeBadge mode={section.mode} /> : null}
         </div>
-        {section ? <HeaderCountStrip section={section} /> : null}
+        {expanded && section ? <HeaderCountStrip section={section} /> : null}
       </header>
 
       {expanded ? (
