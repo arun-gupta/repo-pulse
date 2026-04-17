@@ -5,7 +5,7 @@ describe('org-inventory config', () => {
   it('exposes the Phase 1 default and max bulk-selection limits', () => {
     expect(ORG_INVENTORY_CONFIG.defaultBulkSelectionLimit).toBe(5)
     expect(ORG_INVENTORY_CONFIG.maxBulkSelectionLimit).toBe(5)
-    expect(ORG_INVENTORY_CONFIG.defaultPageSize).toBe(25)
+    expect(ORG_INVENTORY_CONFIG.defaultPageSize).toBe(10)
     expect(ORG_INVENTORY_CONFIG.pageSizeOptions).toEqual([10, 25, 50, 100])
   })
 
@@ -19,6 +19,6 @@ describe('org-inventory config', () => {
     expect(clampOrgInventoryPageSize(25)).toBe(25)
     expect(clampOrgInventoryPageSize(50)).toBe(50)
     expect(clampOrgInventoryPageSize(10)).toBe(10)
-    expect(clampOrgInventoryPageSize(15)).toBe(25)
+    expect(clampOrgInventoryPageSize(15)).toBe(10)
   })
 })

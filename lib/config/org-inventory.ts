@@ -1,7 +1,7 @@
 export const ORG_INVENTORY_CONFIG = {
   defaultBulkSelectionLimit: 5,
   maxBulkSelectionLimit: 5,
-  defaultPageSize: 25,
+  defaultPageSize: 10,
   pageSizeOptions: [10, 25, 50, 100],
 } as const
 
