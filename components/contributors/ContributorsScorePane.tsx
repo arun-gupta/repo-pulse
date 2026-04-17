@@ -110,7 +110,10 @@ export function ContributorsScorePane({ section, activeTag: externalTag, onTagCh
             if (!activeTag) return true
             if (activeTag === 'governance') return GOVERNANCE_CONTRIBUTORS_METRICS.has(metric.label)
             if (activeTag === 'community') return COMMUNITY_CONTRIBUTORS_METRICS.has(metric.label)
-            return true
+            // Unknown tags (e.g., release-health, supply-chain, quick-win) have
+            // no contributors-tab items, so filter everything out rather than
+            // leaking every row through. Fixes #69 follow-up.
+            return false
           })
           .map((metric) => {
             const isGov = GOVERNANCE_CONTRIBUTORS_METRICS.has(metric.label)
