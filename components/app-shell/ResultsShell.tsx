@@ -6,6 +6,7 @@ import { resultTabs } from '@/lib/results-shell/tabs'
 import type { ResultTabId } from '@/specs/006-results-shell/contracts/results-shell-props'
 import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/results-shell-props'
 import { UserBadge } from '@/components/auth/UserBadge'
+import { ElevatedScopeBanner } from '@/components/auth/ElevatedScopeBanner'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import type { TabMatchCounts } from '@/lib/search/types'
 import { useHighlightMatches } from '@/components/search/useHighlightMatches'
@@ -93,6 +94,7 @@ export function ResultsShell({
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:bg-slate-800/60">
+      <ElevatedScopeBanner />
       <header className="w-full bg-sky-900 text-white dark:bg-slate-900">
         <div className="mx-auto flex max-w-5xl items-start justify-between gap-4 px-4 py-5">
           <div className="min-w-0">
