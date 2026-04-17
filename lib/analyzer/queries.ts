@@ -32,11 +32,14 @@ export const REPO_OVERVIEW_QUERY = `
         spdxId
         name
       }
-      docReadmeMd: object(expression: "HEAD:README.md") { ... on Blob { text } }
-      docReadmeLower: object(expression: "HEAD:readme.md") { ... on Blob { text } }
-      docReadmeRst: object(expression: "HEAD:README.rst") { ... on Blob { text } }
-      docReadmeTxt: object(expression: "HEAD:README.txt") { ... on Blob { text } }
-      docReadmePlain: object(expression: "HEAD:README") { ... on Blob { text } }
+      rootTree: object(expression: "HEAD:") {
+        ... on Tree {
+          entries {
+            name
+            type
+          }
+        }
+      }
       docLicense: object(expression: "HEAD:LICENSE") { ... on Blob { oid text } }
       docLicenseMd: object(expression: "HEAD:LICENSE.md") { ... on Blob { oid text } }
       docLicenseTxt: object(expression: "HEAD:LICENSE.txt") { ... on Blob { oid text } }
@@ -107,6 +110,27 @@ export const REPO_OVERVIEW_QUERY = `
               ... on Blob { text }
             }
           }
+        }
+      }
+    }
+    rateLimit {
+      limit
+      remaining
+      resetAt
+    }
+  }
+`
+
+// README blob fetched on-demand once its exact filename is resolved from
+// rootTree (issue #351). GitHub GraphQL `object(expression: "HEAD:<path>")`
+// is case-sensitive on the filename, so we can only fetch the blob after the
+// case-insensitive match — we can't know the exact casing up front.
+export const REPO_README_BLOB_QUERY = `
+  query RepoReadmeBlob($owner: String!, $name: String!, $expression: String!) {
+    repository(owner: $owner, name: $name) {
+      object(expression: $expression) {
+        ... on Blob {
+          text
         }
       }
     }
