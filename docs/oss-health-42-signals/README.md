@@ -205,9 +205,9 @@ RepoPulse’s inclusive-naming suggestions are informed by guidance from the [In
 
 **How the score is weighted in this dimension:** RepoPulse splits the Documentation score into four categories, then combines them into a composite:
 
-- **File presence (35%)**: Weighted presence of key repo docs (README 30%, CONTRIBUTING 20%, SECURITY 20%, CHANGELOG 20%, CODE_OF_CONDUCT 10%). The `LICENSE` file is intentionally *not* counted here.
-- **README quality (30%)**: Weighted coverage of README sections (description 25%, installation 25%, usage 25%, contributing 15%, license section 10%).
-- **Licensing (25%)**: License present (40%), OSI-approved (25%), license tier classified (10%), and DCO/CLA enforcement (25%).
+- **File presence (50%)**: Weighted presence of key repo docs (README 30%, CONTRIBUTING 20%, SECURITY 20%, CHANGELOG 20%, CODE_OF_CONDUCT 10%) plus community templates (issue templates 5%, PR template 5%, GOVERNANCE 5%). The `LICENSE` file is intentionally *not* counted here (it's scored under Licensing). Sub-weights sum to 1.15 and are capped at 1.0, so community templates act as a recovery signal for repos missing canonical files.
+- **README quality (25%)**: Weighted coverage of README sections (description 25%, installation 25%, usage 25%, contributing 15%, license section 10%).
+- **Licensing (15%)**: License present (40%), OSI-approved (25%), license tier classified (10%), and DCO/CLA enforcement (25%).
 - **Inclusive naming (10%)**: Inclusive naming findings are scored separately and then folded into Documentation as the final 10%.
 
 **Example recommendations you might see in this dimension:**
