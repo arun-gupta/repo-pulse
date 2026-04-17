@@ -154,14 +154,14 @@ describe('OrgInventoryView', () => {
       />,
     )
 
-    expect(screen.getByText(/Showing 1–25 of 30/)).toBeInTheDocument()
-    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
-    expect(screen.queryByText('facebook/repo-26')).not.toBeInTheDocument()
+    expect(screen.getByText(/Showing 1–10 of 30/)).toBeInTheDocument()
+    expect(screen.getByText('Page 1 of 3')).toBeInTheDocument()
+    expect(screen.queryByText('facebook/repo-11')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument()
-    expect(screen.getByText('facebook/repo-26')).toBeInTheDocument()
-    expect(screen.getByText(/Showing 26–30 of 30/)).toBeInTheDocument()
+    expect(screen.getByText('Page 2 of 3')).toBeInTheDocument()
+    expect(screen.getByText('facebook/repo-11')).toBeInTheDocument()
+    expect(screen.getByText(/Showing 11–20 of 30/)).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByLabelText('Rows per page'), '50')
     expect(screen.getByText('Page 1 of 1')).toBeInTheDocument()
