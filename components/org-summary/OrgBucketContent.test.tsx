@@ -91,6 +91,26 @@ describe('OrgBucketContent — StaleAdminsPanel migration (#303)', () => {
   })
 })
 
+describe('OrgBucketContent — pre-analysis governance rendering (#286)', () => {
+  it('renders TwoFactorEnforcementPanel and StaleAdminsPanel when view is null — org-level panels self-fetch', () => {
+    renderWithSession(<OrgBucketContent bucketId="governance" view={null} org="acme" />)
+    expect(screen.getByTestId('two-factor-panel')).toBeInTheDocument()
+    expect(screen.getByTestId('stale-admins-panel')).toBeInTheDocument()
+  })
+
+  it('renders no rollup panels when view is null (nothing to aggregate yet)', () => {
+    renderWithSession(<OrgBucketContent bucketId="governance" view={null} org="acme" />)
+    // Registry-driven rollup panels rely on view.panels — none should appear.
+    expect(screen.queryByTestId('mock-panel-maintainers')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('mock-panel-license-consistency')).not.toBeInTheDocument()
+  })
+
+  it('renders the empty-state hint when view is null and bucket has no extra panels (e.g. activity)', () => {
+    renderWithSession(<OrgBucketContent bucketId="activity" view={null} org="acme" />)
+    expect(screen.getByText(/no data available/i)).toBeInTheDocument()
+  })
+})
+
 describe('OrgBucketContent — TwoFactorEnforcementPanel wiring (#286)', () => {
   it('does NOT render TwoFactorEnforcementPanel when bucketId is documentation', () => {
     renderWithSession(<OrgBucketContent bucketId="documentation" view={emptyView()} org="acme" />)
