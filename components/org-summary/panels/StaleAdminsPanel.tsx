@@ -92,32 +92,35 @@ export function StaleAdminsPanel({ org, ownerType, sectionOverride, loadingOverr
       className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
       data-testid="stale-admins-panel"
     >
-      <header className={`flex flex-wrap items-start justify-between gap-2 ${expanded ? 'mb-3' : ''}`}>
-        <div className="flex min-w-0 items-start gap-2">
-          <button
-            type="button"
-            onClick={() => setExpanded((e) => !e)}
-            aria-label={expanded ? 'Collapse Org admin activity' : 'Expand Org admin activity'}
-            aria-expanded={expanded}
-            title={expanded ? 'Collapse' : 'Expand'}
-            data-testid="stale-admins-panel-toggle"
-            className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <PanelChevron expanded={expanded} />
-          </button>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Org admin activity
-              </h3>
-              <ScoringHelp section={section} />
+      <header className={expanded ? 'mb-3' : ''}>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start gap-2">
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              aria-label={expanded ? 'Collapse Org admin activity' : 'Expand Org admin activity'}
+              aria-expanded={expanded}
+              title={expanded ? 'Collapse' : 'Expand'}
+              data-testid="stale-admins-panel-toggle"
+              className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            >
+              <PanelChevron expanded={expanded} />
+            </button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Org admin activity
+                </h3>
+                <ScoringHelp section={section} />
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Stale admin detection — an inactive admin is a privilege-escalation risk.
+              </p>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Stale admin detection — an inactive admin is a privilege-escalation risk.
-            </p>
           </div>
+          {section ? <ModeBadge mode={section.mode} /> : null}
         </div>
-        {section ? <ModeBadge mode={section.mode} /> : null}
+        {section ? <HeaderCountStrip section={section} /> : null}
       </header>
 
       {expanded ? (
@@ -145,6 +148,64 @@ function PanelChevron({ expanded }: { expanded: boolean }) {
       <path d="M4 6l4 4 4-4" />
     </svg>
   )
+}
+
+function HeaderCountStrip({ section }: { section: StaleAdminsSection }) {
+  if (section.applicability !== 'applicable' || section.admins.length === 0) return null
+  const counts = countByClassification(section.admins)
+  const total = section.admins.length
+  return (
+    <div
+      className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
+      data-testid="stale-admins-count-strip"
+      aria-label={`Admin summary — ${total} admins`}
+    >
+      <span className="font-medium text-slate-700 dark:text-slate-200">
+        {total} admin{total === 1 ? '' : 's'}
+      </span>
+      <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">
+        ·
+      </span>
+      {GROUP_ORDER.map((c) => (
+        <CountPill key={c} classification={c} count={counts[c]} />
+      ))}
+    </div>
+  )
+}
+
+function CountPill({
+  classification,
+  count,
+}: {
+  classification: StaleAdminClassification
+  count: number
+}) {
+  const config = GROUP_CONFIG[classification]
+  const dim = count === 0
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${config.pillClassName} ${dim ? 'opacity-40' : ''}`}
+      data-testid={`stale-admins-count-${classification}`}
+    >
+      <span aria-hidden="true">{config.icon}</span>
+      <span>
+        {count} {config.label.toLowerCase()}
+      </span>
+    </span>
+  )
+}
+
+function countByClassification(
+  admins: StaleAdminRecord[],
+): Record<StaleAdminClassification, number> {
+  const counts: Record<StaleAdminClassification, number> = {
+    active: 0,
+    stale: 0,
+    'no-public-activity': 0,
+    unavailable: 0,
+  }
+  for (const a of admins) counts[a.classification]++
+  return counts
 }
 
 function ScoringHelp({ section }: { section: StaleAdminsSection | null }) {
