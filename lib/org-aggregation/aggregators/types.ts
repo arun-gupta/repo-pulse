@@ -107,6 +107,7 @@ export type ResponsivenessRollupValue = {
 
 export type LicenseConsistencyValue = {
   perLicense: { spdxId: string; count: number; osiApproved: boolean }[]
+  perRepo: { repo: string; spdxId: string; osiApproved: boolean }[]
   nonOsiCount: number
 }
 
