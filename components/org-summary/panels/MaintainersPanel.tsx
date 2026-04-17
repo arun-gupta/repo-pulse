@@ -25,6 +25,7 @@ export function MaintainersPanel({ panel }: Props) {
     panel.value && panel.contributingReposCount < panel.totalReposInRun
       ? `${panel.contributingReposCount} of ${panel.totalReposInRun} repos`
       : null
+  const summary = buildSummary(panel.value)
 
   return (
     <section
@@ -46,6 +47,14 @@ export function MaintainersPanel({ panel }: Props) {
             <PanelChevron expanded={expanded} />
           </button>
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Maintainers</h3>
+          {summary ? (
+            <span
+              className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              data-testid="maintainers-panel-summary"
+            >
+              {summary}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-3">
           {panel.status === 'unavailable' ? (
@@ -77,6 +86,17 @@ export function MaintainersPanel({ panel }: Props) {
       ) : null}
     </section>
   )
+}
+
+function buildSummary(value: MaintainersValue | null): string | null {
+  if (!value) return null
+  const unique = value.projectWide.length
+  if (unique === 0) return null
+  const teams = value.projectWide.filter((e) => e.kind === 'team').length
+  const uniqueLabel = `${unique} maintainer${unique === 1 ? '' : 's'}`
+  if (teams === 0) return uniqueLabel
+  const teamsLabel = `${teams} team${teams === 1 ? '' : 's'}`
+  return `${uniqueLabel} · ${teamsLabel}`
 }
 
 function PanelChevron({ expanded }: { expanded: boolean }) {

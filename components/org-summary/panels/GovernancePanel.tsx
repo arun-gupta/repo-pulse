@@ -11,6 +11,7 @@ interface Props {
 
 export function GovernancePanel({ panel }: Props) {
   const [expanded, setExpanded] = useState(true)
+  const summary = buildSummary(panel.value)
   return (
     <section
       aria-label="GOVERNANCE.md coverage"
@@ -31,6 +32,14 @@ export function GovernancePanel({ panel }: Props) {
             <PanelChevron expanded={expanded} />
           </button>
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">GOVERNANCE.md coverage</h3>
+          {summary ? (
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${summary.className}`}
+              data-testid="governance-panel-summary"
+            >
+              {summary.label}
+            </span>
+          ) : null}
         </div>
         {panel.lastUpdatedAt ? (
           <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -52,6 +61,19 @@ export function GovernancePanel({ panel }: Props) {
       ) : null}
     </section>
   )
+}
+
+function buildSummary(value: GovernanceValue | null): { label: string; className: string } | null {
+  if (!value) return null
+  const total = value.perRepo.length
+  if (total === 0) return null
+  const withGovernance = value.perRepo.filter((r) => r.present).length
+  const label = `${withGovernance} of ${total} repos`
+  const className =
+    withGovernance === total
+      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+      : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+  return { label, className }
 }
 
 function PanelChevron({ expanded }: { expanded: boolean }) {
