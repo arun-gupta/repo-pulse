@@ -104,6 +104,40 @@ describe('StaleAdminsPanel — baseline rendering', () => {
     expect(within(unavailableSummary).getByText('1')).toBeInTheDocument()
   })
 
+  it('renders a commit-search badge with an explanatory tooltip on admins whose activity was inferred from org commit search', () => {
+    const section = makeSection({
+      admins: [
+        {
+          username: 'alice',
+          classification: 'active',
+          lastActivityAt: '2026-04-10T00:00:00Z',
+          lastActivitySource: 'public-events',
+          unavailableReason: null,
+        },
+        {
+          username: 'bob',
+          classification: 'stale',
+          lastActivityAt: '2025-09-01T00:00:00Z',
+          lastActivitySource: 'org-commit-search',
+          unavailableReason: null,
+        },
+      ],
+    })
+    renderWithSession(<StaleAdminsPanel org="acme" ownerType="Organization" sectionOverride={section} />)
+
+    // The stale group (bob) has a commit-search badge; the active group (alice) does not.
+    const staleGroup = screen.getByTestId('stale-admins-group-stale')
+    const activeGroup = screen.getByTestId('stale-admins-group-active')
+
+    const badge = within(staleGroup).getByTestId('stale-admin-commit-search-badge')
+    expect(badge.getAttribute('title')).toBe('Activity inferred from org commit search')
+    expect(badge.getAttribute('aria-label')).toBe('Activity inferred from org commit search')
+
+    expect(
+      within(activeGroup).queryByTestId('stale-admin-commit-search-badge'),
+    ).not.toBeInTheDocument()
+  })
+
   it('renders a chevron inside each group header summary', () => {
     const section = makeSection({
       admins: [mkAdmin('s1', 'stale'), mkAdmin('a1', 'active')],
