@@ -191,6 +191,65 @@ test.describe('#340 theme toggle exposes System option', () => {
   })
 })
 
+test.describe('#344 sign-in button is visible in dark mode', () => {
+  // Regression guard: in dark mode the landing-page "Sign in with GitHub" button
+  // used to render as a near-black pill on a near-black page, making the primary
+  // CTA almost invisible. Assert the button background is light in dark mode and
+  // dark in light mode — a computed-style check that will fail if a future edit
+  // drops the dark: variant. Uses a canvas round-trip so the check is robust to
+  // modern color spaces (lab/oklch) used by Tailwind 4.
+
+  async function buttonRelativeLuminance(link: Locator): Promise<number> {
+    return link.evaluate((el) => {
+      const bg = getComputedStyle(el).backgroundColor
+      const c = document.createElement('canvas')
+      c.width = 1
+      c.height = 1
+      const ctx = c.getContext('2d')!
+      ctx.fillStyle = bg
+      ctx.fillRect(0, 0, 1, 1)
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+      // Perceptual relative luminance in [0, 1] (Rec. 709 coefficients).
+      const lin = (v: number) => {
+        const s = v / 255
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+      }
+      return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    })
+  }
+
+  test.describe('with prefers-color-scheme: dark', () => {
+    test.use({ colorScheme: 'dark' })
+
+    test('sign-in button has a light background that contrasts the dark page', async ({ page }) => {
+      await page.goto('/')
+      await expect(page.locator('html')).toHaveClass(/(^|\s)dark(\s|$)/)
+
+      const link = page.getByRole('link', { name: /sign in with github/i })
+      await expect(link).toBeVisible()
+      const luminance = await buttonRelativeLuminance(link)
+      // In dark mode the button must be a light surface — well above the dark
+      // slate family (slate-900 luminance ≈ 0.009). 0.5 is the standard midpoint.
+      expect(luminance).toBeGreaterThan(0.5)
+    })
+  })
+
+  test.describe('with prefers-color-scheme: light', () => {
+    test.use({ colorScheme: 'light' })
+
+    test('sign-in button keeps a dark background in light mode (no regression)', async ({ page }) => {
+      await page.goto('/')
+      await expect(page.locator('html')).not.toHaveClass(/(^|\s)dark(\s|$)/)
+
+      const link = page.getByRole('link', { name: /sign in with github/i })
+      await expect(link).toBeVisible()
+      const luminance = await buttonRelativeLuminance(link)
+      // In light mode the button must stay dark — well below midpoint.
+      expect(luminance).toBeLessThan(0.2)
+    })
+  })
+})
+
 test.describe('#326 dark mode surfaces', () => {
   test('Overview top-bar controls render on dark surfaces', async ({ page }) => {
     await setupAnalyzed(page)
