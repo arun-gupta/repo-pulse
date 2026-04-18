@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ResultsShell } from '@/components/app-shell/ResultsShell'
 import { OrgInventoryView } from '@/components/org-inventory/OrgInventoryView'
+import { OrgBucketContent } from '@/components/org-summary/OrgBucketContent'
 import { ReportSearchBar } from '@/components/search/ReportSearchBar'
 import { SearchProvider } from '@/components/search/SearchContext'
 import type { TabMatchCounts } from '@/lib/search/types'
@@ -20,6 +21,12 @@ const DEMO_ORG_TABS: ResultTabDefinition[] = [
     label: 'Overview',
     status: 'implemented',
     description: 'Organization inventory summary and public repository metadata.',
+  },
+  {
+    id: 'governance',
+    label: 'Governance',
+    status: 'implemented',
+    description: 'Org-level security signals available without analyzing individual repos — 2FA enforcement, admin activity.',
   },
 ]
 
@@ -84,6 +91,7 @@ export function DemoOrganizationClient({ response }: DemoOrganizationClientProps
             }}
           />
         }
+        governance={<OrgBucketContent bucketId="governance" view={null} org={response.org} />}
         contributors={emptyPanel}
         activity={emptyPanel}
         responsiveness={emptyPanel}
