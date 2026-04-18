@@ -90,6 +90,14 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
         <SignInButton tier={scopeTier} />
 
+        <a
+          href="/demo"
+          data-testid="demo-link"
+          className="text-sm font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-300 dark:hover:text-sky-200"
+        >
+          See an example without signing in →
+        </a>
+
         <fieldset
           className="max-w-md space-y-2 px-4 text-left text-xs text-slate-600 dark:text-slate-300"
           aria-label="GitHub permission scope"

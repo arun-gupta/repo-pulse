@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-04-18T02:57:06.534Z",
+  "repos": [
+    {
+      "repo": "simonw/llm-echo",
+      "slug": "simonw__llm-echo"
+    },
+    {
+      "repo": "333fred/compiler-developer-sdk",
+      "slug": "333fred__compiler-developer-sdk"
+    },
+    {
+      "repo": "ossf/security-insights-spec",
+      "slug": "ossf__security-insights-spec"
+    },
+    {
+      "repo": "fluxcd/helm-controller",
+      "slug": "fluxcd__helm-controller"
+    },
+    {
+      "repo": "projectcalico/calico",
+      "slug": "projectcalico__calico"
+    },
+    {
+      "repo": "prometheus/prometheus",
+      "slug": "prometheus__prometheus"
+    }
+  ],
+  "org": "ossf"
+}

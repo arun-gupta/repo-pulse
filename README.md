@@ -21,6 +21,8 @@ RepoPulse analyzes any public GitHub repository and produces a composite **OSS H
 
 > **Try it now** — paste any GitHub repo URL into [repopulse-arun-gupta.vercel.app](https://repopulse-arun-gupta.vercel.app) and get a health report in seconds.
 
+> **No account? No problem.** The [`/demo`](https://repopulse-arun-gupta.vercel.app/demo) route ships with six pre-analyzed repositories and one organization inventory — full scorecards, comparisons, and recommendations, no OAuth required. Fixtures refresh weekly.
+
 ## Who it's for
 
 RepoPulse is built for **community-oriented projects** — multi-contributor repositories with users, maintainers, and a growth story. The primary audience is:

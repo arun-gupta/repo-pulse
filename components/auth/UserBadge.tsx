@@ -14,6 +14,8 @@ export function UserBadge({ onSignOut }: UserBadgeProps) {
     onSignOut?.()
   }
 
+  if (!session) return null
+
   return (
     <div className="flex items-center gap-2">
       <img
