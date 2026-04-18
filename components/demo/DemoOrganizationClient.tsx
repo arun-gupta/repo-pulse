@@ -217,19 +217,19 @@ function DemoOrgAnalysisPanel({ org, topCount }: { org: string; topCount: number
           tabs render aggregated rollups against real data.
         </p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         <button
           type="button"
           disabled
           title="Sign in with GitHub to analyze organization repositories"
           aria-label="Analyze is disabled in demo mode — sign in with GitHub to run a live analysis"
-          className="cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+          className="cursor-not-allowed whitespace-nowrap rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
         >
           Analyze (demo)
         </button>
         <Link
           href="/"
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-sky-700"
+          className="whitespace-nowrap rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-sky-700"
         >
           Sign in to analyze →
         </Link>
