@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { isRateLimitLow } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
 import { ORG_AGGREGATION_CONFIG } from '@/lib/config/org-aggregation'
-import { clampOrgInventoryPageSize, ORG_INVENTORY_CONFIG } from '@/lib/config/org-inventory'
+import { clampBulkSelectionLimit, clampOrgInventoryPageSize, ORG_INVENTORY_CONFIG } from '@/lib/config/org-inventory'
 import {
   applySelectionLimit,
   DEFAULT_ORG_INVENTORY_VISIBLE_COLUMNS,
@@ -241,6 +241,25 @@ export function OrgInventoryView({
                         Clear
                       </button>
                     ) : null}
+                    <label className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      Limit
+                      <select
+                        aria-label="Bulk selection limit"
+                        value={selectionLimit}
+                        onChange={(event) => {
+                          const next = clampBulkSelectionLimit(Number(event.target.value))
+                          const result = applySelectionLimit(selectedRepos, next)
+                          setSelectionLimit(next)
+                          setSelectedRepos(result.selectedRepos)
+                          setSelectionError(result.error)
+                        }}
+                        className="rounded border border-slate-300 bg-white px-1 py-0.5 text-xs text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                      >
+                        {Array.from({ length: ORG_INVENTORY_CONFIG.maxBulkSelectionLimit }, (_, i) => i + 1).map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
                   <div className="flex items-center gap-2">
                     {onAnalyzeAllActive ? (

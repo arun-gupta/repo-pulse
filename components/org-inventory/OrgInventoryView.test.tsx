@@ -720,6 +720,92 @@ describe('OrgInventoryView', () => {
 
     expect(screen.getByRole('button', { name: /analyze all/i })).toBeDisabled()
   })
+
+  it('bulk-selection limit control renders with default value 5', () => {
+    render(
+      <OrgInventoryView
+        org="facebook"
+        summary={makeSummary([buildRepo('facebook/react')])}
+        results={[buildRepo('facebook/react')]}
+        rateLimit={null}
+        onAnalyzeRepo={vi.fn()}
+        onAnalyzeSelected={vi.fn()}
+      />,
+    )
+
+    const limitSelect = screen.getByLabelText('Bulk selection limit')
+    expect(limitSelect).toBeInTheDocument()
+    expect((limitSelect as HTMLSelectElement).value).toBe('5')
+  })
+
+  it('bulk-selection limit control offers options 1 through maxBulkSelectionLimit (5)', () => {
+    render(
+      <OrgInventoryView
+        org="facebook"
+        summary={makeSummary([buildRepo('facebook/react')])}
+        results={[buildRepo('facebook/react')]}
+        rateLimit={null}
+        onAnalyzeRepo={vi.fn()}
+        onAnalyzeSelected={vi.fn()}
+      />,
+    )
+
+    const limitSelect = screen.getByLabelText('Bulk selection limit') as HTMLSelectElement
+    const options = Array.from(limitSelect.options).map((o) => Number(o.value))
+    expect(options).toEqual([1, 2, 3, 4, 5])
+  })
+
+  it('lowering the selection limit prevents selecting more repos than the new cap', async () => {
+    const results = Array.from({ length: 5 }, (_, i) => buildRepo(`facebook/repo-${i + 1}`))
+
+    render(
+      <OrgInventoryView
+        org="facebook"
+        summary={makeSummary(results)}
+        results={results}
+        rateLimit={null}
+        onAnalyzeRepo={vi.fn()}
+        onAnalyzeSelected={vi.fn()}
+      />,
+    )
+
+    await userEvent.selectOptions(screen.getByLabelText('Bulk selection limit'), '2')
+
+    await userEvent.click(screen.getByLabelText('Select facebook/repo-1'))
+    await userEvent.click(screen.getByLabelText('Select facebook/repo-2'))
+    // Third selection should be blocked
+    await userEvent.click(screen.getByLabelText('Select facebook/repo-3'))
+
+    expect(screen.getByText(/you can select up to 2 repositories/i)).toBeInTheDocument()
+    expect(screen.getByText(/2 selected ·/)).toBeInTheDocument()
+  })
+
+  it('lowering the selection limit below the current selection trims existing selection', async () => {
+    const results = Array.from({ length: 5 }, (_, i) => buildRepo(`facebook/repo-${i + 1}`))
+
+    render(
+      <OrgInventoryView
+        org="facebook"
+        summary={makeSummary(results)}
+        results={results}
+        rateLimit={null}
+        onAnalyzeRepo={vi.fn()}
+        onAnalyzeSelected={vi.fn()}
+      />,
+    )
+
+    // Select 3 repos first (default limit is 5)
+    await userEvent.click(screen.getByLabelText('Select facebook/repo-1'))
+    await userEvent.click(screen.getByLabelText('Select facebook/repo-2'))
+    await userEvent.click(screen.getByLabelText('Select facebook/repo-3'))
+    expect(screen.getByText(/3 selected ·/)).toBeInTheDocument()
+
+    // Now lower the limit to 1 — selection should be trimmed to 1
+    await userEvent.selectOptions(screen.getByLabelText('Bulk selection limit'), '1')
+
+    expect(screen.getByText(/1 selected ·/)).toBeInTheDocument()
+    expect(screen.getByText(/selection trimmed/i)).toBeInTheDocument()
+  })
 })
 
 function buildRepo(repo: string, overrides: Record<string, unknown> = {}) {
