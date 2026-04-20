@@ -21,6 +21,8 @@ interface Props {
   loadingOverride?: boolean
   /** Override for tests. */
   onRetryOverride?: () => void
+  /** Override for tests. */
+  nextAutoRetryAtOverride?: string | null
 }
 
 // Risk-first ordering: the user's attention should go to Stale and Unavailable
@@ -79,6 +81,7 @@ export function StaleAdminsPanel({
   sectionOverride,
   loadingOverride,
   onRetryOverride,
+  nextAutoRetryAtOverride,
 }: Props) {
   const { session, hasScope } = useAuth()
   // admin:org is a strict superset of read:org — treat either as "elevated"
@@ -96,6 +99,12 @@ export function StaleAdminsPanel({
   const section = hasOverride ? sectionOverride : hookState.section
   const loading = loadingOverride ?? (hasOverride ? false : hookState.loading)
   const onRetry = onRetryOverride ?? hookState.refetch
+  const nextAutoRetryAt =
+    nextAutoRetryAtOverride !== undefined
+      ? nextAutoRetryAtOverride
+      : hasOverride
+        ? null
+        : hookState.nextAutoRetryAt
   const [expanded, setExpanded] = useState(true)
 
   return (
@@ -143,7 +152,12 @@ export function StaleAdminsPanel({
             <p className="text-sm text-slate-500 dark:text-slate-400">Loading admin activity…</p>
           ) : null}
           {section ? (
-            <SectionBody section={section} onRetry={onRetry} refreshing={loading} />
+            <SectionBody
+              section={section}
+              onRetry={onRetry}
+              refreshing={loading}
+              nextAutoRetryAt={nextAutoRetryAt}
+            />
           ) : null}
         </>
       ) : null}
@@ -247,10 +261,12 @@ function SectionBody({
   section,
   onRetry,
   refreshing,
+  nextAutoRetryAt,
 }: {
   section: StaleAdminsSection
   onRetry: () => void
   refreshing: boolean
+  nextAutoRetryAt: string | null
 }) {
   if (section.applicability === 'not-applicable-non-org') {
     return (
@@ -290,7 +306,7 @@ function SectionBody({
           defaultOpen={DEFAULT_OPEN[classification]}
           onRetry={onRetry}
           refreshing={refreshing}
-          earliestRetryAvailableAt={section.earliestRetryAvailableAt ?? null}
+          nextAutoRetryAt={nextAutoRetryAt}
         />
       ))}
     </div>
@@ -303,14 +319,14 @@ function GroupSection({
   defaultOpen,
   onRetry,
   refreshing,
-  earliestRetryAvailableAt,
+  nextAutoRetryAt,
 }: {
   classification: StaleAdminClassification
   admins: StaleAdminRecord[]
   defaultOpen: boolean
   onRetry: () => void
   refreshing: boolean
-  earliestRetryAvailableAt: string | null
+  nextAutoRetryAt: string | null
 }) {
   const config = GROUP_CONFIG[classification]
   const isUnavailable = classification === 'unavailable'
@@ -341,12 +357,12 @@ function GroupSection({
           onRetry={onRetry}
           showRetry={retryableCount > 0}
           refreshing={refreshing}
-          earliestRetryAvailableAt={earliestRetryAvailableAt}
+          nextAutoRetryAt={nextAutoRetryAt}
         />
       ) : null}
       <ul role="list" className="divide-y divide-slate-200 px-3 pb-1.5 dark:divide-slate-700">
         {admins.map((admin) => (
-          <AdminRow key={admin.username} admin={admin} />
+          <AdminRow key={admin.username} admin={admin} nextAutoRetryAt={nextAutoRetryAt} />
         ))}
       </ul>
     </details>
@@ -363,18 +379,23 @@ const UNAVAILABLE_REASON_LABEL: Record<StaleAdminUnavailableReason, string> = {
 // Row-level humanized copy. Framed around what GitHub returned (or didn't),
 // not our implementation (`/search/commits`, `/events/public`). Avoids
 // parenthetical technical asides — those read as app-error / debug output.
-// Terminal conditions (`admin-account-404`) are distinct from retryable
-// throttling; commit-search / events failures are grouped under the same
-// user-facing copy because in practice they share a root cause (GitHub-side
-// throttling we can't observe directly) and a single recourse (retry later).
+//
+// Two rendering modes, driven by `hasCountdown`:
+//   - With countdown: a live timer follows the lead and carries the "when".
+//     Keep the lead tight; no promises about time live in the text.
+//   - Without countdown: the background retry ladder is exhausted, so the
+//     text points at the Retry button instead of lying about a time.
+//
+// Terminal conditions (`admin-account-404`) don't vary — they're terminal.
 function unavailableReasonRowText(reason: StaleAdminUnavailableReason | null, hasCountdown: boolean): string {
   switch (reason) {
     case 'rate-limited':
-      // When a countdown follows, the timer carries the "when"; keep the lead tight.
-      return hasCountdown ? 'GitHub rate limit.' : 'GitHub rate limit — retry in about a minute.'
+      return hasCountdown ? 'GitHub rate limit.' : 'GitHub rate limit — click Retry to try again.'
     case 'commit-search-failed':
     case 'events-fetch-failed':
-      return 'GitHub didn’t return activity data — retry may work in about a minute.'
+      return hasCountdown
+        ? 'GitHub didn’t return activity data.'
+        : 'GitHub didn’t return activity data — click Retry to try again.'
     case 'admin-account-404':
       return 'GitHub account not found or deleted.'
     default:
@@ -387,13 +408,13 @@ function UnavailableReasonStrip({
   onRetry,
   showRetry,
   refreshing,
-  earliestRetryAvailableAt,
+  nextAutoRetryAt,
 }: {
   counts: Record<StaleAdminUnavailableReason | 'unknown', number>
   onRetry: () => void
   showRetry: boolean
   refreshing: boolean
-  earliestRetryAvailableAt: string | null
+  nextAutoRetryAt: string | null
 }) {
   const entries = (Object.keys(UNAVAILABLE_REASON_LABEL) as StaleAdminUnavailableReason[])
     .filter((r) => counts[r] > 0)
@@ -420,7 +441,7 @@ function UnavailableReasonStrip({
         <RetryButton
           onRetry={onRetry}
           refreshing={refreshing}
-          earliestRetryAvailableAt={earliestRetryAvailableAt}
+          nextAutoRetryAt={nextAutoRetryAt}
         />
       ) : null}
     </div>
@@ -430,13 +451,13 @@ function UnavailableReasonStrip({
 function RetryButton({
   onRetry,
   refreshing,
-  earliestRetryAvailableAt,
+  nextAutoRetryAt,
 }: {
   onRetry: () => void
   refreshing: boolean
-  earliestRetryAvailableAt: string | null
+  nextAutoRetryAt: string | null
 }) {
-  const target = earliestRetryAvailableAt ? Date.parse(earliestRetryAvailableAt) : NaN
+  const target = nextAutoRetryAt ? Date.parse(nextAutoRetryAt) : NaN
   const hasKnownTarget = Number.isFinite(target)
   const [nowMs, setNowMs] = useState(() => Date.now())
   useEffect(() => {
@@ -448,12 +469,15 @@ function RetryButton({
   const remainingMs = hasKnownTarget ? Math.max(0, target - nowMs) : 0
   const seconds = Math.ceil(remainingMs / 1000)
   const waiting = hasKnownTarget && remainingMs > 0
+  // When a background auto-retry is pending, users should not fire their
+  // own on top of it (doubles the rate-limit pressure). Disable until the
+  // timer is up OR the ladder is exhausted (nextAutoRetryAt = null).
   const disabled = refreshing || waiting
   const label = refreshing
     ? 'Retrying…'
     : waiting
-      ? `Retry in ${seconds}s`
-      : 'Retry unavailable'
+      ? `Auto-retry in ${seconds}s`
+      : 'Retry'
 
   return (
     <button
@@ -504,7 +528,13 @@ function GroupChevron() {
   )
 }
 
-function AdminRow({ admin }: { admin: StaleAdminRecord }) {
+function AdminRow({
+  admin,
+  nextAutoRetryAt,
+}: {
+  admin: StaleAdminRecord
+  nextAutoRetryAt: string | null
+}) {
   return (
     <li
       className="flex flex-wrap items-baseline justify-between gap-2 py-1"
@@ -518,12 +548,18 @@ function AdminRow({ admin }: { admin: StaleAdminRecord }) {
       >
         {admin.username}
       </a>
-      <RowDetail admin={admin} />
+      <RowDetail admin={admin} nextAutoRetryAt={nextAutoRetryAt} />
     </li>
   )
 }
 
-function RowDetail({ admin }: { admin: StaleAdminRecord }) {
+function RowDetail({
+  admin,
+  nextAutoRetryAt,
+}: {
+  admin: StaleAdminRecord
+  nextAutoRetryAt: string | null
+}) {
   if (admin.lastActivityAt) {
     return (
       <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
@@ -549,14 +585,21 @@ function RowDetail({ admin }: { admin: StaleAdminRecord }) {
     )
   }
   if (admin.classification === 'unavailable') {
-    const hasCountdown = Boolean(admin.retryAvailableAt)
+    // Unified countdown source: prefer this admin's own GitHub-disclosed
+    // reset (`retryAvailableAt`), fall back to the hook's next scheduled
+    // background retry (`nextAutoRetryAt`). Either way, every unavailable
+    // row shows a live countdown — no "about a minute" copy that never
+    // updates. When neither is available (ladder exhausted, terminal
+    // reason), no countdown is shown and the copy points at Retry.
+    const countdownAt = admin.retryAvailableAt ?? nextAutoRetryAt
+    const hasCountdown = Boolean(countdownAt)
     return (
       <span className="text-xs text-slate-500 dark:text-slate-400">
         {unavailableReasonRowText(admin.unavailableReason, hasCountdown)}
-        {admin.retryAvailableAt ? (
+        {countdownAt ? (
           <>
             {' '}
-            <RetryCountdown availableAt={admin.retryAvailableAt} />
+            <RetryCountdown availableAt={countdownAt} />
           </>
         ) : null}
       </span>

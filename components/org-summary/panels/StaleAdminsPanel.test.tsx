@@ -353,7 +353,7 @@ describe('StaleAdminsPanel — Unavailable bucket split (issue #364)', () => {
     expect(screen.queryByTestId('stale-admins-unavailable-retry')).not.toBeInTheDocument()
   })
 
-  it('renders humanized, non-app-error row text for each unavailable reason', () => {
+  it('renders humanized, non-app-error row text for each unavailable reason (ladder exhausted → "click Retry")', () => {
     const section = makeSection({
       admins: [
         mkUnavailable('u1', 'rate-limited'),
@@ -361,30 +361,74 @@ describe('StaleAdminsPanel — Unavailable bucket split (issue #364)', () => {
         mkUnavailable('u3', 'admin-account-404'),
       ],
     })
-    renderWithSession(<StaleAdminsPanel org="acme" ownerType="Organization" sectionOverride={section} />)
+    // nextAutoRetryAtOverride=null simulates the ladder-exhausted state.
+    renderWithSession(
+      <StaleAdminsPanel
+        org="acme"
+        ownerType="Organization"
+        sectionOverride={section}
+        nextAutoRetryAtOverride={null}
+      />,
+    )
 
     const unavailable = screen.getByTestId('stale-admins-group-unavailable')
-    // Row copy is framed around what GitHub returned, not our implementation.
-    expect(within(unavailable).getByText(/GitHub rate limit — retry in about a minute/i)).toBeInTheDocument()
-    expect(within(unavailable).getByText(/GitHub didn’t return activity data/i)).toBeInTheDocument()
+    expect(within(unavailable).getByText(/GitHub rate limit — click Retry to try again/i)).toBeInTheDocument()
+    expect(within(unavailable).getByText(/GitHub didn’t return activity data — click Retry to try again/i)).toBeInTheDocument()
     expect(within(unavailable).getByText(/GitHub account not found/i)).toBeInTheDocument()
-    // Our implementation names and debug asides must not leak into user copy.
+    // Our implementation names, debug asides, and lying time-promises must not appear.
     expect(within(unavailable).queryByText(/commit search/i)).not.toBeInTheDocument()
     expect(within(unavailable).queryByText(/events feed/i)).not.toBeInTheDocument()
     expect(within(unavailable).queryByText(/\(often a burst rate-limit\)/i)).not.toBeInTheDocument()
+    expect(within(unavailable).queryByText(/about a minute/i)).not.toBeInTheDocument()
     expect(within(unavailable).queryByText(/commit-search-failed/)).not.toBeInTheDocument()
     expect(within(unavailable).queryByText(/rate-limited\)/)).not.toBeInTheDocument()
   })
 
-  it('when a countdown is present, the row lead is tight and defers the "when" to the timer', () => {
+  it('every unavailable row shows a countdown when a background retry is scheduled, regardless of whether GitHub disclosed a reset', () => {
     vi.setSystemTime(new Date('2026-04-20T12:00:00Z'))
     const section = makeSection({
-      admins: [mkUnavailable('u1', 'rate-limited', '2026-04-20T12:00:30Z')],
+      admins: [
+        // u1 has its own GitHub-disclosed reset (should win over nextAutoRetryAt).
+        mkUnavailable('u1', 'rate-limited', '2026-04-20T12:00:15Z'),
+        // u2 has none — should fall back to the hook's nextAutoRetryAt.
+        mkUnavailable('u2', 'commit-search-failed'),
+      ],
     })
-    renderWithSession(<StaleAdminsPanel org="acme" ownerType="Organization" sectionOverride={section} />)
-    // Concise lead (no "retry in about a minute" — countdown carries the signal).
-    expect(screen.getByText('GitHub rate limit.')).toBeInTheDocument()
-    expect(screen.getByTestId('retry-countdown').textContent).toMatch(/Retry available in \d+s/)
+    renderWithSession(
+      <StaleAdminsPanel
+        org="acme"
+        ownerType="Organization"
+        sectionOverride={section}
+        nextAutoRetryAtOverride={'2026-04-20T12:00:30Z'}
+      />,
+    )
+
+    const countdowns = screen.getAllByTestId('retry-countdown')
+    expect(countdowns).toHaveLength(2)
+    // u1 uses its own reset (≈15s), u2 falls back to nextAutoRetryAt (≈30s).
+    expect(countdowns[0]!.textContent).toMatch(/15s/)
+    expect(countdowns[1]!.textContent).toMatch(/30s/)
+    vi.useRealTimers()
+  })
+
+  it('section-level Retry button shows the auto-retry countdown and disables while waiting', () => {
+    vi.setSystemTime(new Date('2026-04-20T12:00:00Z'))
+    const onRetry = vi.fn()
+    const section = makeSection({
+      admins: [mkUnavailable('u1', 'commit-search-failed')],
+    })
+    renderWithSession(
+      <StaleAdminsPanel
+        org="acme"
+        ownerType="Organization"
+        sectionOverride={section}
+        onRetryOverride={onRetry}
+        nextAutoRetryAtOverride={'2026-04-20T12:00:25Z'}
+      />,
+    )
+    const retry = screen.getByTestId('stale-admins-unavailable-retry')
+    expect(retry.textContent).toMatch(/Auto-retry in \d+s/)
+    expect(retry).toBeDisabled()
     vi.useRealTimers()
   })
 

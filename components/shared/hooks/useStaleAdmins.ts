@@ -18,6 +18,14 @@ export interface UseStaleAdminsState {
   section: StaleAdminsSection | null
   error: string | null
   refetch: () => void
+  /**
+   * ISO timestamp of the next scheduled background auto-retry, or null
+   * when none is scheduled (ladder exhausted, loading, nothing retryable,
+   * or section absent). Used by the panel to drive a unified countdown
+   * across all unavailable rows so the user sees one consistent signal
+   * instead of a mix of exact counters and vague "about a minute" copy.
+   */
+  nextAutoRetryAt: string | null
 }
 
 // Bounded background auto-retry ladder. Hybrid strategy:
@@ -37,11 +45,12 @@ export function useStaleAdmins(options: UseStaleAdminsOptions): UseStaleAdminsSt
 
   const [retryCount, setRetryCount] = useState(0)
   const [ladderStep, setLadderStep] = useState(0)
+  const [nextAutoRetryAt, setNextAutoRetryAt] = useState<string | null>(null)
   const refetch = useCallback(() => {
     setLadderStep(0)
     setRetryCount((n) => n + 1)
   }, [])
-  const [state, setState] = useState<Omit<UseStaleAdminsState, 'refetch'>>(() => ({
+  const [state, setState] = useState<Omit<UseStaleAdminsState, 'refetch' | 'nextAutoRetryAt'>>(() => ({
     loading: Boolean(org && token),
     section: null,
     error: null,
@@ -117,15 +126,22 @@ export function useStaleAdmins(options: UseStaleAdminsOptions): UseStaleAdminsSt
   // Schedule a background auto-retry after each fetch completes, when there
   // are still retryable-unavailable admins. Cancelled on new fetch / option
   // change / unmount. The ladder advances per fire; once exhausted, the
-  // user's Retry button is the fallback.
+  // user's Retry button is the fallback. `nextAutoRetryAt` tracks the fire
+  // time so the UI can render one unified countdown across all rows.
   useEffect(() => {
-    if (state.loading) return
-    if (!state.section) return
-    if (ladderStep >= BG_RETRY_LADDER_MS.length) return
-    if (!sectionHasRetryableUnavailable(state.section)) return
+    const canSchedule =
+      !state.loading &&
+      state.section !== null &&
+      ladderStep < BG_RETRY_LADDER_MS.length &&
+      sectionHasRetryableUnavailable(state.section)
+
+    if (!canSchedule) {
+      queueMicrotask(() => setNextAutoRetryAt(null))
+      return
+    }
 
     const fallbackDelay = BG_RETRY_LADDER_MS[ladderStep]!
-    const earliestAt = state.section.earliestRetryAvailableAt
+    const earliestAt = state.section!.earliestRetryAvailableAt
     let delay = fallbackDelay
     if (earliestAt) {
       const untilReset = Date.parse(earliestAt) - Date.now()
@@ -137,6 +153,8 @@ export function useStaleAdmins(options: UseStaleAdminsOptions): UseStaleAdminsSt
       }
     }
 
+    const fireAt = new Date(Date.now() + delay).toISOString()
+    queueMicrotask(() => setNextAutoRetryAt(fireAt))
     const id = setTimeout(() => {
       setLadderStep((s) => s + 1)
       setRetryCount((n) => n + 1)
@@ -144,7 +162,7 @@ export function useStaleAdmins(options: UseStaleAdminsOptions): UseStaleAdminsSt
     return () => clearTimeout(id)
   }, [state.loading, state.section, ladderStep])
 
-  return { ...state, refetch }
+  return { ...state, refetch, nextAutoRetryAt }
 }
 
 function sectionHasRetryableUnavailable(section: StaleAdminsSection): boolean {
