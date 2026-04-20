@@ -188,14 +188,14 @@ describe('buildJsonExport', () => {
     expect(discussions.windowCount).toBeNull()
   })
 
-  it('includes onboarding block with all four signal fields', async () => {
+  it('includes onboarding block with score summary and all 9 signals', async () => {
     const response: AnalyzeResponse = {
       ...MINIMAL_RESPONSE,
       results: [{
         ...MINIMAL_RESPONSE.results[0],
         goodFirstIssueCount: 12,
         devEnvironmentSetup: true,
-        gitpodPresent: false,
+        gitpodPresent: true,
         newContributorPRAcceptanceRate: 0.75,
       }],
     }
@@ -204,39 +204,31 @@ describe('buildJsonExport', () => {
     const parsed = JSON.parse(text) as {
       results: Array<{
         onboarding: {
-          goodFirstIssueCount: number | 'unavailable'
-          devEnvironmentSetup: boolean | 'unavailable'
-          gitpodPresent: boolean | 'unavailable'
-          newContributorPRAcceptanceRate: number | 'unavailable'
+          score: { present: number; total: number; percentile: number | null; tone: string }
+          signals: Record<string, { status: string; value?: unknown; gitpodBonus?: boolean }>
         }
       }>
     }
     const onboarding = parsed.results[0].onboarding
     expect(onboarding).toBeDefined()
-    expect(onboarding.goodFirstIssueCount).toBe(12)
-    expect(onboarding.devEnvironmentSetup).toBe(true)
-    expect(onboarding.gitpodPresent).toBe(false)
-    expect(onboarding.newContributorPRAcceptanceRate).toBe(0.75)
+    expect(onboarding.score.total).toBe(9)
+    expect(onboarding.signals.good_first_issues.value).toBe(12)
+    expect(onboarding.signals.dev_environment_setup.status).toBe('present')
+    expect(onboarding.signals.dev_environment_setup.gitpodBonus).toBe(true)
+    expect(onboarding.signals.new_contributor_acceptance.value).toBe(0.75)
+    expect(Object.keys(onboarding.signals)).toHaveLength(9)
   })
 
-  it('onboarding block emits "unavailable" strings when signals are unavailable', async () => {
+  it('onboarding signals show "unknown" status when all data is unavailable', async () => {
     const result = buildJsonExport(MINIMAL_RESPONSE)
     const text = await result.blob.text()
     const parsed = JSON.parse(text) as {
-      results: Array<{
-        onboarding: {
-          goodFirstIssueCount: number | 'unavailable'
-          devEnvironmentSetup: boolean | 'unavailable'
-          gitpodPresent: boolean | 'unavailable'
-          newContributorPRAcceptanceRate: number | 'unavailable'
-        }
-      }>
+      results: Array<{ onboarding: { signals: Record<string, { status: string }> } }>
     }
-    const onboarding = parsed.results[0].onboarding
-    expect(onboarding.goodFirstIssueCount).toBe('unavailable')
-    expect(onboarding.devEnvironmentSetup).toBe('unavailable')
-    expect(onboarding.gitpodPresent).toBe('unavailable')
-    expect(onboarding.newContributorPRAcceptanceRate).toBe('unavailable')
+    const signals = parsed.results[0].onboarding.signals
+    expect(signals.good_first_issues.status).toBe('unknown')
+    expect(signals.dev_environment_setup.status).toBe('unknown')
+    expect(signals.new_contributor_acceptance.status).toBe('unknown')
   })
 
   it('omits security, licensing, and inclusiveNaming when data is unavailable', async () => {

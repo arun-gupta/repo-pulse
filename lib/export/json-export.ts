@@ -12,6 +12,7 @@ import { getInclusiveNamingScore } from '@/lib/inclusive-naming/score-config'
 import { getSecurityScore } from '@/lib/security/score-config'
 import { computeCommunityCompleteness } from '@/lib/community/completeness'
 import { computeReleaseHealthCompleteness } from '@/lib/release-health/completeness'
+import { computeOnboardingCompleteness } from '@/lib/onboarding/completeness'
 
 export interface JsonExportResult {
   blob: Blob
@@ -281,11 +282,30 @@ function computeReleaseHealth(result: AnalysisResult) {
 }
 
 function computeOnboarding(result: AnalysisResult) {
+  const completeness = computeOnboardingCompleteness(result)
+  const status = (key: string): 'present' | 'missing' | 'unknown' => {
+    if ((completeness.present as string[]).includes(key)) return 'present'
+    if ((completeness.missing as string[]).includes(key)) return 'missing'
+    return 'unknown'
+  }
   return {
-    goodFirstIssueCount: result.goodFirstIssueCount ?? 'unavailable',
-    devEnvironmentSetup: result.devEnvironmentSetup ?? 'unavailable',
-    gitpodPresent: result.gitpodPresent ?? 'unavailable',
-    newContributorPRAcceptanceRate: result.newContributorPRAcceptanceRate ?? 'unavailable',
+    score: {
+      present: completeness.present.length,
+      total: completeness.present.length + completeness.missing.length + completeness.unknown.length,
+      percentile: completeness.percentile,
+      tone: completeness.tone,
+    },
+    signals: {
+      good_first_issues: { status: status('good_first_issues'), value: result.goodFirstIssueCount ?? 'unavailable' },
+      dev_environment_setup: { status: status('dev_environment_setup'), gitpodBonus: result.gitpodPresent === true },
+      new_contributor_acceptance: { status: status('new_contributor_acceptance'), value: result.newContributorPRAcceptanceRate ?? 'unavailable' },
+      issue_templates: { status: status('issue_templates') },
+      pull_request_template: { status: status('pull_request_template') },
+      contributing: { status: status('contributing') },
+      code_of_conduct: { status: status('code_of_conduct') },
+      readme_installation: { status: status('readme_installation') },
+      readme_contributing: { status: status('readme_contributing') },
+    },
   }
 }
 
