@@ -161,9 +161,9 @@ describe('fetchOrgAdmins', () => {
     if (result.kind === 'ok') {
       expect(result.admins.map((a) => a.login)).toEqual(['alice'])
     }
-    const callArgs = fetchMock.mock.calls[0]
+    const callArgs = fetchMock.mock.calls[0] as unknown[]
     expect(callArgs).toBeDefined()
-    const init = callArgs![1] as RequestInit | undefined
+    const init = callArgs[1] as RequestInit | undefined
     expect(init?.headers).toMatchObject({ Authorization: 'Bearer ghp_test' })
   })
 
@@ -465,7 +465,7 @@ describe('fetchOrgTwoFactorRequirement', () => {
     const result = await fetchOrgTwoFactorRequirement('ghp_test', 'kubernetes')
 
     expect(result).toEqual({ kind: 'ok', twoFactorRequirementEnabled: true })
-    const init = fetchMock.mock.calls[0]![1] as RequestInit | undefined
+    const init = (fetchMock.mock.calls[0] as unknown[])[1] as RequestInit | undefined
     expect(init?.headers).toMatchObject({ Authorization: 'Bearer ghp_test' })
   })
 
