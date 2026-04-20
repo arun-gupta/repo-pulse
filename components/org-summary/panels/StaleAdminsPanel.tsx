@@ -585,12 +585,17 @@ function RowDetail({
   }
   if (admin.classification === 'unavailable') {
     // Unified countdown source: prefer this admin's own GitHub-disclosed
-    // reset (`retryAvailableAt`), fall back to the hook's next scheduled
-    // background retry (`nextAutoRetryAt`). Either way, every unavailable
-    // row shows a live countdown — no "about a minute" copy that never
-    // updates. When neither is available (ladder exhausted, terminal
-    // reason), no countdown is shown and the copy points at Retry.
-    const countdownAt = admin.retryAvailableAt ?? nextAutoRetryAt
+    // reset (`retryAvailableAt`) only while it's still in the future —
+    // a past timestamp means the window has passed and shouldn't keep
+    // "Ready to retry." pinned after the ladder is exhausted. Fall back
+    // to the hook's next scheduled background retry (`nextAutoRetryAt`).
+    // When neither is available (ladder exhausted, terminal reason), no
+    // countdown is shown and the copy points at Retry.
+    const retryAt =
+      admin.retryAvailableAt && Date.parse(admin.retryAvailableAt) > Date.now()
+        ? admin.retryAvailableAt
+        : null
+    const countdownAt = retryAt ?? nextAutoRetryAt
     const hasCountdown = Boolean(countdownAt)
     return (
       <span className="text-xs text-slate-500 dark:text-slate-400">

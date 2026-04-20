@@ -458,14 +458,17 @@ describe('StaleAdminsPanel — Unavailable bucket split (issue #364)', () => {
     vi.useRealTimers()
   })
 
-  it('renders "Ready to retry" when the countdown has elapsed', () => {
+  it('shows "click Retry" copy (not a stale countdown) when retryAvailableAt is in the past and ladder is exhausted', () => {
     vi.setSystemTime(new Date('2026-04-20T12:01:00Z'))
     const elapsed = new Date('2026-04-20T12:00:00Z').toISOString()
     const section = makeSection({
       admins: [mkUnavailable('u1', 'rate-limited', elapsed)],
     })
     renderWithSession(<StaleAdminsPanel org="acme" ownerType="Organization" sectionOverride={section} />)
-    expect(screen.getByTestId('retry-countdown-ready')).toBeInTheDocument()
+    // Past retryAvailableAt with no nextAutoRetryAt: ladder exhausted, no countdown pinned.
+    expect(screen.queryByTestId('retry-countdown-ready')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('retry-countdown')).not.toBeInTheDocument()
+    expect(screen.getByText(/click Retry to try again/)).toBeInTheDocument()
     vi.useRealTimers()
   })
 
