@@ -188,6 +188,57 @@ describe('buildJsonExport', () => {
     expect(discussions.windowCount).toBeNull()
   })
 
+  it('includes onboarding block with all four signal fields', async () => {
+    const response: AnalyzeResponse = {
+      ...MINIMAL_RESPONSE,
+      results: [{
+        ...MINIMAL_RESPONSE.results[0],
+        goodFirstIssueCount: 12,
+        devEnvironmentSetup: true,
+        gitpodPresent: false,
+        newContributorPRAcceptanceRate: 0.75,
+      }],
+    }
+    const result = buildJsonExport(response)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as {
+      results: Array<{
+        onboarding: {
+          goodFirstIssueCount: number | 'unavailable'
+          devEnvironmentSetup: boolean | 'unavailable'
+          gitpodPresent: boolean | 'unavailable'
+          newContributorPRAcceptanceRate: number | 'unavailable'
+        }
+      }>
+    }
+    const onboarding = parsed.results[0].onboarding
+    expect(onboarding).toBeDefined()
+    expect(onboarding.goodFirstIssueCount).toBe(12)
+    expect(onboarding.devEnvironmentSetup).toBe(true)
+    expect(onboarding.gitpodPresent).toBe(false)
+    expect(onboarding.newContributorPRAcceptanceRate).toBe(0.75)
+  })
+
+  it('onboarding block emits "unavailable" strings when signals are unavailable', async () => {
+    const result = buildJsonExport(MINIMAL_RESPONSE)
+    const text = await result.blob.text()
+    const parsed = JSON.parse(text) as {
+      results: Array<{
+        onboarding: {
+          goodFirstIssueCount: number | 'unavailable'
+          devEnvironmentSetup: boolean | 'unavailable'
+          gitpodPresent: boolean | 'unavailable'
+          newContributorPRAcceptanceRate: number | 'unavailable'
+        }
+      }>
+    }
+    const onboarding = parsed.results[0].onboarding
+    expect(onboarding.goodFirstIssueCount).toBe('unavailable')
+    expect(onboarding.devEnvironmentSetup).toBe('unavailable')
+    expect(onboarding.gitpodPresent).toBe('unavailable')
+    expect(onboarding.newContributorPRAcceptanceRate).toBe('unavailable')
+  })
+
   it('omits security, licensing, and inclusiveNaming when data is unavailable', async () => {
     const result = buildJsonExport(MINIMAL_RESPONSE)
     const text = await result.blob.text()

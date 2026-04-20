@@ -202,8 +202,9 @@ function computeCommunity(result: AnalysisResult) {
   // Signals map — one entry per CommunitySignalKey, present state is
   // 'unknown' when the signal couldn't be determined (FR-016).
   type PresentState = boolean | 'unknown'
-  const makeSignal = (key: (typeof completeness.present)[number]): { present: PresentState } => {
-    if (completeness.present.includes(key)) return { present: true }
+  type SignalKey = Exclude<(typeof completeness.present)[number], 'gitpod_bonus'>
+  const makeSignal = (key: SignalKey): { present: PresentState } => {
+    if ((completeness.present as string[]).includes(key)) return { present: true }
     if (completeness.missing.includes(key)) return { present: false }
     return { present: 'unknown' }
   }
@@ -279,6 +280,15 @@ function computeReleaseHealth(result: AnalysisResult) {
   }
 }
 
+function computeOnboarding(result: AnalysisResult) {
+  return {
+    goodFirstIssueCount: result.goodFirstIssueCount ?? 'unavailable',
+    devEnvironmentSetup: result.devEnvironmentSetup ?? 'unavailable',
+    gitpodPresent: result.gitpodPresent ?? 'unavailable',
+    newContributorPRAcceptanceRate: result.newContributorPRAcceptanceRate ?? 'unavailable',
+  }
+}
+
 function computeComparison(results: AnalysisResult[]) {
   if (results.length < 2) return undefined
   return buildComparisonSections(results).map((section) => ({
@@ -314,6 +324,7 @@ export function buildJsonExport(response: AnalyzeResponse): JsonExportResult {
       inclusiveNaming: computeInclusiveNaming(result),
       community: computeCommunity(result),
       releaseHealth: computeReleaseHealth(result),
+      onboarding: computeOnboarding(result),
     })),
     comparison: computeComparison(response.results),
   }

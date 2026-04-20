@@ -204,6 +204,9 @@ function renderRepo(result: AnalysisResult, appUrl?: string): string {
     lines.push(...communityLines)
   }
 
+  // Onboarding signals section (P2-F08 / #117).
+  lines.push(...renderOnboardingSection(result))
+
   // Release Health section (cross-cutting lens; see P2-F09 / #69).
   const releaseHealthLines = renderReleaseHealthSection(result)
   if (releaseHealthLines.length > 0) {
@@ -656,6 +659,31 @@ function renderCommunitySection(result: AnalysisResult): string[] {
  * status table. Per-bracket calibration is deferred to #152, so percentile
  * labels use the linear ratio → percentile fallback.
  */
+function renderOnboardingSection(result: AnalysisResult): string[] {
+  const fmt = (v: unknown): string => {
+    if (v === 'unavailable' || v === undefined) return '—'
+    if (typeof v === 'boolean') return v ? '✓ Yes' : '✗ No'
+    if (typeof v === 'number') return String(v)
+    return String(v)
+  }
+  const fmtRate = (v: number | 'unavailable' | undefined): string => {
+    if (v === 'unavailable' || v === undefined) return '—'
+    return `${(v * 100).toFixed(1)}%`
+  }
+
+  return [
+    '### Onboarding & Accessibility',
+    '',
+    '| Signal | Value |',
+    '| --- | --- |',
+    `| Good first issues | ${fmt(result.goodFirstIssueCount)} |`,
+    `| Dev environment setup | ${fmt(result.devEnvironmentSetup)} |`,
+    `| Gitpod support | ${fmt(result.gitpodPresent)} |`,
+    `| New contributor PR acceptance | ${fmtRate(result.newContributorPRAcceptanceRate)} |`,
+    '',
+  ]
+}
+
 function renderReleaseHealthSection(result: AnalysisResult): string[] {
   const completeness = computeReleaseHealthCompleteness(result)
   const rh = result.releaseHealthResult
