@@ -5,6 +5,7 @@ import { getHealthScore, type HealthScoreDefinition } from '@/lib/scoring/health
 import { computeCommunityCompleteness } from '@/lib/community/completeness'
 import { computeGovernanceCompleteness } from '@/lib/governance/completeness'
 import { computeReleaseHealthCompleteness } from '@/lib/release-health/completeness'
+import { computeOnboardingCompleteness } from '@/lib/onboarding/completeness'
 import type { ScoreTone } from '@/specs/008-metric-cards/contracts/metric-card-props'
 import { formatMaturityAge, formatNormalizedRate, formatGrowthTrajectory } from '@/lib/maturity/format'
 
@@ -132,6 +133,18 @@ function buildLensReadouts(result: AnalysisResult): LensReadout[] {
         : 'No verified release-health signals',
       tooltip: 'Release Health is a cross-cutting lens — count of release-health signals present (release frequency, time since last release, semver compliance, release notes quality, tag-to-release promotion). Linear fallback until per-bracket calibration lands in #152. Does not feed the composite OSS Health Score.',
       tone: releaseHealth.tone,
+    })
+  }
+
+  const onboarding = computeOnboardingCompleteness(result)
+  if (onboarding.ratio !== null) {
+    lenses.push({
+      key: 'onboarding',
+      label: 'Onboarding',
+      percentileLabel: onboarding.percentile !== null ? `${onboarding.percentile}th percentile` : '—',
+      detail: `${onboarding.present.length} of ${onboarding.present.length + onboarding.missing.length} signals`,
+      tooltip: 'Onboarding is a cross-cutting lens — count of onboarding signals present across Contributors and Documentation (good first issues, dev environment, contributor acceptance rate, issue/PR templates, CONTRIBUTING.md, CODE_OF_CONDUCT.md, README installation and contributing sections). Does not feed the composite OSS Health Score.',
+      tone: onboarding.tone,
     })
   }
 
