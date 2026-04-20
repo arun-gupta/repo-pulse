@@ -2,7 +2,15 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { ActivityView } from './ActivityView'
-import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+import type { AnalysisResult, TrendComparisonMetrics } from '@/lib/analyzer/analysis-result'
+
+function createTrendComparisons(overrides: Partial<Record<'month' | 'week' | 'day', Partial<TrendComparisonMetrics>>> = {}) {
+  return {
+    month: { currentPeriodCommitCount: 3, previousPeriodCommitCount: 2, delta: 0.5, direction: 'accelerating', ...overrides.month },
+    week: { currentPeriodCommitCount: 2, previousPeriodCommitCount: 1, delta: 1, direction: 'accelerating', ...overrides.week },
+    day: { currentPeriodCommitCount: 1, previousPeriodCommitCount: 0, delta: 1, direction: 'accelerating', ...overrides.day },
+  }
+}
 
 function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
   return {
@@ -50,6 +58,71 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
       metadataChecks: [],
     },
     securityResult: 'unavailable',
+    activityCadenceByWindow: {
+      30: {
+        totalWeeks: 5,
+        weeklyCommitCounts: [1, 0, 1, 0, 1],
+        activeWeeksRatio: 0.6,
+        commitRegularity: 0.4,
+        longestGapDays: 12,
+        weekendToWeekdayRatio: 0.5,
+        weekendCommitCount: 2,
+        weekdayCommitCount: 4,
+        trendComparisons: createTrendComparisons(),
+      },
+      60: {
+        totalWeeks: 9,
+        weeklyCommitCounts: [1, 1, 0, 1, 0, 1, 2, 0, 1],
+        activeWeeksRatio: 0.67,
+        commitRegularity: 0.5,
+        longestGapDays: 18,
+        weekendToWeekdayRatio: 0.5,
+        weekendCommitCount: 3,
+        weekdayCommitCount: 6,
+        trendComparisons: createTrendComparisons({
+          month: { currentPeriodCommitCount: 3, previousPeriodCommitCount: 4, delta: -0.25, direction: 'decelerating' },
+        }),
+      },
+      90: {
+        totalWeeks: 13,
+        weeklyCommitCounts: [1, 0, 1, 0, 1, 1, 0, 2, 0, 2, 1, 0, 1],
+        activeWeeksRatio: 0.62,
+        commitRegularity: 0.58,
+        longestGapDays: 21,
+        weekendToWeekdayRatio: 0.6,
+        weekendCommitCount: 6,
+        weekdayCommitCount: 10,
+        trendComparisons: createTrendComparisons({
+          month: { currentPeriodCommitCount: 6, previousPeriodCommitCount: 4, delta: 0.5, direction: 'accelerating' },
+        }),
+      },
+      180: {
+        totalWeeks: 26,
+        weeklyCommitCounts: Array.from({ length: 26 }, (_, index) => (index % 4 === 0 ? 2 : index % 3 === 0 ? 1 : 0)),
+        activeWeeksRatio: 0.5,
+        commitRegularity: 0.75,
+        longestGapDays: 34,
+        weekendToWeekdayRatio: 0.7,
+        weekendCommitCount: 9,
+        weekdayCommitCount: 13,
+        trendComparisons: createTrendComparisons({
+          month: { currentPeriodCommitCount: 6, previousPeriodCommitCount: 4, delta: 0.5, direction: 'accelerating' },
+        }),
+      },
+      365: {
+        totalWeeks: 53,
+        weeklyCommitCounts: Array.from({ length: 53 }, (_, index) => (index % 5 === 0 ? 2 : index % 3 === 0 ? 1 : 0)),
+        activeWeeksRatio: 0.55,
+        commitRegularity: 0.82,
+        longestGapDays: 41,
+        weekendToWeekdayRatio: 0.8,
+        weekendCommitCount: 16,
+        weekdayCommitCount: 20,
+        trendComparisons: createTrendComparisons({
+          month: { currentPeriodCommitCount: 6, previousPeriodCommitCount: 4, delta: 0.5, direction: 'accelerating' },
+        }),
+      },
+    },
     missingFields: [],
     ...overrides,
   }
@@ -65,6 +138,7 @@ describe('ActivityView', () => {
     expect(within(activityView).getAllByText(/^commits$/i)).toHaveLength(2)
     expect(within(activityView).getAllByText(/^pull requests$/i)).toHaveLength(2)
     expect(within(activityView).getAllByText(/^issues$/i)).toHaveLength(2)
+    expect(within(activityView).getAllByText(/development cadence/i)).toHaveLength(2)
     expect(within(activityView).getAllByText(/^merge rate$/i)).toHaveLength(2)
     expect(within(activityView).getAllByText(/^ranking$/i)).toHaveLength(2)
     expect(within(activityView).getAllByText(/^closure rate$/i)).toHaveLength(2)
@@ -118,13 +192,15 @@ describe('ActivityView', () => {
     const activityView = screen.getByRole('region', { name: /activity view/i })
     expect(within(activityView).getByText(/^commits$/i)).toBeInTheDocument()
     expect(within(activityView).getByText('18')).toBeInTheDocument()
+    expect(within(activityView).getByText(/development cadence/i)).toBeInTheDocument()
     expect(within(activityView).getAllByText(/\d+\w{2} percentile/i).length).toBeGreaterThan(0)
 
     await userEvent.click(screen.getByRole('button', { name: '30d' }))
 
     expect(screen.getByRole('button', { name: '30d' })).toHaveAttribute('aria-pressed', 'true')
     expect(within(activityView).getByText(/^commits$/i)).toBeInTheDocument()
-    expect(within(activityView).getByText('3')).toBeInTheDocument()
+    expect(within(activityView).getAllByText('3').length).toBeGreaterThan(0)
+    expect(within(activityView).getByText('60%')).toBeInTheDocument()
     expect(within(activityView).getByText('20.0%')).toBeInTheDocument()
     expect(within(activityView).getAllByText(/\d+\w{2} percentile/i).length).toBeGreaterThan(0)
     expect(within(activityView).getByText(/prs are not reaching merge/i)).toBeInTheDocument()
@@ -136,7 +212,7 @@ describe('ActivityView', () => {
 
     expect(screen.getByRole('button', { name: '12 months' })).toHaveAttribute('aria-pressed', 'true')
     expect(within(activityView).getByText(/^releases$/i)).toBeInTheDocument()
-    expect(within(activityView).getByText('6')).toBeInTheDocument()
+    expect(within(activityView).getAllByText('6').length).toBeGreaterThan(0)
     expect(within(activityView).getByText('75.0%')).toBeInTheDocument()
     expect(within(activityView).getAllByText(/\d+\w{2} percentile/i).length).toBeGreaterThan(0)
     expect(within(activityView).getByText('4.0d')).toBeInTheDocument()

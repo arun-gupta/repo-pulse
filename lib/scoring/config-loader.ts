@@ -27,6 +27,7 @@ export const ACTIVITY_CADENCE_RECENCY_WEIGHT = 0.05
 export const DOCUMENTATION_SEMVER_BONUS = 0.03
 export const DOCUMENTATION_NOTES_BONUS = 0.02
 export const DOCUMENTATION_TAG_PROMOTION_BONUS = 0.02
+export const ACTIVITY_LONG_GAP_ALERT_DAYS = 45
 
 /**
  * Project Maturity (P2-F11 / #74) — shared config consumed by the analyzer,
@@ -100,6 +101,8 @@ export interface BracketCalibration {
   issuesClosedWithoutCommentRatio: PercentileSet
   topContributorShare: PercentileSet
   documentationScore?: PercentileSet
+  activeWeeksRatio?: PercentileSet
+  commitRegularity?: PercentileSet
   // Project Maturity (P2-F11 / #74). Optional — populated per stratum once
   // calibration re-samples under #152. When absent, the UI cohort caption
   // degrades gracefully (omits the context line).
