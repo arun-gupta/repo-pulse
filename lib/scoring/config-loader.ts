@@ -27,6 +27,7 @@ export const ACTIVITY_CADENCE_RECENCY_WEIGHT = 0.05
 export const DOCUMENTATION_SEMVER_BONUS = 0.03
 export const DOCUMENTATION_NOTES_BONUS = 0.02
 export const DOCUMENTATION_TAG_PROMOTION_BONUS = 0.02
+export const ACTIVITY_LONG_GAP_ALERT_DAYS = 45
 
 export type BracketKey = 'solo-tiny' | 'solo-small' | 'emerging' | 'growing' | 'established' | 'popular'
 
@@ -69,6 +70,8 @@ export interface BracketCalibration {
   issuesClosedWithoutCommentRatio: PercentileSet
   topContributorShare: PercentileSet
   documentationScore?: PercentileSet
+  activeWeeksRatio?: PercentileSet
+  commitRegularity?: PercentileSet
 }
 
 /**

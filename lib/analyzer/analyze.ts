@@ -1,4 +1,5 @@
 import type {
+  ActivityCadenceMetrics,
   ActivityWindowDays,
   ActivityWindowMetrics,
   AnalysisDiagnostic,
@@ -15,12 +16,13 @@ import type {
   RepositoryFetchFailure,
   Unavailable,
 } from './analysis-result'
-import { CONTRIBUTOR_WINDOW_DAYS } from './analysis-result'
+import { ACTIVITY_WINDOW_DAYS, CONTRIBUTOR_WINDOW_DAYS } from './analysis-result'
 import { queryGitHubGraphQL } from './github-graphql'
 import { fetchContributorCount, fetchMaintainerCount, fetchPublicUserOrganizations, type MaintainerToken } from './github-rest'
 import { REPO_COMMIT_AND_RELEASES_QUERY, REPO_ACTIVITY_COUNTS_QUERY, REPO_COMMIT_HISTORY_PAGE_QUERY, REPO_DISCUSSIONS_PAGE_QUERY, REPO_OVERVIEW_QUERY, REPO_README_BLOB_QUERY, REPO_RESPONSIVENESS_METADATA_QUERY, buildResponsivenessDetailQuery } from './queries'
 import { extractLicensingResult, type LicenseFileInfo } from './extract-licensing'
 import { extractInclusiveNamingResult } from '@/lib/inclusive-naming/checker'
+import { buildActivityCadenceMetrics } from '@/lib/activity/cadence'
 import { detectReleaseHealth } from '@/lib/release-health/detect'
 import type { SecurityResult, DirectSecurityCheck } from '@/lib/security/analysis-result'
 import { fetchScorecardData } from '@/lib/security/scorecard-client'
@@ -582,6 +584,10 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         commitHistory.nodes,
         overview.data.repository?.issues.totalCount,
       )
+      const commitTimestamps365d = commitHistory.nodes.length > 0
+        ? commitHistory.nodes.map((node) => node.authoredDate)
+        : 'unavailable'
+      const activityCadenceByWindow = buildActivityCadenceByWindow(commitTimestamps365d, now)
       const experimentalOrgAttribution = await buildExperimentalOrganizationCommitCountsByWindow(input.token, commitHistory.nodes, now)
       latestRateLimit = experimentalOrgAttribution.rateLimit ?? latestRateLimit
 
@@ -600,6 +606,8 @@ export async function analyze(input: AnalyzeInput): Promise<AnalyzeResponse> {
         responsiveness.data,
         contributorMetricsByWindow,
         activityMetricsByWindow,
+        activityCadenceByWindow,
+        commitTimestamps365d,
         contributorCount.data,
         maintainers.data.count,
         maintainers.data.tokens,
@@ -672,6 +680,8 @@ function buildAnalysisResult(
   responsiveness: RepoResponsivenessResponse,
   contributorMetricsByWindow: Record<ContributorWindowDays, ContributorWindowMetrics>,
   activityMetricsByWindow: Record<ActivityWindowDays, ActivityWindowMetrics>,
+  activityCadenceByWindow: Record<ActivityWindowDays, ActivityCadenceMetrics> | undefined,
+  commitTimestamps365d: string[] | Unavailable,
   totalContributorCount: number | Unavailable,
   maintainerCount: number | Unavailable,
   maintainerTokens: MaintainerToken[] | Unavailable,
@@ -790,6 +800,8 @@ function buildAnalysisResult(
       ]),
     ) as Record<ContributorWindowDays, ContributorWindowMetrics>,
     activityMetricsByWindow,
+    activityCadenceByWindow,
+    commitTimestamps365d,
     responsivenessMetricsByWindow,
     responsivenessMetrics,
     staleIssueRatio: activityMetricsByWindow[90].staleIssueRatio,
@@ -838,6 +850,26 @@ function buildAnalysisResult(
     releaseHealthResult: extractReleaseHealthResult(activity, now),
     missingFields,
   }
+}
+
+function buildActivityCadenceByWindow(
+  commitTimestamps365d: string[] | Unavailable,
+  now: Date,
+): Record<ActivityWindowDays, ActivityCadenceMetrics> | undefined {
+  if (!Array.isArray(commitTimestamps365d)) {
+    return undefined
+  }
+
+  return Object.fromEntries(
+    ACTIVITY_WINDOW_DAYS.map((windowDays) => [
+      windowDays,
+      buildActivityCadenceMetrics({
+        commitTimestamps: commitTimestamps365d,
+        now,
+        windowDays,
+      }),
+    ]),
+  ) as Record<ActivityWindowDays, ActivityCadenceMetrics>
 }
 
 function extractReleaseHealthResult(

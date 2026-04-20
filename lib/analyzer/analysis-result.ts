@@ -28,6 +28,27 @@ export interface ActivityWindowMetrics {
   medianTimeToCloseHours: number | Unavailable
 }
 
+export type TrendComparisonMode = 'month' | 'week' | 'day'
+
+export interface TrendComparisonMetrics {
+  currentPeriodCommitCount: number | Unavailable
+  previousPeriodCommitCount: number | Unavailable
+  delta: number | Unavailable
+  direction: 'accelerating' | 'decelerating' | 'flat' | Unavailable
+}
+
+export interface ActivityCadenceMetrics {
+  totalWeeks: number | Unavailable
+  weeklyCommitCounts: number[] | Unavailable
+  activeWeeksRatio: number | Unavailable
+  commitRegularity: number | Unavailable
+  longestGapDays: number | Unavailable
+  weekendToWeekdayRatio: number | Unavailable
+  weekendCommitCount: number | Unavailable
+  weekdayCommitCount: number | Unavailable
+  trendComparisons: Record<TrendComparisonMode, TrendComparisonMetrics> | Unavailable
+}
+
 export interface ResponsivenessMetrics {
   issueFirstResponseMedianHours: number | Unavailable
   issueFirstResponseP90Hours: number | Unavailable
@@ -159,6 +180,8 @@ export interface AnalysisResult {
   experimentalUnattributedAuthors90d: number | Unavailable
   contributorMetricsByWindow?: Record<ContributorWindowDays, ContributorWindowMetrics>
   activityMetricsByWindow?: Record<ActivityWindowDays, ActivityWindowMetrics>
+  activityCadenceByWindow?: Record<ActivityWindowDays, ActivityCadenceMetrics>
+  commitTimestamps365d?: string[] | Unavailable
   responsivenessMetricsByWindow?: Record<ActivityWindowDays, ResponsivenessMetrics>
   responsivenessMetrics?: ResponsivenessMetrics
   staleIssueRatio?: number | Unavailable
