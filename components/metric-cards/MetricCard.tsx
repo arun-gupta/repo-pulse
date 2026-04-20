@@ -142,7 +142,7 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
             <span className="text-[9px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Lenses</span>
             <span className="text-[9px] text-slate-400 dark:text-slate-500">percentile rank · signals present</span>
           </div>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             {card.lenses.map((lens) => (
               <LensPill
                 key={lens.key}
