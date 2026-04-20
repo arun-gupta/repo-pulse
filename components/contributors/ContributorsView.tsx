@@ -80,6 +80,8 @@ export function ContributorsView({ results, activeTag, onTagChange }: Contributo
                     devEnvironmentSetup={result.devEnvironmentSetup ?? 'unavailable'}
                     gitpodPresent={result.gitpodPresent ?? 'unavailable'}
                     newContributorPRAcceptanceRate={result.newContributorPRAcceptanceRate ?? 'unavailable'}
+                    activeTag={activeTag}
+                    onTagChange={onTagChange}
                   />
                 )}
               </div>

@@ -142,7 +142,7 @@ function buildLensReadouts(result: AnalysisResult): LensReadout[] {
       key: 'onboarding',
       label: 'Onboarding',
       percentileLabel: onboarding.percentile !== null ? `${onboarding.percentile}th percentile` : '—',
-      detail: `${onboarding.present.length} of ${onboarding.present.length + onboarding.missing.length} signals`,
+      detail: `${onboarding.present.length} of ${onboarding.present.length + onboarding.missing.length + onboarding.unknown.length} signals`,
       tooltip: 'Onboarding is a cross-cutting lens — count of onboarding signals present across Contributors and Documentation (good first issues, dev environment, contributor acceptance rate, issue/PR templates, CONTRIBUTING.md, CODE_OF_CONDUCT.md, README installation and contributing sections). Does not feed the composite OSS Health Score.',
       tone: onboarding.tone,
     })
