@@ -170,7 +170,15 @@ describe('analyze', () => {
       issueFirstResponseTimestamps: 'unavailable',
       issueCloseTimestamps: 'unavailable',
       prMergeTimestamps: 'unavailable',
+      commitTimestamps365d: [
+        '2026-03-30T12:00:00Z',
+        '2026-03-29T12:00:00Z',
+        '2026-03-28T12:00:00Z',
+      ],
     })
+    expect(result.results[0]?.activityCadenceByWindow?.[30]).toBeDefined()
+    expect(result.results[0]?.activityCadenceByWindow?.[30]?.weeklyCommitCounts).not.toBe('unavailable')
+    expect(result.results[0]?.activityCadenceByWindow?.[30]?.trendComparisons).not.toBe('unavailable')
     expect(result.results[0]?.missingFields).not.toContain('releases12mo')
     expect(result.results[0]?.missingFields).not.toContain('uniqueCommitAuthors90d')
     expect(result.results[0]?.missingFields).not.toContain('totalContributors')

@@ -12,6 +12,7 @@ import { buildActivitySections, getActivityWindowOptions } from '@/lib/activity/
 import { CONTRIB_EX_ACTIVITY_CARDS } from '@/lib/tags/tag-mappings'
 import { ActivityScoreHelp } from './ActivityScoreHelp'
 import { DiscussionsCard } from './DiscussionsCard'
+import { DevelopmentCadenceCard } from './DevelopmentCadenceCard'
 import { ReleaseCadenceCard } from './ReleaseCadenceCard'
 
 interface ActivityViewProps {
@@ -150,6 +151,7 @@ export function ActivityView({ results, activeTag: externalTag, onTagChange }: A
                   {!activeTag || activeTag === 'community' ? (
                     <DiscussionsCard result={result} activeTag={activeTag} onTagClick={handleTagClick} windowDays={windowDays} />
                   ) : null}
+                  <DevelopmentCadenceCard result={result} windowDays={windowDays} />
                   {!activeTag || activeTag === 'release-health' ? (
                     <ReleaseCadenceCard result={result} activeTag={activeTag} onTagClick={handleTagClick} />
                   ) : null}

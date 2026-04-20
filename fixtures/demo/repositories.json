@@ -154,6 +154,83 @@
           "medianTimeToCloseHours": "unavailable"
         }
       },
+      "activityCadenceByWindow": {
+        "30": {
+          "totalWeeks": 5,
+          "weeklyCommitCounts": [1, 0, 1, 2, 0],
+          "activeWeeksRatio": 0.6,
+          "commitRegularity": 0.4,
+          "longestGapDays": 12,
+          "weekendToWeekdayRatio": 0.5,
+          "weekendCommitCount": 2,
+          "weekdayCommitCount": 4,
+          "trendComparisons": {
+            "month": { "currentPeriodCommitCount": 3, "previousPeriodCommitCount": 2, "delta": 0.5, "direction": "accelerating" },
+            "week": { "currentPeriodCommitCount": 2, "previousPeriodCommitCount": 1, "delta": 1, "direction": "accelerating" },
+            "day": { "currentPeriodCommitCount": 1, "previousPeriodCommitCount": 0, "delta": 1, "direction": "accelerating" }
+          }
+        },
+        "60": {
+          "totalWeeks": 9,
+          "weeklyCommitCounts": [1, 1, 0, 1, 0, 1, 2, 0, 1],
+          "activeWeeksRatio": 0.67,
+          "commitRegularity": 0.5,
+          "longestGapDays": 18,
+          "weekendToWeekdayRatio": 0.5,
+          "weekendCommitCount": 3,
+          "weekdayCommitCount": 6,
+          "trendComparisons": {
+            "month": { "currentPeriodCommitCount": 3, "previousPeriodCommitCount": 4, "delta": -0.25, "direction": "decelerating" },
+            "week": { "currentPeriodCommitCount": 1, "previousPeriodCommitCount": 2, "delta": -0.5, "direction": "decelerating" },
+            "day": { "currentPeriodCommitCount": 0, "previousPeriodCommitCount": 1, "delta": -1, "direction": "decelerating" }
+          }
+        },
+        "90": {
+          "totalWeeks": 13,
+          "weeklyCommitCounts": [1, 0, 1, 0, 1, 1, 0, 2, 0, 2, 1, 0, 1],
+          "activeWeeksRatio": 0.62,
+          "commitRegularity": 0.58,
+          "longestGapDays": 21,
+          "weekendToWeekdayRatio": 0.6,
+          "weekendCommitCount": 6,
+          "weekdayCommitCount": 10,
+          "trendComparisons": {
+            "month": { "currentPeriodCommitCount": 6, "previousPeriodCommitCount": 4, "delta": 0.5, "direction": "accelerating" },
+            "week": { "currentPeriodCommitCount": 3, "previousPeriodCommitCount": 2, "delta": 0.5, "direction": "accelerating" },
+            "day": { "currentPeriodCommitCount": 1, "previousPeriodCommitCount": 1, "delta": 0, "direction": "flat" }
+          }
+        },
+        "180": {
+          "totalWeeks": 26,
+          "weeklyCommitCounts": [2, 0, 1, 1, 0, 2, 0, 1, 0, 2, 1, 0, 1, 2, 0, 1, 0, 1, 2, 0, 1, 0, 2, 1, 0, 1],
+          "activeWeeksRatio": 0.58,
+          "commitRegularity": 0.74,
+          "longestGapDays": 34,
+          "weekendToWeekdayRatio": 0.7,
+          "weekendCommitCount": 9,
+          "weekdayCommitCount": 13,
+          "trendComparisons": {
+            "month": { "currentPeriodCommitCount": 6, "previousPeriodCommitCount": 4, "delta": 0.5, "direction": "accelerating" },
+            "week": { "currentPeriodCommitCount": 2, "previousPeriodCommitCount": 1, "delta": 1, "direction": "accelerating" },
+            "day": { "currentPeriodCommitCount": 0, "previousPeriodCommitCount": 0, "delta": "unavailable", "direction": "unavailable" }
+          }
+        },
+        "365": {
+          "totalWeeks": 53,
+          "weeklyCommitCounts": [2, 0, 1, 0, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 1, 0],
+          "activeWeeksRatio": 0.55,
+          "commitRegularity": 0.82,
+          "longestGapDays": 41,
+          "weekendToWeekdayRatio": 0.8,
+          "weekendCommitCount": 16,
+          "weekdayCommitCount": 20,
+          "trendComparisons": {
+            "month": { "currentPeriodCommitCount": 6, "previousPeriodCommitCount": 4, "delta": 0.5, "direction": "accelerating" },
+            "week": { "currentPeriodCommitCount": 2, "previousPeriodCommitCount": 1, "delta": 1, "direction": "accelerating" },
+            "day": { "currentPeriodCommitCount": 0, "previousPeriodCommitCount": 0, "delta": "unavailable", "direction": "unavailable" }
+          }
+        }
+      },
       "responsivenessMetricsByWindow": {
         "30": {
           "issueFirstResponseMedianHours": "unavailable",
