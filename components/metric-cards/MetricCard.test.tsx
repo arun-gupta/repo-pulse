@@ -73,6 +73,9 @@ describe('MetricCard', () => {
     expect(screen.getByText('31.6 /mo')).toBeInTheDocument()
     expect(screen.getByText('Growth trajectory')).toBeInTheDocument()
     expect(screen.getByText('Accelerating')).toBeInTheDocument()
+    expect(screen.queryByText('Commits (30d)')).not.toBeInTheDocument()
+    expect(screen.queryByText('PRs opened (90d)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Total contributors')).not.toBeInTheDocument()
   })
 
   it('shows fallback for unavailable description', () => {
