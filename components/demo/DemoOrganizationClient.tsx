@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { DemoSignInDialog } from '@/components/demo/DemoSignInDialog'
 import { ResultsShell } from '@/components/app-shell/ResultsShell'
 import { OrgInventoryView } from '@/components/org-inventory/OrgInventoryView'
 import { OrgBucketContent } from '@/components/org-summary/OrgBucketContent'
@@ -105,6 +106,7 @@ export function DemoOrganizationClient({ response, governance, topReposAnalyzed 
   const [domTotalMatches, setDomTotalMatches] = useState(0)
   const [domMatchedTabCount, setDomMatchedTabCount] = useState(0)
   const [orgWindow, setOrgWindow] = useState<ContributorDiversityWindow>(90)
+  const [signInDialogRepos, setSignInDialogRepos] = useState<string[] | null>(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -164,6 +166,12 @@ export function DemoOrganizationClient({ response, governance, topReposAnalyzed 
 
   return (
     <SearchProvider query={debouncedQuery}>
+      {signInDialogRepos !== null && (
+        <DemoSignInDialog
+          repos={signInDialogRepos}
+          onDismiss={() => setSignInDialogRepos(null)}
+        />
+      )}
       <ResultsShell
         initialActiveTab="overview"
         analysisPanel={<DemoOrgAnalysisPanel org={response.org} topCount={topReposAnalyzed.length} />}
@@ -187,12 +195,9 @@ export function DemoOrganizationClient({ response, governance, topReposAnalyzed 
             summary={response.summary}
             results={response.results}
             rateLimit={response.rateLimit}
-            onAnalyzeRepo={() => {
-              // No-op: analyzing fresh repositories requires sign-in.
-            }}
-            onAnalyzeSelected={() => {
-              // No-op: analyzing fresh repositories requires sign-in.
-            }}
+            onAnalyzeRepo={(repo) => setSignInDialogRepos([repo])}
+            onAnalyzeSelected={(repos) => setSignInDialogRepos(repos)}
+            onAnalyzeAllActive={(repos) => setSignInDialogRepos(repos)}
           />
         }
         contributors={view ? withNote(
