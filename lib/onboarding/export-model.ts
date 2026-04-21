@@ -13,9 +13,9 @@ export interface OnboardingExportModel {
 export function buildOnboardingExportModel(result: AnalysisResult): OnboardingExportModel {
   const completeness = computeOnboardingCompleteness(result)
 
-  const status = (key: string): 'present' | 'missing' | 'unknown' => {
-    if ((completeness.present as string[]).includes(key)) return 'present'
-    if ((completeness.missing as string[]).includes(key)) return 'missing'
+  const status = (key: OnboardingSignalKey): 'present' | 'missing' | 'unknown' => {
+    if (completeness.present.includes(key)) return 'present'
+    if (completeness.missing.includes(key)) return 'missing'
     return 'unknown'
   }
 

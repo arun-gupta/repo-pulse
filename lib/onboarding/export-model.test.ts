@@ -73,4 +73,9 @@ describe('buildOnboardingExportModel', () => {
     const model = buildOnboardingExportModel(BASE as AnalysisResult)
     expect(model.score.total).toBe(9)
   })
+
+  it('score.tone is neutral when all signals are unknown', () => {
+    const model = buildOnboardingExportModel(BASE as AnalysisResult)
+    expect(model.score.tone).toBe('neutral')
+  })
 })
