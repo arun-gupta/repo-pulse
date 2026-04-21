@@ -135,16 +135,16 @@ describe('StaleAdminsPanel — baseline rendering', () => {
 
     // Expanded by default — strip and description are visible.
     expect(screen.getByTestId('stale-admins-count-strip')).toBeInTheDocument()
-    expect(screen.getByText(/stale admin detection/i)).toBeInTheDocument()
+    expect(screen.getByText(/member roles and admin activity/i)).toBeInTheDocument()
 
     const toggle = screen.getByTestId('stale-admins-panel-toggle')
     fireEvent.click(toggle)
 
     expect(screen.queryByTestId('stale-admins-group-stale')).not.toBeInTheDocument()
-    expect(screen.queryByText(/stale admin detection/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/member roles and admin activity/i)).not.toBeInTheDocument()
     // Summary strip and title stay visible so the signal is still readable at a glance.
     expect(screen.getByTestId('stale-admins-count-strip')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /org admin activity/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /org admin.*member overview/i })).toBeInTheDocument()
   })
 
   it('omits the header summary strip when applicability is not applicable', () => {
