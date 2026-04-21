@@ -28,9 +28,9 @@ describe('ComparisonView', () => {
   it('lets the user toggle the median column', async () => {
     render(<ComparisonView results={[buildResult('facebook/react'), buildResult('nvidia/topograph')]} />)
 
-    expect(screen.getAllByRole('button', { name: /median/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /^median$/i }).length).toBeGreaterThan(0)
     await userEvent.click(screen.getByRole('checkbox', { name: /show median column/i }))
-    expect(screen.queryAllByRole('button', { name: /median/i })).toHaveLength(0)
+    expect(screen.queryAllByRole('button', { name: /^median$/i })).toHaveLength(0)
   })
 
   it('lets the user disable a section', async () => {
