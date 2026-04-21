@@ -114,9 +114,9 @@
 
 **Purpose**: Cross-cutting concerns — recommendations catalog, exports, and missing data panel.
 
-- [ ] T027 [P] Add CTR-8 (`good_first_issues`), CTR-9 (`dev_environment_setup`), CTR-10 (`new_contributor_acceptance`) entries to `lib/recommendations/catalog.ts` with `onboarding` tag
-- [ ] T028 [P] Add `onboarding` block to `lib/export/json-export.ts`: include `goodFirstIssueCount`, `devEnvironmentSetup`, `gitpodPresent`, `newContributorPRAcceptanceRate` (or `'unavailable'` markers)
-- [ ] T029 [P] Add onboarding signals table to `lib/export/markdown-export.ts`: four rows — Good first issues, Dev environment setup, Gitpod support, New contributor PR acceptance
+- [X] T027 [P] Add CTR-8 (`good_first_issues`), CTR-9 (`dev_environment_setup`), CTR-10 (`new_contributor_acceptance`) entries to `lib/recommendations/catalog.ts` with `onboarding` tag
+- [X] T028 [P] Add `onboarding` block to `lib/export/json-export.ts`: include `goodFirstIssueCount`, `devEnvironmentSetup`, `gitpodPresent`, `newContributorPRAcceptanceRate` (or `'unavailable'` markers)
+- [X] T029 [P] Add onboarding signals table to `lib/export/markdown-export.ts`: four rows — Good first issues, Dev environment setup, Gitpod support, New contributor PR acceptance
 - [X] T030 Write unit tests for the three catalog entries in `lib/recommendations/catalog.test.ts` (if catalog has tests) and for the onboarding block in `lib/export/json-export.test.ts` and `lib/export/markdown-export.test.ts`
 
 **Checkpoint**: `npm test lib/recommendations lib/export` passes; JSON and Markdown exports include onboarding signals
@@ -129,7 +129,7 @@
 - [X] T032 [P] Run full test suite `npm test` — all tests pass
 - [X] T033 [P] Run `npm run build` — production build succeeds (with `DEV_GITHUB_PAT=` prefix per DEVELOPMENT.md)
 - [X] T034 Update `docs/DEVELOPMENT.md` Phase 2 feature order table: mark P2-F08 as ✅ Done
-- [ ] T035 Manual browser verification at `http://localhost:3014`: activate `onboarding` pill, verify Documentation and Contributors tabs filter correctly; verify OnboardingPane renders for a real repo; verify Community score changes; verify Comparison tab shows new rows; verify JSON and Markdown exports include onboarding block
+- [X] T035 Manual browser verification at `http://localhost:3014`: activate `onboarding` pill, verify Documentation and Contributors tabs filter correctly; verify OnboardingPane renders for a real repo; verify Community score changes; verify Comparison tab shows new rows; verify JSON and Markdown exports include onboarding block
 
 ---
 
