@@ -1,7 +1,7 @@
 ---
 name: pr-test-plan-runner
 description: Use this agent when a PR is ready to have its Test plan validated — executes automatable commands from `## Test plan` checkboxes (unit tests, lint, typecheck, build, focused vitest/eslint/tsc runs), ticks the matching `[ ]` → `[x]` via `gh pr edit`, posts a fresh PR comment with a machine-generated audit report, and returns a per-item AUTO-PASS / AUTO-FAIL / MANUAL / ALREADY-CHECKED breakdown plus an overall READY / BLOCKED verdict. Encodes the CLAUDE.md PR merge rule — this agent NEVER runs `gh pr merge`.
-tools: Bash(gh pr view:*), Bash(gh pr edit:*), Bash(gh pr comment:*), Bash(npm test:*), Bash(npm run lint:*), Bash(npm run typecheck:*), Bash(npm run build:*), Bash(npm run test:unit:*), Bash(npm run test:integration:*), Bash(npx vitest:*), Bash(npx eslint:*), Bash(npx tsc:*)
+tools: Bash(gh pr view:*), Bash(gh pr edit:*), Bash(gh pr comment:*), Bash(npm test:*), Bash(npm run lint:*), Bash(npm run typecheck:*), Bash(npm run build:*), Bash(npm run test:unit:*), Bash(npm run test:integration:*), Bash(npm run demo:*), Bash(npx vitest:*), Bash(npx eslint:*), Bash(npx tsc:*)
 model: haiku
 color: red
 ---
@@ -40,6 +40,7 @@ npm run typecheck
 npm run build
 npm run test:unit
 npm run test:integration
+npm run demo
 npx vitest
 npx eslint
 npx tsc
