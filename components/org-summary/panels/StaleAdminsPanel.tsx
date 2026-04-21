@@ -364,7 +364,7 @@ function MemberPermissionSummary({
           <span className="font-medium">Personal Access Token</span>
           {' with '}
           <code className="font-mono text-[0.7rem]">read:org</code>
-          {' scope — PATs bypass OAuth app restrictions. You must also be a member of this org to see concealed admins and member counts.'}
+          {' scope — PATs bypass OAuth app restrictions. You must also be a member of this org to see full member details and admin counts.'}
         </p>
       ) : !elevated ? (
         <p className="text-xs text-slate-500 dark:text-slate-400">
