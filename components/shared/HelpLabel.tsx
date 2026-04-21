@@ -38,8 +38,7 @@ export function HelpLabel({ label, helpText, className }: HelpLabelProps) {
           <span
             role="button"
             tabIndex={0}
-            title={helpText}
-            aria-label={`${label}. ${helpText}`}
+            aria-label={`${label} help`}
             aria-expanded={open}
             onMouseEnter={() => setOpen(true)}
             onMouseLeave={() => setOpen(false)}
@@ -72,7 +71,7 @@ export function HelpLabel({ label, helpText, className }: HelpLabelProps) {
           {open ? (
             <span
               role="tooltip"
-              className="pointer-events-none absolute left-1/2 top-full z-20 mt-1 w-64 -translate-x-1/2 rounded-md border border-slate-200 bg-white p-2 text-xs font-normal normal-case tracking-normal text-slate-700 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              className="pointer-events-none absolute bottom-full left-0 z-20 mb-1 w-64 rounded-md border border-slate-200 bg-white p-2 text-xs font-normal normal-case tracking-normal text-slate-700 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             >
               {helpText}
             </span>
