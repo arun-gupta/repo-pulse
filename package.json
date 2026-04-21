@@ -16,7 +16,8 @@
     "calibrate:solo:dry-run": "tsx scripts/calibrate.ts --profile=solo --dry-run",
     "calibrate:legacy": "tsx scripts/calibrate-legacy.ts",
     "list-candidates": "tsx scripts/list-candidates.ts",
-    "demo:fixtures": "tsx scripts/generate-demo-fixtures.ts"
+    "demo:fixtures": "tsx scripts/generate-demo-fixtures.ts",
+    "demo:check-parity": "tsx scripts/check-demo-fixture-parity.ts"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

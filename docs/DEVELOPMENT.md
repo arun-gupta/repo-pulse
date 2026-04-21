@@ -69,7 +69,7 @@ Three project-scoped sub-agents in `.claude/agents/` encode the RepoPulse workfl
 
 Each agent returns a structured report. `spec-reviewer` returns `PASS` / `FAIL` with citations into the constitution and `docs/PRODUCT.md`; `dod-verifier` returns a per-item `SATISFIED` / `BLOCKED` / `REQUIRES HUMAN SIGN-OFF` punch list with command output as evidence; `pr-test-plan-runner` returns a per-item `AUTO-PASS` / `AUTO-FAIL` / `MANUAL` / `ALREADY-CHECKED` classification plus an overall `READY` / `BLOCKED` verdict, and additionally posts a PR comment with an agent-generated disclaimer (`> Automated report from pr-test-plan-runner …`) so reviewers have a durable audit trail of what ran, when, and with what result.
 
-**PR merge discipline**: `pr-test-plan-runner`'s tool allowlist is narrow — 12 patterns total: `Bash(gh pr view:*)`, `Bash(gh pr edit:*)`, `Bash(gh pr comment:*)` for PR interaction, plus nine automatable command prefixes (`Bash(npm test:*)`, `Bash(npm run lint:*)`, `Bash(npm run typecheck:*)`, `Bash(npm run build:*)`, `Bash(npm run test:unit:*)`, `Bash(npm run test:integration:*)`, `Bash(npx vitest:*)`, `Bash(npx eslint:*)`, `Bash(npx tsc:*)`). `gh pr merge`, `gh pr close`, `gh pr ready`, and `gh pr review` are explicitly absent from the allowlist, and the agent prompt additionally forbids extracted Test plan commands matching those prefixes, `rm`, `git reset`, `git push --force`, `sudo`, `curl`, `wget`, `ssh`, `npm run test:e2e`, and `npx playwright`. The `CLAUDE.md` rule that PR merging is a manual user action is intact — none of the three agents is permitted to merge.
+**PR merge discipline**: `pr-test-plan-runner`'s tool allowlist is narrow — 13 patterns total: `Bash(gh pr view:*)`, `Bash(gh pr edit:*)`, `Bash(gh pr comment:*)` for PR interaction, plus ten automatable command prefixes (`Bash(npm test:*)`, `Bash(npm run lint:*)`, `Bash(npm run typecheck:*)`, `Bash(npm run build:*)`, `Bash(npm run test:unit:*)`, `Bash(npm run test:integration:*)`, `Bash(npm run demo:*)`, `Bash(npx vitest:*)`, `Bash(npx eslint:*)`, `Bash(npx tsc:*)`). `gh pr merge`, `gh pr close`, `gh pr ready`, and `gh pr review` are explicitly absent from the allowlist, and the agent prompt additionally forbids extracted Test plan commands matching those prefixes, `rm`, `git reset`, `git push --force`, `sudo`, `curl`, `wget`, `ssh`, `npm run test:e2e`, and `npx playwright`. The `CLAUDE.md` rule that PR merging is a manual user action is intact — none of the three agents is permitted to merge.
 
 Sub-agents inherit the parent session's `.claude/settings.json` allowlist as a ceiling; they cannot widen it. No entry was added to `settings.json` for these three agents — the existing allowlist already covers every tool they need.
 
@@ -341,6 +341,18 @@ PR with test plan → merge
 **Key distinction:** The GitHub issue defines *what and why* (requirements). SpecKit generates *how* (TypeScript interfaces, view props, data flow contracts). They are not duplicates — the issue is the input, the spec file is the output.
 
 This replaces the Phase 1 pattern where PRODUCT.md contained inline acceptance criteria for every feature. Phase 1 specs are frozen in PRODUCT.md as a historical record.
+
+---
+
+## Adding an org governance signal — demo fixture rule
+
+Any PR that adds a new governance panel or signal (i.e. a new `/api/org/` route that feeds `OrgFixture.governance` in `app/demo/organization/page.tsx`) **must** do all three of the following in the same PR:
+
+1. Add the new field to the `governance` object in `scripts/generate-demo-fixtures.ts`.
+2. Regenerate the fixtures with `npm run demo:fixtures` and commit the updated `fixtures/demo/org-ossf.json`.
+3. Confirm `npm run demo:check-parity` exits 0.
+
+**Why**: hand-authoring values in `fixtures/demo/` violates the accuracy policy (constitution §II). Issue #385 documented a real incident where `memberPermission` was committed with fabricated counts that were only caught during manual review. The CI workflow `.github/workflows/demo-fixture-parity.yml` enforces generator parity automatically on every PR that touches governance-related files.
 
 ---
 
