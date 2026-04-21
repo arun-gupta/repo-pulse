@@ -37,6 +37,7 @@ export async function GET(request: Request) {
     const section: MemberPermissionDistributionSection = {
       kind: 'member-permission-distribution',
       applicability: 'not-applicable-non-org',
+      adminCount: null,
       memberCount: null,
       outsideCollaboratorCount: null,
       unavailableReasons: [],
