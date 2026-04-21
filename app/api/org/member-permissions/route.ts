@@ -1,6 +1,8 @@
 import {
+  fetchOrgAdmins,
   fetchOrgMembers,
   fetchOrgOutsideCollaborators,
+  type OrgAdminListResult,
   type OrgMemberListResult,
   type OrgCollaboratorListResult,
 } from '@/lib/analyzer/github-rest'
@@ -43,27 +45,41 @@ export async function GET(request: Request) {
     return Response.json({ section })
   }
 
-  const [memberResult, collaboratorResult] = await Promise.all([
+  const [adminResult, allMembersResult, collaboratorResult] = await Promise.all([
+    fetchOrgAdmins(token, org),
     fetchOrgMembers(token, org),
     fetchOrgOutsideCollaborators(token, org),
   ])
 
-  if (memberResult.kind !== 'ok') {
+  // Total member fetch failing is a hard blocker — we can't show any counts
+  if (allMembersResult.kind !== 'ok') {
     const section: MemberPermissionDistributionSection = {
       kind: 'member-permission-distribution',
       applicability: 'member-list-unavailable',
+      adminCount: null,
       memberCount: null,
       outsideCollaboratorCount: null,
-      unavailableReasons: [mapMemberReason(memberResult)],
+      unavailableReasons: [mapMemberReason(allMembersResult)],
       resolvedAt,
     }
     return Response.json({ section })
   }
 
-  const memberCount = memberResult.members.length
   const unavailableReasons: MemberPermissionUnavailableReason[] = []
-  let outsideCollaboratorCount: number | null = null
 
+  // Admin count — use same endpoint as stale admins panel (role=admin)
+  let adminCount: number | null = null
+  if (adminResult.kind === 'ok') {
+    adminCount = adminResult.admins.length
+  } else {
+    unavailableReasons.push(mapAdminReason(adminResult))
+  }
+
+  // Non-admin members = all org members − admins (only when both are available)
+  const memberCount =
+    adminCount !== null ? allMembersResult.members.length - adminCount : null
+
+  let outsideCollaboratorCount: number | null = null
   if (collaboratorResult.kind === 'ok') {
     outsideCollaboratorCount = collaboratorResult.collaborators.length
   } else {
@@ -75,6 +91,7 @@ export async function GET(request: Request) {
   const section: MemberPermissionDistributionSection = {
     kind: 'member-permission-distribution',
     applicability,
+    adminCount,
     memberCount,
     outsideCollaboratorCount,
     unavailableReasons,
@@ -89,6 +106,16 @@ function getBearerToken(request: Request): string | null {
   if (!authorization) return null
   const match = authorization.match(/^Bearer\s+(.+)$/i)
   return match?.[1]?.trim() || null
+}
+
+function mapAdminReason(result: OrgAdminListResult): MemberPermissionUnavailableReason {
+  switch (result.kind) {
+    case 'rate-limited': return 'admin-list-rate-limited'
+    case 'auth-failed': return 'admin-list-auth-failed'
+    case 'scope-insufficient': return 'admin-list-scope-insufficient'
+    case 'network': return 'network'
+    default: return 'unknown'
+  }
 }
 
 function mapMemberReason(result: OrgMemberListResult): MemberPermissionUnavailableReason {

@@ -583,11 +583,11 @@ describe('fetchUserOrgMembership', () => {
 describe('fetchOrgMembers', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('sends role=member query with bearer auth', async () => {
+  it('sends role=all query with bearer auth', async () => {
     const fetchMock = vi.fn(async (input: string | URL) => {
       const url = String(input)
       expect(url).toContain('/orgs/kubernetes/members')
-      expect(url).toContain('role=member')
+      expect(url).toContain('role=all')
       expect(url).toContain('per_page=100')
       return buildPageResponse([{ login: 'alice' }])
     })
@@ -610,7 +610,7 @@ describe('fetchOrgMembers', () => {
         return buildPageResponse([{ login: 'bob' }])
       }
       return buildPageResponse([{ login: 'alice' }], {
-        linkHeader: '<https://api.github.com/orgs/x/members?role=member&per_page=100&page=2>; rel="next"',
+        linkHeader: '<https://api.github.com/orgs/x/members?role=all&per_page=100&page=2>; rel="next"',
       })
     })
     vi.stubGlobal('fetch', fetchMock)

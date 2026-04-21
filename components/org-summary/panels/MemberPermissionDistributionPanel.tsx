@@ -15,8 +15,6 @@ import {
 interface Props {
   org: string | null
   ownerType: OwnerType
-  /** Admin count from the stale-admins section — must not be fetched independently (FR-007) */
-  adminCount: number | null
   /** Override for tests and demo fixtures */
   sectionOverride?: MemberPermissionDistributionSection | null
   /** Override for tests */
@@ -26,7 +24,6 @@ interface Props {
 export function MemberPermissionDistributionPanel({
   org,
   ownerType,
-  adminCount,
   sectionOverride,
   loadingOverride,
 }: Props) {
@@ -43,15 +40,13 @@ export function MemberPermissionDistributionPanel({
   const loading = loadingOverride ?? (hasOverride ? false : hookState.loading)
   const [expanded, setExpanded] = useState(true)
 
-  const resolvedAdminCount = adminCount
-
   const computedFlag: PermissionFlag | null =
-    section && section.applicability === 'applicable' && resolvedAdminCount !== null
+    section && section.applicability === 'applicable' && section.adminCount !== null
       ? (section.flag !== undefined
           ? (section.flag ?? null)
           : evaluatePermissionFlag(
-              resolvedAdminCount,
-              resolvedAdminCount +
+              section.adminCount,
+              section.adminCount +
                 (section.memberCount ?? 0) +
                 (section.outsideCollaboratorCount ?? 0),
             ))
@@ -100,7 +95,7 @@ export function MemberPermissionDistributionPanel({
             </p>
           ) : null}
           {!loading && section ? (
-            <SectionBody section={section} adminCount={resolvedAdminCount} org={org ?? ''} />
+            <SectionBody section={section} org={org ?? ''} />
           ) : null}
         </>
       ) : null}
@@ -140,11 +135,9 @@ function FlagBadge({ flag }: { flag: PermissionFlag }) {
 
 function SectionBody({
   section,
-  adminCount,
   org,
 }: {
   section: MemberPermissionDistributionSection
-  adminCount: number | null
   org: string
 }) {
   if (section.applicability === 'not-applicable-non-org') {
@@ -170,9 +163,9 @@ function SectionBody({
     )
   }
 
+  const adminVal = section.adminCount ?? 0
   const memberCount = section.memberCount ?? 0
   const collabCount = section.outsideCollaboratorCount ?? 0
-  const adminVal = adminCount ?? 0
   const total = adminVal + memberCount + collabCount
   const adminPct = total > 0 ? Math.round((adminVal / total) * 100) : 0
   const memberPct = total > 0 ? Math.round((memberCount / total) * 100) : 0
@@ -186,7 +179,7 @@ function SectionBody({
       <div className="grid grid-cols-3 gap-2 text-sm">
         <RoleRow
           label="Admins"
-          count={adminVal}
+          count={section.adminCount}
           pct={adminPct}
           countTestId="perm-admin-count"
           pctTestId="perm-admin-pct"

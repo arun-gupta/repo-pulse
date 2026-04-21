@@ -21,6 +21,7 @@ function makeSection(overrides: Partial<MemberPermissionDistributionSection> = {
   return {
     kind: 'member-permission-distribution',
     applicability: 'applicable',
+    adminCount: 2,
     memberCount: 8,
     outsideCollaboratorCount: 1,
     unavailableReasons: [],
@@ -29,7 +30,7 @@ function makeSection(overrides: Partial<MemberPermissionDistributionSection> = {
   }
 }
 
-const BASE_PROPS = { org: 'acme', ownerType: 'Organization' as const, adminCount: 2 }
+const BASE_PROPS = { org: 'acme', ownerType: 'Organization' as const }
 
 // ── US1: Role distribution display ───────────────────────────────────────────
 
@@ -82,8 +83,7 @@ describe('MemberPermissionDistributionPanel — role distribution (US1)', () => 
     renderWithSession(
       <MemberPermissionDistributionPanel
         {...BASE_PROPS}
-        adminCount={null}
-        sectionOverride={makeSection({ applicability: 'member-list-unavailable', memberCount: null })}
+        sectionOverride={makeSection({ applicability: 'member-list-unavailable', adminCount: null, memberCount: null })}
       />,
     )
     expect(screen.getByTestId('perm-unavailable')).toBeTruthy()
@@ -112,7 +112,6 @@ describe('MemberPermissionDistributionPanel — admin-heavy flag (US2)', () => {
     renderWithSession(
       <MemberPermissionDistributionPanel
         {...BASE_PROPS}
-        adminCount={15}
         sectionOverride={flagSection({
           kind: 'admin-heavy',
           thresholdBreached: 'ratio',

@@ -100,15 +100,7 @@ function GovernanceExtraPanels({
     elevated,
   })
 
-  // Always drive StaleAdminsPanel from the lifted hook state so the admin
-  // list is fetched exactly once and the count can flow to the distribution
-  // panel (FR-007). For demo/test overrides the hook is a no-op (org: null).
   const staleAdminsSection = hasStaleAdminsOverride ? staleAdminsOverride : staleAdminsState.section
-
-  const adminCount: number | null =
-    staleAdminsSection?.applicability === 'applicable'
-      ? staleAdminsSection.admins.length
-      : null
 
   return (
     <>
@@ -128,7 +120,6 @@ function GovernanceExtraPanels({
       <MemberPermissionDistributionPanel
         org={org}
         ownerType={ownerType}
-        adminCount={adminCount}
         sectionOverride={memberPermissionOverride}
       />
     </>

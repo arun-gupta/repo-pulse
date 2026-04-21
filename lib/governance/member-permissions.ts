@@ -11,6 +11,9 @@ export type MemberPermissionApplicability =
   | 'partial'
 
 export type MemberPermissionUnavailableReason =
+  | 'admin-list-rate-limited'
+  | 'admin-list-auth-failed'
+  | 'admin-list-scope-insufficient'
   | 'member-list-rate-limited'
   | 'member-list-auth-failed'
   | 'member-list-scope-insufficient'
@@ -29,11 +32,14 @@ export interface PermissionFlag {
 export interface MemberPermissionDistributionSection {
   kind: 'member-permission-distribution'
   applicability: MemberPermissionApplicability
+  /** Org owners (role=admin) */
+  adminCount: number | null
+  /** Non-admin org members (total - admins) */
   memberCount: number | null
   outsideCollaboratorCount: number | null
   unavailableReasons: MemberPermissionUnavailableReason[]
   resolvedAt: string
-  /** Pre-computed flag for tests/overrides; otherwise computed by the panel from adminCount prop */
+  /** Pre-computed flag for tests/overrides; otherwise computed by the panel */
   flag?: PermissionFlag | null
 }
 

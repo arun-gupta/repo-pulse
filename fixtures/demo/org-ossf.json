@@ -1344,7 +1344,8 @@
     "memberPermission": {
       "kind": "member-permission-distribution",
       "applicability": "applicable",
-      "memberCount": 42,
+      "adminCount": 8,
+      "memberCount": 34,
       "outsideCollaboratorCount": 5,
       "unavailableReasons": [],
       "resolvedAt": "2026-04-20T15:54:23.471Z"

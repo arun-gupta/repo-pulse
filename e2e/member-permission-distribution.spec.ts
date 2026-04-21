@@ -19,8 +19,11 @@ test.describe('Member permission distribution panel (#288)', () => {
     // Panel title
     await expect(panel.getByText(/member permission distribution/i)).toBeVisible()
 
-    // Member count appears (fixture: memberCount=42)
-    await expect(panel.getByTestId('perm-member-count')).toContainText('42')
+    // Admin count appears (fixture: adminCount=8)
+    await expect(panel.getByTestId('perm-admin-count')).toContainText('8')
+
+    // Non-admin member count appears (fixture: memberCount=34)
+    await expect(panel.getByTestId('perm-member-count')).toContainText('34')
 
     // Outside collaborator count appears (fixture: outsideCollaboratorCount=5)
     await expect(panel.getByTestId('perm-collab-count')).toContainText('5')

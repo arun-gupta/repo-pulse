@@ -201,7 +201,7 @@ export type OrgMemberListResult =
 
 export async function fetchOrgMembers(token: string, org: string): Promise<OrgMemberListResult> {
   const members: { login: string }[] = []
-  let url: string | null = `https://api.github.com/orgs/${encodeURIComponent(org)}/members?role=member&per_page=100`
+  let url: string | null = `https://api.github.com/orgs/${encodeURIComponent(org)}/members?role=all&per_page=100`
 
   try {
     while (url) {
