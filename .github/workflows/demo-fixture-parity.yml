@@ -1,0 +1,33 @@
+name: Demo fixture parity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/demo/organization/page.tsx'
+      - 'scripts/generate-demo-fixtures.ts'
+      - 'scripts/check-demo-fixture-parity.ts'
+  pull_request:
+    paths:
+      - 'app/demo/organization/page.tsx'
+      - 'scripts/generate-demo-fixtures.ts'
+      - 'scripts/check-demo-fixture-parity.ts'
+      - 'app/api/org/**'
+      - 'lib/governance/**'
+
+jobs:
+  parity:
+    name: Governance field parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Check governance field parity
+        run: npm run demo:check-parity

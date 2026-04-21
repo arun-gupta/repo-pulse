@@ -344,6 +344,18 @@ This replaces the Phase 1 pattern where PRODUCT.md contained inline acceptance c
 
 ---
 
+## Adding an org governance signal — demo fixture rule
+
+Any PR that adds a new governance panel or signal (i.e. a new `/api/org/` route that feeds `OrgFixture.governance` in `app/demo/organization/page.tsx`) **must** do all three of the following in the same PR:
+
+1. Add the new field to the `governance` object in `scripts/generate-demo-fixtures.ts`.
+2. Regenerate the fixtures with `npm run demo:fixtures` and commit the updated `fixtures/demo/org-ossf.json`.
+3. Confirm `npm run demo:check-parity` exits 0.
+
+**Why**: hand-authoring values in `fixtures/demo/` violates the accuracy policy (constitution §II). Issue #385 documented a real incident where `memberPermission` was committed with fabricated counts that were only caught during manual review. The CI workflow `.github/workflows/demo-fixture-parity.yml` enforces generator parity automatically on every PR that touches governance-related files.
+
+---
+
 ## Adding a new scoring signal — integration checklist
 
 There is no central signal registry. When adding a new signal to an existing lens (e.g. community, licensing, docs), update every touchpoint below or the signal will be invisible on one of the surfaces:

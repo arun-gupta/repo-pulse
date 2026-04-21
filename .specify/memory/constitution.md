@@ -1,7 +1,9 @@
 # RepoPulse Constitution
 
-**Version**: 1.2 — Amended 2026-04-15
+**Version**: 1.3 — Amended 2026-04-20
 **Amendment**: Sections XII and XIII updated to drop the per-feature `specs/NNN-feature-name/checklists/manual-testing.md` file. The PR body's `## Test plan` section is now the single source of truth for manual testing signoff. Rationale: under the one-Claude-per-issue ephemeral-worktree workflow, the in-repo checklist file duplicated the PR Test Plan, drifted from it, and added ceremony without adding coverage. GitHub preserves PR bodies indefinitely and they are queryable via `gh pr view --json body`, so the test record remains durable. Signed off by: arun-gupta.
+
+**Amendment (v1.3, 2026-04-20)**: Section XII updated to add a Definition of Done item requiring fixture generator parity for any PR that adds or changes a governance signal. Rationale: issue #385 revealed that `memberPermission` was hand-authored in `fixtures/demo/org-ossf.json` with fabricated values because `generate-demo-fixtures.ts` was not updated in the same PR as the feature. The new DoD item closes this gap by requiring generator parity and fixture regeneration whenever `OrgFixture.governance` changes. A CI check (`npm run demo:check-parity`) enforces this mechanically. Signed off by: arun-gupta.
 
 **Previous amendment (v1.1, 2026-04-06)**: Section III rules 4 and 6 updated to reflect OAuth-only authentication (P1-F14). PAT input and server-side `GITHUB_TOKEN` removed. Rationale: GitHub OAuth distributes rate limit consumption across individual user quotas, enabling the app to scale to any number of concurrent users without a shared API quota bottleneck. Storing the OAuth token in-memory only (never in localStorage or cookies) eliminates the XSS token-theft risk present in the previous PAT-based localStorage flow, improving security while preserving the stateless Phase 1 architecture. Signed off by: arun-gupta.
 
@@ -180,6 +182,7 @@ A feature is complete only when all of the following are true:
 - [ ] PR Test Plan completed and signed off before merge
 - [ ] README updated for any user-facing or setup changes
 - [ ] Constitution compliance verified — no rule violated
+- [ ] If a governance signal was added or changed: `scripts/generate-demo-fixtures.ts` updated in the same PR and `fixtures/demo/` regenerated via `npm run demo:fixtures` (never hand-authored)
 
 ---
 
