@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
-export const BASELINE_SCOPE = 'public_repo'
+export const BASELINE_SCOPE = ''
 
 export interface AuthSession {
   token: string
@@ -31,12 +31,14 @@ const AuthContext = createContext<AuthContextValue>({
 })
 
 function normalizeScopes(input: readonly string[] | undefined): readonly string[] {
-  if (!input || input.length === 0) return [BASELINE_SCOPE] as const
+  if (!input || input.length === 0) return [] as const
   return input
 }
 
+const ELEVATED_SCOPE_SET = new Set(['read:org', 'admin:org'])
+
 export function getElevatedScopes(scopes: readonly string[] | undefined): readonly string[] {
-  return (scopes ?? []).filter((s) => s !== BASELINE_SCOPE)
+  return (scopes ?? []).filter((s) => ELEVATED_SCOPE_SET.has(s))
 }
 
 export function AuthProvider({

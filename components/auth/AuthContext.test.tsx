@@ -52,14 +52,14 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('token')).toHaveTextContent('none')
   })
 
-  it('defaults scopes to [public_repo] when none are supplied', () => {
+  it('defaults scopes to [] when none are supplied', () => {
     render(
       <AuthProvider initialSession={{ token: 'gho_abc', username: 'arun-gupta' }}>
         <TestConsumer />
       </AuthProvider>,
     )
-    expect(screen.getByTestId('scopes')).toHaveTextContent('public_repo')
-    expect(screen.getByTestId('hasPublicRepo')).toHaveTextContent('true')
+    expect(screen.getByTestId('scopes')).toHaveTextContent('none')
+    expect(screen.getByTestId('hasPublicRepo')).toHaveTextContent('false')
     expect(screen.getByTestId('hasReadOrg')).toHaveTextContent('false')
   })
 
@@ -90,10 +90,10 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('hasPublicRepo')).toHaveTextContent('false')
   })
 
-  it('elevatedScopes is empty on a baseline session', () => {
+  it('elevatedScopes is empty on a baseline session (no scope)', () => {
     render(
       <AuthProvider
-        initialSession={{ token: 'gho_abc', username: 'arun-gupta', scopes: ['public_repo'] }}
+        initialSession={{ token: 'gho_abc', username: 'arun-gupta', scopes: [] }}
       >
         <TestConsumer />
       </AuthProvider>,

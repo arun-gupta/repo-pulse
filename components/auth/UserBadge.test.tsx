@@ -34,10 +34,10 @@ describe('UserBadge', () => {
     expect(signOut).toHaveBeenCalled()
   })
 
-  it('does not render an elevated-scope chip on a baseline session', () => {
+  it('does not render an elevated-scope chip on a baseline session (no scope)', () => {
     render(
       <AuthProvider
-        initialSession={{ token: 'gho_abc', username: 'arun-gupta', scopes: ['public_repo'] }}
+        initialSession={{ token: 'gho_abc', username: 'arun-gupta', scopes: [] }}
       >
         <UserBadge />
       </AuthProvider>,

@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 
   const userData = (await userResponse.json()) as { login?: string }
   const username = userData.login ?? 'unknown'
-  const scopes = tokenData.scope ?? 'public_repo'
+  const scopes = tokenData.scope ?? ''
 
   // Return token to client via URL fragment (never sent to server)
   const fragment = `token=${encodeURIComponent(tokenData.access_token)}&username=${encodeURIComponent(username)}&scopes=${encodeURIComponent(scopes)}`
