@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/auth/AuthContext'
 import { STALE_ADMIN_THRESHOLD_DAYS } from '@/lib/config/governance'
 import { useStaleAdmins, type OwnerType } from '@/components/shared/hooks/useStaleAdmins'
+import { useMemberPermissionDistribution } from '@/components/shared/hooks/useMemberPermissionDistribution'
+import {
+  evaluatePermissionFlag,
+  type MemberPermissionDistributionSection,
+  type PermissionFlag,
+} from '@/lib/governance/member-permissions'
 import type {
   StaleAdminClassification,
   StaleAdminMode,
@@ -15,7 +21,7 @@ import type {
 interface Props {
   org: string | null
   ownerType: OwnerType
-  /** Override for tests. */
+  /** Override for tests and demo fixtures — stale admins data. */
   sectionOverride?: StaleAdminsSection | null
   /** Override for tests. */
   loadingOverride?: boolean
@@ -23,6 +29,8 @@ interface Props {
   onRetryOverride?: () => void
   /** Override for tests. */
   nextAutoRetryAtOverride?: string | null
+  /** Override for tests and demo fixtures — member permission data. */
+  memberPermissionOverride?: MemberPermissionDistributionSection | null
 }
 
 // Risk-first ordering: the user's attention should go to Stale and Unavailable
@@ -82,34 +90,58 @@ export function StaleAdminsPanel({
   loadingOverride,
   onRetryOverride,
   nextAutoRetryAtOverride,
+  memberPermissionOverride,
 }: Props) {
   const { session, hasScope } = useAuth()
   // admin:org is a strict superset of read:org — treat either as "elevated"
   // for the concealed-admins view.
   const elevated = hasScope('read:org') || hasScope('admin:org')
-  const hasOverride = sectionOverride !== undefined
+  const hasStaleOverride = sectionOverride !== undefined
+  const hasMemberOverride = memberPermissionOverride !== undefined
 
-  const hookState = useStaleAdmins({
-    org: hasOverride ? null : org,
+  const staleHookState = useStaleAdmins({
+    org: hasStaleOverride ? null : org,
     ownerType,
-    token: hasOverride ? null : session?.token ?? null,
+    token: hasStaleOverride ? null : session?.token ?? null,
     elevated,
   })
 
-  const section = hasOverride ? sectionOverride : hookState.section
-  const loading = loadingOverride ?? (hasOverride ? false : hookState.loading)
-  const onRetry = onRetryOverride ?? hookState.refetch
+  const memberHookState = useMemberPermissionDistribution({
+    org: hasMemberOverride ? null : org,
+    ownerType,
+    token: hasMemberOverride ? null : session?.token ?? null,
+  })
+
+  const section = hasStaleOverride ? sectionOverride : staleHookState.section
+  const loading = loadingOverride ?? (hasStaleOverride ? false : staleHookState.loading)
+  const onRetry = onRetryOverride ?? staleHookState.refetch
   const nextAutoRetryAt =
     nextAutoRetryAtOverride !== undefined
       ? nextAutoRetryAtOverride
-      : hasOverride
+      : hasStaleOverride
         ? null
-        : hookState.nextAutoRetryAt
+        : staleHookState.nextAutoRetryAt
+
+  const memberSection = hasMemberOverride ? memberPermissionOverride : memberHookState.section
+  const memberLoading = hasMemberOverride ? false : memberHookState.loading
+
+  const computedFlag: PermissionFlag | null =
+    memberSection && memberSection.applicability === 'applicable' && memberSection.adminCount !== null
+      ? (memberSection.flag !== undefined
+          ? (memberSection.flag ?? null)
+          : evaluatePermissionFlag(
+              memberSection.adminCount,
+              memberSection.adminCount +
+                (memberSection.memberCount ?? 0) +
+                (memberSection.outsideCollaboratorCount ?? 0),
+            ))
+      : null
+
   const [expanded, setExpanded] = useState(true)
 
   return (
     <section
-      aria-label="Org admin activity"
+      aria-label="Org admin & member overview"
       className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
       data-testid="stale-admins-panel"
     >
@@ -119,7 +151,7 @@ export function StaleAdminsPanel({
             <button
               type="button"
               onClick={() => setExpanded((e) => !e)}
-              aria-label={expanded ? 'Collapse Org admin activity' : 'Expand Org admin activity'}
+              aria-label={expanded ? 'Collapse Org admin & member overview' : 'Expand Org admin & member overview'}
               aria-expanded={expanded}
               title={expanded ? 'Collapse' : 'Expand'}
               data-testid="stale-admins-panel-toggle"
@@ -130,40 +162,237 @@ export function StaleAdminsPanel({
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Org admin activity
+                  Org admin &amp; member overview
                 </h3>
                 <ScoringHelp section={section} />
               </div>
               {expanded ? (
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Stale admin detection — an inactive admin is a privilege-escalation risk.
+                  Member roles and admin activity — who has elevated access and whether they&apos;re active.
                 </p>
               ) : null}
             </div>
           </div>
-          {section ? <ModeBadge mode={section.mode} /> : null}
+          <div className="flex items-center gap-2">
+            {!elevated && memberSection?.applicability === 'applicable' ? (
+              <span
+                className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                title="Sign in with 'Read org membership' or 'Org admin' permission to see private member counts"
+              >
+                Baseline — public members only
+              </span>
+            ) : null}
+            {computedFlag ? <FlagBadge flag={computedFlag} /> : null}
+            {section ? <ModeBadge mode={section.mode} /> : null}
+          </div>
         </div>
         {section ? <HeaderCountStrip section={section} /> : null}
       </header>
 
       {expanded ? (
-        <>
-          {loading && !section ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Loading admin activity…</p>
-          ) : null}
-          {section ? (
-            <SectionBody
-              section={section}
-              onRetry={onRetry}
-              refreshing={loading}
-              nextAutoRetryAt={nextAutoRetryAt}
-            />
-          ) : null}
-        </>
+        <div className="space-y-4">
+          {/* Permission distribution summary */}
+          <MemberPermissionSummary
+            section={memberSection}
+            loading={memberLoading}
+            org={org ?? ''}
+            elevated={elevated}
+          />
+
+          {/* Admin activity detail — collapsible sub-section */}
+          <details open className="group" data-testid="stale-admins-activity-detail">
+            <summary className="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-slate-600 list-none dark:text-slate-300 [&::-webkit-details-marker]:hidden">
+              <svg
+                aria-hidden="true"
+                className="h-3.5 w-3.5 shrink-0 -rotate-90 text-slate-400 transition-transform group-open:rotate-0 dark:text-slate-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Admin activity detail
+            </summary>
+            <div className="mt-2">
+              {loading && !section ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Loading admin activity…</p>
+              ) : null}
+              {section ? (
+                <SectionBody
+                  section={section}
+                  onRetry={onRetry}
+                  refreshing={loading}
+                  nextAutoRetryAt={nextAutoRetryAt}
+                />
+              ) : null}
+            </div>
+          </details>
+        </div>
       ) : null}
     </section>
   )
 }
+
+// ── Member permission summary ─────────────────────────────────────────────────
+
+function MemberPermissionSummary({
+  section,
+  loading,
+  org,
+  elevated,
+}: {
+  section: MemberPermissionDistributionSection | null
+  loading: boolean
+  org: string
+  elevated: boolean
+}) {
+  if (loading) {
+    return (
+      <p className="text-sm text-slate-500 dark:text-slate-400" data-testid="perm-loading">
+        Loading member distribution…
+      </p>
+    )
+  }
+  if (!section) return null
+
+  if (section.applicability === 'not-applicable-non-org') {
+    return (
+      <p className="text-sm text-slate-600 dark:text-slate-300" data-testid="perm-na">
+        Not applicable — member roles are an organization-level concept. This analysis targets a
+        user-owned repository.
+      </p>
+    )
+  }
+
+  if (section.applicability === 'member-list-unavailable') {
+    return (
+      <p className="text-sm text-rose-700 dark:text-rose-400" data-testid="perm-unavailable">
+        Member list could not be retrieved — insufficient permissions or private organization.
+      </p>
+    )
+  }
+
+  const adminVal = section.adminCount ?? 0
+  const effectiveMemberCount =
+    !elevated && section.memberCount === 0 ? null : section.memberCount
+  const memberCount = effectiveMemberCount ?? 0
+  const collabCount = section.outsideCollaboratorCount ?? 0
+  const total = adminVal + memberCount + collabCount
+  const adminPct = total > 0 ? Math.round((adminVal / total) * 100) : 0
+  const memberPct = total > 0 ? Math.round((memberCount / total) * 100) : 0
+  const collabPct = total > 0 ? Math.round((collabCount / total) * 100) : 0
+
+  const adminUrl = `https://github.com/orgs/${org}/people?query=role%3Aowner`
+  const memberUrl = `https://github.com/orgs/${org}/people?query=role%3Amember`
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2 text-sm">
+        <RoleRow
+          label="Admins"
+          count={section.adminCount}
+          pct={adminPct}
+          countTestId="perm-admin-count"
+          pctTestId="perm-admin-pct"
+          linkTestId="perm-admin-link"
+          href={adminUrl}
+        />
+        <RoleRow
+          label="Members"
+          count={effectiveMemberCount}
+          pct={memberPct}
+          countTestId="perm-member-count"
+          pctTestId="perm-member-pct"
+          linkTestId="perm-member-link"
+          href={memberUrl}
+        />
+        <RoleRow
+          label="Outside collaborators"
+          count={section.outsideCollaboratorCount}
+          pct={collabPct}
+          countTestId="perm-collab-count"
+          pctTestId="perm-collab-pct"
+          linkTestId={null}
+          href={null}
+        />
+      </div>
+      {!elevated ? (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Showing public members only. Sign in with{' '}
+          <span className="font-medium">Read org membership</span> or{' '}
+          <span className="font-medium">Org admin</span> permission for full counts.
+        </p>
+      ) : section.applicability === 'partial' && section.unavailableReasons.length > 0 ? (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Some data unavailable:{' '}
+          {section.unavailableReasons.join(', ')}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function RoleRow({
+  label,
+  count,
+  pct,
+  countTestId,
+  pctTestId,
+  linkTestId,
+  href,
+}: {
+  label: string
+  count: number | null
+  pct: number
+  countTestId: string
+  pctTestId: string
+  linkTestId: string | null
+  href: string | null
+}) {
+  const countContent = (
+    <span className="font-semibold text-slate-900 dark:text-slate-100" data-testid={countTestId}>
+      {count ?? 'Unavailable'}
+    </span>
+  )
+
+  return (
+    <div className="rounded border border-slate-100 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800">
+      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+      <div className="flex items-baseline gap-1">
+        {href && linkTestId ? (
+          <a href={href} target="_blank" rel="noreferrer" data-testid={linkTestId} className="hover:underline">
+            {countContent}
+          </a>
+        ) : (
+          countContent
+        )}
+        {count !== null ? (
+          <span className="text-xs text-slate-500 dark:text-slate-400" data-testid={pctTestId}>
+            ({pct}%)
+          </span>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function FlagBadge({ flag }: { flag: PermissionFlag }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+      data-testid="perm-flag-badge"
+      aria-label={`Admin-heavy flag: ${flag.message}`}
+    >
+      <span aria-hidden="true">⚠</span>
+      <span>{flag.message}</span>
+    </span>
+  )
+}
+
+// ── Stale admin content ───────────────────────────────────────────────────────
 
 function PanelChevron({ expanded }: { expanded: boolean }) {
   return (
@@ -398,8 +627,8 @@ function unavailableReasonRowText(reason: StaleAdminUnavailableReason | null, ha
     return 'Activity could not be retrieved.'
   }
   return hasCountdown
-    ? 'GitHub didn’t return activity data.'
-    : 'GitHub didn’t return activity data — click Retry to try again.'
+    ? "GitHub didn’t return activity data."
+    : "GitHub didn’t return activity data — click Retry to try again."
 }
 
 function UnavailableReasonStrip({

@@ -6,11 +6,9 @@ import type { ContributorDiversityWindow } from '@/lib/org-aggregation/aggregato
 import type { TwoFactorEnforcementSection } from '@/lib/governance/two-factor'
 import type { StaleAdminsSection } from '@/lib/governance/stale-admins'
 import type { MemberPermissionDistributionSection } from '@/lib/governance/member-permissions'
-import { useStaleAdmins, type OwnerType } from '@/components/shared/hooks/useStaleAdmins'
 import { PANEL_BUCKETS, isRealPanel, renderPanel, type PanelBucketId } from './panels/registry'
 import { StaleAdminsPanel } from './panels/StaleAdminsPanel'
 import { TwoFactorEnforcementPanel } from './panels/TwoFactorEnforcementPanel'
-import { MemberPermissionDistributionPanel } from './panels/MemberPermissionDistributionPanel'
 
 interface Props {
   bucketId: PanelBucketId
@@ -88,19 +86,7 @@ function GovernanceExtraPanels({
   staleAdminsOverride,
   memberPermissionOverride,
 }: GovernanceExtraPanelsProps) {
-  const { session, hasScope } = useAuth()
-  const elevated = hasScope('read:org') || hasScope('admin:org')
-  const ownerType: OwnerType = org ? 'Organization' : 'User'
-  const hasStaleAdminsOverride = staleAdminsOverride !== undefined
-
-  const staleAdminsState = useStaleAdmins({
-    org: hasStaleAdminsOverride ? null : org,
-    ownerType,
-    token: hasStaleAdminsOverride ? null : session?.token ?? null,
-    elevated,
-  })
-
-  const staleAdminsSection = hasStaleAdminsOverride ? staleAdminsOverride : staleAdminsState.section
+  const ownerType = org ? 'Organization' : 'User'
 
   return (
     <>
@@ -112,16 +98,8 @@ function GovernanceExtraPanels({
       <StaleAdminsPanel
         org={org}
         ownerType={ownerType}
-        sectionOverride={staleAdminsSection}
-        loadingOverride={hasStaleAdminsOverride ? false : staleAdminsState.loading}
-        onRetryOverride={hasStaleAdminsOverride ? undefined : staleAdminsState.refetch}
-        nextAutoRetryAtOverride={hasStaleAdminsOverride ? null : staleAdminsState.nextAutoRetryAt}
-      />
-      <MemberPermissionDistributionPanel
-        org={org}
-        ownerType={ownerType}
-        elevated={elevated}
-        sectionOverride={memberPermissionOverride}
+        sectionOverride={staleAdminsOverride}
+        memberPermissionOverride={memberPermissionOverride}
       />
     </>
   )
