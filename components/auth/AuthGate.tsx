@@ -33,7 +33,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             .split(/[\s,]+/)
             .map((s) => s.trim())
             .filter(Boolean)
-        : ['public_repo']
+        : []
       signIn({ token, username, scopes })
       // Restore any query params saved before the OAuth redirect (e.g. ?repos=...)
       const savedSearch = sessionStorage.getItem('oauth_return_search') ?? ''
@@ -116,7 +116,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             value="baseline"
             checked={scopeTier === 'baseline'}
             onChange={setScopeTier}
-            label={<><span className="font-semibold">Baseline</span> (<code>public_repo</code>)</>}
+            label={<><span className="font-semibold">Baseline</span> (read-only public data)</>}
             guidance="Public data only — for auditing third-party orgs."
           />
           <ScopeRadio

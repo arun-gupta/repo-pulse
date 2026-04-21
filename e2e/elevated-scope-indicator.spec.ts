@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('RFE #345 — global elevated-scope indicator', () => {
   test('baseline session renders no banner and no chip', async ({ page }) => {
-    await page.goto('/#token=gho_test_token&username=test-user&scopes=public_repo')
+    await page.goto('/#token=gho_test_token&username=test-user&scopes=')
 
     // Wait for the signed-in app shell to render
     await expect(page.getByText('test-user')).toBeVisible()
@@ -13,7 +13,7 @@ test.describe('RFE #345 — global elevated-scope indicator', () => {
 
   test('elevated session renders a global banner enumerating read:org', async ({ page }) => {
     await page.goto(
-      '/#token=gho_test_token&username=test-user&scopes=' + encodeURIComponent('public_repo read:org'),
+      '/#token=gho_test_token&username=test-user&scopes=' + encodeURIComponent('read:org'),
     )
 
     const banner = page.getByTestId('elevated-scope-banner')
@@ -30,7 +30,7 @@ test.describe('RFE #345 — global elevated-scope indicator', () => {
 
   test('elevated session also renders a persistent chip next to the user badge', async ({ page }) => {
     await page.goto(
-      '/#token=gho_test_token&username=test-user&scopes=' + encodeURIComponent('public_repo read:org'),
+      '/#token=gho_test_token&username=test-user&scopes=' + encodeURIComponent('read:org'),
     )
 
     const chip = page.getByTestId('elevated-scope-chip')
@@ -42,7 +42,7 @@ test.describe('RFE #345 — global elevated-scope indicator', () => {
 
   test('dismissing the banner keeps the chip visible', async ({ page }) => {
     await page.goto(
-      '/#token=gho_test_token&username=test-user&scopes=' + encodeURIComponent('public_repo read:org'),
+      '/#token=gho_test_token&username=test-user&scopes=' + encodeURIComponent('read:org'),
     )
 
     await expect(page.getByTestId('elevated-scope-banner')).toBeVisible()

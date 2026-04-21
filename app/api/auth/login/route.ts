@@ -10,11 +10,11 @@ export type ScopeTier = 'baseline' | 'read-org' | 'admin-org'
 export function buildOAuthScope(tier: ScopeTier): string {
   switch (tier) {
     case 'admin-org':
-      return 'public_repo admin:org'
+      return 'admin:org'
     case 'read-org':
-      return 'public_repo read:org'
+      return 'read:org'
     default:
-      return 'public_repo'
+      return ''
   }
 }
 
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       return Response.redirect(`${base.toString()}#${fragment}`, 302)
     }
     return Response.json(
-      { error: 'DEV_GITHUB_PAT is set but rejected by GitHub (invalid or lacking public_repo scope).' },
+      { error: 'DEV_GITHUB_PAT is set but rejected by GitHub (invalid token).' },
       { status: 500 },
     )
   }

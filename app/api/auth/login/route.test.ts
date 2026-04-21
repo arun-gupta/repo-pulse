@@ -38,7 +38,7 @@ describe('GET /api/auth/login', () => {
     const location = response.headers.get('location') ?? ''
     expect(location).toContain('https://github.com/login/oauth/authorize')
     expect(location).toContain('client_id=test_client_id')
-    expect(location).toContain('scope=public_repo')
+    expect(location).toContain('scope=')
   })
 
   it('includes a state parameter', async () => {
@@ -104,13 +104,11 @@ describe('GET /api/auth/login', () => {
     expect(location).toContain('github.com/login/oauth/authorize')
   })
 
-  it('requests public_repo scope only on the baseline path (no ?elevated=1)', async () => {
+  it('requests no scope (empty) on the baseline path (no ?elevated=1)', async () => {
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login'))
     const location = response.headers.get('location') ?? ''
-    const scopeMatch = location.match(/scope=([^&]+)/)
-    expect(scopeMatch).not.toBeNull()
-    const scope = decodeURIComponent(scopeMatch![1]!)
-    expect(scope).toBe('public_repo')
+    const url = new URL(location)
+    expect(url.searchParams.get('scope')).toBe('')
   })
 
   it('adds read:org scope when ?elevated=1 is passed (legacy alias for scope_tier=read-org)', async () => {
@@ -119,42 +117,42 @@ describe('GET /api/auth/login', () => {
     const scopeMatch = location.match(/scope=([^&]+)/)
     expect(scopeMatch).not.toBeNull()
     const scope = decodeURIComponent(scopeMatch![1]!).replace(/\+/g, ' ')
-    expect(scope).toBe('public_repo read:org')
+    expect(scope).toBe('read:org')
   })
 
   it('treats ?elevated=0 as baseline', async () => {
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login?elevated=0'))
     const location = response.headers.get('location') ?? ''
-    const scope = decodeURIComponent(location.match(/scope=([^&]+)/)![1]!).replace(/\+/g, ' ')
-    expect(scope).toBe('public_repo')
+    const url = new URL(location)
+    expect(url.searchParams.get('scope')).toBe('')
   })
 
   it('adds read:org scope when ?scope_tier=read-org is passed', async () => {
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=read-org'))
     const location = response.headers.get('location') ?? ''
     const scope = decodeURIComponent(location.match(/scope=([^&]+)/)![1]!).replace(/\+/g, ' ')
-    expect(scope).toBe('public_repo read:org')
+    expect(scope).toBe('read:org')
   })
 
   it('adds admin:org scope when ?scope_tier=admin-org is passed (no need to also include read:org — admin:org is a superset)', async () => {
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=admin-org'))
     const location = response.headers.get('location') ?? ''
     const scope = decodeURIComponent(location.match(/scope=([^&]+)/)![1]!).replace(/\+/g, ' ')
-    expect(scope).toBe('public_repo admin:org')
+    expect(scope).toBe('admin:org')
   })
 
   it('treats ?scope_tier=baseline as baseline', async () => {
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=baseline'))
     const location = response.headers.get('location') ?? ''
-    const scope = decodeURIComponent(location.match(/scope=([^&]+)/)![1]!).replace(/\+/g, ' ')
-    expect(scope).toBe('public_repo')
+    const url = new URL(location)
+    expect(url.searchParams.get('scope')).toBe('')
   })
 
   it('prefers scope_tier over the legacy elevated flag when both are present', async () => {
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login?elevated=1&scope_tier=admin-org'))
     const location = response.headers.get('location') ?? ''
     const scope = decodeURIComponent(location.match(/scope=([^&]+)/)![1]!).replace(/\+/g, ' ')
-    expect(scope).toBe('public_repo admin:org')
+    expect(scope).toBe('admin:org')
   })
 
   it('dev-PAT session reports the PAT\'s real scopes from X-OAuth-Scopes, not the requested tier', async () => {
@@ -199,7 +197,7 @@ describe('GET /api/auth/login', () => {
 
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=admin-org'))
     const location = response.headers.get('location') ?? ''
-    expect(decodeURIComponent(location)).toContain('scopes=public_repo admin:org')
+    expect(decodeURIComponent(location)).toContain('scopes=admin:org')
   })
 
   it('dev-PAT treats an empty X-OAuth-Scopes header (legacy GitHub responses) as absent', async () => {
@@ -219,6 +217,6 @@ describe('GET /api/auth/login', () => {
 
     const response = await GET(mockRequest('http://localhost:3010/api/auth/login?scope_tier=read-org'))
     const location = response.headers.get('location') ?? ''
-    expect(decodeURIComponent(location)).toContain('scopes=public_repo read:org')
+    expect(decodeURIComponent(location)).toContain('scopes=read:org')
   })
 })

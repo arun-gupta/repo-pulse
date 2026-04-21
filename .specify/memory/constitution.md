@@ -1,7 +1,9 @@
 # RepoPulse Constitution
 
-**Version**: 1.3 — Amended 2026-04-20
-**Amendment**: Sections XII and XIII updated to drop the per-feature `specs/NNN-feature-name/checklists/manual-testing.md` file. The PR body's `## Test plan` section is now the single source of truth for manual testing signoff. Rationale: under the one-Claude-per-issue ephemeral-worktree workflow, the in-repo checklist file duplicated the PR Test Plan, drifted from it, and added ceremony without adding coverage. GitHub preserves PR bodies indefinitely and they are queryable via `gh pr view --json body`, so the test record remains durable. Signed off by: arun-gupta.
+**Version**: 1.4 — Amended 2026-04-21
+**Amendment (v1.4, 2026-04-21)**: Section III rule 4 updated to reflect no-scope baseline OAuth (issue #401). Rationale: RepoPulse only reads public data; the previous `public_repo` baseline granted unnecessary write access. A no-scope token provides the same read access and full 5,000 req/hr rate limit without write permission. Signed off by: arun-gupta.
+
+**Amendment (v1.3)**: Sections XII and XIII updated to drop the per-feature `specs/NNN-feature-name/checklists/manual-testing.md` file. The PR body's `## Test plan` section is now the single source of truth for manual testing signoff. Rationale: under the one-Claude-per-issue ephemeral-worktree workflow, the in-repo checklist file duplicated the PR Test Plan, drifted from it, and added ceremony without adding coverage. GitHub preserves PR bodies indefinitely and they are queryable via `gh pr view --json body`, so the test record remains durable. Signed off by: arun-gupta.
 
 **Amendment (v1.3, 2026-04-20)**: Section XII updated to add a Definition of Done item requiring fixture generator parity for any PR that adds or changes a governance signal. Rationale: issue #385 revealed that `memberPermission` was hand-authored in `fixtures/demo/org-ossf.json` with fabricated values because `generate-demo-fixtures.ts` was not updated in the same PR as the feature. The new DoD item closes this gap by requiring generator parity and fixture regeneration whenever `OrgFixture.governance` changes. A CI check (`npm run demo:check-parity`) enforces this mechanically. Signed off by: arun-gupta.
 
@@ -61,7 +63,7 @@ Response: { "results": AnalysisResult[] }
 1. **Primary source**: GitHub GraphQL API (`https://api.github.com/graphql`).
 2. Each repo requires 1–3 GraphQL requests. Precise field selection — no over-fetching.
 3. REST API may supplement only where GraphQL cannot reach a specific metric. This is an exception, not a pattern.
-4. Auth: GitHub OAuth App only — PAT input is not supported in Phase 1 (amended v1.1). OAuth token is held in-memory for the duration of the session; it is never written to localStorage, cookies, or any persistent storage. Minimum scope: `public_repo` read-only.
+4. Auth: GitHub OAuth App only — PAT input is not supported in Phase 1 (amended v1.1). OAuth token is held in-memory for the duration of the session; it is never written to localStorage, cookies, or any persistent storage. Baseline scope: no scope (empty string) — read-only access to all public data without write permission (amended v1.4). Elevated tiers: `read:org` and `admin:org` only — `public_repo` is not included in any tier.
 5. No server-side `GITHUB_TOKEN` is used — each user authenticates via OAuth and their own quota is consumed (amended v1.1). Credentials are never hardcoded anywhere in the codebase.
 6. ~~Server-side `GITHUB_TOKEN` takes precedence~~ — removed in v1.1. All API calls use the authenticated user's OAuth token. `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are stored as server-side environment variables and never sent to the client.
 7. Token is never included in URLs, never exposed to the client bundle, never logged.

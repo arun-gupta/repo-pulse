@@ -14,10 +14,10 @@ describe('ElevatedScopeBanner', () => {
     expect(screen.queryByTestId('elevated-scope-banner')).not.toBeInTheDocument()
   })
 
-  it('renders nothing when session has only the baseline public_repo scope', () => {
+  it('renders nothing when session has no elevated scopes (baseline: no scope)', () => {
     render(
       <AuthProvider
-        initialSession={{ token: 'gho_abc', username: 'arun-gupta', scopes: ['public_repo'] }}
+        initialSession={{ token: 'gho_abc', username: 'arun-gupta', scopes: [] }}
       >
         <ElevatedScopeBanner />
       </AuthProvider>,
