@@ -14,24 +14,18 @@ import { join } from 'path'
 
 const root = process.cwd()
 
-function extractGovernanceInterfaceKeys(src: string): string[] {
+export function extractGovernanceInterfaceKeys(src: string): string[] | null {
   // Match the governance block inside the OrgFixture interface definition.
   // The block has no nested braces (only union types like `Foo | null`).
   const match = src.match(/governance:\s*\{([^}]+)\}/)
-  if (!match) {
-    console.error('[demo-parity] Could not locate `governance: { ... }` block in OrgFixture interface')
-    process.exit(1)
-  }
+  if (!match) return null
   return [...match[1].matchAll(/^\s+(\w+)\s*:/gm)].map((m) => m[1])
 }
 
-function extractGovernanceGeneratorKeys(src: string): string[] {
+export function extractGovernanceGeneratorKeys(src: string): string[] | null {
   // Match the governance shorthand object in the fixture generator's orgPayload.
   const match = src.match(/governance:\s*\{([^}]+)\}/)
-  if (!match) {
-    console.error('[demo-parity] Could not locate `governance: { ... }` assignment in generate-demo-fixtures.ts')
-    process.exit(1)
-  }
+  if (!match) return null
   return [...match[1].matchAll(/\b(\w+)\b/g)].map((m) => m[1])
 }
 
@@ -39,7 +33,16 @@ const pageSrc = readFileSync(join(root, 'app/demo/organization/page.tsx'), 'utf8
 const generatorSrc = readFileSync(join(root, 'scripts/generate-demo-fixtures.ts'), 'utf8')
 
 const interfaceKeys = extractGovernanceInterfaceKeys(pageSrc)
+if (!interfaceKeys) {
+  console.error('[demo-parity] Could not locate `governance: { ... }` block in OrgFixture interface')
+  process.exit(1)
+}
+
 const generatorKeys = extractGovernanceGeneratorKeys(generatorSrc)
+if (!generatorKeys) {
+  console.error('[demo-parity] Could not locate `governance: { ... }` assignment in generate-demo-fixtures.ts')
+  process.exit(1)
+}
 
 const missing = interfaceKeys.filter((k) => !generatorKeys.includes(k))
 
