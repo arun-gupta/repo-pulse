@@ -10,6 +10,12 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  # Opt into Node.js 24 for JavaScript actions (checkout, setup-node,
+  # create-pull-request) ahead of the June 2026 default switch.
+  # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -21,7 +27,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
