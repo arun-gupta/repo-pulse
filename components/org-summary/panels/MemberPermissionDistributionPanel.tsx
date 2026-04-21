@@ -88,7 +88,10 @@ export function MemberPermissionDistributionPanel({
           </div>
           <div className="flex items-center gap-2">
             {!elevated && section?.applicability === 'applicable' ? (
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400">
+              <span
+                className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                title="Sign in with 'Read org membership' or 'Org admin' permission to see private member counts"
+              >
                 Baseline — public members only
               </span>
             ) : null}
@@ -221,7 +224,13 @@ function SectionBody({
           href={null}
         />
       </div>
-      {section.applicability === 'partial' && section.unavailableReasons.length > 0 ? (
+      {!elevated ? (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Showing public members only. Sign in with{' '}
+          <span className="font-medium">Read org membership</span> or{' '}
+          <span className="font-medium">Org admin</span> permission for full counts.
+        </p>
+      ) : section.applicability === 'partial' && section.unavailableReasons.length > 0 ? (
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Some data unavailable:{' '}
           {section.unavailableReasons.join(', ')}
