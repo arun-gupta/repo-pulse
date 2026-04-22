@@ -84,6 +84,7 @@ type GitHubIssueResponse = {
   html_url: string
   state: string
   created_at: string
+  labels: Array<{ name: string }>
 }
 
 export async function fetchCNCFSandboxIssues(token: string): Promise<SandboxApplicationIssue[]> {
@@ -112,12 +113,15 @@ export async function fetchCNCFSandboxIssues(token: string): Promise<SandboxAppl
       if (!Array.isArray(batch) || batch.length === 0) break
 
       for (const issue of batch) {
+        const labels = (issue.labels ?? []).map((l) => l.name)
         issues.push({
           issueNumber: issue.number,
           issueUrl: issue.html_url,
           title: issue.title,
           state: issue.state === 'open' ? 'OPEN' : 'CLOSED',
           createdAt: issue.created_at,
+          labels,
+          approved: labels.includes('gitvote/passed'),
         })
       }
 

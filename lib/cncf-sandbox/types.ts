@@ -42,6 +42,9 @@ export interface SandboxApplicationIssue {
   title: string
   state: 'OPEN' | 'CLOSED'
   createdAt: string
+  labels: string[]
+  /** True when the issue carries the `gitvote/passed` label — TOC vote approved. */
+  approved: boolean
   parsedFields?: ParsedApplicationField[]
 }
 
