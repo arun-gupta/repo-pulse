@@ -37,6 +37,26 @@ const PILL_CLASSES: Record<NonNullable<LandscapeProjectStatus>, string> = {
     'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600',
 }
 
+const PILL_HREFS: Record<NonNullable<LandscapeProjectStatus>, string> = {
+  graduated: 'https://landscape.cncf.io/?project=graduated',
+  incubating: 'https://landscape.cncf.io/?project=incubating',
+  sandbox: 'https://landscape.cncf.io/?project=sandbox',
+  landscape: 'https://landscape.cncf.io/',
+}
+
+function LandscapePill({ status }: { status: NonNullable<LandscapeProjectStatus> }) {
+  return (
+    <a
+      href={PILL_HREFS[status]}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`rounded-full px-2 py-0.5 text-xs font-medium hover:underline ${PILL_CLASSES[status]}`}
+    >
+      {PILL_LABELS[status]}
+    </a>
+  )
+}
+
 const TIER_BADGES: Record<string, { label: string; className: string }> = {
   strong: {
     label: 'Strong candidate',
@@ -392,11 +412,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                     }`}
                   >
                     <span className="truncate">{repo.repo}</span>
-                    {status ? (
-                      <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${PILL_CLASSES[status]}`}>
-                        {PILL_LABELS[status]}
-                      </span>
-                    ) : null}
+                    {status ? <span className="ml-2 shrink-0"><LandscapePill status={status} /></span> : null}
                   </button>
                 </li>
               )
@@ -460,11 +476,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-500 dark:text-slate-400">{repo.name}</span>
-                          {status ? (
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PILL_CLASSES[status]}`}>
-                              {PILL_LABELS[status]}
-                            </span>
-                          ) : null}
+                          {status ? <LandscapePill status={status} /> : null}
                         </div>
                       </td>
                       <td className="py-2 pr-4 text-slate-400">—</td>
@@ -487,11 +499,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                             className="h-4 w-4 rounded border-slate-300"
                           />
                           <span className="text-slate-700 dark:text-slate-300">{repo.name}</span>
-                          {status ? (
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PILL_CLASSES[status]}`}>
-                              {PILL_LABELS[status]}
-                            </span>
-                          ) : null}
+                          {status ? <LandscapePill status={status} /> : null}
                         </div>
                       </td>
                       <td colSpan={4} className="py-2">
@@ -538,11 +546,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                         <span className="font-medium text-slate-800 dark:text-slate-200">
                           {repo.name}
                         </span>
-                        {status ? (
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PILL_CLASSES[status]}`}>
-                            {PILL_LABELS[status]}
-                          </span>
-                        ) : null}
+                        {status ? <LandscapePill status={status} /> : null}
                       </div>
                     </td>
                     <td className="py-2 pr-4">
@@ -602,11 +606,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
               return (
                 <li key={repo.repo} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 opacity-60 dark:border-slate-700 dark:bg-slate-800">
                   <span className="text-xs text-slate-600 dark:text-slate-300">{repo.name}</span>
-                  {status ? (
-                    <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${PILL_CLASSES[status]}`}>
-                      {PILL_LABELS[status]}
-                    </span>
-                  ) : null}
+                  {status ? <LandscapePill status={status} /> : null}
                 </li>
               )
             })}
