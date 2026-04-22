@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>A single score that tells you how healthy your open source project really is.</strong><br/>
+  <strong>A single score that tells you how healthy your open source project really is — with actionable recommendations to improve it.</strong><br/>
   Calibrated against 2,400+ real GitHub repositories.
 </p>
 
