@@ -141,6 +141,8 @@ const STATUS_TEXT: Record<string, string> = {
   'human-only': '📋',
 }
 
+const ASSESSMENT_ORDER: Record<string, number> = { empty: 0, weak: 1, adequate: 2, strong: 3 }
+
 function buildMarkdownReport(aspirantResult: AspirantReadinessResult, repoSlug?: string): string {
   const { readinessScore, readyCount, totalAutoCheckable, autoFields, humanOnlyFields, tagRecommendation, sandboxApplication } = aspirantResult
   const readyFields = autoFields.filter((f) => f.status === 'ready')
@@ -190,6 +192,14 @@ function buildMarkdownReport(aspirantResult: AspirantReadinessResult, repoSlug?:
     lines.push('')
   }
 
+  const sortedHumanOnlyForExport = [...humanOnlyFields].sort((a, b) => {
+    const pa = sandboxApplication?.parsedFields?.find((p) => p.fieldId === a.id)
+    const pb = sandboxApplication?.parsedFields?.find((p) => p.fieldId === b.id)
+    const orderA = pa ? (ASSESSMENT_ORDER[pa.assessment] ?? 4) : 4
+    const orderB = pb ? (ASSESSMENT_ORDER[pb.assessment] ?? 4) : 4
+    return orderA - orderB
+  })
+
   lines.push('## Needs Your Input', '')
 
   if (tagRecommendation.primaryTag) {
@@ -200,7 +210,7 @@ function buildMarkdownReport(aspirantResult: AspirantReadinessResult, repoSlug?:
     lines.push('')
   }
 
-  for (const f of humanOnlyFields) {
+  for (const f of sortedHumanOnlyForExport) {
     const parsed = sandboxApplication?.parsedFields?.find((p) => p.fieldId === f.id)
     const badge = parsed ? ` (${parsed.assessment})` : ''
     lines.push(`### 📋 ${f.label}${badge}`)
@@ -269,6 +279,15 @@ export function CNCFReadinessTab({ aspirantResult, onNavigateToTab, repoSlug }: 
 
   const readyFields = autoFields.filter((f) => f.status === 'ready')
   const needsWorkFields = [...autoFields.filter((f) => f.status !== 'ready')].reverse()
+
+  const sortedHumanOnlyFields = [...humanOnlyFields].sort((a, b) => {
+    const pa = sandboxApplication?.parsedFields?.find((p) => p.fieldId === a.id)
+    const pb = sandboxApplication?.parsedFields?.find((p) => p.fieldId === b.id)
+    // Unparsed (no application filed) treated as lowest priority — already sorted fine in config order
+    const orderA = pa ? (ASSESSMENT_ORDER[pa.assessment] ?? 4) : 4
+    const orderB = pb ? (ASSESSMENT_ORDER[pb.assessment] ?? 4) : 4
+    return orderA - orderB
+  })
 
   return (
     <div className="space-y-6">
@@ -341,7 +360,7 @@ export function CNCFReadinessTab({ aspirantResult, onNavigateToTab, repoSlug }: 
               <p className="text-sm text-slate-700 dark:text-slate-300">{tagRecommendation.fallbackNote}</p>
             </li>
           ) : null}
-          {humanOnlyFields.map((field) => {
+          {sortedHumanOnlyFields.map((field) => {
             const parsed = sandboxApplication?.parsedFields?.find((p) => p.fieldId === field.id)
             return (
               <HumanFieldRow key={field.id} field={field} parsed={parsed ?? null} />
