@@ -27,6 +27,14 @@ export interface TAGRecommendation {
   fallbackNote: string | null
 }
 
+export interface SandboxApplicationIssue {
+  issueNumber: number
+  issueUrl: string
+  title: string
+  state: 'OPEN' | 'CLOSED'
+  createdAt: string
+}
+
 export interface AspirantReadinessResult {
   foundationTarget: FoundationTarget
   readinessScore: number
@@ -36,6 +44,12 @@ export interface AspirantReadinessResult {
   totalAutoCheckable: number
   alreadyInLandscape: boolean
   tagRecommendation: TAGRecommendation
+  sandboxApplication: SandboxApplicationIssue | null
+}
+
+export interface SandboxIssueData {
+  issues: SandboxApplicationIssue[]
+  fetchedAt: number
 }
 
 export interface CNCFLandscapeData {

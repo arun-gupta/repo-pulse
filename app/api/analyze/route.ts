@@ -1,6 +1,6 @@
 import { analyze } from '@/lib/analyzer/analyze'
 import type { FoundationTarget } from '@/lib/cncf-sandbox/types'
-import { fetchCNCFLandscape } from '@/lib/cncf-sandbox/landscape'
+import { fetchCNCFLandscape, fetchCNCFSandboxIssues } from '@/lib/cncf-sandbox/landscape'
 import { evaluateAspirant } from '@/lib/cncf-sandbox/evaluate'
 
 export async function POST(request: Request) {
@@ -34,16 +34,24 @@ export async function POST(request: Request) {
     // Fetch CNCF landscape data when CNCF Sandbox target is selected
     let landscapeData = null
     if (foundationTarget === 'cncf-sandbox') {
-      try {
-        landscapeData = await fetchCNCFLandscape()
-      } catch {
-        // Landscape fetch failure is non-fatal — evaluate.ts handles null gracefully
+      const [landscapeResult, sandboxIssues] = await Promise.allSettled([
+        fetchCNCFLandscape(),
+        fetchCNCFSandboxIssues(token),
+      ])
+
+      landscapeData = landscapeResult.status === 'fulfilled' ? landscapeResult.value : null
+      const issues = sandboxIssues.status === 'fulfilled' ? sandboxIssues.value : []
+
+      if (landscapeResult.status === 'rejected') {
         console.warn('[analyze] CNCF landscape fetch failed — proceeding without landscape data')
+      }
+      if (sandboxIssues.status === 'rejected') {
+        console.warn('[analyze] CNCF sandbox issues fetch failed — proceeding without application status')
       }
 
       // Attach aspirant evaluation results to each repo result
       for (const result of response.results) {
-        const aspirantResult = evaluateAspirant(result, landscapeData)
+        const aspirantResult = evaluateAspirant(result, landscapeData, issues)
         if (aspirantResult.alreadyInLandscape) {
           result.landscapeOverride = true
           result.aspirantResult = null

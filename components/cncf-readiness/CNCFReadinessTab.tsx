@@ -48,8 +48,48 @@ function FieldRow({ field, onNavigateToTab }: { field: AspirantField; onNavigate
   )
 }
 
+function SandboxApplicationBanner({ application }: { application: import('@/lib/cncf-sandbox/types').SandboxApplicationIssue | null }) {
+  if (application === null) {
+    return (
+      <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+        <span className="mt-0.5 text-base" aria-hidden="true">📋</span>
+        <div>
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">No application found in cncf/sandbox</p>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+            When ready, file an issue at{' '}
+            <a href="https://github.com/cncf/sandbox/issues/new/choose" target="_blank" rel="noreferrer" className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400">
+              github.com/cncf/sandbox
+            </a>{' '}
+            to start the review process.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const isOpen = application.state === 'OPEN'
+  const date = new Date(application.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+
+  return (
+    <div className={`flex items-start gap-3 rounded-lg border p-3 ${isOpen ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20' : 'border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-800'}`}>
+      <span className="mt-0.5 text-base" aria-hidden="true">{isOpen ? '🟢' : '⚫'}</span>
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+          Application {isOpen ? 'filed — under review' : 'filed — closed'} &mdash;{' '}
+          <a href={application.issueUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline hover:text-blue-800 dark:text-blue-400">
+            #{application.issueNumber}
+          </a>
+        </p>
+        <p className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-400">
+          {application.title} &middot; filed {date}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export function CNCFReadinessTab({ aspirantResult, onNavigateToTab }: CNCFReadinessTabProps) {
-  const { readinessScore, readyCount, totalAutoCheckable, autoFields, humanOnlyFields, tagRecommendation } = aspirantResult
+  const { readinessScore, readyCount, totalAutoCheckable, autoFields, humanOnlyFields, tagRecommendation, sandboxApplication } = aspirantResult
 
   const readyFields = autoFields.filter((f) => f.status === 'ready')
   const needsWorkFields = [...autoFields.filter((f) => f.status !== 'ready')].reverse()
@@ -67,6 +107,8 @@ export function CNCFReadinessTab({ aspirantResult, onNavigateToTab }: CNCFReadin
           {readyCount} of {totalAutoCheckable} auto-checkable fields ready
         </p>
       </div>
+
+      <SandboxApplicationBanner application={sandboxApplication} />
 
       {needsWorkFields.length > 0 ? (
         <section>

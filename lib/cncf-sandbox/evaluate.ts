@@ -1,12 +1,13 @@
 import type { AnalysisResult, DocumentationResult, ReleaseHealthResult } from '@/lib/analyzer/analysis-result'
-import type { AspirantField, AspirantReadinessResult, CNCFLandscapeData, TAGRecommendation } from './types'
+import type { AspirantField, AspirantReadinessResult, CNCFLandscapeData, SandboxApplicationIssue, TAGRecommendation } from './types'
 import { CNCF_AUTO_FIELDS, CNCF_HUMAN_FIELDS, CNCF_ALLOWED_SPDX_IDS } from './config'
-import { isRepoInLandscape } from './landscape'
+import { isRepoInLandscape, findSandboxApplication } from './landscape'
 import { recommendTAG } from './tag-recommender'
 
 export function evaluateAspirant(
   result: AnalysisResult,
   landscapeData: CNCFLandscapeData | null,
+  sandboxIssues?: SandboxApplicationIssue[],
 ): AspirantReadinessResult {
   const doc = result.documentationResult !== 'unavailable' ? result.documentationResult : null
   const release = result.releaseHealthResult && result.releaseHealthResult !== 'unavailable'
@@ -43,6 +44,10 @@ export function evaluateAspirant(
     extractReadmeFirstParagraph(doc?.readmeContent ?? null),
   )
 
+  const sandboxApplication = sandboxIssues
+    ? findSandboxApplication(result.repo, sandboxIssues)
+    : null
+
   return {
     foundationTarget: 'cncf-sandbox',
     readinessScore,
@@ -52,6 +57,7 @@ export function evaluateAspirant(
     totalAutoCheckable,
     alreadyInLandscape,
     tagRecommendation,
+    sandboxApplication,
   }
 }
 
