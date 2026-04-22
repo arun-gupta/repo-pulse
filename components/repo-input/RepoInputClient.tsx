@@ -46,6 +46,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const searchParams = useSearchParams()
   const initialRepos = decodeRepos(searchParams.toString())
   const initialRepoValue = initialRepos.join('\n')
+  const initialFoundationTarget = (searchParams.get('foundationTarget') ?? 'none') as FoundationTarget
   const autoTriggeredRef = useRef(false)
   const [analysisResponse, setAnalysisResponse] = useState<AnalyzeResponse | null>(null)
   const [analyzedRepos, setAnalyzedRepos] = useState<string[]>([])
@@ -59,7 +60,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [emptyQuoteIndex, setEmptyQuoteIndex] = useState(() => getRandomQuoteIndex(null))
   const [quoteIndex, setQuoteIndex] = useState<number | null>(null)
   const [activeTag, setActiveTag] = useState<string | null>(null)
-  const [foundationTarget, setFoundationTarget] = useState<FoundationTarget>('none')
+  const [foundationTarget, setFoundationTarget] = useState<FoundationTarget>(initialFoundationTarget)
   const [aspirantResult, setAspirantResult] = useState<AspirantReadinessResult | null>(null)
   const cncfBadges: CNCFFieldBadge[] = aspirantResult
     ? aspirantResult.autoFields.map((field) => ({ fieldId: field.id, label: field.label, status: field.status }))
