@@ -27,7 +27,7 @@ RepoPulse analyzes any public GitHub repository and produces a composite **OSS H
 
 RepoPulse is built for open source projects across the full maturity spectrum. The primary audience is:
 
-- Maintainers with 3+ active contributors looking to close specific gaps
+- Maintainers of any open source project looking to understand and improve its health
 - OSPOs and program managers evaluating OSS health across a portfolio
 - Foundation-track projects (CNCF, Apache, Linux Foundation, etc.) preparing for stage reviews
 
