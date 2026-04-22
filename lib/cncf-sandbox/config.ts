@@ -69,7 +69,7 @@ export const CNCF_HUMAN_FIELDS: CNCFHumanFieldConfig[] = [
     id: 'tag-engagement',
     label: 'TAG Domain Technical Review',
     explanatoryNote:
-      "Select the TAG matching your project's domain (see the recommended TAG surfaced above). Present at a TAG meeting before the TOC vote — this is treated as a soft prerequisite and has a documented impact on approval rate. Contact the TAG chairs on CNCF Slack to request a slot. All 7 rejected projects in our analysis had zero TAG engagement; nearly all approved projects had presented before or during the vote.",
+      "Select the TAG matching your project's domain (see the recommended TAG surfaced above). Present at a TAG meeting before the TOC vote — this is treated as a soft prerequisite and has a documented impact on approval rate. Contact the TAG chairs on CNCF Slack to request a slot. All 7 rejected projects in our analysis (github.com/cncf/sandbox, gitvote/failed label) had zero TAG engagement; nearly all approved projects had presented before or during the vote.",
   },
   {
     id: 'cncf-contacts',

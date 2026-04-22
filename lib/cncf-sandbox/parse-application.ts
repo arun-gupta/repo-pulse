@@ -111,7 +111,7 @@ function assessAndRecommend(
       if (!hasEngagement || lower === '_no response_' || lower === 'no response') {
         return {
           assessment: 'empty',
-          recommendation: "TAG engagement is a soft prerequisite with documented impact on approval rate. All 7 rejected projects in our analysis had zero TAG engagement. Contact the relevant TAG chairs on CNCF Slack to request a presentation slot before your TOC vote.",
+          recommendation: "TAG engagement is a soft prerequisite with documented impact on approval rate. All 7 rejected projects in our analysis (github.com/cncf/sandbox, gitvote/failed label) had zero TAG engagement. Contact the relevant TAG chairs on CNCF Slack to request a presentation slot before your TOC vote.",
         }
       }
       if (/presented|meeting|reviewed/i.test(content)) return { assessment: 'strong', recommendation: null }
@@ -148,7 +148,7 @@ function getEmptyRecommendation(fieldId: string): string {
     'cloud-native-fit': "Required and heavily weighted by reviewers. Name 4–8 CNCF projects and describe the one-line architectural relationship for each.",
     'business-separation': "If no commercial product exists, state that explicitly. If one does, describe governance separation — do not leave blank.",
     'similar-projects': "Leaving this blank is a red flag. Search the CNCF landscape for your category and address each project you find, even if you believe there is no overlap.",
-    'tag-engagement': "Critical gap. Contact the relevant TAG chairs on CNCF Slack to schedule a presentation before the TOC vote — all 7 rejected projects in our corpus had zero TAG engagement.",
+    'tag-engagement': "Critical gap. Contact the relevant TAG chairs on CNCF Slack to schedule a presentation before the TOC vote — all 7 rejected projects in our analysis (github.com/cncf/sandbox, gitvote/failed label) had zero TAG engagement.",
     'cncf-contacts': "Name a specific CNCF contact (TOC member, TAG lead, or Ambassador). A blank contact field correlates with longer review cycles.",
     'license-exception': "State explicitly — Yes (with dependency names and licenses) or No.",
     'contact-email': "Provide at least one contact email for the primary submitter.",
