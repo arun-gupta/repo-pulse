@@ -176,7 +176,6 @@ export const CANDIDACY_CRITERIA_QUERY = `
     repository(owner: $owner, name: $name) {
       description
       homepageUrl
-      hasPages
       repositoryTopics(first: 20) {
         nodes { topic { name } }
       }

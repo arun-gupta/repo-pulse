@@ -10,7 +10,6 @@ interface CriteriaResponse {
   repository: {
     description: string | null
     homepageUrl: string | null
-    hasPages: boolean | null
     repositoryTopics: { nodes: Array<{ topic: { name: string } }> }
     licenseInfo: { spdxId: string | null } | null
     rootTree: { entries: Array<{ name: string; type: string }> } | null
@@ -135,7 +134,7 @@ export async function POST(request: Request) {
               ),
               hasRoadmapFile,
               hasReadmeRoadmapSection,
-              hasWebsite: !!(repo.homepageUrl?.trim() || repo.hasPages),
+              hasWebsite: !!(repo.homepageUrl?.trim()),
               hasAdopters: !!(
                 repo.cncfAdopters || repo.cncfAdoptersLower || repo.cncfAdoptersPlain || repo.cncfAdoptersDocs
               ),
