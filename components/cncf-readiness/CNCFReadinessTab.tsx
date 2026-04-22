@@ -147,13 +147,19 @@ function buildMarkdownReport(aspirantResult: AspirantReadinessResult, repoSlug?:
   const needsWorkFields = [...autoFields.filter((f) => f.status !== 'ready')].reverse()
   const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
+  const scoreBar = readinessScore >= 80 ? '🟢' : readinessScore >= 50 ? '🟡' : '🔴'
+
   const lines: string[] = [
-    `# CNCF Sandbox Readiness Report${repoSlug ? ` — ${repoSlug}` : ''}`,
+    `# CNCF Sandbox Readiness Report`,
     '',
+    repoSlug ? `**Repository**: ${repoSlug}` : '',
     `**Generated**: ${date}`,
-    `**Score**: ${readinessScore} / 100 — ${readyCount} of ${totalAutoCheckable} auto-checkable fields ready`,
     '',
-  ]
+    `## ${scoreBar} Score: ${readinessScore} / 100`,
+    '',
+    `${readyCount} of ${totalAutoCheckable} auto-checkable fields ready.`,
+    '',
+  ].filter((l) => l !== undefined) as string[]
 
   if (sandboxApplication) {
     const filedDate = new Date(sandboxApplication.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
