@@ -37,24 +37,30 @@ const PILL_CLASSES: Record<NonNullable<LandscapeProjectStatus>, string> = {
     'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600',
 }
 
-const PILL_HREFS: Record<NonNullable<LandscapeProjectStatus>, string> = {
-  graduated: 'https://landscape.cncf.io/?project=graduated',
-  incubating: 'https://landscape.cncf.io/?project=incubating',
-  sandbox: 'https://landscape.cncf.io/?project=sandbox',
-  landscape: 'https://landscape.cncf.io/',
-}
-
-function LandscapePill({ status }: { status: NonNullable<LandscapeProjectStatus> }) {
-  return (
-    <a
-      href={PILL_HREFS[status]}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`rounded-full px-2 py-0.5 text-xs font-medium hover:underline ${PILL_CLASSES[status]}`}
-    >
-      {PILL_LABELS[status]}
-    </a>
-  )
+function LandscapePill({
+  status,
+  onClick,
+  active,
+}: {
+  status: NonNullable<LandscapeProjectStatus>
+  onClick?: () => void
+  active?: boolean
+}) {
+  const base = `rounded-full px-2 py-0.5 text-xs font-medium ${PILL_CLASSES[status]}`
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${base} cursor-pointer ring-offset-0 transition-shadow hover:ring-2 hover:ring-current${active ? ' ring-2 ring-current' : ''}`}
+        aria-pressed={active}
+        title={`Filter by ${PILL_LABELS[status]}`}
+      >
+        {PILL_LABELS[status]}
+      </button>
+    )
+  }
+  return <span className={base}>{PILL_LABELS[status]}</span>
 }
 
 const TIER_BADGES: Record<string, { label: string; className: string }> = {
@@ -103,6 +109,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
   const [fetchStatus, setFetchStatus] = useState<'idle' | 'fetching' | 'done'>('idle')
   const [fetchTimer, setFetchTimer] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeStatusFilter, setActiveStatusFilter] = useState<LandscapeProjectStatus>(null)
   const abortRef = useRef<AbortController | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const fetchStartRef = useRef<number>(0)
@@ -355,6 +362,11 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
 
   const hasMoreRepos = batchOffset < selectable.length
 
+  const filteredResults = useMemo(() => {
+    if (!activeStatusFilter) return rankedResults
+    return rankedResults.filter(({ repo }) => getRepoStatus(repo) === activeStatusFilter)
+  }, [rankedResults, activeStatusFilter, getRepoStatus])
+
   if (landscapeLoading) {
     return (
       <section aria-label="CNCF Candidacy Scan" className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -451,6 +463,22 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
         </div>
       ) : null}
 
+      {/* Active filter indicator */}
+      {activeStatusFilter ? (
+        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+          <span>Showing only:</span>
+          <LandscapePill status={activeStatusFilter} active />
+          <button
+            type="button"
+            onClick={() => setActiveStatusFilter(null)}
+            className="rounded px-1.5 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            aria-label="Clear filter"
+          >
+            ✕ Clear
+          </button>
+        </div>
+      ) : null}
+
       {/* Results table */}
       {rankedResults.length > 0 ? (
         <div className="overflow-x-auto">
@@ -465,7 +493,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {rankedResults.map(({ repo, rowState }) => {
+              {filteredResults.map(({ repo, rowState }) => {
                 const status = getRepoStatus(repo)
                 const isHosted = status && CNCF_HOSTED_STATUSES.has(status)
                 const isChecked = selected.has(repo.repo)
@@ -476,7 +504,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-500 dark:text-slate-400">{repo.name}</span>
-                          {status ? <LandscapePill status={status} /> : null}
+                          {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
                         </div>
                       </td>
                       <td className="py-2 pr-4 text-slate-400">—</td>
@@ -499,7 +527,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                             className="h-4 w-4 rounded border-slate-300"
                           />
                           <span className="text-slate-700 dark:text-slate-300">{repo.name}</span>
-                          {status ? <LandscapePill status={status} /> : null}
+                          {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
                         </div>
                       </td>
                       <td colSpan={4} className="py-2">
@@ -546,7 +574,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                         <span className="font-medium text-slate-800 dark:text-slate-200">
                           {repo.name}
                         </span>
-                        {status ? <LandscapePill status={status} /> : null}
+                        {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
                       </div>
                     </td>
                     <td className="py-2 pr-4">
