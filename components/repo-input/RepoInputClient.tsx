@@ -352,6 +352,8 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     setSubmissionError(null)
     setAnalysisResponse(null)
     setOrgInventoryResponse(null)
+    setAspirantResult(null)
+    setLandscapeOverride(false)
     setResultsResetKey((current) => current + 1)
     setInputMode('org')
     setLoadingRepos([])
