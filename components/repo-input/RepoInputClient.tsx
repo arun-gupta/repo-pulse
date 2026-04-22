@@ -26,7 +26,7 @@ import { PreRunWarningDialog } from '@/components/org-summary/PreRunWarningDialo
 import type { ContributorDiversityWindow } from '@/lib/org-aggregation/aggregators/types'
 import { useOrgAggregation } from '@/components/shared/hooks/useOrgAggregation'
 import { isRateLimitLow, type AnalysisResult, type AnalyzeResponse } from '@/lib/analyzer/analysis-result'
-import type { AspirantReadinessResult, FoundationTarget } from '@/lib/cncf-sandbox/types'
+import type { AspirantReadinessResult, CNCFFieldBadge, FoundationTarget } from '@/lib/cncf-sandbox/types'
 import { CNCFReadinessTab } from '@/components/cncf-readiness/CNCFReadinessTab'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
 import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/results-shell-props'
@@ -61,6 +61,9 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [foundationTarget, setFoundationTarget] = useState<FoundationTarget>('none')
   const [aspirantResult, setAspirantResult] = useState<AspirantReadinessResult | null>(null)
+  const cncfBadges: CNCFFieldBadge[] = aspirantResult
+    ? aspirantResult.autoFields.map((field) => ({ fieldId: field.id, label: field.label, status: field.status }))
+    : []
   const [landscapeOverride, setLandscapeOverride] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -651,7 +654,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="contributors" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <ContributorsView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <ContributorsView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} cncfBadges={cncfBadges} />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Enter repositories and click <span className="font-medium text-slate-700 dark:text-slate-200">Analyze</span> to get started.
@@ -662,7 +665,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="activity" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <ActivityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <ActivityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} cncfBadges={cncfBadges} />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Enter repositories and click <span className="font-medium text-slate-700 dark:text-slate-200">Analyze</span> to get started.
@@ -688,7 +691,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
             selectedWindow={orgWindow}
           />
         ) : analysisResponse ? (
-          <DocumentationView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <DocumentationView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} cncfBadges={cncfBadges} />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Enter repositories and click <span className="font-medium text-slate-700 dark:text-slate-200">Analyze</span> to get started.
@@ -715,7 +718,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
           <OrgBucketContent bucketId="security" view={orgAggregation.view} selectedWindow={orgWindow} />
         ) : analysisResponse ? (
-          <SecurityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} />
+          <SecurityView results={analysisResponse.results} activeTag={activeTag} onTagChange={setActiveTag} cncfBadges={cncfBadges} />
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Enter repositories and click <span className="font-medium text-slate-700 dark:text-slate-200">Analyze</span> to get started.
