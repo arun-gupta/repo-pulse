@@ -42,7 +42,7 @@ RepoPulse is built for open source projects across the full maturity spectrum. T
 | :busts_in_silhouette: | **Multi-Repo Comparison** | Side-by-side analysis of up to 4 repositories |
 | :office: | **Org Inventory** | Browse and analyze all repos within a GitHub organization, with an org-summary view that surfaces Overview, Contributors, Activity, Responsiveness, Documentation, Governance (2FA enforcement, stale admin detection, member permission distribution), Security, and Recommendations (top systemic issues) across the analyzed repo set |
 | :bulb: | **Unified Recommendations** | Actionable improvement suggestions across all scoring dimensions |
-| :seedling: | **CNCF Sandbox Readiness** | Select "CNCF Sandbox" as the Foundation Target to activate aspirant mode: a 0–100 readiness score across 11 auto-checkable fields (roadmap, contributing, CoC, maintainers, security, license, adopters, LFX, contributor diversity, activity), a "Needs work" / "Needs your input" breakdown with remediation hints ranked by point impact, TAG recommendation, application-issue detection (parses a filed sandbox application if one exists), and `gitvote/passed` TOC approval detection |
+| :seedling: | **CNCF Sandbox Readiness** | Select "CNCF Sandbox" as the Foundation Target for a 0–100 pre-application readiness score, ranked remediation hints, TAG recommendation, and automatic detection of filed applications and TOC approval status |
 | :book: | **Scoring Methodology** | Full transparency into calibration data and thresholds |
 | :outbox_tray: | **Export** | JSON, Markdown, and shareable URL; CNCF Readiness tab adds a dedicated "Download Readiness Report" export |
 
