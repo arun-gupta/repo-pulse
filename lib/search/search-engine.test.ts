@@ -12,6 +12,7 @@ const index: SearchIndex = {
   security: ['facebook/react', 'SEC-3 Branch-Protection: High', 'SEC-6 Dependency-Update-Tool: Medium', 'OpenSSF Scorecard: 7.2/10'],
   recommendations: ['facebook/react', 'SEC-3: Enforce branch protection', 'ACT-1: Reduce PR backlog', 'Critical', 'High', 'Medium'],
   comparison: ['facebook/react', 'kubernetes/kubernetes', 'Stars', 'Forks'],
+  'cncf-readiness': [],
 }
 
 describe('executeSearch', () => {
@@ -61,6 +62,7 @@ describe('executeSearch', () => {
       security: [],
       recommendations: [],
       comparison: [],
+      'cncf-readiness': [],
     }
     // "1.0.0" should match literally, not as regex (where . matches any char)
     const result = executeSearch(specialIndex, '1.0.0')
