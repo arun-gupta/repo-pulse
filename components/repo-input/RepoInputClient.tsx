@@ -23,6 +23,7 @@ import { OrgSummaryView } from '@/components/org-summary/OrgSummaryView'
 import { OrgBucketContent } from '@/components/org-summary/OrgBucketContent'
 import { OrgWindowSelector } from '@/components/org-summary/OrgWindowSelector'
 import { PreRunWarningDialog } from '@/components/org-summary/PreRunWarningDialog'
+import { CNCFCandidacyPanel } from '@/components/cncf-candidacy/CNCFCandidacyPanel'
 import type { ContributorDiversityWindow } from '@/lib/org-aggregation/aggregators/types'
 import { useOrgAggregation } from '@/components/shared/hooks/useOrgAggregation'
 import { isRateLimitLow, type AnalysisResult, type AnalyzeResponse } from '@/lib/analyzer/analysis-result'
@@ -416,11 +417,13 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         { id: 'governance', label: 'Governance', status: 'implemented', description: 'Org-level hygiene and policy — account activity, maintainers, governance files, license consistency.' },
         { id: 'security', label: 'Security', status: 'implemented', description: 'Org-level OpenSSF Scorecard rollup.' },
         { id: 'recommendations', label: 'Recommendations', status: 'implemented', description: 'Top systemic issues across the analyzed repos, grouped by CHAOSS dimension.' },
+        { id: 'cncf-candidacy', label: 'CNCF Candidacy', status: 'implemented', description: 'CNCF Sandbox candidacy scan — ranks repos by readiness.' },
       ]
     : orgInventoryResponse?.org
       ? [
           { id: 'overview', label: 'Overview', status: 'implemented', description: 'Organization inventory summary and lightweight public repository metadata.' },
           { id: 'governance', label: 'Governance', status: 'implemented', description: 'Org-level security signals available without analyzing individual repos — 2FA enforcement, admin activity.' },
+          { id: 'cncf-candidacy', label: 'CNCF Candidacy', status: 'implemented', description: 'CNCF Sandbox candidacy scan — ranks repos by readiness.' },
         ]
       : [
           { id: 'overview', label: 'Overview', status: 'implemented', description: 'Organization inventory summary and lightweight public repository metadata.' },
@@ -734,6 +737,11 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
             Enter repositories and click <span className="font-medium text-slate-700 dark:text-slate-200">Analyze</span> to get started.
           </p>
         )
+      }
+      cncfCandidacy={
+        inputMode === 'org' && orgInventoryResponse && orgInventoryResponse.results.length > 0 ? (
+          <CNCFCandidacyPanel org={orgInventoryResponse.org} repos={orgInventoryResponse.results} />
+        ) : null
       }
       comparison={
         analysisResponse && successfulRepoCount >= 2 ? (

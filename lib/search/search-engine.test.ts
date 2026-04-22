@@ -12,6 +12,8 @@ const index: SearchIndex = {
   security: ['facebook/react', 'SEC-3 Branch-Protection: High', 'SEC-6 Dependency-Update-Tool: Medium', 'OpenSSF Scorecard: 7.2/10'],
   recommendations: ['facebook/react', 'SEC-3: Enforce branch protection', 'ACT-1: Reduce PR backlog', 'Critical', 'High', 'Medium'],
   comparison: ['facebook/react', 'kubernetes/kubernetes', 'Stars', 'Forks'],
+  'cncf-readiness': [],
+  'cncf-candidacy': [],
 }
 
 describe('executeSearch', () => {
@@ -37,7 +39,7 @@ describe('executeSearch', () => {
 
   it('counts matches per tab correctly', () => {
     const result = executeSearch(index, 'facebook/react')
-    // facebook/react appears in all 8 tabs
+    // facebook/react appears in all non-empty tabs (overview, contributors, activity, responsiveness, documentation, security, recommendations, comparison = 8)
     expect(result.matchedTabCount).toBe(8)
     expect(result.matchCounts.overview).toBe(1)
     expect(result.matchCounts.security).toBe(1)
@@ -61,6 +63,8 @@ describe('executeSearch', () => {
       security: [],
       recommendations: [],
       comparison: [],
+      'cncf-readiness': [],
+      'cncf-candidacy': [],
     }
     // "1.0.0" should match literally, not as regex (where . matches any char)
     const result = executeSearch(specialIndex, '1.0.0')
