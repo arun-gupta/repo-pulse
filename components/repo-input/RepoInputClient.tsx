@@ -248,6 +248,11 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
 
   function handleModeChange(mode: 'repos' | 'org') {
     setInputMode(mode)
+    if (mode === 'org') {
+      setAspirantResult(null)
+      setLandscapeOverride(false)
+      setLandscapeStatus(undefined)
+    }
   }
 
   function handleReset() {
@@ -656,9 +661,9 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       searchQuery={debouncedQuery}
       onDomMatchCounts={handleDomMatchCounts}
       tagMatchCounts={analysisResponse ? computeTabTagCounts(analysisResponse.results, activeTag) : undefined}
-      aspirantResult={aspirantResult}
-      landscapeOverride={landscapeOverride}
-      landscapeStatus={landscapeStatus}
+      aspirantResult={inputMode === 'repos' ? aspirantResult : null}
+      landscapeOverride={inputMode === 'repos' ? landscapeOverride : false}
+      landscapeStatus={inputMode === 'repos' ? landscapeStatus : undefined}
       repoSlug={analyzedRepos[0]}
       overview={overviewContent}
       contributors={
