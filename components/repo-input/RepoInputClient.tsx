@@ -519,6 +519,18 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
 
   const overviewContent = (
     <div className="space-y-4">
+      {inputMode === 'foundation' && !foundationResult && !foundationError && !loadingFoundation ? (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Enter one or more repos or an org slug above and click <span className="font-medium text-slate-700 dark:text-slate-200">Analyze</span> to check foundation readiness.
+          </p>
+          {emptyQuote ? (
+            <p className="text-xs italic text-slate-400 dark:text-slate-500">
+              &ldquo;{emptyQuote.text}&rdquo; — {emptyQuote.author}{emptyQuote.context ? `, ${emptyQuote.context}` : ''}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       {isEmptyState && inputMode === 'repos' ? (
         <div className="space-y-3">
           <p className="text-sm text-slate-500 dark:text-slate-400">
