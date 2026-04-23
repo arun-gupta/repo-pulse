@@ -408,15 +408,19 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
     [selected, repoStates, token, fetchBatch],
   )
 
-  // Search across ALL org repos
+  // Dropdown: repos from the full org list that match the query but aren't yet in the scan
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return []
     const q = searchQuery.toLowerCase()
-    return repos.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) || r.repo.toLowerCase().includes(q),
-    ).slice(0, 10)
-  }, [repos, searchQuery])
+    const loadedSlugs = new Set(rankedResults.map((r) => r.repo.repo))
+    return repos
+      .filter(
+        (r) =>
+          !loadedSlugs.has(r.repo) &&
+          (r.name.toLowerCase().includes(q) || r.repo.toLowerCase().includes(q)),
+      )
+      .slice(0, 10)
+  }, [repos, searchQuery, rankedResults])
 
   // Check if all repos in the current batch are CNCF members
   const allBatchAreCncfHosted = useMemo(() => {
@@ -488,8 +492,12 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
     let results = rankedResults.map((r, i) => ({ ...r, rank: i + 1 }))
     if (activeStatusFilter) results = results.filter(({ repo }) => getRepoStatus(repo) === activeStatusFilter)
     if (activeTierFilter) results = results.filter(({ rowState }) => rowState?.status === 'loaded' && rowState.result.tier === activeTierFilter)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      results = results.filter(({ repo }) => repo.name.toLowerCase().includes(q) || repo.repo.toLowerCase().includes(q))
+    }
     return results
-  }, [rankedResults, activeStatusFilter, activeTierFilter, getRepoStatus])
+  }, [rankedResults, activeStatusFilter, activeTierFilter, getRepoStatus, searchQuery])
 
   if (landscapeLoading) {
     return (
@@ -614,7 +622,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
               ) : (
                 <p className="text-xs text-slate-400 dark:text-slate-500">
                   {batchOffset} of {selectable.length} repos scanned
-                  {(activeStatusFilter || activeTierFilter) ? ` · ${filteredResults.length} shown` : ''}
+                  {(activeStatusFilter || activeTierFilter || searchQuery.trim()) ? ` · ${filteredResults.length} shown` : ''}
                 </p>
               )}
             </div>
@@ -750,18 +758,14 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
         const isCountdown = pct <= 10
         const bgClass = pct <= 10
           ? 'border-red-300 bg-red-50 dark:border-red-700/50 dark:bg-red-900/20'
-          : pct <= 20
+          : pct <= 30
             ? 'border-orange-300 bg-orange-50 dark:border-orange-700/50 dark:bg-orange-900/20'
-            : pct <= 30
-              ? 'border-yellow-300 bg-yellow-50 dark:border-yellow-700/50 dark:bg-yellow-900/20'
-              : 'border-amber-200 bg-amber-50 dark:border-amber-700/50 dark:bg-amber-900/20'
+            : 'border-amber-200 bg-amber-50 dark:border-amber-700/50 dark:bg-amber-900/20'
         const textClass = pct <= 10
           ? 'text-red-800 dark:text-red-200'
-          : pct <= 20
+          : pct <= 30
             ? 'text-orange-800 dark:text-orange-200'
-            : pct <= 30
-              ? 'text-yellow-800 dark:text-yellow-200'
-              : 'text-amber-800 dark:text-amber-200'
+            : 'text-amber-800 dark:text-amber-200'
         return (
           <div className={`flex items-center gap-3 rounded-md border px-3 py-2 ${bgClass}`}>
             {isCountdown ? (
