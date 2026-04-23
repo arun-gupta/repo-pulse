@@ -397,16 +397,18 @@ print_status() {
       fi
     fi
 
-    # Detect SpecKit lifecycle stage from filesystem artifacts.
+    # Detect SpecKit lifecycle stage from filesystem artifacts scoped to this
+    # issue's spec directory (specs/<issue>-*/) to avoid matching specs from
+    # prior features that were committed to main and inherited by every worktree.
     # done: spec + plan + tasks all generated (full lifecycle ran)
     # in-progress: spec + plan generated (awaiting tasks/implementation)
     # paused: spec generated, awaiting human approval before plan
-    # no-spec: no spec generated yet (e.g. --no-speckit worktree)
+    # no-spec: no spec for this issue (e.g. --no-speckit worktree)
     spec_state="no-spec"
-    if compgen -G "$wt_path/specs/*/spec.md" > /dev/null 2>&1; then
-      if compgen -G "$wt_path/specs/*/tasks.md" > /dev/null 2>&1; then
+    if [[ -n "${issue:-}" ]] && compgen -G "$wt_path/specs/${issue}-*/spec.md" > /dev/null 2>&1; then
+      if compgen -G "$wt_path/specs/${issue}-*/tasks.md" > /dev/null 2>&1; then
         spec_state="done"
-      elif compgen -G "$wt_path/specs/*/plan.md" > /dev/null 2>&1; then
+      elif compgen -G "$wt_path/specs/${issue}-*/plan.md" > /dev/null 2>&1; then
         spec_state="in-progress"
       else
         spec_state="paused"
