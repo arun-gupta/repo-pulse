@@ -15,6 +15,7 @@ Usage:
   scripts/claude-worktree.sh --remove              [<issue-number>]
   scripts/claude-worktree.sh --cleanup-merged      [<issue-number>]
   scripts/claude-worktree.sh --cleanup-all-merged
+  scripts/claude-worktree.sh --status
 
 Options:
   --headless             Run claude -p in background (log -> claude.log)
@@ -24,6 +25,13 @@ Options:
   --remove               Discard worktree (works on unmerged work)
   --cleanup-merged       Post-merge: pull main, remove worktree, delete local+remote branch
   --cleanup-all-merged   Batch sweep: run --cleanup-merged on every worktree whose PR is MERGED
+  --status, --list       Print one row per linked worktree: issue, branch, path, port, PIDs,
+                         spec state, PR state, and session ID. Dead PIDs are flagged as
+                         PID(dead). Worktrees with no .claude.session-id show blanks.
+                         Spec state: no-spec | paused | in-progress | done.
+                         PR state: none | OPEN | MERGED | CLOSED.
+                         Note: fetches PR state via gh for each worktree; with many worktrees
+                         this may take a few seconds.
   -h, --help             Show this help and exit
 
 For --remove and --cleanup-merged, the issue number is inferred from the branch
@@ -34,6 +42,7 @@ Batch example:
   for i in 210 211 212; do scripts/claude-worktree.sh --headless "$i"; done
   for i in 210 211 212; do scripts/claude-worktree.sh --approve-spec "$i"; done
   scripts/claude-worktree.sh --cleanup-all-merged
+  scripts/claude-worktree.sh --status
 EOF
 }
 
@@ -331,6 +340,96 @@ cleanup_all_merged() {
   fi
 }
 
+# Print a single-screen status table of every linked worktree provisioned by this script.
+# Columns: ISSUE  BRANCH  PATH  PORT  DEV-PID  CLAUDE-PID  SPEC  PR  SESSION
+# Spec states:  no-spec | paused | in-progress | done
+# PR states:    none | OPEN | MERGED | CLOSED
+print_status() {
+  local branch issue port dev_pid_str claude_pid_str spec_state pr_state session_str
+  local _p _dpid _cpid _prst _sid skip_first wt_path
+  local -a rows
+
+  rows=("ISSUE\tBRANCH\tPATH\tPORT\tDEV-PID\tCLAUDE-PID\tSPEC\tPR\tSESSION")
+
+  skip_first=1
+  while IFS= read -r wt_path; do
+    if (( skip_first )); then
+      skip_first=0
+      continue
+    fi
+
+    branch="$(git -C "$wt_path" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+
+    issue=""
+    if [[ "$branch" =~ ^([0-9]+)- ]]; then
+      issue="${BASH_REMATCH[1]}"
+    fi
+
+    port="-"
+    if [[ -f "$wt_path/.env.local" ]]; then
+      _p="$(grep '^PORT=' "$wt_path/.env.local" 2>/dev/null | head -1 | cut -d= -f2 || true)"
+      [[ -n "${_p:-}" ]] && port="$_p"
+    fi
+
+    dev_pid_str="-"
+    if [[ -f "$wt_path/.dev.pid" ]]; then
+      _dpid="$(cat "$wt_path/.dev.pid" 2>/dev/null || true)"
+      if [[ -n "${_dpid:-}" ]]; then
+        if kill -0 "$_dpid" 2>/dev/null; then
+          dev_pid_str="$_dpid"
+        else
+          dev_pid_str="${_dpid}(dead)"
+        fi
+      fi
+    fi
+
+    claude_pid_str="-"
+    if [[ -f "$wt_path/.claude.pid" ]]; then
+      _cpid="$(cat "$wt_path/.claude.pid" 2>/dev/null || true)"
+      if [[ -n "${_cpid:-}" ]]; then
+        if kill -0 "$_cpid" 2>/dev/null; then
+          claude_pid_str="$_cpid"
+        else
+          claude_pid_str="${_cpid}(dead)"
+        fi
+      fi
+    fi
+
+    # Detect SpecKit lifecycle stage from filesystem artifacts.
+    # done: spec + plan + tasks all generated (full lifecycle ran)
+    # in-progress: spec + plan generated (awaiting tasks/implementation)
+    # paused: spec generated, awaiting human approval before plan
+    # no-spec: no spec generated yet (e.g. --no-speckit worktree)
+    spec_state="no-spec"
+    if compgen -G "$wt_path/specs/*/spec.md" > /dev/null 2>&1; then
+      if compgen -G "$wt_path/specs/*/tasks.md" > /dev/null 2>&1; then
+        spec_state="done"
+      elif compgen -G "$wt_path/specs/*/plan.md" > /dev/null 2>&1; then
+        spec_state="in-progress"
+      else
+        spec_state="paused"
+      fi
+    fi
+
+    pr_state="none"
+    if [[ -n "${branch:-}" && "$branch" != "HEAD" ]]; then
+      if _prst="$(cd "$REPO_ROOT" && gh pr view "$branch" --json state -q .state 2>/dev/null)"; then
+        [[ -n "${_prst:-}" ]] && pr_state="$_prst"
+      fi
+    fi
+
+    session_str="-"
+    if [[ -f "$wt_path/.claude.session-id" ]]; then
+      _sid="$(cat "$wt_path/.claude.session-id" 2>/dev/null || true)"
+      [[ -n "${_sid:-}" ]] && session_str="${_sid:0:8}"
+    fi
+
+    rows+=("${issue:-?}\t${branch:-?}\t${wt_path}\t${port}\t${dev_pid_str}\t${claude_pid_str}\t${spec_state}\t${pr_state}\t${session_str}")
+  done < <(git -C "$REPO_ROOT" worktree list --porcelain | awk '/^worktree/ {print $2}')
+
+  printf '%b\n' "${rows[@]}" | column -t -s $'\t'
+}
+
 release_paused_session() {
   local issue="$1"
   local prompt="$2"
@@ -408,6 +507,11 @@ if [[ "${1:-}" == "--cleanup-all-merged" ]]; then
   if ! cleanup_all_merged; then
     exit 1
   fi
+  exit 0
+fi
+
+if [[ "${1:-}" == "--status" || "${1:-}" == "--list" ]]; then
+  print_status
   exit 0
 fi
 
