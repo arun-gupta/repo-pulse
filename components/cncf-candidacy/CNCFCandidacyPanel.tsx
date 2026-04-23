@@ -159,7 +159,8 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
   const [scanStarted, setScanStarted] = useState(false)
   const [concurrency, setConcurrency] = useState(5)
   const [repoLimit, setRepoLimit] = useState(25)
-  const [rateLimit, setRateLimit] = useState<{ remaining: number; limit: number } | null>(null)
+  const [rateLimit, setRateLimit] = useState<{ remaining: number; limit: number; resetAt: string | null } | null>(null)
+  const [pausedByRateLimit, setPausedByRateLimit] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const fetchStartRef = useRef<number>(0)
@@ -291,9 +292,11 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
         if (data.rateLimit &&
           typeof data.rateLimit.remaining === 'number' &&
           typeof data.rateLimit.limit === 'number') {
-          const { remaining, limit } = data.rateLimit as { remaining: number; limit: number }
+          const rl = data.rateLimit as { remaining: number; limit: number; resetAt?: string | null }
           setRateLimit((prev) =>
-            prev === null || remaining < prev.remaining ? { remaining, limit } : prev,
+            prev === null || rl.remaining < prev.remaining
+              ? { remaining: rl.remaining, limit: rl.limit, resetAt: rl.resetAt ?? null }
+              : prev,
           )
         }
         const item = data.results[0]
@@ -346,11 +349,11 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanStarted, landscapeLoading, token, selectable.length])
 
-  const handleStop = useCallback(() => {
+  const stopAndClearLoading = useCallback((byRateLimit = false) => {
     abortRef.current?.abort()
     setFetchStatus('done')
     stopTimer()
-    // Discard repos that are still loading
+    if (byRateLimit) setPausedByRateLimit(true)
     setRepoStates((prev) => {
       const next = new Map(prev)
       for (const [key, val] of next.entries()) {
@@ -359,6 +362,23 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
       return next
     })
   }, [stopTimer])
+
+  const handleStop = useCallback(() => stopAndClearLoading(false), [stopAndClearLoading])
+
+  // Auto-stop when rate limit drops below 10%
+  useEffect(() => {
+    if (!rateLimit || fetchStatus !== 'fetching') return
+    const pct = Math.floor((rateLimit.remaining / rateLimit.limit) * 100)
+    if (pct <= 10) stopAndClearLoading(true)
+  }, [rateLimit, fetchStatus, stopAndClearLoading])
+
+  const handleResumeAnyway = useCallback(() => {
+    if (!token) return
+    setPausedByRateLimit(false)
+    // Refetch any selected repos that have no result yet (were in-flight when we paused)
+    const pending = loadedSelectable.filter((r) => selected.has(r.repo) && !repoStates.has(r.repo))
+    if (pending.length > 0) fetchBatch(pending)
+  }, [token, loadedSelectable, selected, repoStates, fetchBatch])
 
   const handleShowNext = useCallback(() => {
     if (!token) return
@@ -412,15 +432,16 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return []
     const q = searchQuery.toLowerCase()
-    const loadedSlugs = new Set(rankedResults.map((r) => r.repo.repo))
+    // Exclude repos already selected or with any fetched state
+    const inScanSlugs = new Set([...Array.from(selected), ...Array.from(repoStates.keys())])
     return repos
       .filter(
         (r) =>
-          !loadedSlugs.has(r.repo) &&
+          !inScanSlugs.has(r.repo) &&
           (r.name.toLowerCase().includes(q) || r.repo.toLowerCase().includes(q)),
       )
       .slice(0, 10)
-  }, [repos, searchQuery, rankedResults])
+  }, [repos, searchQuery, selected, repoStates])
 
   // Check if all repos in the current batch are CNCF members
   const allBatchAreCncfHosted = useMemo(() => {
@@ -754,8 +775,10 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
       {/* Rate limit banner */}
       {rateLimit && scanStarted ? (() => {
         const pct = Math.floor((rateLimit.remaining / rateLimit.limit) * 100)
-        if (pct > 50) return null
-        const isCountdown = pct <= 10
+        if (pct > 50 && !pausedByRateLimit) return null
+        const resetTime = rateLimit.resetAt
+          ? new Date(rateLimit.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : null
         const bgClass = pct <= 10
           ? 'border-red-300 bg-red-50 dark:border-red-700/50 dark:bg-red-900/20'
           : pct <= 30
@@ -768,22 +791,32 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
             : 'text-amber-800 dark:text-amber-200'
         return (
           <div className={`flex items-center gap-3 rounded-md border px-3 py-2 ${bgClass}`}>
-            {isCountdown ? (
+            {pct <= 10 ? (
               <span className={`text-3xl font-bold tabular-nums ${textClass}`}>{pct}</span>
             ) : null}
             <div className="flex-1">
               <span className={`text-sm font-medium ${textClass}`}>
-                {isCountdown
-                  ? `% rate limit remaining — slow down or stop`
-                  : `Rate limit at ${pct}% — ${rateLimit.remaining.toLocaleString()} of ${rateLimit.limit.toLocaleString()} points remaining`}
+                {pausedByRateLimit
+                  ? `Scan paused — rate limit at ${pct}% (${rateLimit.remaining.toLocaleString()} points left)`
+                  : pct <= 10
+                    ? `% rate limit remaining — scan auto-stopped`
+                    : `Rate limit at ${pct}% — ${rateLimit.remaining.toLocaleString()} of ${rateLimit.limit.toLocaleString()} points remaining`}
               </span>
-              {isCountdown ? (
+              {resetTime ? (
                 <p className={`text-xs ${textClass} opacity-80`}>
-                  {rateLimit.remaining.toLocaleString()} of {rateLimit.limit.toLocaleString()} points remaining
+                  Resets at {resetTime}
                 </p>
               ) : null}
             </div>
-            {fetchStatus === 'fetching' ? (
+            {pausedByRateLimit ? (
+              <button
+                type="button"
+                onClick={handleResumeAnyway}
+                className={`rounded border px-3 py-1 text-xs font-medium border-current bg-white/60 hover:bg-white/90 dark:bg-slate-800/60 ${textClass}`}
+              >
+                Resume anyway
+              </button>
+            ) : fetchStatus === 'fetching' ? (
               <button
                 type="button"
                 onClick={handleStop}
