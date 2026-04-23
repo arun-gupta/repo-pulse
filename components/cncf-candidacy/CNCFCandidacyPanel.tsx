@@ -184,6 +184,23 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
     [landscapeStatuses],
   )
 
+  // Map lowercase repo name → landscape slug for repos NOT in this org (used for name-collision warnings)
+  const landscapeNameMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const url of Object.keys(landscapeStatuses)) {
+      // url = https://github.com/owner/repo
+      const path = url.replace('https://github.com/', '')
+      const slash = path.indexOf('/')
+      if (slash === -1) continue
+      const owner = path.slice(0, slash).toLowerCase()
+      const repoName = path.slice(slash + 1).toLowerCase()
+      if (owner && repoName && owner !== org.toLowerCase()) {
+        map[repoName] = `${owner}/${repoName}`
+      }
+    }
+    return map
+  }, [landscapeStatuses, org])
+
   // Partition repos into CNCF-hosted and selectable, sorted by stars
   const { cncfHosted, selectable } = useMemo(() => {
     const cncfHosted: OrgRepoSummary[] = []
@@ -961,6 +978,17 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                             </p>
                           ) : repo.isFork ? (
                             <p className="text-[10px] text-amber-600 dark:text-amber-400">⚠ fork</p>
+                          ) : null}
+                          {(() => {
+                            const collision = landscapeNameMap[repo.name.toLowerCase()]
+                            return collision ? (
+                              <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                                ⚠ name matches {collision} in CNCF landscape
+                              </p>
+                            ) : null
+                          })()}
+                          {repo.archived ? (
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500">archived</p>
                           ) : null}
                         </div>
                         {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
