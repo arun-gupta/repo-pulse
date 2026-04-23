@@ -184,8 +184,8 @@ export function findSandboxApplication(
     const words = stripped.split(/\s+/)
     for (const word of words) {
       const wordNorm = word.replace(/[^a-z0-9]/g, '')
-      if (wordNorm === normalized || wordNorm.startsWith(normalized) || normalized.startsWith(wordNorm)) {
-        if (normalized.length >= 3 && wordNorm.length >= 3) {
+      if (wordNorm === normalized || wordNorm.startsWith(normalized)) {
+        if (normalized.length >= 4 && wordNorm.length >= 4) {
           return issue
         }
       }

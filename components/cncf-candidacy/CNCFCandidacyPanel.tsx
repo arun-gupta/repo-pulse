@@ -37,6 +37,50 @@ const PILL_CLASSES: Record<NonNullable<LandscapeProjectStatus>, string> = {
     'bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600',
 }
 
+const HEALTH_CHECK_CRITERIA = [
+  'Approved open-source license (Apache-2.0, MIT, etc.)',
+  'CONTRIBUTING guide',
+  'Code of conduct',
+  'MAINTAINERS file',
+  'SECURITY policy',
+  'Roadmap file or README section',
+  'Project website / homepage',
+  'Adopters list',
+  'Listed in CNCF Landscape',
+]
+
+const MATURITY_SIGNAL_CRITERIA = [
+  'Has a project description',
+  'Roadmap file present',
+  'Implements a spec or standard',
+  'Integrates with CNCF projects (Kubernetes, Prometheus, etc.)',
+  'In an active CNCF landscape category',
+  'Has similar projects in the landscape',
+  'Mentions TAG review or SIG engagement',
+  'Business/product separation (manual check)',
+  'LFX Insights enrolled (manual check)',
+]
+
+function CriteriaTooltip({ criteria }: { criteria: string[] }) {
+  return (
+    <span className="group relative ml-1 inline-block align-middle">
+      <span className="cursor-default select-none text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+        ⓘ
+      </span>
+      <span className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 rounded-md border border-slate-200 bg-white p-2 shadow-lg group-hover:block dark:border-slate-700 dark:bg-slate-800">
+        <ul className="space-y-1">
+          {criteria.map((c, i) => (
+            <li key={i} className="flex gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+              <span className="shrink-0 font-mono text-slate-400">{i + 1}.</span>
+              <span>{c}</span>
+            </li>
+          ))}
+        </ul>
+      </span>
+    </span>
+  )
+}
+
 function LandscapePill({
   status,
   onClick,
@@ -110,6 +154,9 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
   const [fetchTimer, setFetchTimer] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeStatusFilter, setActiveStatusFilter] = useState<LandscapeProjectStatus>(null)
+  const [activeTierFilter, setActiveTierFilter] = useState<string | null>(null)
+  const [scanStarted, setScanStarted] = useState(false)
+  const [concurrency, setConcurrency] = useState(5)
   const abortRef = useRef<AbortController | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const fetchStartRef = useRef<number>(0)
@@ -238,7 +285,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
       setFetchStatus('fetching')
       startTimer()
 
-      await withConcurrency(batch, FETCH_CONCURRENCY, (repo) =>
+      await withConcurrency(batch, concurrency, (repo) =>
         fetchRepo(repo, controller.signal),
       )
 
@@ -248,19 +295,19 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
       }
       stopTimer()
     },
-    [token, fetchRepo, startTimer, stopTimer],
+    [token, concurrency, fetchRepo, startTimer, stopTimer],
   )
 
-  // Load first batch once landscape is ready and token available
+  // Load first batch once scan is started, landscape is ready, and token available
   useEffect(() => {
-    if (landscapeLoading || !token || selectable.length === 0 || batchOffset > 0) return
+    if (!scanStarted || landscapeLoading || !token || selectable.length === 0 || batchOffset > 0) return
     const firstBatch = selectable.slice(0, BATCH_SIZE)
     const newSelected = new Set(firstBatch.map((r) => r.repo))
     setSelected(newSelected)
     setBatchOffset(BATCH_SIZE)
     fetchBatch(firstBatch)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [landscapeLoading, token, selectable.length])
+  }, [scanStarted, landscapeLoading, token, selectable.length])
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort()
@@ -333,32 +380,45 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
     })
   }, [loadedSelectable, getRepoStatus])
 
-  // Build ranked results from loaded repos
+  // Group priority: Graduated → Incubating → Sandbox → Landscape → other (by candidacy score)
+  const groupPriority = useCallback((repo: OrgRepoSummary, rowState: RepoRowState | null): number => {
+    const status = getRepoStatus(repo)
+    if (rowState === null) {
+      if (status === 'graduated') return 0
+      if (status === 'incubating') return 1
+      if (status === 'sandbox') return 2
+    }
+    if (status === 'landscape') return 3
+    return 4
+  }, [getRepoStatus])
+
   const rankedResults = useMemo(() => {
-    const results: Array<{ repo: OrgRepoSummary; rowState: RepoRowState }> = []
+    const all: Array<{ repo: OrgRepoSummary; rowState: RepoRowState | null }> = []
 
     for (const repo of loadedSelectable) {
       const rowState = repoStates.get(repo.repo)
-      if (rowState) {
-        results.push({ repo, rowState })
-      } else if (selected.has(repo.repo)) {
-        // Auto-selected but not yet fetched (edge case)
-        results.push({ repo, rowState: { status: 'loading' } })
-      }
+      if (rowState) all.push({ repo, rowState })
+      else if (selected.has(repo.repo)) all.push({ repo, rowState: { status: 'loading' } })
+    }
+    for (const repo of cncfHosted) {
+      all.push({ repo, rowState: null })
     }
 
-    // Sort loaded rows by Track 1 score desc, stars as tiebreaker
-    results.sort((a, b) => {
-      const aLoaded = a.rowState.status === 'loaded' ? a.rowState.result.track1Score : -1
-      const bLoaded = b.rowState.status === 'loaded' ? b.rowState.result.track1Score : -1
-      if (bLoaded !== aLoaded) return bLoaded - aLoaded
+    all.sort((a, b) => {
+      const aPriority = groupPriority(a.repo, a.rowState)
+      const bPriority = groupPriority(b.repo, b.rowState)
+      if (aPriority !== bPriority) return aPriority - bPriority
+      // Within group: score desc, then stars
+      const aScore = a.rowState?.status === 'loaded' ? a.rowState.result.track1Score : -1
+      const bScore = b.rowState?.status === 'loaded' ? b.rowState.result.track1Score : -1
+      if (bScore !== aScore) return bScore - aScore
       const aStars = typeof a.repo.stars === 'number' ? a.repo.stars : 0
       const bStars = typeof b.repo.stars === 'number' ? b.repo.stars : 0
       return bStars - aStars
     })
 
-    return results
-  }, [loadedSelectable, repoStates, selected])
+    return all
+  }, [loadedSelectable, repoStates, selected, cncfHosted, groupPriority])
 
   const hasMoreRepos = batchOffset < selectable.length
 
@@ -371,15 +431,17 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
     }
     const tierCounts = { strong: 0, 'needs-work': 0, 'not-ready': 0 }
     for (const { rowState } of rankedResults) {
-      if (rowState.status === 'loaded') tierCounts[rowState.result.tier]++
+      if (rowState?.status === 'loaded') tierCounts[rowState.result.tier]++
     }
-    return { statusCounts, tierCounts, loadedCount: rankedResults.filter(r => r.rowState.status === 'loaded').length }
+    return { statusCounts, tierCounts, loadedCount: rankedResults.filter(r => r.rowState?.status === 'loaded').length }
   }, [repos, rankedResults, getRepoStatus])
 
   const filteredResults = useMemo(() => {
-    if (!activeStatusFilter) return rankedResults
-    return rankedResults.filter(({ repo }) => getRepoStatus(repo) === activeStatusFilter)
-  }, [rankedResults, activeStatusFilter, getRepoStatus])
+    let results = rankedResults.map((r, i) => ({ ...r, rank: i + 1 }))
+    if (activeStatusFilter) results = results.filter(({ repo }) => getRepoStatus(repo) === activeStatusFilter)
+    if (activeTierFilter) results = results.filter(({ rowState }) => rowState?.status === 'loaded' && rowState.result.tier === activeTierFilter)
+    return results
+  }, [rankedResults, activeStatusFilter, activeTierFilter, getRepoStatus])
 
   if (landscapeLoading) {
     return (
@@ -393,6 +455,67 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
   }
 
   if (repos.length === 0) return null
+
+  if (!scanStarted) {
+    const scannable = selectable.length
+    const estimatedSeconds = Math.ceil(scannable / concurrency)
+    const estimateLabel = estimatedSeconds < 60
+      ? `~${estimatedSeconds}s`
+      : `~${Math.ceil(estimatedSeconds / 60)}m`
+
+    return (
+      <section aria-label="CNCF Candidacy Scan" className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">CNCF Sandbox Candidacy Scan</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Ranks the {scannable} repos in <span className="font-mono">{org}</span> by CNCF Sandbox readiness — health checks, maturity signals, and top gaps.
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+              Concurrency — repos fetched in parallel
+            </p>
+            <div className="flex gap-2">
+              {[1, 3, 5, 10].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setConcurrency(c)}
+                  aria-pressed={concurrency === c}
+                  className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                    concurrency === c
+                      ? 'border-sky-400 bg-sky-100 text-sky-800 dark:border-sky-500 dark:bg-sky-900/40 dark:text-sky-200'
+                      : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            Estimated time: <span className="font-medium text-slate-600 dark:text-slate-300">{estimateLabel}</span>
+            {' '}for {scannable} repos at concurrency {concurrency}
+            {concurrency >= 10 ? <span className="ml-1 text-amber-600 dark:text-amber-400">(may hit GitHub rate limits)</span> : null}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setScanStarted(true)}
+            disabled={!token}
+            title={!token ? 'Sign in with GitHub to run the scan' : undefined}
+            className="rounded-md border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-800 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/50 dark:bg-sky-900/20 dark:text-sky-200 dark:hover:bg-sky-900/40"
+          >
+            Run CNCF Candidacy Scan
+          </button>
+          {!token ? (
+            <p className="text-xs text-slate-400 dark:text-slate-500">Sign in with GitHub to enable.</p>
+          ) : null}
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section aria-label="CNCF Candidacy Scan" className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -408,8 +531,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
           {selectable.length > 0 ? (
             <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
               {rankedResults.length} of {selectable.length} repos scanned
-              {activeStatusFilter ? ` · ${filteredResults.length} shown` : ''}
-              {cncfHosted.length > 0 ? ` · ${cncfHosted.length} existing CNCF projects` : ''}
+              {(activeStatusFilter || activeTierFilter) ? ` · ${filteredResults.length} shown` : ''}
             </p>
           ) : null}
         </div>
@@ -434,12 +556,38 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
               </button>
             )
           })}
-          {summary.loadedCount > 0 ? (
-            <span className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              {summary.tierCounts.strong > 0 ? <span className="text-emerald-700 dark:text-emerald-400"><span className="font-semibold">{summary.tierCounts.strong}</span> strong</span> : null}
-              {summary.tierCounts['needs-work'] > 0 ? <span className="text-amber-700 dark:text-amber-400"><span className="font-semibold">{summary.tierCounts['needs-work']}</span> needs work</span> : null}
-              {summary.tierCounts['not-ready'] > 0 ? <span className="text-red-700 dark:text-red-400"><span className="font-semibold">{summary.tierCounts['not-ready']}</span> not ready</span> : null}
-            </span>
+          {summary.tierCounts.strong > 0 ? (
+            <button
+              type="button"
+              onClick={() => setActiveTierFilter(activeTierFilter === 'strong' ? null : 'strong')}
+              aria-pressed={activeTierFilter === 'strong'}
+              className={`flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800 transition-shadow hover:ring-2 hover:ring-emerald-400 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300${activeTierFilter === 'strong' ? ' ring-2 ring-emerald-400' : ''}`}
+            >
+              <span className="font-semibold">{summary.tierCounts.strong}</span>
+              <span>strong</span>
+            </button>
+          ) : null}
+          {summary.tierCounts['needs-work'] > 0 ? (
+            <button
+              type="button"
+              onClick={() => setActiveTierFilter(activeTierFilter === 'needs-work' ? null : 'needs-work')}
+              aria-pressed={activeTierFilter === 'needs-work'}
+              className={`flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 transition-shadow hover:ring-2 hover:ring-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300${activeTierFilter === 'needs-work' ? ' ring-2 ring-amber-400' : ''}`}
+            >
+              <span className="font-semibold">{summary.tierCounts['needs-work']}</span>
+              <span>needs work</span>
+            </button>
+          ) : null}
+          {summary.tierCounts['not-ready'] > 0 ? (
+            <button
+              type="button"
+              onClick={() => setActiveTierFilter(activeTierFilter === 'not-ready' ? null : 'not-ready')}
+              aria-pressed={activeTierFilter === 'not-ready'}
+              className={`flex items-center gap-1.5 rounded-full border border-red-300 bg-red-100 px-3 py-1 text-xs font-medium text-red-800 transition-shadow hover:ring-2 hover:ring-red-400 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300${activeTierFilter === 'not-ready' ? ' ring-2 ring-red-400' : ''}`}
+            >
+              <span className="font-semibold">{summary.tierCounts['not-ready']}</span>
+              <span>not ready</span>
+            </button>
           ) : null}
         </div>
       ) : null}
@@ -518,13 +666,18 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
       ) : null}
 
       {/* Active filter indicator */}
-      {activeStatusFilter ? (
+      {activeStatusFilter || activeTierFilter ? (
         <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
           <span>Showing only:</span>
-          <LandscapePill status={activeStatusFilter} active />
+          {activeStatusFilter ? <LandscapePill status={activeStatusFilter} active /> : null}
+          {activeTierFilter ? (
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TIER_BADGES[activeTierFilter]?.className ?? ''}`}>
+              {TIER_BADGES[activeTierFilter]?.label ?? activeTierFilter}
+            </span>
+          ) : null}
           <button
             type="button"
-            onClick={() => setActiveStatusFilter(null)}
+            onClick={() => { setActiveStatusFilter(null); setActiveTierFilter(null) }}
             className="rounded px-1.5 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-700 dark:hover:text-slate-200"
             aria-label="Clear filter"
           >
@@ -539,38 +692,60 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="pb-2 pr-3 font-semibold text-slate-400 dark:text-slate-500">#</th>
                 <th className="pb-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">Repo</th>
                 <th className="pb-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">
-                  Sandbox criteria
+                  Health checks
                   <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">/ 9</span>
+                  <CriteriaTooltip criteria={HEALTH_CHECK_CRITERIA} />
                 </th>
                 <th className="pb-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">
-                  Context signals
+                  Maturity signals
                   <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">/ 9</span>
+                  <CriteriaTooltip criteria={MATURITY_SIGNAL_CRITERIA} />
                 </th>
                 <th className="pb-2 pr-4 font-semibold text-slate-600 dark:text-slate-300">Top gaps</th>
                 <th className="pb-2 font-semibold text-slate-600 dark:text-slate-300">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredResults.map(({ repo, rowState }) => {
+              {filteredResults.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+                    {activeStatusFilter && CNCF_HOSTED_STATUSES.has(activeStatusFilter)
+                      ? `These repos are already CNCF projects — they're excluded from candidacy scoring.`
+                      : activeTierFilter
+                      ? 'No repos match this filter yet.'
+                      : 'No results yet.'}
+                  </td>
+                </tr>
+              ) : null}
+              {filteredResults.map(({ repo, rowState, rank }) => {
                 const status = getRepoStatus(repo)
-                const isHosted = status && CNCF_HOSTED_STATUSES.has(status)
                 const isChecked = selected.has(repo.repo)
+                const rowNum = rank
 
-                if (isHosted) {
+                if (rowState === null) {
                   return (
-                    <tr key={repo.repo} className="opacity-50">
+                    <tr key={repo.repo} className="opacity-60">
+                      <td className="py-2 pr-3 text-xs text-slate-400 dark:text-slate-600">{rowNum}</td>
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-slate-500 dark:text-slate-400">{repo.name}</span>
-                          {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
+                          <a href={repo.url} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline dark:text-sky-400">{repo.name}</a>
+                          {status ? <LandscapePill status={status} /> : null}
                         </div>
                       </td>
-                      <td className="py-2 pr-4 text-slate-400">—</td>
-                      <td className="py-2 pr-4 text-slate-400">—</td>
-                      <td className="py-2 pr-4 text-slate-400">—</td>
-                      <td className="py-2 text-slate-400">—</td>
+                      <td colSpan={3} className="py-2 pr-4 text-xs italic text-slate-400 dark:text-slate-500">
+                        Already a CNCF project — excluded from candidacy scoring
+                      </td>
+                      <td className="py-2">
+                        <span
+                          title="Already a CNCF project — no candidacy report available"
+                          className="cursor-not-allowed text-xs text-slate-300 dark:text-slate-600"
+                        >
+                          View full report
+                        </span>
+                      </td>
                     </tr>
                   )
                 }
@@ -578,6 +753,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                 if (rowState.status === 'loading') {
                   return (
                     <tr key={repo.repo}>
+                      <td className="py-2 pr-3 text-xs text-slate-400 dark:text-slate-600">{rowNum}</td>
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
                           <input
@@ -586,7 +762,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                             onChange={() => handleToggleSelect(repo.repo)}
                             className="h-4 w-4 rounded border-slate-300"
                           />
-                          <span className="text-slate-700 dark:text-slate-300">{repo.name}</span>
+                          <a href={repo.url} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline dark:text-sky-400">{repo.name}</a>
                           {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
                         </div>
                       </td>
@@ -600,6 +776,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                 if (rowState.status === 'error') {
                   return (
                     <tr key={repo.repo}>
+                      <td className="py-2 pr-3 text-xs text-slate-400 dark:text-slate-600">{rowNum}</td>
                       <td className="py-2 pr-4">
                         <div className="flex items-center gap-2">
                           <input
@@ -608,7 +785,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                             onChange={() => handleToggleSelect(repo.repo)}
                             className="h-4 w-4 rounded border-slate-300"
                           />
-                          <span className="text-slate-700 dark:text-slate-300">{repo.name}</span>
+                          <a href={repo.url} target="_blank" rel="noopener noreferrer" className="text-sky-600 hover:underline dark:text-sky-400">{repo.name}</a>
                         </div>
                       </td>
                       <td colSpan={4} className="py-2 text-xs text-rose-600 dark:text-rose-400">
@@ -623,6 +800,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
 
                 return (
                   <tr key={repo.repo}>
+                    <td className="py-2 pr-3 text-xs text-slate-400 dark:text-slate-600">{rowNum}</td>
                     <td className="py-2 pr-4">
                       <div className="flex items-center gap-2">
                         <input
@@ -631,9 +809,9 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                           onChange={() => handleToggleSelect(repo.repo)}
                           className="h-4 w-4 rounded border-slate-300"
                         />
-                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                        <a href={repo.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-600 hover:underline dark:text-sky-400">
                           {repo.name}
-                        </span>
+                        </a>
                         {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
                       </div>
                     </td>
@@ -668,7 +846,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
                     </td>
                     <td className="py-2">
                       <a
-                        href={`/?repos=${encodeURIComponent(result.repo)}&foundationTarget=cncf-sandbox`}
+                        href={`/?repos=${encodeURIComponent(result.repo)}&foundationTarget=cncf-sandbox&tab=cncf-readiness`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs font-medium text-sky-600 underline hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-200"
@@ -684,26 +862,6 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
         </div>
       ) : null}
 
-      {/* CNCF-hosted repos (always shown, greyed out) */}
-      {cncfHosted.length > 0 && rankedResults.length > 0 ? (
-        <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
-          <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-            Existing CNCF projects ({cncfHosted.length})
-          </p>
-          <ul className="flex flex-wrap gap-2">
-            {cncfHosted.map((repo) => {
-              const status = getRepoStatus(repo)
-              return (
-                <li key={repo.repo} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 opacity-60 dark:border-slate-700 dark:bg-slate-800">
-                  <span className="text-xs text-slate-600 dark:text-slate-300">{repo.name}</span>
-                  {status ? <LandscapePill status={status} onClick={() => setActiveStatusFilter(activeStatusFilter === status ? null : status)} active={activeStatusFilter === status} /> : null}
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      ) : null}
-
       {/* Show next 25 */}
       {hasMoreRepos && fetchStatus !== 'fetching' ? (
         <div className="flex justify-center pt-2">
@@ -713,7 +871,10 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
             disabled={!token}
             className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
-            Show next 25
+            Show next {Math.min(BATCH_SIZE, selectable.length - batchOffset)}{' '}
+            <span className="text-slate-400 dark:text-slate-500">
+              ({batchOffset + 1}–{Math.min(batchOffset + BATCH_SIZE, selectable.length)} of {selectable.length})
+            </span>
           </button>
         </div>
       ) : null}

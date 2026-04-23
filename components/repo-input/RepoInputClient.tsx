@@ -29,7 +29,7 @@ import { useOrgAggregation } from '@/components/shared/hooks/useOrgAggregation'
 import { isRateLimitLow, type AnalysisResult, type AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import type { AspirantReadinessResult, CNCFFieldBadge, FoundationTarget } from '@/lib/cncf-sandbox/types'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
-import type { ResultTabDefinition } from '@/specs/006-results-shell/contracts/results-shell-props'
+import type { ResultTabDefinition, ResultTabId } from '@/specs/006-results-shell/contracts/results-shell-props'
 import { resultTabs } from '@/lib/results-shell/tabs'
 import { decodeRepos } from '@/lib/export/shareable-url'
 import { parseRepos } from '@/lib/parse-repos'
@@ -47,6 +47,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const initialRepos = decodeRepos(searchParams.toString())
   const initialRepoValue = initialRepos.join('\n')
   const initialFoundationTarget = (searchParams.get('foundationTarget') ?? 'none') as FoundationTarget
+  const initialTab = (searchParams.get('tab') ?? 'overview') as ResultTabId
   const autoTriggeredRef = useRef(false)
   const [analysisResponse, setAnalysisResponse] = useState<AnalyzeResponse | null>(null)
   const [analyzedRepos, setAnalyzedRepos] = useState<string[]>([])
@@ -66,6 +67,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     ? aspirantResult.autoFields.map((field) => ({ fieldId: field.id, label: field.label, status: field.status }))
     : []
   const [landscapeOverride, setLandscapeOverride] = useState(false)
+  const [landscapeStatus, setLandscapeStatus] = useState<'sandbox' | 'incubating' | 'graduated' | undefined>(undefined)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [preRunDialogRepos, setPreRunDialogRepos] = useState<string[] | null>(null)
@@ -317,13 +319,16 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         const firstResult = response.results[0]
         if (firstResult?.landscapeOverride) {
           setLandscapeOverride(true)
+          setLandscapeStatus(firstResult.landscapeStatus)
           setAspirantResult(null)
         } else if (firstResult?.aspirantResult) {
           setAspirantResult(firstResult.aspirantResult)
           setLandscapeOverride(false)
+          setLandscapeStatus(undefined)
         } else {
           setAspirantResult(null)
           setLandscapeOverride(false)
+          setLandscapeStatus(undefined)
         }
       }
     } catch (error) {
@@ -643,7 +648,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     ) : null}
     <ResultsShell
       resetKey={resultsResetKey}
-      initialActiveTab="overview"
+      initialActiveTab={initialTab}
       onReset={handleReset}
       analysisPanel={analysisPanel}
       toolbar={inputMode === 'org' && orgAnalysisComplete ? <OrgWindowSelector selected={orgWindow} onChange={setOrgWindow} /> : exportToolbar}
@@ -653,6 +658,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       tagMatchCounts={analysisResponse ? computeTabTagCounts(analysisResponse.results, activeTag) : undefined}
       aspirantResult={aspirantResult}
       landscapeOverride={landscapeOverride}
+      landscapeStatus={landscapeStatus}
       repoSlug={analyzedRepos[0]}
       overview={overviewContent}
       contributors={

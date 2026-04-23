@@ -30,6 +30,7 @@ interface ResultsShellProps {
   cncfCandidacy?: React.ReactNode
   aspirantResult?: AspirantReadinessResult | null
   landscapeOverride?: boolean
+  landscapeStatus?: 'sandbox' | 'incubating' | 'graduated'
   repoSlug?: string
   tabs?: ResultTabDefinition[]
   initialActiveTab?: ResultTabId
@@ -55,6 +56,7 @@ export function ResultsShell({
   cncfCandidacy,
   aspirantResult,
   landscapeOverride,
+  landscapeStatus,
   repoSlug,
   tabs = resultTabs,
   initialActiveTab = 'overview',
@@ -271,7 +273,13 @@ export function ResultsShell({
                 ) : null}
                 {landscapeOverride ? (
                   <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-200">
-                    This project is already a CNCF Sandbox project. To assess readiness for Incubation, select &ldquo;CNCF Incubating&rdquo; from the foundation target selector.
+                    {landscapeStatus === 'graduated'
+                      ? 'This project is already a CNCF Graduated project.'
+                      : landscapeStatus === 'incubating'
+                        ? 'This project is already a CNCF Incubating project. To assess readiness for Graduation, select “CNCF Graduated” from the foundation target selector.'
+                        : landscapeStatus === 'sandbox'
+                          ? 'This project is already a CNCF Sandbox project. To assess readiness for Incubation, select “CNCF Incubating” from the foundation target selector.'
+                          : 'This project is already listed in the CNCF landscape.'}
                   </div>
                 ) : null}
                 {overview}
