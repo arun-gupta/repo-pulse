@@ -86,9 +86,26 @@ function assessAndRecommend(
     }
 
     case 'business-separation': {
-      const noCommercialTie = /n\/a/i.test(content) || /no commercial/i.test(content) || /unrelated to any (product|service|commercial)/i.test(content) || /not (related|associated|tied|connected) to any (product|service|commercial)/i.test(content) || /no (product|service|commercial|business)/i.test(content) || /purely open.?source/i.test(content)
+      const isNa = /^\s*n\/a\s*$/i.test(content.trim())
+      // Detect explicit statements that there is no commercial tie of any kind
+      const noCommercialTie =
+        /no commercial/i.test(content) ||
+        /no (product|service|business) (tie|connection|relation|affiliation|link)/i.test(content) ||
+        /no ties? to (any )?(commercial|corporate|vendor|company|business)/i.test(content) ||
+        /not (related|associated|tied|connected|backed|funded|sponsored|owned|driven) (to|by) any (commercial|corporate|vendor|company|product|business|entity)/i.test(content) ||
+        /unrelated to any (product|service|commercial)/i.test(content) ||
+        /no (company|corporate|vendor|commercial) (backing|sponsor|funding|affiliation)/i.test(content) ||
+        /(?:purely|entirely|solely|completely) (?:open.?source|community|independent|volunteer)/i.test(content) ||
+        /(?:independent|community.driven|volunteer.driven|community.led|community.owned) (?:project|initiative|effort)/i.test(content) ||
+        /no (commercial|corporate|vendor) (entity|interest|involvement|affiliation)/i.test(content) ||
+        /not (for.profit|commercially (driven|motivated|backed))/i.test(content)
+
       if (noCommercialTie) {
-        return { assessment: 'adequate', recommendation: "Acceptable — but explicitly state that no commercial product is based on this project to pre-empt reviewer questions." }
+        // "n/a" alone is minimal — just adequate; a real statement is strong
+        if (isNa) {
+          return { assessment: 'adequate', recommendation: "Rather than N/A, explicitly state that no commercial product is based on this project — a one-sentence statement pre-empts reviewer questions." }
+        }
+        return { assessment: 'strong', recommendation: null }
       }
       const hasSeparation = /separate|distinct|extension point|different roadmap|open.?source/i.test(content)
       if (hasSeparation && wordCount > 40) return { assessment: 'strong', recommendation: null }

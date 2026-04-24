@@ -215,6 +215,26 @@ function evaluateLFX(label: string, weight: number): AspirantField {
   }
 }
 
+function diversityEvidence(entries: [string, number][], result: AnalysisResult): string {
+  const totalCommits = entries.reduce((s, [, c]) => s + c, 0)
+  const orgCount = entries.length
+  const maxCommits = orgCount > 0 ? Math.max(...entries.map(([, c]) => c)) : 0
+  const dominancePct = totalCommits > 0 ? Math.round((maxCommits / totalCommits) * 100) : 0
+
+  const parts: string[] = [`${orgCount} org${orgCount === 1 ? '' : 's'}`]
+  if (orgCount >= 1) {
+    const topOrg = entries.sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
+    parts.push(`${dominancePct}% from ${topOrg}`)
+  }
+
+  const authors90d = typeof result.uniqueCommitAuthors90d === 'number' ? result.uniqueCommitAuthors90d : null
+  const commits90d = typeof result.commits90d === 'number' ? result.commits90d : null
+  if (authors90d !== null) parts.push(`${authors90d} contributor${authors90d === 1 ? '' : 's'} (90d)`)
+  else if (commits90d !== null) parts.push(`${commits90d} commits (90d)`)
+
+  return parts.join(' · ')
+}
+
 function evaluateContributorDiversity(label: string, weight: number, homeTab: string | undefined, result: AnalysisResult): AspirantField {
   const orgCounts = result.commitCountsByExperimentalOrg
   if (orgCounts === 'unavailable' || typeof orgCounts !== 'object') {
@@ -234,9 +254,11 @@ function evaluateContributorDiversity(label: string, weight: number, homeTab: st
 
   const totalCommits = entries.reduce((s, [, c]) => s + c, 0)
   const orgCount = entries.length
+  const evidence = diversityEvidence([...entries], result)
 
   if (orgCount === 1) {
     return makeField('contributor-diversity', label, weight, homeTab, 'partial', {
+      evidence,
       remediationHint:
         'CNCF TOC reviewers check for single-vendor concentration — recruit contributors from additional organizations or document a concrete plan to do so.',
     })
@@ -247,6 +269,7 @@ function evaluateContributorDiversity(label: string, weight: number, homeTab: st
 
   if (orgCount === 2) {
     return makeField('contributor-diversity', label, weight, homeTab, 'partial', {
+      evidence,
       remediationHint:
         'Only 2 contributor organizations detected — CNCF reviewers look for broader org diversity; recruiting contributors from a third organization strengthens the application.',
     })
@@ -254,14 +277,22 @@ function evaluateContributorDiversity(label: string, weight: number, homeTab: st
 
   if (dominanceRatio > 0.5) {
     return makeField('contributor-diversity', label, weight, homeTab, 'partial', {
+      evidence,
       remediationHint:
         'Contributor count spans multiple organizations but one org dominates — document a diversity plan in the application.',
     })
   }
 
-  return makeField('contributor-diversity', label, weight, homeTab, 'ready', {
-    evidence: `${orgCount} organizations represented`,
-  })
+  return makeField('contributor-diversity', label, weight, homeTab, 'ready', { evidence })
+}
+
+function activityEvidence(commits90d: number | null, commits30d: number | null, totalReleases: number | null, totalTags: number | null): string {
+  const parts: string[] = []
+  if (commits90d !== null) parts.push(`${commits90d} commits (90d)`)
+  if (commits30d !== null) parts.push(`${commits30d} commits (30d)`)
+  if (totalReleases !== null) parts.push(`${totalReleases} release${totalReleases === 1 ? '' : 's'} (12mo)`)
+  else if (totalTags !== null && totalTags > 0) parts.push(`${totalTags} tag${totalTags === 1 ? '' : 's'}, no GitHub Releases`)
+  return parts.join(' · ')
 }
 
 function evaluateProjectActivity(
@@ -272,13 +303,17 @@ function evaluateProjectActivity(
   release: ReleaseHealthResult | null,
 ): AspirantField {
   const commits90d = typeof result.commits90d === 'number' ? result.commits90d : null
+  const commits30d = typeof result.commits30d === 'number' ? result.commits30d : null
   const totalReleases = release ? release.totalReleasesAnalyzed : null
   const totalTags = release && typeof release.totalTags === 'number' ? release.totalTags : null
   const ageInDays = typeof result.ageInDays === 'number' ? result.ageInDays : null
 
+  const evidence = activityEvidence(commits90d, commits30d, totalReleases, totalTags) || undefined
+
   // New project < 6 months with no releases
   if (ageInDays !== null && ageInDays < 180 && (totalReleases === null || totalReleases === 0)) {
     return makeField('project-activity', label, weight, homeTab, 'partial', {
+      evidence,
       remediationHint:
         'No formal releases yet; document your planned release cadence in the application — new projects are held to a different standard.',
     })
@@ -287,6 +322,7 @@ function evaluateProjectActivity(
   // Visibility gap: has tags but no formal GitHub Releases
   if (totalTags !== null && totalTags > 0 && (totalReleases === null || totalReleases === 0)) {
     return makeField('project-activity', label, weight, homeTab, 'partial', {
+      evidence,
       remediationHint:
         "Your releases are not surfaced as GitHub Releases with release notes; TOC reviewers may perceive the project as less active than it is. This was a documented factor in the Reloader rejection (8-0 against). Convert your version tags to formal GitHub Releases.",
     })
@@ -296,13 +332,12 @@ function evaluateProjectActivity(
   const sufficientCommits = commits90d !== null && commits90d >= 10
 
   if (sufficientReleases && sufficientCommits) {
-    return makeField('project-activity', label, weight, homeTab, 'ready', {
-      evidence: `${totalReleases} releases in last 12 months, ${commits90d} commits in last 90 days`,
-    })
+    return makeField('project-activity', label, weight, homeTab, 'ready', { evidence })
   }
 
   if (totalReleases !== null && totalReleases >= 1 && totalReleases < 4) {
     return makeField('project-activity', label, weight, homeTab, 'partial', {
+      evidence,
       remediationHint:
         'Fewer than 4 formal releases in the past year; proactively describe your release cadence in the application.',
     })
@@ -310,11 +345,13 @@ function evaluateProjectActivity(
 
   if (commits90d !== null && commits90d >= 1 && commits90d < 10) {
     return makeField('project-activity', label, weight, homeTab, 'partial', {
+      evidence,
       remediationHint: 'Low recent commit activity may concern reviewers; note your maintenance approach in the application.',
     })
   }
 
   return makeField('project-activity', label, weight, homeTab, 'partial', {
+    evidence,
     remediationHint:
       'Project activity signals are low — describe your release cadence and maintenance approach in the application.',
   })
