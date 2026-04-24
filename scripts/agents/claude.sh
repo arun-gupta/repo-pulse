@@ -6,15 +6,19 @@ agent_launch() {
   local wt="$1" issue="$2" port="$3" session_id="$4" kickoff="$5" headless="$6"
 
   cd "$wt"
+  # --strict-mcp-config with no --mcp-config disables project MCP servers for this
+  # session. Without it, servers like playwright (npx @playwright/mcp@latest, no -y)
+  # can hang waiting for an interactive install prompt that never arrives because
+  # Claude Code has already taken over stdin/stdout for MCP communication.
   if (( headless )); then
-    nohup claude -p "$kickoff" --session-id "$session_id" > agent.log 2>&1 &
+    nohup claude -p "$kickoff" --session-id "$session_id" --strict-mcp-config > agent.log 2>&1 &
     local pid=$!
     echo "agent-pid=$pid" >> ".agent"
     echo "Claude (headless) PID $pid — log: $wt/agent.log"
     echo "Session ID: $session_id (recorded in $wt/.agent)"
     echo "Release the pause with: scripts/agent.sh --approve-spec $issue"
   else
-    exec claude --session-id "$session_id" "$kickoff"
+    exec claude --session-id "$session_id" --strict-mcp-config "$kickoff"
   fi
 }
 
