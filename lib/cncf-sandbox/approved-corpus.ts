@@ -1,17 +1,23 @@
 /**
- * Fetches the last 50 approved CNCF Sandbox applications (closed issues with
+ * Fetches the last 100 approved CNCF Sandbox applications (closed issues with
  * label:sandbox), extracts the cloud-native-fit and benefit-to-landscape
  * sections from each, and ranks CNCF project mentions by frequency.
  *
- * The result is cached for 15 minutes so it is fetched at most once per
- * server process warm-up window.
+ * The result is cached for 15 minutes. On any failure the function throws so
+ * the caller (via Promise.allSettled) can omit the corpus hint gracefully.
  */
+
+export interface CorpusProject {
+  name: string
+  /** Percentage of sampled approved applications that cite this project (0–100) */
+  pct: number
+}
 
 export interface ApprovedCorpusSummary {
   /** Number of approved applications actually sampled */
   totalSampled: number
-  /** CNCF project display names ranked by how many approved applications cite them */
-  topCNCFProjects: string[]
+  /** CNCF projects ranked by how many approved applications cite them, with percentages */
+  topCNCFProjects: CorpusProject[]
 }
 
 // Each entry: [substring to search for in lowercased text, canonical display name].
@@ -100,7 +106,7 @@ function extractSection(body: string, headingPattern: RegExp): string | null {
   return null
 }
 
-function countProjectMentionsInDoc(text: string): Set<string> {
+function mentionsInDoc(text: string): Set<string> {
   const lower = text.toLowerCase()
   const found = new Set<string>()
   const seen = new Set<string>()
@@ -114,9 +120,14 @@ function countProjectMentionsInDoc(text: string): Set<string> {
   return found
 }
 
+/** Detect which corpus-tracked CNCF projects are mentioned in a block of text. */
+export function detectCorpusProjects(text: string): Set<string> {
+  return mentionsInDoc(text)
+}
+
 async function fetchApprovedIssues(token: string): Promise<Array<{ body: string }>> {
   const res = await fetch(
-    'https://api.github.com/repos/cncf/sandbox/issues?state=closed&labels=sandbox&per_page=50&page=1&sort=created&direction=desc',
+    'https://api.github.com/repos/cncf/sandbox/issues?state=closed&labels=sandbox&per_page=100&page=1&sort=created&direction=desc',
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -126,75 +137,9 @@ async function fetchApprovedIssues(token: string): Promise<Array<{ body: string 
       signal: AbortSignal.timeout(15_000),
     },
   )
-  if (!res.ok) return []
+  if (!res.ok) throw new Error(`Failed to fetch approved sandbox issues: HTTP ${res.status}`)
   const issues = (await res.json()) as Array<{ body?: string | null }>
   return issues.filter((i) => i.body).map((i) => ({ body: i.body! }))
-}
-
-// Static corpus pre-computed from approved sandbox applications.
-// Used as fallback when the live fetch fails, so recommendations are always
-// grounded in real data rather than generic advice.
-// Ordered by typical mention frequency across approved sandbox applications:
-// the top projects appear in the majority of approved cloud-native-fit and
-// benefit-to-landscape answers; the tail appears in ~10–25% of applications.
-const STATIC_CORPUS: ApprovedCorpusSummary = {
-  totalSampled: 50,
-  topCNCFProjects: [
-    // Very high frequency — cited in most approved applications
-    'Kubernetes',
-    'Prometheus',
-    'Helm',
-    'OpenTelemetry',
-    // High frequency — cited in >40% of approved applications
-    'cert-manager',
-    'Argo',
-    'Flux',
-    'Cilium',
-    'Falco',
-    'containerd',
-    'etcd',
-    'gRPC',
-    // Medium frequency — cited in 20–40% of approved applications
-    'Fluentd',
-    'Fluent Bit',
-    'Envoy',
-    'Linkerd',
-    'Harbor',
-    'Jaeger',
-    'OPA',
-    'KEDA',
-    'Crossplane',
-    'Dapr',
-    'Knative',
-    'CoreDNS',
-    // Lower frequency — cited in 10–20% of approved applications
-    'Backstage',
-    'Kyverno',
-    'Thanos',
-    'Rook',
-    'SPIFFE',
-    'SPIRE',
-    'Tekton',
-    'Istio',
-    'Cluster API',
-    'NATS',
-    'Longhorn',
-    'ORAS',
-    'KubeVirt',
-    'Chaos Mesh',
-    'LitmusChaos',
-    'Vitess',
-    'Volcano',
-    'MetalLB',
-    'Contour',
-    'KubeEdge',
-    'Dragonfly',
-    'Pixie',
-    'WasmEdge',
-    'in-toto',
-    'TUF',
-    'Notary',
-  ],
 }
 
 let corpusCache: { summary: ApprovedCorpusSummary; fetchedAt: number } | null = null
@@ -205,38 +150,27 @@ export async function buildApprovedCorpusSummary(token: string): Promise<Approve
     return corpusCache.summary
   }
 
-  try {
-    const issues = await fetchApprovedIssues(token)
+  const issues = await fetchApprovedIssues(token)
 
-    if (issues.length === 0) return STATIC_CORPUS
+  const frequency = new Map<string, number>()
+  for (const issue of issues) {
+    const cloudNativeFit = extractSection(issue.body, /cloud native .*(fit|integration|overlap)/i)
+    const benefitToLandscape = extractSection(issue.body, /benefit to the landscape/i)
+    const combinedText = [cloudNativeFit, benefitToLandscape].filter(Boolean).join('\n')
+    if (!combinedText) continue
 
-    // Aggregate frequency: how many approved applications cite each project,
-    // across both the cloud-native-fit and benefit-to-landscape sections.
-    const frequency = new Map<string, number>()
-
-    for (const issue of issues) {
-      const cloudNativeFit = extractSection(issue.body, /cloud native .*(fit|integration|overlap)/i)
-      const benefitToLandscape = extractSection(issue.body, /benefit to the landscape/i)
-      const combinedText = [cloudNativeFit, benefitToLandscape].filter(Boolean).join('\n')
-      if (!combinedText) continue
-
-      for (const name of countProjectMentionsInDoc(combinedText)) {
-        frequency.set(name, (frequency.get(name) ?? 0) + 1)
-      }
+    for (const name of mentionsInDoc(combinedText)) {
+      frequency.set(name, (frequency.get(name) ?? 0) + 1)
     }
-
-    const topCNCFProjects = [...frequency.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 20)
-      .map(([name]) => name)
-
-    const summary: ApprovedCorpusSummary = {
-      totalSampled: issues.length,
-      topCNCFProjects: topCNCFProjects.length > 0 ? topCNCFProjects : STATIC_CORPUS.topCNCFProjects,
-    }
-    corpusCache = { summary, fetchedAt: Date.now() }
-    return summary
-  } catch {
-    return STATIC_CORPUS
   }
+
+  const total = issues.length
+  const topCNCFProjects: CorpusProject[] = [...frequency.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([name, count]) => ({ name, pct: total > 0 ? Math.round((count / total) * 100) : 0 }))
+
+  const summary: ApprovedCorpusSummary = { totalSampled: total, topCNCFProjects }
+  corpusCache = { summary, fetchedAt: Date.now() }
+  return summary
 }

@@ -1,5 +1,6 @@
 import type { ApplicationFieldAssessment, ParsedApplicationField } from './types'
 import type { ApprovedCorpusSummary } from './approved-corpus'
+import { detectCorpusProjects } from './approved-corpus'
 
 // Maps ### headings in the issue template to our human-only field IDs
 const HEADING_TO_FIELD_ID: Array<[RegExp, string]> = [
@@ -44,10 +45,34 @@ function fieldIdFromHeading(heading: string): string | null {
   return null
 }
 
-function corpusProjectHint(corpus: ApprovedCorpusSummary | undefined, take = 8): string {
+function corpusProjectHint(
+  corpus: ApprovedCorpusSummary | undefined,
+  content: string,
+  take = 6,
+): string {
   if (!corpus || corpus.topCNCFProjects.length === 0) return ''
-  const listed = corpus.topCNCFProjects.slice(0, take).join(', ')
-  return ` Among the last ${corpus.totalSampled} approved sandbox projects, the most commonly cited were: ${listed}.`
+
+  const mentioned = detectCorpusProjects(content)
+
+  // Projects the applicant already cited that appear in the approved corpus
+  const alreadyCited = corpus.topCNCFProjects
+    .filter((p) => mentioned.has(p.name))
+    .map((p) => p.name)
+
+  // Top projects from the corpus that the applicant has NOT yet cited
+  const missing = corpus.topCNCFProjects
+    .filter((p) => !mentioned.has(p.name))
+    .slice(0, take)
+
+  if (missing.length === 0) return ''
+
+  const missingStr = missing.map((p) => `${p.name} (${p.pct}% of approved)`).join(', ')
+
+  if (alreadyCited.length > 0) {
+    return ` You named ${alreadyCited.join(', ')}. Among the last ${corpus.totalSampled} approved sandbox projects, commonly cited projects you haven't mentioned include: ${missingStr}.`
+  }
+
+  return ` Among the last ${corpus.totalSampled} approved sandbox projects, the most commonly cited were: ${missingStr}.`
 }
 
 function assessAndRecommend(
@@ -81,7 +106,7 @@ function assessAndRecommend(
     case 'benefit-to-landscape': {
       // Should name 2+ CNCF projects and answer from ecosystem perspective
       const cncfProjectMentions = (content.match(/\b(kubernetes|prometheus|envoy|grpc|fluentd|jaeger|vitess|argo|flux|helm|linkerd|harbor|rook|cert-manager|opa|spiffe|cortex|thanos|dragonfly|keda|crossplane|cluster api|open cluster management|kcp|backstage|dapr|knative|notary|falco|chaos mesh|litmus|opentelemetry|openmetrics|kyverno|pixie|slime|emissary|curiefense|porter|nocalhost|superedge|wasm|krustlet|aeraki|sealer|opensergo|kube-ovn|cilium|longhorn|contour|tekton|istio)\b/gi) ?? []).length
-      const hint = corpusProjectHint(corpus)
+      const hint = corpusProjectHint(corpus, content)
       if (cncfProjectMentions >= 2 && wordCount > 40) return { assessment: 'strong', recommendation: null }
       if (cncfProjectMentions >= 1) return { assessment: 'adequate', recommendation: `Name at least 2 existing CNCF projects that become more complete or valuable in combination with yours, and describe how.${hint}` }
       return { assessment: 'weak', recommendation: `Answer from the ecosystem's perspective: what was absent or broken before this project? Name 2+ CNCF projects that benefit from combining with yours.${hint}` }
@@ -89,7 +114,7 @@ function assessAndRecommend(
 
     case 'cloud-native-fit': {
       const cncfMentions = (content.match(/\b(kubernetes|cncf|prometheus|envoy|opentelemetry|kcp|crossplane|cert-manager|argo|flux|helm|linkerd|keda|dapr|knative|opa|falco|cilium|tekton|istio|longhorn|contour|harbor|kyverno|thanos|jaeger|backstage|fluentd|containerd|etcd|coredns|spiffe|spire)\b/gi) ?? []).length
-      const hint = corpusProjectHint(corpus)
+      const hint = corpusProjectHint(corpus, content)
       if (cncfMentions >= 4 && wordCount > 80) return { assessment: 'strong', recommendation: null }
       if (cncfMentions >= 2) return { assessment: 'adequate', recommendation: `Name 4–8 CNCF projects with a one-line architectural relationship each (data plane, API consumer, plugin extension, etc.). 'Runs on Kubernetes' is insufficient.${hint}` }
       return { assessment: 'weak', recommendation: `This is the field most often flagged by reviewers. Name 4–8 CNCF projects and describe the specific technical relationship for each — not just 'compatible' or 'runs on Kubernetes'.${hint}` }
