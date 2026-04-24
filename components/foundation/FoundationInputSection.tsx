@@ -77,10 +77,10 @@ export function FoundationInputSection({
             <span className="font-mono">owner/repo</span>
             <span className="mx-2 text-slate-300 dark:text-slate-600">·</span>
             <span className="font-medium text-slate-700 dark:text-slate-300">Org:</span>{' '}
-            <span className="font-mono">cncf</span>
+            <span className="font-mono">org-slug</span>
             <span className="mx-2 text-slate-300 dark:text-slate-600">·</span>
             <span className="font-medium text-slate-700 dark:text-slate-300">Board:</span>{' '}
-            <span className="font-mono">github.com/orgs/cncf/projects/14</span>
+            <span className="font-mono">github.com/orgs/org/projects/14</span>
           </p>
           <div ref={tooltipRef} className="relative">
             <button
@@ -122,7 +122,7 @@ export function FoundationInputSection({
                   <div>
                     <p className="font-medium text-slate-700 dark:text-slate-300">Projects board:</p>
                     <ul className="mt-1 space-y-0.5 font-mono text-slate-600 dark:text-slate-400">
-                      <li>https://github.com/orgs/cncf/projects/14</li>
+                      <li>https://github.com/orgs/org/projects/14</li>
                     </ul>
                     <p className="mt-1 not-italic text-slate-500 dark:text-slate-500">Scans repos from New &amp; Upcoming columns</p>
                   </div>
@@ -134,7 +134,7 @@ export function FoundationInputSection({
         <textarea
           value={inputValue}
           onChange={(e) => onInputChange(e.target.value)}
-          placeholder={'owner/repo\nowner/another-repo\n— or — cncf\n— or — https://github.com/orgs/cncf/projects/14'}
+          placeholder={'owner1/repo1 owner2/repo2\n— or — org-slug\n— or — https://github.com/orgs/org/projects/14'}
           rows={3}
           className="w-full resize-none overflow-hidden rounded border border-slate-300 bg-white p-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
           aria-label="Foundation input"
