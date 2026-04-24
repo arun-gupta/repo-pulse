@@ -136,11 +136,24 @@ function evaluateCoC(label: string, weight: number, homeTab: string | undefined,
   }
   const content = doc.cocContent
   const lower = content?.toLowerCase() ?? ''
-  if (content && (lower.includes('contributor covenant') || lower.includes('contributor-covenant.org'))) {
+  const recognized =
+    content && (
+      lower.includes('contributor covenant') ||
+      lower.includes('contributor-covenant.org') ||
+      // Projects that defer to the CNCF CoC (which itself is based on Contributor Covenant)
+      lower.includes('cncf/foundation') ||
+      lower.includes('cncf code of conduct') ||
+      lower.includes('cncf community code of conduct') ||
+      lower.includes('conduct@cncf.io') ||
+      /cncf\.io\/(community\/)?code-of-conduct/i.test(content)
+    )
+  if (recognized) {
     return makeField('coc', label, weight, homeTab, 'ready')
   }
   return makeField('coc', label, weight, homeTab, 'partial', {
-    remediationHint: 'Code of Conduct file found; verify it references the Contributor Covenant (v1.x or v2.x) — CNCF requires this specific CoC.',
+    remediationHint: content
+      ? 'Code of Conduct file found but does not appear to reference the Contributor Covenant or CNCF Code of Conduct — CNCF requires one of these.'
+      : 'Code of Conduct file found; verify it references the Contributor Covenant (v1.x or v2.x) or the CNCF Code of Conduct.',
   })
 }
 

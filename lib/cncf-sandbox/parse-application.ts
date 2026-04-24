@@ -48,7 +48,7 @@ function fieldIdFromHeading(heading: string): string | null {
 function corpusProjectHint(
   corpus: ApprovedCorpusSummary | undefined,
   content: string,
-  take = 6,
+  take = 4,
 ): string {
   if (!corpus || corpus.topCNCFProjects.length === 0) return ''
 
@@ -67,7 +67,7 @@ function corpusProjectHint(
   const missingStr = missing.map((p) => `${p.name} (${p.pct}%)`).join(', ')
 
   if (alreadyCited.length > 0) {
-    const citedStr = alreadyCited.map((p) => `${p.name} (${p.pct}%)`).join(', ')
+    const citedStr = alreadyCited.map((p) => `${p.name} (${p.pct}% of last ${corpus.totalSampled})`).join(', ')
     return ` You named ${citedStr} — good. Among the last ${corpus.totalSampled} approved sandbox projects, commonly cited projects you haven't mentioned include: ${missingStr}.`
   }
 

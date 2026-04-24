@@ -156,9 +156,9 @@ export async function buildApprovedCorpusSummary(token: string): Promise<Approve
   for (const issue of issues) {
     const cloudNativeFit = extractSection(issue.body, /cloud native .*(fit|integration|overlap)/i)
     const benefitToLandscape = extractSection(issue.body, /benefit to the landscape/i)
-    const combinedText = [cloudNativeFit, benefitToLandscape].filter(Boolean).join('\n')
-    if (!combinedText) continue
-
+    // Fall back to the full body when neither section heading matches —
+    // older approved applications predate the current template structure.
+    const combinedText = [cloudNativeFit, benefitToLandscape].filter(Boolean).join('\n') || issue.body
     for (const name of mentionsInDoc(combinedText)) {
       frequency.set(name, (frequency.get(name) ?? 0) + 1)
     }
