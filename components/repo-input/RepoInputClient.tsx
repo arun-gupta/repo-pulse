@@ -79,6 +79,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     skipped: SkippedIssue[]
     method: 'graphql' | 'labels'
     url: string
+    issueMap: Record<string, number>
   } | null>(null)
   const cncfBadges: CNCFFieldBadge[] = aspirantResult
     ? aspirantResult.autoFields.map((field) => ({ fieldId: field.id, label: field.label, status: field.status }))
@@ -316,7 +317,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       // Phase 1: resolve repos (fast) — then pause for user review
       setFoundationLoadingItems(['Resolving repositories from board…'])
       try {
-        const { repos, skipped, method } = await fetchBoardRepos(session.token, parsed.url)
+        const { repos, skipped, method, issueMap } = await fetchBoardRepos(session.token, parsed.url)
 
         if (controller.signal.aborted) return
 
@@ -328,7 +329,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         }
 
         // Pause here — show review panel so user can confirm before analysis
-        setPendingBoardScan({ repos, skipped, method, url: parsed.url })
+        setPendingBoardScan({ repos, skipped, method, url: parsed.url, issueMap })
       } catch (error) {
         if (controller.signal.aborted) return
         setFoundationError(error instanceof Error ? error.message : 'Board scan failed.')
@@ -483,12 +484,12 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     setLoadingFoundation(true)
     setFoundationLoadingItems(pendingBoardScan.repos)
 
-    const { repos, skipped, method, url } = pendingBoardScan
+    const { repos, skipped, method, url, issueMap } = pendingBoardScan
 
     try {
       const response = onAnalyze
         ? await onAnalyze(repos, session.token)
-        : await submitAnalysisRequest(repos, session.token, 'cncf-sandbox', controller.signal)
+        : await submitAnalysisRequest(repos, session.token, 'cncf-sandbox', controller.signal, issueMap)
 
       if (response && !controller.signal.aborted) {
         setFoundationResult({ kind: 'projects-board', url, results: response, skipped, method })
@@ -1109,11 +1110,11 @@ function formatElapsedTime(seconds: number) {
   return `${seconds}s`
 }
 
-async function submitAnalysisRequest(repos: string[], token: string, foundationTarget: FoundationTarget, signal?: AbortSignal): Promise<AnalyzeResponse> {
+async function submitAnalysisRequest(repos: string[], token: string, foundationTarget: FoundationTarget, signal?: AbortSignal, sandboxIssueNumbers?: Record<string, number>): Promise<AnalyzeResponse> {
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ repos, token, foundationTarget }),
+    body: JSON.stringify({ repos, token, foundationTarget, sandboxIssueNumbers }),
     signal,
   })
   const payload = (await response.json()) as AnalyzeResponse & { error?: string }

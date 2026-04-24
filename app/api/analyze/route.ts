@@ -10,6 +10,7 @@ export async function POST(request: Request) {
       repos?: string[]
       token?: string | null
       foundationTarget?: FoundationTarget
+      sandboxIssueNumbers?: Record<string, number>
     }
 
     if (!Array.isArray(body.repos) || body.repos.length === 0) {
@@ -50,12 +51,18 @@ export async function POST(request: Request) {
         console.warn('[analyze] CNCF sandbox issues fetch failed — proceeding without application status')
       }
 
+      const knownIssueNumbers = body.sandboxIssueNumbers ?? {}
+
       // Attach aspirant evaluation results to each repo result
       for (const result of response.results) {
-        // Short-circuit: if the matching issue already has gitvote/passed, skip full evaluation
-        const preliminaryMatch = issues.length > 0
-          ? findSandboxApplication(result.repo, issues)
-          : null
+        // Direct lookup when the caller knows the sandbox issue number (board scan);
+        // fall back to fuzzy title matching for manually-entered repos.
+        const knownNumber = knownIssueNumbers[result.repo]
+        const preliminaryMatch = knownNumber
+          ? (issues.find((i) => i.issueNumber === knownNumber) ?? null)
+          : issues.length > 0
+            ? findSandboxApplication(result.repo, issues)
+            : null
 
         // Check if repo is already a CNCF-hosted project (sandbox/incubating/graduated)
         const existingStatus = landscapeData
@@ -74,7 +81,7 @@ export async function POST(request: Request) {
           continue
         }
 
-        const aspirantResult = evaluateAspirant(result, landscapeData, issues)
+        const aspirantResult = evaluateAspirant(result, landscapeData, issues, knownNumber)
         // If an application issue was found, fetch its body and parse the fields
         if (aspirantResult.sandboxApplication) {
           const body = await fetchSandboxIssueBody(token, aspirantResult.sandboxApplication.issueNumber)

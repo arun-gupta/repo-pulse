@@ -8,6 +8,7 @@ export function evaluateAspirant(
   result: AnalysisResult,
   landscapeData: CNCFLandscapeData | null,
   sandboxIssues?: SandboxApplicationIssue[],
+  knownSandboxIssueNumber?: number,
 ): AspirantReadinessResult {
   const doc = result.documentationResult !== 'unavailable' ? result.documentationResult : null
   const release = result.releaseHealthResult && result.releaseHealthResult !== 'unavailable'
@@ -45,7 +46,9 @@ export function evaluateAspirant(
   )
 
   const sandboxApplication = sandboxIssues
-    ? findSandboxApplication(result.repo, sandboxIssues)
+    ? (knownSandboxIssueNumber
+        ? (sandboxIssues.find((i) => i.issueNumber === knownSandboxIssueNumber) ?? null)
+        : findSandboxApplication(result.repo, sandboxIssues))
     : null
 
   return {

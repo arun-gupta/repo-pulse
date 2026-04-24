@@ -10,6 +10,8 @@ export interface BoardReposResult {
   skipped: SkippedIssue[]
   /** Which resolution method succeeded */
   method: 'graphql' | 'labels'
+  /** Maps each resolved repo slug to its cncf/sandbox issue number */
+  issueMap: Record<string, number>
 }
 
 // Status field values to include (case-insensitive)
@@ -323,6 +325,7 @@ async function fetchBoardItemsViaLabels(token: string): Promise<BoardItem[]> {
 function itemsToResult(items: BoardItem[], method: BoardReposResult['method']): BoardReposResult {
   const repos: string[] = []
   const skipped: SkippedIssue[] = []
+  const issueMap: Record<string, number> = {}
   const seenSlugs = new Set<string>()
 
   for (const item of items) {
@@ -330,6 +333,7 @@ function itemsToResult(items: BoardItem[], method: BoardReposResult['method']): 
     if (slug && !seenSlugs.has(slug.toLowerCase())) {
       seenSlugs.add(slug.toLowerCase())
       repos.push(slug)
+      issueMap[slug] = item.issueNumber
     } else {
       skipped.push({
         issueNumber: item.issueNumber,
@@ -342,12 +346,12 @@ function itemsToResult(items: BoardItem[], method: BoardReposResult['method']): 
     }
   }
 
-  return { repos, skipped, method }
+  return { repos, skipped, method, issueMap }
 }
 
 export async function fetchBoardRepos(token: string, boardUrl: string): Promise<BoardReposResult> {
   const parsed = parseBoardUrl(boardUrl)
-  if (!parsed) return { repos: [], skipped: [], method: 'graphql' }
+  if (!parsed) return { repos: [], skipped: [], method: 'graphql', issueMap: {} }
 
   // Try the accurate GraphQL path first; fall back to label-based Issues API
   // if the token lacks project read access (common with baseline OAuth scope).
