@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { CNCFReadinessTab } from '@/components/cncf-readiness/CNCFReadinessTab'
 import { CNCFCandidacyPanel } from '@/components/cncf-candidacy/CNCFCandidacyPanel'
-import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
+import type { AnalyzeResponse, AnalysisResult } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
 import type { SkippedIssue } from '@/lib/foundation/fetch-board-repos'
 
@@ -14,6 +15,81 @@ export type FoundationResult =
 interface FoundationResultsViewProps {
   result: FoundationResult | null
   error: string | null
+}
+
+function ScoreBadge({ score }: { score: number }) {
+  const color =
+    score >= 80 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+    : score >= 50 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+    : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+  return (
+    <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium tabular-nums ${color}`}>
+      {score}%
+    </span>
+  )
+}
+
+function RepoAccordion({ repoResults }: { repoResults: AnalysisResult[] }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+
+  function toggle(repo: string) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(repo)) next.delete(repo)
+      else next.add(repo)
+      return next
+    })
+  }
+
+  return (
+    <div className="divide-y divide-slate-200 dark:divide-slate-700 rounded border border-slate-200 dark:border-slate-700">
+      {repoResults.map((repoResult) => {
+        const isOpen = expanded.has(repoResult.repo)
+        const score = repoResult.aspirantResult?.readinessScore
+        return (
+          <div key={repoResult.repo}>
+            <button
+              type="button"
+              onClick={() => toggle(repoResult.repo)}
+              className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/40"
+              aria-expanded={isOpen}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 ${isOpen ? 'rotate-90' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {repoResult.repo}
+                </span>
+                {score !== undefined ? <ScoreBadge score={score} /> : null}
+              </span>
+            </button>
+            {isOpen ? (
+              <div className="border-t border-slate-200 px-4 pb-4 pt-3 dark:border-slate-700">
+                {repoResult.aspirantResult ? (
+                  <CNCFReadinessTab
+                    aspirantResult={repoResult.aspirantResult}
+                    repoSlug={repoResult.repo}
+                  />
+                ) : (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    No foundation readiness data available for {repoResult.repo}.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 export function FoundationResultsView({ result, error }: FoundationResultsViewProps) {
@@ -30,7 +106,7 @@ export function FoundationResultsView({ result, error }: FoundationResultsViewPr
 
   if (result.kind === 'repos') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {result.results.failures.length > 0 ? (
           <section className="rounded border border-amber-200 bg-amber-50 p-4 dark:bg-amber-900/20 dark:border-amber-800/60">
             <h2 className="font-semibold text-amber-900 dark:text-amber-200">Failed repositories</h2>
@@ -43,21 +119,7 @@ export function FoundationResultsView({ result, error }: FoundationResultsViewPr
             </ul>
           </section>
         ) : null}
-        {result.results.results.map((repoResult) => (
-          <section key={repoResult.repo} className="space-y-2">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{repoResult.repo}</h2>
-            {repoResult.aspirantResult ? (
-              <CNCFReadinessTab
-                aspirantResult={repoResult.aspirantResult}
-                repoSlug={repoResult.repo}
-              />
-            ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                No foundation readiness data available for {repoResult.repo}.
-              </p>
-            )}
-          </section>
-        ))}
+        <RepoAccordion repoResults={result.results.results} />
       </div>
     )
   }
@@ -74,7 +136,7 @@ export function FoundationResultsView({ result, error }: FoundationResultsViewPr
   // projects-board — board scan results
   const totalResolved = result.results.results.length + result.results.failures.length
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section className="rounded border border-sky-200 bg-sky-50 p-4 text-sm dark:border-sky-800/60 dark:bg-sky-900/20">
         <p className="font-semibold text-sky-900 dark:text-sky-200">CNCF Sandbox board scan</p>
         <p className="mt-1 text-sky-800 dark:text-sky-300">
@@ -143,24 +205,9 @@ export function FoundationResultsView({ result, error }: FoundationResultsViewPr
         </section>
       ) : null}
 
-      {result.results.results.map((repoResult) => (
-        <section key={repoResult.repo} className="space-y-2">
-          <h2 className="flex items-baseline gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            {repoResult.repo}
-            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">— CNCF sandbox board</span>
-          </h2>
-          {repoResult.aspirantResult ? (
-            <CNCFReadinessTab
-              aspirantResult={repoResult.aspirantResult}
-              repoSlug={repoResult.repo}
-            />
-          ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              No foundation readiness data available for {repoResult.repo}.
-            </p>
-          )}
-        </section>
-      ))}
+      {result.results.results.length > 0 ? (
+        <RepoAccordion repoResults={result.results.results} />
+      ) : null}
 
       {result.results.results.length === 0 && result.results.failures.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">

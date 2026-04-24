@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { FoundationResultsView } from './FoundationResultsView'
 import type { FoundationResult } from './FoundationResultsView'
 
@@ -104,16 +105,19 @@ describe('FoundationResultsView — null result (empty state)', () => {
 })
 
 describe('FoundationResultsView — repos branch', () => {
-  it('renders CNCFReadinessTab for each result', () => {
+  it('renders CNCFReadinessTab for each result after expanding', async () => {
     const result = makeReposResult(['facebook/react', 'vercel/next.js'])
     render(<FoundationResultsView result={result} error={null} />)
+    const buttons = screen.getAllByRole('button', { expanded: false })
+    for (const btn of buttons) await userEvent.click(btn)
     const tabs = screen.getAllByTestId('cncf-readiness-tab')
     expect(tabs).toHaveLength(2)
   })
 
-  it('renders CNCFReadinessTab with correct repoSlug', () => {
+  it('renders CNCFReadinessTab with correct repoSlug after expanding', async () => {
     const result = makeReposResult(['facebook/react'])
     render(<FoundationResultsView result={result} error={null} />)
+    await userEvent.click(screen.getByRole('button', { expanded: false }))
     expect(screen.getByTestId('cncf-readiness-tab')).toHaveTextContent('facebook/react')
   })
 
@@ -130,7 +134,7 @@ describe('FoundationResultsView — repos branch', () => {
     expect(screen.getByText(/bad\/repo/)).toBeInTheDocument()
   })
 
-  it('renders both successes and failures with per-repo isolation', () => {
+  it('renders both successes and failures with per-repo isolation', async () => {
     const mixedResult = {
       kind: 'repos',
       results: {
@@ -140,6 +144,7 @@ describe('FoundationResultsView — repos branch', () => {
       },
     } as unknown as FoundationResult
     render(<FoundationResultsView result={mixedResult} error={null} />)
+    await userEvent.click(screen.getByRole('button', { expanded: false }))
     expect(screen.getByTestId('cncf-readiness-tab')).toBeInTheDocument()
     expect(screen.getByText(/bad\/repo/)).toBeInTheDocument()
   })
@@ -198,7 +203,7 @@ describe('FoundationResultsView — projects-board branch', () => {
     expect(screen.getByText(/#42 My Project/i)).toBeInTheDocument()
   })
 
-  it('renders a CNCFReadinessTab for each resolved repo', () => {
+  it('renders a CNCFReadinessTab for each resolved repo after expanding', async () => {
     const result: FoundationResult = {
       kind: 'projects-board',
       url: 'https://github.com/orgs/cncf/projects/14',
@@ -211,6 +216,7 @@ describe('FoundationResultsView — projects-board branch', () => {
       method: 'graphql' as const,
     }
     render(<FoundationResultsView result={result} error={null} />)
+    await userEvent.click(screen.getByRole('button', { expanded: false }))
     expect(screen.getByTestId('cncf-readiness-tab')).toHaveTextContent('owner/myrepo')
   })
 })
