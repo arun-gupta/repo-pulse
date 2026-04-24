@@ -259,7 +259,10 @@ export function FoundationResultsView({ result, error, onReanalyze, shareableUrl
               </p>
             ) : null}
           </div>
-          {onReanalyze ? <ReanalyzeButton onClick={onReanalyze} /> : null}
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            {shareableUrl ? <CopyLinkButton url={shareableUrl} /> : null}
+            {onReanalyze ? <ReanalyzeButton onClick={onReanalyze} /> : null}
+          </div>
         </div>
       </section>
 

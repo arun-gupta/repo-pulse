@@ -969,7 +969,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
           result={foundationResult}
           error={foundationError}
           shareableUrl={
-            foundationResult && (foundationResult.kind === 'repos' || foundationResult.kind === 'org') && foundationInput
+            foundationResult && foundationInput
               ? encodeFoundationUrl({ foundation: foundationTarget, input: foundationInput })
               : undefined
           }
