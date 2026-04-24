@@ -142,6 +142,7 @@ describe('POST /api/analyze', () => {
 
     const response = await POST(request)
     expect(response.status).toBe(200)
+    expect(analyzeMock).toHaveBeenCalledWith(expect.objectContaining({ repos: atLimit }))
   })
 
   // NEW-01: server-side slug validation
