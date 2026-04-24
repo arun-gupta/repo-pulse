@@ -847,69 +847,58 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       ) : null}
       {inputMode === 'foundation' && pendingBoardScan && !loadingFoundation ? (
         <section className="space-y-4">
-          <div className="rounded border border-sky-200 bg-sky-50 p-4 dark:border-sky-800/60 dark:bg-sky-900/20">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-semibold text-sky-900 dark:text-sky-200">
-                  {pendingBoardScan.repos.length} {pendingBoardScan.repos.length === 1 ? 'repository' : 'repositories'} found
-                </p>
-                <p className="mt-1 text-sm text-sky-800 dark:text-sky-300">
-                  {pendingBoardScan.method === 'graphql' ? (
-                    <>Resolved from the <strong>New</strong> and <strong>review/tech</strong> columns of the board via the GitHub Projects API.</>
-                  ) : (
-                    <>Resolved from open issues in{' '}
-                    <a href="https://github.com/cncf/sandbox/issues" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">cncf/sandbox</a>
-                    {' '}matching{' '}
-                    <code className="rounded bg-sky-100 px-1 dark:bg-sky-800/60">label:New -label:gitvote/passed</code>
-                    {' '}or{' '}
-                    <code className="rounded bg-sky-100 px-1 dark:bg-sky-800/60">label:review/tech -label:sandbox</code>.</>
-                  )}
-                </p>
-                <p className="mt-1.5 text-sm text-sky-800 dark:text-sky-300">
-                  Review the list below, then click <strong>Analyze</strong> to run the CNCF Sandbox readiness scan.
-                </p>
-                {pendingBoardScan.method === 'labels' ? (
-                  <p className="mt-2 text-xs text-sky-600 dark:text-sky-400">
-                    <span className="font-medium">Note:</span> Label-based results may include repos no longer in those columns.{' '}
-                    <a href="/api/auth/login?scope_tier=read-project" className="underline hover:no-underline">
-                      Re-authenticate with board read access
-                    </a>{' '}
-                    for exact results.
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex shrink-0 gap-2">
-                <button
-                  type="button"
-                  onClick={() => void handleStartBoardAnalysis()}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-sky-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500"
-                >
-                  Analyze
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPendingBoardScan(null)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-              </div>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">
+                {pendingBoardScan.repos.length} {pendingBoardScan.repos.length === 1 ? 'repository' : 'repositories'} found
+              </p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                {pendingBoardScan.method === 'graphql' ? (
+                  <>Resolved from the <strong>New</strong> and <strong>review/tech</strong> columns of the board via the GitHub Projects API.</>
+                ) : (
+                  <>Resolved from open issues in{' '}
+                  <a href="https://github.com/cncf/sandbox/issues" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">cncf/sandbox</a>
+                  {' '}matching{' '}
+                  <code className="rounded bg-slate-100 px-1 text-xs dark:bg-slate-700">label:New -label:gitvote/passed</code>
+                  {' '}or{' '}
+                  <code className="rounded bg-slate-100 px-1 text-xs dark:bg-slate-700">label:review/tech -label:sandbox</code>.</>
+                )}
+              </p>
+              <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+                Review the list below, then click <strong>Analyze</strong> to run the CNCF Sandbox readiness scan.
+              </p>
             </div>
-            <ul className="mt-3 grid grid-cols-1 gap-1 sm:grid-cols-2">
-              {pendingBoardScan.repos.map((repo) => (
-                <li key={repo} className="truncate text-sm text-sky-900 dark:text-sky-200">
-                  <a
-                    href={`https://github.com/${repo}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:no-underline"
-                  >
-                    {repo}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => void handleStartBoardAnalysis()}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500"
+              >
+                Analyze
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingBoardScan(null)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
+          <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+            {pendingBoardScan.repos.map((repo) => (
+              <li key={repo} className="truncate text-sm text-slate-700 dark:text-slate-300">
+                <a
+                  href={`https://github.com/${repo}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:no-underline"
+                >
+                  {repo}
+                </a>
+              </li>
+            ))}
+          </ul>
           {pendingBoardScan.skipped.length > 0 ? (
             <section className="rounded border border-amber-200 bg-amber-50 p-4 dark:bg-amber-900/20 dark:border-amber-800/60">
               <h2 className="font-semibold text-amber-900 dark:text-amber-200">
