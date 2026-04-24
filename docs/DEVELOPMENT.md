@@ -139,8 +139,6 @@ npm run lint
 npm run build
 ```
 
-> **Note**: If you have `DEV_GITHUB_PAT` in `.env.local` (see multi-worktree section below), run `DEV_GITHUB_PAT= npm run build` — the build asserts this variable is not present in `NODE_ENV=production` contexts, and `next build` forces production.
-
 ---
 
 ## Multi-worktree local development (`DEV_GITHUB_PAT`)
