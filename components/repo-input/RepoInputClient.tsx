@@ -605,7 +605,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     />
   )
 
-  const exportToolbar = analysisResponse ? (
+  const exportToolbar = analysisResponse && inputMode === 'repos' ? (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <ReportSearchBar
         query={searchQuery}
