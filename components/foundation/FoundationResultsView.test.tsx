@@ -177,6 +177,7 @@ describe('FoundationResultsView — projects-board branch', () => {
       url: 'https://github.com/orgs/cncf/projects/14',
       results: { results: [], failures: [], rateLimit: null },
       skipped: [],
+      method: 'graphql' as const,
     }
     render(<FoundationResultsView result={result} error={null} />)
     expect(screen.getByText(/CNCF Sandbox board scan/i)).toBeInTheDocument()
@@ -190,6 +191,7 @@ describe('FoundationResultsView — projects-board branch', () => {
       skipped: [
         { issueNumber: 42, issueUrl: 'https://github.com/cncf/sandbox/issues/42', title: 'My Project', reason: 'No GitHub repository URL found in issue body' },
       ],
+      method: 'graphql' as const,
     }
     render(<FoundationResultsView result={result} error={null} />)
     expect(screen.getByText(/Skipped issues/i)).toBeInTheDocument()
@@ -206,6 +208,7 @@ describe('FoundationResultsView — projects-board branch', () => {
         rateLimit: null,
       },
       skipped: [],
+      method: 'graphql' as const,
     }
     render(<FoundationResultsView result={result} error={null} />)
     expect(screen.getByTestId('cncf-readiness-tab')).toHaveTextContent('owner/myrepo')

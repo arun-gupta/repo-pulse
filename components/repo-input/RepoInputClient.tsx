@@ -304,7 +304,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     if (parsed.kind === 'projects-board') {
       setFoundationLoadingItems(['Resolving repositories from CNCF sandbox board…'])
       try {
-        const { repos, skipped } = await fetchBoardRepos(session.token, parsed.url)
+        const { repos, skipped, method } = await fetchBoardRepos(session.token, parsed.url)
 
         if (controller.signal.aborted) return
 
@@ -322,7 +322,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
           : await submitAnalysisRequest(repos, session.token, 'cncf-sandbox', controller.signal)
 
         if (response && !controller.signal.aborted) {
-          setFoundationResult({ kind: 'projects-board', url: parsed.url, results: response, skipped })
+          setFoundationResult({ kind: 'projects-board', url: parsed.url, results: response, skipped, method })
         }
       } catch (error) {
         if (controller.signal.aborted) return

@@ -9,7 +9,7 @@ import type { SkippedIssue } from '@/lib/foundation/fetch-board-repos'
 export type FoundationResult =
   | { kind: 'repos'; results: AnalyzeResponse }
   | { kind: 'org'; inventory: OrgInventoryResponse }
-  | { kind: 'projects-board'; url: string; results: AnalyzeResponse; skipped: SkippedIssue[] }
+  | { kind: 'projects-board'; url: string; results: AnalyzeResponse; skipped: SkippedIssue[]; method: 'graphql' | 'labels' }
 
 interface FoundationResultsViewProps {
   result: FoundationResult | null
@@ -88,6 +88,13 @@ export function FoundationResultsView({ result, error }: FoundationResultsViewPr
         {result.skipped.length > 0 ? (
           <p className="mt-1 text-sky-700 dark:text-sky-400">
             {result.skipped.length} {result.skipped.length === 1 ? 'issue was' : 'issues were'} skipped — see warning below.
+          </p>
+        ) : null}
+        {result.method === 'labels' ? (
+          <p className="mt-2 text-xs text-sky-600 dark:text-sky-400">
+            <span className="font-medium">Note:</span> Projects board API was unavailable — results are based on{' '}
+            <span className="font-mono">New</span> and <span className="font-mono">Upcoming</span> issue labels, which may
+            include issues no longer in those columns. Sign in with elevated scope for exact board data.
           </p>
         ) : null}
       </section>
