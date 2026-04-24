@@ -79,7 +79,7 @@ export function FoundationResultsView({ result, error }: FoundationResultsViewPr
         <p className="font-semibold text-sky-900 dark:text-sky-200">CNCF Sandbox board scan</p>
         <p className="mt-1 text-sky-800 dark:text-sky-300">
           Scanned <strong>{totalResolved}</strong> {totalResolved === 1 ? 'repository' : 'repositories'} from the{' '}
-          <strong>New</strong> and <strong>Upcoming</strong> columns of the{' '}
+          <strong>New</strong> and <strong>review/tech</strong> columns of the{' '}
           <a href={result.url} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
             CNCF sandbox board
           </a>

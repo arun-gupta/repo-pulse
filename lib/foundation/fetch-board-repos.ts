@@ -13,7 +13,7 @@ export interface BoardReposResult {
 }
 
 // Status field values to include (case-insensitive)
-const BOARD_COLUMNS = new Set(['new', 'upcoming'])
+const BOARD_COLUMNS = new Set(['new', 'review/tech'])
 
 // Repo names that are org-meta repos, not real projects
 const EXCLUDED_REPO_NAMES = new Set(['.github', 'actions', 'community', '.github.io'])
@@ -268,15 +268,15 @@ async function fetchIssuesByLabel(token: string, label: string): Promise<GitHubI
 }
 
 async function fetchBoardItemsViaLabels(token: string): Promise<BoardItem[]> {
-  const [newIssues, upcomingIssues] = await Promise.all([
+  const [newIssues, reviewTechIssues] = await Promise.all([
     fetchIssuesByLabel(token, 'New'),
-    fetchIssuesByLabel(token, 'Upcoming'),
+    fetchIssuesByLabel(token, 'review/tech'),
   ])
 
   // Deduplicate
   const seen = new Set<number>()
   const all: GitHubIssueListItem[] = []
-  for (const issue of [...newIssues, ...upcomingIssues]) {
+  for (const issue of [...newIssues, ...reviewTechIssues]) {
     if (!seen.has(issue.number)) {
       seen.add(issue.number)
       all.push(issue)
