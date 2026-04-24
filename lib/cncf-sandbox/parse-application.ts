@@ -55,9 +55,7 @@ function corpusProjectHint(
   const mentioned = detectCorpusProjects(content)
 
   // Projects the applicant already cited that appear in the approved corpus
-  const alreadyCited = corpus.topCNCFProjects
-    .filter((p) => mentioned.has(p.name))
-    .map((p) => p.name)
+  const alreadyCited = corpus.topCNCFProjects.filter((p) => mentioned.has(p.name))
 
   // Top projects from the corpus that the applicant has NOT yet cited
   const missing = corpus.topCNCFProjects
@@ -66,10 +64,11 @@ function corpusProjectHint(
 
   if (missing.length === 0) return ''
 
-  const missingStr = missing.map((p) => `${p.name} (${p.pct}% of ${corpus.totalSampled} approved)`).join(', ')
+  const missingStr = missing.map((p) => `${p.name} (${p.pct}%)`).join(', ')
 
   if (alreadyCited.length > 0) {
-    return ` You named ${alreadyCited.join(', ')}. Among the last ${corpus.totalSampled} approved sandbox projects, commonly cited projects you haven't mentioned include: ${missingStr}.`
+    const citedStr = alreadyCited.map((p) => `${p.name} (${p.pct}%)`).join(', ')
+    return ` You named ${citedStr} — good. Among the last ${corpus.totalSampled} approved sandbox projects, commonly cited projects you haven't mentioned include: ${missingStr}.`
   }
 
   return ` Among the last ${corpus.totalSampled} approved sandbox projects, the most commonly cited were: ${missingStr}.`
