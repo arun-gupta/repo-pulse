@@ -631,17 +631,17 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
         </p>
       ) : null}
       {loadingRepos.length > 0 && inputMode === 'repos' ? (
-        <section aria-label="Analysis loading state" className="rounded border border-blue-200 bg-blue-50 p-4 dark:bg-blue-900/20 dark:border-blue-800/60">
+        <section aria-label="Analysis loading state">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-blue-900 dark:text-blue-200">Analyzing repositories...</h2>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-200">Analyzing repositories...</h2>
             <div className="flex items-center gap-3">
-              <span className="text-xs tabular-nums text-blue-700 dark:text-blue-300">{formatElapsedTime(elapsedSeconds)}</span>
+              <span className="text-xs tabular-nums text-slate-500 dark:text-slate-400">{formatElapsedTime(elapsedSeconds)}</span>
               <button
                 type="button"
                 onClick={handleCancelRepoFetch}
                 aria-label="Cancel"
                 title="Cancel"
-                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700 dark:bg-slate-900"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
               >
                 <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
                   <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
@@ -649,40 +649,40 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
               </button>
             </div>
           </div>
-          <ul className="mt-2 list-disc pl-5 text-sm text-blue-900 dark:text-blue-200">
+          <ul className="mt-2 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
             {loadingRepos.map((repo) => (
               <li key={repo}>{repo}</li>
             ))}
           </ul>
           {elapsedSeconds >= 10 ? (
-            <p className="mt-3 text-xs text-blue-700 dark:text-blue-300">
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
               Large repositories with extensive commit history may take longer to analyze.
             </p>
           ) : null}
           {elapsedSeconds >= 30 ? (
-            <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Still working — fetching commit history and computing contributor metrics.
             </p>
           ) : null}
           {currentQuote ? (
-            <p className="mt-3 border-t border-blue-200 pt-3 text-xs italic text-blue-600 dark:border-blue-800/60 dark:text-blue-400">
+            <p className="mt-3 border-t border-slate-200 pt-3 text-xs italic text-slate-400 dark:border-slate-700 dark:text-slate-500">
               &ldquo;{currentQuote.text}&rdquo; — {currentQuote.author}{currentQuote.context ? `, ${currentQuote.context}` : ''}
             </p>
           ) : null}
         </section>
       ) : null}
       {loadingOrg ? (
-        <section aria-label="Org inventory loading state" className="rounded border border-blue-200 bg-blue-50 p-4 dark:bg-blue-900/20 dark:border-blue-800/60">
+        <section aria-label="Org inventory loading state">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-blue-900 dark:text-blue-200">Loading org inventory for:</h2>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-200">Loading org inventory for:</h2>
             <div className="flex items-center gap-3">
-              <span className="text-xs tabular-nums text-blue-700 dark:text-blue-300">{formatElapsedTime(elapsedSeconds)}</span>
+              <span className="text-xs tabular-nums text-slate-500 dark:text-slate-400">{formatElapsedTime(elapsedSeconds)}</span>
               <button
                 type="button"
                 onClick={handleCancelOrgFetch}
                 aria-label="Cancel"
                 title="Cancel"
-                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700 dark:bg-slate-900"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
               >
                 <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
                   <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
@@ -690,31 +690,31 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
               </button>
             </div>
           </div>
-          <p className="mt-2 text-sm text-blue-900 dark:text-blue-200">{loadingOrg}</p>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{loadingOrg}</p>
           {elapsedSeconds >= 10 ? (
-            <p className="mt-3 text-xs text-blue-700 dark:text-blue-300">
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
               Large organizations with many repositories may take longer to load.
             </p>
           ) : null}
           {currentQuote ? (
-            <p className="mt-3 border-t border-blue-200 pt-3 text-xs italic text-blue-600 dark:border-blue-800/60 dark:text-blue-400">
+            <p className="mt-3 border-t border-slate-200 pt-3 text-xs italic text-slate-400 dark:border-slate-700 dark:text-slate-500">
               &ldquo;{currentQuote.text}&rdquo; — {currentQuote.author}{currentQuote.context ? `, ${currentQuote.context}` : ''}
             </p>
           ) : null}
         </section>
       ) : null}
       {loadingFoundation ? (
-        <section aria-label="Foundation scan loading state" className="rounded border border-blue-200 bg-blue-50 p-4 dark:bg-blue-900/20 dark:border-blue-800/60">
+        <section aria-label="Foundation scan loading state">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-blue-900 dark:text-blue-200">Analyzing foundation readiness...</h2>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-200">Analyzing foundation readiness...</h2>
             <div className="flex items-center gap-3">
-              <span className="text-xs tabular-nums text-blue-700 dark:text-blue-300">{formatElapsedTime(elapsedSeconds)}</span>
+              <span className="text-xs tabular-nums text-slate-500 dark:text-slate-400">{formatElapsedTime(elapsedSeconds)}</span>
               <button
                 type="button"
                 onClick={handleCancelFoundationFetch}
                 aria-label="Cancel"
                 title="Cancel"
-                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700 dark:bg-slate-900"
+                className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-600 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700"
               >
                 <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
                   <rect x="3.5" y="3.5" width="9" height="9" rx="1" />
@@ -723,22 +723,22 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
             </div>
           </div>
           {foundationLoadingItems.length > 0 ? (
-            <ul className="mt-2 list-disc pl-5 text-sm text-blue-900 dark:text-blue-200">
+            <ul className="mt-2 list-disc pl-5 text-sm text-slate-700 dark:text-slate-300">
               {foundationLoadingItems.map((item) => <li key={item}>{item}</li>)}
             </ul>
           ) : null}
           {elapsedSeconds >= 10 ? (
-            <p className="mt-3 text-xs text-blue-700 dark:text-blue-300">
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
               Large repositories with extensive commit history may take longer to analyze.
             </p>
           ) : null}
           {elapsedSeconds >= 30 ? (
-            <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Still working — fetching commit history and computing contributor metrics.
             </p>
           ) : null}
           {currentQuote ? (
-            <p className="mt-3 border-t border-blue-200 pt-3 text-xs italic text-blue-600 dark:border-blue-800/60 dark:text-blue-400">
+            <p className="mt-3 border-t border-slate-200 pt-3 text-xs italic text-slate-400 dark:border-slate-700 dark:text-slate-500">
               &ldquo;{currentQuote.text}&rdquo; — {currentQuote.author}{currentQuote.context ? `, ${currentQuote.context}` : ''}
             </p>
           ) : null}
