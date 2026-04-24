@@ -145,7 +145,10 @@ function evaluateCoC(label: string, weight: number, homeTab: string | undefined,
       lower.includes('cncf code of conduct') ||
       lower.includes('cncf community code of conduct') ||
       lower.includes('conduct@cncf.io') ||
-      /cncf\.io\/(community\/)?code-of-conduct/i.test(content)
+      /cncf\.io\/(community\/)?code-of-conduct/i.test(content) ||
+      // Projects that link to an org-level CoC on GitHub (transitive CNCF/CC delegation)
+      /https?:\/\/github\.com\/[^)]+\/(?:CODE-OF-CONDUCT|CODE_OF_CONDUCT|code-of-conduct|code_of_conduct)/i.test(content) ||
+      /\[.*code of conduct.*\]\(https?:\/\//i.test(content)
     )
   if (recognized) {
     return makeField('coc', label, weight, homeTab, 'ready')
