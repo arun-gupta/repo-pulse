@@ -171,9 +171,43 @@ describe('FoundationResultsView — org branch', () => {
 })
 
 describe('FoundationResultsView — projects-board branch', () => {
-  it('renders a coming-soon message for projects-board results', () => {
-    const result: FoundationResult = { kind: 'projects-board', url: 'https://github.com/orgs/cncf/projects/14' }
+  it('renders board scan results with a header', () => {
+    const result: FoundationResult = {
+      kind: 'projects-board',
+      url: 'https://github.com/orgs/cncf/projects/14',
+      results: { results: [], failures: [], rateLimit: null },
+      skipped: [],
+    }
     render(<FoundationResultsView result={result} error={null} />)
-    expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
+    expect(screen.getByText(/CNCF Sandbox board scan/i)).toBeInTheDocument()
+  })
+
+  it('shows skipped issues when present', () => {
+    const result: FoundationResult = {
+      kind: 'projects-board',
+      url: 'https://github.com/orgs/cncf/projects/14',
+      results: { results: [], failures: [], rateLimit: null },
+      skipped: [
+        { issueNumber: 42, issueUrl: 'https://github.com/cncf/sandbox/issues/42', title: 'My Project', reason: 'No GitHub repository URL found in issue body' },
+      ],
+    }
+    render(<FoundationResultsView result={result} error={null} />)
+    expect(screen.getByText(/Skipped issues/i)).toBeInTheDocument()
+    expect(screen.getByText(/#42 My Project/i)).toBeInTheDocument()
+  })
+
+  it('renders a CNCFReadinessTab for each resolved repo', () => {
+    const result: FoundationResult = {
+      kind: 'projects-board',
+      url: 'https://github.com/orgs/cncf/projects/14',
+      results: {
+        results: [{ repo: 'owner/myrepo', aspirantResult: makeAspirantResult() } as never],
+        failures: [],
+        rateLimit: null,
+      },
+      skipped: [],
+    }
+    render(<FoundationResultsView result={result} error={null} />)
+    expect(screen.getByTestId('cncf-readiness-tab')).toHaveTextContent('owner/myrepo')
   })
 })

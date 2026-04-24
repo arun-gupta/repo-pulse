@@ -33,6 +33,7 @@ import { resultTabs } from '@/lib/results-shell/tabs'
 import { decodeRepos, decodeFoundationUrl } from '@/lib/export/shareable-url'
 import { parseRepos } from '@/lib/parse-repos'
 import { parseFoundationInput } from '@/lib/foundation/parse-foundation-input'
+import { fetchBoardRepos } from '@/lib/foundation/fetch-board-repos'
 import { LOADING_QUOTES, getRandomQuoteIndex } from '@/lib/loading-quotes'
 import { RepoInputForm } from './RepoInputForm'
 import { FoundationResultsView, type FoundationResult } from '@/components/foundation/FoundationResultsView'
@@ -286,11 +287,6 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       return
     }
 
-    if (parsed.kind === 'projects-board') {
-      setFoundationResult({ kind: 'projects-board', url: parsed.url })
-      return
-    }
-
     foundationFetchAbortRef.current?.abort()
     const controller = new AbortController()
     foundationFetchAbortRef.current = controller
@@ -298,6 +294,40 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     setFoundationError(null)
     setFoundationResult(null)
     setLoadingFoundation(true)
+
+    if (parsed.kind === 'projects-board') {
+      setFoundationLoadingItems(['Resolving repositories from CNCF sandbox board…'])
+      try {
+        const { repos, skipped } = await fetchBoardRepos(session.token)
+
+        if (controller.signal.aborted) return
+
+        if (repos.length === 0) {
+          setFoundationError(
+            'No repositories could be resolved from the CNCF sandbox board. The New and Upcoming columns may be empty, or issue bodies may not contain parseable repository URLs.',
+          )
+          return
+        }
+
+        setFoundationLoadingItems(repos)
+
+        const response = onAnalyze
+          ? await onAnalyze(repos, session.token)
+          : await submitAnalysisRequest(repos, session.token, 'cncf-sandbox', controller.signal)
+
+        if (response && !controller.signal.aborted) {
+          setFoundationResult({ kind: 'projects-board', url: parsed.url, results: response, skipped })
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return
+        setFoundationError(error instanceof Error ? error.message : 'Board scan failed.')
+      } finally {
+        setLoadingFoundation(false)
+        foundationFetchAbortRef.current = null
+      }
+      return
+    }
+
     setFoundationLoadingItems(parsed.kind === 'repos' ? parsed.repos : [parsed.kind === 'org' ? parsed.org : ''])
 
     try {
