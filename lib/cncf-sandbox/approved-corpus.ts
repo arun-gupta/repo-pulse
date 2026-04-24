@@ -13,11 +13,25 @@ export interface CorpusProject {
   pct: number
 }
 
+export interface FieldPatternStat {
+  label: string
+  /** Percentage of sampled approved applications matching this pattern (0–100) */
+  pct: number
+}
+
+export interface FieldCorpusStats {
+  /** Number of approved applications that had this section at all */
+  totalSampled: number
+  patterns: FieldPatternStat[]
+}
+
 export interface ApprovedCorpusSummary {
   /** Number of approved applications actually sampled */
   totalSampled: number
   /** CNCF projects ranked by how many approved applications cite them, with percentages */
   topCNCFProjects: CorpusProject[]
+  /** Pattern frequency stats per application field */
+  fieldStats: Record<string, FieldCorpusStats>
 }
 
 // Each entry: [substring to search for in lowercased text, canonical display name].
@@ -125,6 +139,30 @@ export function detectCorpusProjects(text: string): Set<string> {
   return mentionsInDoc(text)
 }
 
+interface PatternDef {
+  label: string
+  test: (text: string) => boolean
+}
+
+const FIELD_PATTERN_DEFS: Record<string, PatternDef[]> = {
+  'why-cncf': [
+    { label: 'mentions governance or vendor neutrality', test: (t) => /governance|vendor.neutral|multi.stakeholder|neutral/i.test(t) },
+    { label: 'names a specific TAG or working group', test: (t) => /\bTAG\b|working group|technical advisory/i.test(t) },
+  ],
+  'tag-engagement': [
+    { label: 'has a TAG presentation or meeting', test: (t) => /presented|presentation|meeting|reviewed/i.test(t) },
+  ],
+  'similar-projects': [
+    { label: 'names 3 or more comparable projects', test: (t) => (t.match(/\b[A-Z][a-zA-Z-]+\b/g) ?? []).length >= 3 && t.split(/\s+/).length > 20 },
+  ],
+}
+
+const FIELD_SECTION_PATTERNS: Record<string, RegExp> = {
+  'why-cncf': /why cncf/i,
+  'tag-engagement': /domain technical review/i,
+  'similar-projects': /similar projects/i,
+}
+
 async function fetchApprovedIssues(token: string): Promise<Array<{ body: string }>> {
   const res = await fetch(
     'https://api.github.com/repos/cncf/sandbox/issues?state=closed&labels=sandbox&per_page=100&page=1&sort=created&direction=desc',
@@ -153,6 +191,16 @@ export async function buildApprovedCorpusSummary(token: string): Promise<Approve
   const issues = await fetchApprovedIssues(token)
 
   const frequency = new Map<string, number>()
+  // fieldCounts[fieldId][patternLabel] = count of issues matching that pattern
+  const fieldCounts: Record<string, Record<string, number>> = {}
+  const fieldSectionTotal: Record<string, number> = {}
+  for (const fieldId of Object.keys(FIELD_PATTERN_DEFS)) {
+    fieldCounts[fieldId] = {}
+    for (const p of FIELD_PATTERN_DEFS[fieldId]) {
+      fieldCounts[fieldId][p.label] = 0
+    }
+  }
+
   for (const issue of issues) {
     const cloudNativeFit = extractSection(issue.body, /cloud native .*(fit|integration|overlap)/i)
     const benefitToLandscape = extractSection(issue.body, /benefit to the landscape/i)
@@ -162,6 +210,17 @@ export async function buildApprovedCorpusSummary(token: string): Promise<Approve
     for (const name of mentionsInDoc(combinedText)) {
       frequency.set(name, (frequency.get(name) ?? 0) + 1)
     }
+
+    // Collect field-level pattern stats from specific sections
+    for (const [fieldId, patterns] of Object.entries(FIELD_PATTERN_DEFS)) {
+      const headingPattern = FIELD_SECTION_PATTERNS[fieldId]
+      const sectionText = headingPattern ? extractSection(issue.body, headingPattern) : null
+      if (!sectionText || sectionText.length < 10) continue
+      fieldSectionTotal[fieldId] = (fieldSectionTotal[fieldId] ?? 0) + 1
+      for (const p of patterns) {
+        if (p.test(sectionText)) fieldCounts[fieldId][p.label]++
+      }
+    }
   }
 
   const total = issues.length
@@ -170,7 +229,20 @@ export async function buildApprovedCorpusSummary(token: string): Promise<Approve
     .slice(0, 20)
     .map(([name, count]) => ({ name, pct: total > 0 ? Math.round((count / total) * 100) : 0 }))
 
-  const summary: ApprovedCorpusSummary = { totalSampled: total, topCNCFProjects }
+  const fieldStats: Record<string, FieldCorpusStats> = {}
+  for (const [fieldId, patterns] of Object.entries(FIELD_PATTERN_DEFS)) {
+    const sampled = fieldSectionTotal[fieldId] ?? 0
+    if (sampled === 0) continue
+    fieldStats[fieldId] = {
+      totalSampled: sampled,
+      patterns: patterns.map((p) => ({
+        label: p.label,
+        pct: Math.round((fieldCounts[fieldId][p.label] / sampled) * 100),
+      })),
+    }
+  }
+
+  const summary: ApprovedCorpusSummary = { totalSampled: total, topCNCFProjects, fieldStats }
   corpusCache = { summary, fetchedAt: Date.now() }
   return summary
 }

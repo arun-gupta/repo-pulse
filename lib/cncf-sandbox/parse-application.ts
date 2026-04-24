@@ -45,6 +45,18 @@ function fieldIdFromHeading(heading: string): string | null {
   return null
 }
 
+function fieldPatternPct(
+  corpus: ApprovedCorpusSummary | undefined,
+  fieldId: string,
+  patternLabel: string,
+): { pct: number; total: number } | null {
+  const stats = corpus?.fieldStats?.[fieldId]
+  if (!stats || stats.totalSampled === 0) return null
+  const p = stats.patterns.find((x) => x.label === patternLabel)
+  if (!p) return null
+  return { pct: p.pct, total: stats.totalSampled }
+}
+
 function corpusProjectHint(
   corpus: ApprovedCorpusSummary | undefined,
   content: string,
@@ -98,8 +110,14 @@ function assessAndRecommend(
         return { assessment: 'weak', recommendation: "Remove commercial-motivation language — citing visibility or marketing as primary drivers is a documented rejection factor. Focus on governance benefit and ecosystem fit." }
       }
       if (hasGovernance && hasSpecifics && wordCount > 60) return { assessment: 'strong', recommendation: null }
-      if (hasGovernance && wordCount > 30) return { assessment: 'adequate', recommendation: "Strengthen by naming the specific TAG or working group this project fits into, and explaining why now is the right time to apply." }
-      return { assessment: 'weak', recommendation: "Name a concrete governance benefit (not just 'visibility'), identify the CNCF technical context (specific TAGs, adjacent projects), and explain the timing." }
+      if (hasGovernance && wordCount > 30) {
+        const tagStat = fieldPatternPct(corpus, 'why-cncf', 'names a specific TAG or working group')
+        const tagHint = tagStat ? `${tagStat.pct}% of the last ${tagStat.total} approved applications named a specific TAG or working group. ` : ''
+        return { assessment: 'adequate', recommendation: `${tagHint}Strengthen by identifying where this project fits in the CNCF technical landscape — name the relevant TAG or working group, and explain why now is the right time to apply.` }
+      }
+      const govStat = fieldPatternPct(corpus, 'why-cncf', 'mentions governance or vendor neutrality')
+      const govHint = govStat ? `${govStat.pct}% of the last ${govStat.total} approved applications cited governance or vendor neutrality as the primary benefit. ` : ''
+      return { assessment: 'weak', recommendation: `${govHint}Name a concrete governance benefit (not just 'visibility'), identify the relevant TAG or working group, and explain the timing.` }
     }
 
     case 'benefit-to-landscape': {
@@ -155,15 +173,19 @@ function assessAndRecommend(
       }
       const projectMentions = (content.match(/\b[A-Z][a-zA-Z-]+\b/g) ?? []).length
       if (projectMentions >= 3 && wordCount > 60) return { assessment: 'strong', recommendation: null }
-      return { assessment: 'adequate', recommendation: "Name every CNCF project a reviewer could find in your category and write one sentence explaining the architectural or capability difference for each." }
+      const simStat = fieldPatternPct(corpus, 'similar-projects', 'names 3 or more comparable projects')
+      const simHint = simStat ? `${simStat.pct}% of the last ${simStat.total} approved applications named 3 or more comparable projects. ` : ''
+      return { assessment: 'adequate', recommendation: `${simHint}Name every CNCF project a reviewer could find in your category and write one sentence explaining the architectural or capability difference for each.` }
     }
 
     case 'tag-engagement': {
       const hasEngagement = /tag|presented|meeting|slack|chair|review/i.test(content)
       if (!hasEngagement || lower === '_no response_' || lower === 'no response') {
+        const engageStat = fieldPatternPct(corpus, 'tag-engagement', 'has a TAG presentation or meeting')
+        const engageHint = engageStat ? `${engageStat.pct}% of the last ${engageStat.total} approved applications had an actual TAG presentation or meeting. ` : ''
         return {
           assessment: 'empty',
-          recommendation: "TAG engagement is a soft prerequisite with documented impact on approval rate. All 7 rejected projects in our analysis (github.com/cncf/sandbox, gitvote/failed label) had zero TAG engagement. Contact the relevant TAG chairs on CNCF Slack to request a presentation slot before your TOC vote.",
+          recommendation: `${engageHint}Contact the relevant TAG chairs on CNCF Slack to request a presentation slot before your TOC vote.`,
         }
       }
       if (/presented|meeting|reviewed/i.test(content)) return { assessment: 'strong', recommendation: null }
@@ -212,7 +234,7 @@ function getEmptyRecommendation(fieldId: string): string {
     'cloud-native-fit': "Required and heavily weighted by reviewers. Name 4–8 CNCF projects and describe the one-line architectural relationship for each.",
     'business-separation': "If no commercial product exists, state that explicitly. If one does, describe governance separation — do not leave blank.",
     'similar-projects': "Leaving this blank is a red flag. Search the CNCF landscape for your category and address each project you find, even if you believe there is no overlap.",
-    'tag-engagement': "Critical gap. Contact the relevant TAG chairs on CNCF Slack to schedule a presentation before the TOC vote — all 7 rejected projects in our analysis (github.com/cncf/sandbox, gitvote/failed label) had zero TAG engagement.",
+    'tag-engagement': "Critical gap. Contact the relevant TAG chairs on CNCF Slack to schedule a presentation before the TOC vote.",
     'cncf-contacts': "Name a specific CNCF contact (TOC member, TAG lead, or Ambassador). A blank contact field correlates with longer review cycles.",
     'license-exception': "State explicitly — Yes (with dependency names and licenses) or No.",
     'contact-email': "Provide at least one contact email for the primary submitter.",
