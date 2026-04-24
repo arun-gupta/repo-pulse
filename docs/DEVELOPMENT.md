@@ -189,12 +189,13 @@ The script creates `../repo-pulse-<issue>-<slug>/` on a new branch named `<issue
 
 **Agent selection:**
 
-The `--agent <name>` flag selects which coding agent adapter to use. It must appear before the issue number.
+The `--agent <name>` flag selects which coding agent adapter to use. Flags and the issue number can appear in any order.
 
 ```bash
-scripts/agent.sh 207                      # uses claude adapter (default)
-scripts/agent.sh --agent copilot 207      # uses copilot adapter
-scripts/agent.sh --headless --agent copilot 207
+scripts/agent.sh 207                        # uses claude adapter (default)
+scripts/agent.sh 207 --agent copilot        # uses copilot adapter
+scripts/agent.sh 207 --headless --agent copilot
+scripts/agent.sh --agent copilot --headless 207
 ```
 
 Available adapters live in `scripts/agents/`. Each adapter implements three functions sourced by the core:
