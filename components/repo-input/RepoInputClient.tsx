@@ -854,11 +854,23 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
                   {pendingBoardScan.repos.length} {pendingBoardScan.repos.length === 1 ? 'repository' : 'repositories'} found
                 </p>
                 <p className="mt-1 text-sm text-sky-800 dark:text-sky-300">
+                  {pendingBoardScan.method === 'graphql' ? (
+                    <>Resolved from the <strong>New</strong> and <strong>review/tech</strong> columns of the board via the GitHub Projects API.</>
+                  ) : (
+                    <>Resolved from open issues in{' '}
+                    <a href="https://github.com/cncf/sandbox/issues" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">cncf/sandbox</a>
+                    {' '}matching{' '}
+                    <code className="rounded bg-sky-100 px-1 dark:bg-sky-800/60">label:New -label:gitvote/passed</code>
+                    {' '}or{' '}
+                    <code className="rounded bg-sky-100 px-1 dark:bg-sky-800/60">label:review/tech -label:sandbox</code>.</>
+                  )}
+                </p>
+                <p className="mt-1.5 text-sm text-sky-800 dark:text-sky-300">
                   Review the list below, then click <strong>Analyze</strong> to run the CNCF Sandbox readiness scan.
                 </p>
                 {pendingBoardScan.method === 'labels' ? (
                   <p className="mt-2 text-xs text-sky-600 dark:text-sky-400">
-                    <span className="font-medium">Note:</span> Results are based on issue labels and may include repos no longer in those columns.{' '}
+                    <span className="font-medium">Note:</span> Label-based results may include repos no longer in those columns.{' '}
                     <a href="/api/auth/login?scope_tier=read-project" className="underline hover:no-underline">
                       Re-authenticate with board read access
                     </a>{' '}
