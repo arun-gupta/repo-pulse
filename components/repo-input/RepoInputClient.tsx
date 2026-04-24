@@ -105,6 +105,12 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   // re-running (and resetting the elapsed timer) each time the idle quote rotates.
   const emptyQuoteIndexRef = useRef(emptyQuoteIndex)
   emptyQuoteIndexRef.current = emptyQuoteIndex
+  // Latest-ref wrappers so one-shot auto-trigger effects always call the current handler
+  // without taking it as a dep (which would cause the effects to re-run on every render).
+  const handleSubmitRef = useRef(handleSubmit)
+  handleSubmitRef.current = handleSubmit
+  const handleFoundationSubmitRef = useRef(handleFoundationSubmit)
+  handleFoundationSubmitRef.current = handleFoundationSubmit
 
   const isLoading = loadingRepos.length > 0 || !!loadingOrg || loadingFoundation
 
@@ -401,9 +407,8 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     autoTriggeredRef.current = true
     const parsed = parseRepos(initialRepoValue)
     if (!parsed.valid) return
-    void handleSubmit(parsed.repos)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.token])
+    void handleSubmitRef.current(parsed.repos)
+  }, [session?.token, initialRawRepos, initialRepoValue])
 
   // Auto-trigger Foundation scan when URL has mode=foundation params
   useEffect(() => {
@@ -415,9 +420,8 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     setInputMode('foundation')
     setFoundationTarget(initialFoundationState.foundation)
     setFoundationInput(initialFoundationState.input)
-    void handleFoundationSubmit(initialFoundationState.input)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.token])
+    void handleFoundationSubmitRef.current(initialFoundationState.input)
+  }, [session?.token, initialFoundationState, setInputMode, setFoundationTarget, setFoundationInput])
 
   async function handleSubmit(repos: string[]) {
     if (!session?.token) return

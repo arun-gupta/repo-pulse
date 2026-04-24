@@ -345,8 +345,7 @@ export function CNCFCandidacyPanel({ org, repos }: CNCFCandidacyPanelProps) {
     setSelected(newSelected)
     setBatchOffset(limit)
     fetchBatch(initialBatch)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scanStarted, landscapeLoading, token, selectable.length])
+  }, [scanStarted, landscapeLoading, token, selectable, repoLimit, fetchBatch])
 
   const stopAndClearLoading = useCallback((byRateLimit = false) => {
     abortRef.current?.abort()
