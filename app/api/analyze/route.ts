@@ -3,6 +3,7 @@ import type { FoundationTarget } from '@/lib/cncf-sandbox/types'
 import { fetchCNCFLandscape, fetchCNCFSandboxIssues, fetchSandboxIssueBody, findSandboxApplication, getLandscapeProjectStatus } from '@/lib/cncf-sandbox/landscape'
 import { evaluateAspirant } from '@/lib/cncf-sandbox/evaluate'
 import { parseApplicationIssue } from '@/lib/cncf-sandbox/parse-application'
+import { buildApprovedCorpusSummary } from '@/lib/cncf-sandbox/approved-corpus'
 
 export async function POST(request: Request) {
   try {
@@ -36,19 +37,24 @@ export async function POST(request: Request) {
     // Fetch CNCF landscape data when CNCF Sandbox target is selected
     let landscapeData = null
     if (foundationTarget === 'cncf-sandbox') {
-      const [landscapeResult, sandboxIssues] = await Promise.allSettled([
+      const [landscapeResult, sandboxIssues, approvedCorpusResult] = await Promise.allSettled([
         fetchCNCFLandscape(),
         fetchCNCFSandboxIssues(token),
+        buildApprovedCorpusSummary(token),
       ])
 
       landscapeData = landscapeResult.status === 'fulfilled' ? landscapeResult.value : null
       const issues = sandboxIssues.status === 'fulfilled' ? sandboxIssues.value : []
+      const approvedCorpus = approvedCorpusResult.status === 'fulfilled' ? approvedCorpusResult.value : undefined
 
       if (landscapeResult.status === 'rejected') {
         console.warn('[analyze] CNCF landscape fetch failed — proceeding without landscape data')
       }
       if (sandboxIssues.status === 'rejected') {
         console.warn('[analyze] CNCF sandbox issues fetch failed — proceeding without application status')
+      }
+      if (approvedCorpusResult.status === 'rejected') {
+        console.warn('[analyze] Approved corpus fetch failed — proceeding without corpus-based hints')
       }
 
       const knownIssueNumbers = body.sandboxIssueNumbers ?? {}
@@ -86,7 +92,7 @@ export async function POST(request: Request) {
         if (aspirantResult.sandboxApplication) {
           const body = await fetchSandboxIssueBody(token, aspirantResult.sandboxApplication.issueNumber)
           if (body) {
-            aspirantResult.sandboxApplication.parsedFields = parseApplicationIssue(body)
+            aspirantResult.sandboxApplication.parsedFields = parseApplicationIssue(body, approvedCorpus)
           }
         }
         result.aspirantResult = aspirantResult

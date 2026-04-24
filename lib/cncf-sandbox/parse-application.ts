@@ -1,4 +1,5 @@
 import type { ApplicationFieldAssessment, ParsedApplicationField } from './types'
+import type { ApprovedCorpusSummary } from './approved-corpus'
 
 // Maps ### headings in the issue template to our human-only field IDs
 const HEADING_TO_FIELD_ID: Array<[RegExp, string]> = [
@@ -43,9 +44,16 @@ function fieldIdFromHeading(heading: string): string | null {
   return null
 }
 
+function corpusProjectHint(corpus: ApprovedCorpusSummary | undefined, take = 8): string {
+  if (!corpus || corpus.topCNCFProjects.length === 0) return ''
+  const listed = corpus.topCNCFProjects.slice(0, take).join(', ')
+  return ` Among the last ${corpus.totalSampled} approved sandbox projects, the most commonly cited were: ${listed}.`
+}
+
 function assessAndRecommend(
   fieldId: string,
   content: string,
+  corpus?: ApprovedCorpusSummary,
 ): { assessment: ApplicationFieldAssessment; recommendation: string | null } {
   if (isEffectivelyEmpty(content)) {
     return {
@@ -72,17 +80,19 @@ function assessAndRecommend(
 
     case 'benefit-to-landscape': {
       // Should name 2+ CNCF projects and answer from ecosystem perspective
-      const cncfProjectMentions = (content.match(/\b(kubernetes|prometheus|envoy|grpc|fluentd|jaeger|vitess|argo|flux|helm|linkerd|harbor|rook|cert-manager|opa|spiffe|cortex|thanos|dragonfly|keda|crossplane|cluster api|open cluster management|kcp|backstage|dapr|knative|notary|falco|chaos mesh|litmus|opentelemetry|openmetrics|kyverno|pixie|slime|emissary|curiefense|porter|nocalhost|superedge|wasm|krustlet|aeraki|sealer|opensergo|kube-ovn)\b/gi) ?? []).length
+      const cncfProjectMentions = (content.match(/\b(kubernetes|prometheus|envoy|grpc|fluentd|jaeger|vitess|argo|flux|helm|linkerd|harbor|rook|cert-manager|opa|spiffe|cortex|thanos|dragonfly|keda|crossplane|cluster api|open cluster management|kcp|backstage|dapr|knative|notary|falco|chaos mesh|litmus|opentelemetry|openmetrics|kyverno|pixie|slime|emissary|curiefense|porter|nocalhost|superedge|wasm|krustlet|aeraki|sealer|opensergo|kube-ovn|cilium|longhorn|contour|tekton|istio)\b/gi) ?? []).length
+      const hint = corpusProjectHint(corpus)
       if (cncfProjectMentions >= 2 && wordCount > 40) return { assessment: 'strong', recommendation: null }
-      if (cncfProjectMentions >= 1) return { assessment: 'adequate', recommendation: "Name at least 2 existing CNCF projects that become more complete or valuable in combination with yours, and describe how." }
-      return { assessment: 'weak', recommendation: "Answer from the ecosystem's perspective: what was absent or broken before this project? Name 2+ CNCF projects that benefit from combining with yours." }
+      if (cncfProjectMentions >= 1) return { assessment: 'adequate', recommendation: `Name at least 2 existing CNCF projects that become more complete or valuable in combination with yours, and describe how.${hint}` }
+      return { assessment: 'weak', recommendation: `Answer from the ecosystem's perspective: what was absent or broken before this project? Name 2+ CNCF projects that benefit from combining with yours.${hint}` }
     }
 
     case 'cloud-native-fit': {
-      const cncfMentions = (content.match(/\b(kubernetes|cncf|prometheus|envoy|opentelemetry|kcp|crossplane|cert-manager|argo|flux|helm|linkerd|keda|dapr|knative|opa|falco)\b/gi) ?? []).length
+      const cncfMentions = (content.match(/\b(kubernetes|cncf|prometheus|envoy|opentelemetry|kcp|crossplane|cert-manager|argo|flux|helm|linkerd|keda|dapr|knative|opa|falco|cilium|tekton|istio|longhorn|contour|harbor|kyverno|thanos|jaeger|backstage|fluentd|containerd|etcd|coredns|spiffe|spire)\b/gi) ?? []).length
+      const hint = corpusProjectHint(corpus)
       if (cncfMentions >= 4 && wordCount > 80) return { assessment: 'strong', recommendation: null }
-      if (cncfMentions >= 2) return { assessment: 'adequate', recommendation: "Name 4–8 CNCF projects with a one-line architectural relationship each (data plane, API consumer, plugin extension, etc.). 'Runs on Kubernetes' is insufficient." }
-      return { assessment: 'weak', recommendation: "This is the field most often flagged by reviewers. Name 4–8 CNCF projects and describe the specific technical relationship for each — not just 'compatible' or 'runs on Kubernetes'." }
+      if (cncfMentions >= 2) return { assessment: 'adequate', recommendation: `Name 4–8 CNCF projects with a one-line architectural relationship each (data plane, API consumer, plugin extension, etc.). 'Runs on Kubernetes' is insufficient.${hint}` }
+      return { assessment: 'weak', recommendation: `This is the field most often flagged by reviewers. Name 4–8 CNCF projects and describe the specific technical relationship for each — not just 'compatible' or 'runs on Kubernetes'.${hint}` }
     }
 
     case 'business-separation': {
@@ -188,7 +198,7 @@ function getEmptyRecommendation(fieldId: string): string {
   return map[fieldId] ?? "This field appears to be blank — review the CNCF application template and provide a complete answer."
 }
 
-export function parseApplicationIssue(body: string): ParsedApplicationField[] {
+export function parseApplicationIssue(body: string, corpus?: ApprovedCorpusSummary): ParsedApplicationField[] {
   const sections = extractSections(body)
   const fieldMap = new Map<string, { content: string; heading: string }>()
 
@@ -228,7 +238,7 @@ export function parseApplicationIssue(body: string): ParsedApplicationField[] {
     const content = entry?.content?.trim() ?? null
     const effectiveContent = content && !isEffectivelyEmpty(content) ? content : null
 
-    const { assessment, recommendation } = assessAndRecommend(fieldId, effectiveContent ?? '')
+    const { assessment, recommendation } = assessAndRecommend(fieldId, effectiveContent ?? '', corpus)
 
     results.push({ fieldId, content: effectiveContent, assessment, recommendation })
   }
