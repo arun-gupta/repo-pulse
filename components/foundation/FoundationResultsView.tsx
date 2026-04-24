@@ -92,9 +92,14 @@ export function FoundationResultsView({ result, error }: FoundationResultsViewPr
         ) : null}
         {result.method === 'labels' ? (
           <p className="mt-2 text-xs text-sky-600 dark:text-sky-400">
-            <span className="font-medium">Note:</span> Projects board API was unavailable — results are based on{' '}
-            <span className="font-mono">New</span> and <span className="font-mono">Upcoming</span> issue labels, which may
-            include issues no longer in those columns. Sign in with elevated scope for exact board data.
+            <span className="font-medium">Note:</span> Projects board API requires <span className="font-mono">read:project</span> scope — results are based on issue labels and may include repos no longer in those columns.{' '}
+            <a
+              href="/api/auth/login?scope_tier=read-project"
+              className="underline hover:no-underline"
+            >
+              Re-authenticate with board read access
+            </a>{' '}
+            for exact results.
           </p>
         ) : null}
       </section>
