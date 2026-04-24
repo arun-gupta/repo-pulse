@@ -240,9 +240,13 @@ async function fetchBoardItemsViaGraphQL(
 
 // ─── Label fallback path ──────────────────────────────────────────────────────
 
-type GitHubIssueListItem = { number: number; title: string; html_url: string }
+type GitHubIssueListItem = { number: number; title: string; html_url: string; labels: Array<{ name: string }> }
 
-async function fetchIssuesByLabel(token: string, label: string): Promise<GitHubIssueListItem[]> {
+async function fetchIssuesByLabel(
+  token: string,
+  label: string,
+  excludeLabel: string,
+): Promise<GitHubIssueListItem[]> {
   const issues: GitHubIssueListItem[] = []
   let page = 1
   while (page <= 3) {
@@ -260,7 +264,11 @@ async function fetchIssuesByLabel(token: string, label: string): Promise<GitHubI
     if (!res.ok) break
     const batch = (await res.json()) as GitHubIssueListItem[]
     if (!Array.isArray(batch) || batch.length === 0) break
-    issues.push(...batch)
+    // Filter out issues that carry the exclusion label
+    const filtered = batch.filter(
+      (issue) => !issue.labels.some((l) => l.name.toLowerCase() === excludeLabel.toLowerCase()),
+    )
+    issues.push(...filtered)
     if (batch.length < 100) break
     page++
   }
@@ -268,9 +276,11 @@ async function fetchIssuesByLabel(token: string, label: string): Promise<GitHubI
 }
 
 async function fetchBoardItemsViaLabels(token: string): Promise<BoardItem[]> {
+  // "New" column:        label:New        -label:gitvote/passed
+  // "review/tech" column: label:review/tech -label:sandbox
   const [newIssues, reviewTechIssues] = await Promise.all([
-    fetchIssuesByLabel(token, 'New'),
-    fetchIssuesByLabel(token, 'review/tech'),
+    fetchIssuesByLabel(token, 'New', 'gitvote/passed'),
+    fetchIssuesByLabel(token, 'review/tech', 'sandbox'),
   ])
 
   // Deduplicate
