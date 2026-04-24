@@ -66,7 +66,7 @@ function corpusProjectHint(
 
   if (missing.length === 0) return ''
 
-  const missingStr = missing.map((p) => `${p.name} (${p.pct}% of approved)`).join(', ')
+  const missingStr = missing.map((p) => `${p.name} (${p.pct}% of ${corpus.totalSampled} approved)`).join(', ')
 
   if (alreadyCited.length > 0) {
     return ` You named ${alreadyCited.join(', ')}. Among the last ${corpus.totalSampled} approved sandbox projects, commonly cited projects you haven't mentioned include: ${missingStr}.`
