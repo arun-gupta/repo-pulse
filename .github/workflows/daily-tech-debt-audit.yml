@@ -86,18 +86,31 @@ jobs:
           with open('findings.json') as f:
               data = json.load(f)
 
-          findings = data.get('findings', [])
+          all_findings = data.get('findings', [])
+          all_fingerprints = data.get('fingerprints', [])
           date = data.get('date', '')
-          total = len(findings)
+          total = len(all_findings)
+
+          # Filter to new findings only (fingerprints in /tmp/new-fps.txt)
+          try:
+              with open('/tmp/new-fps.txt') as nf:
+                  new_fps = set(line.strip() for line in nf if line.strip())
+          except FileNotFoundError:
+              new_fps = set(all_fingerprints)
+
+          fp_map = {fp: f for fp, f in zip(all_fingerprints, all_findings)}
+          findings = [fp_map[fp] for fp in new_fps if fp in fp_map]
+          new_count = len(findings)
 
           SEVERITIES = ['fix-now', 'fix-soon', 'low-priority']
           ICONS = {'fix-now': '🚨', 'fix-soon': '⚠️', 'low-priority': 'ℹ️'}
           TOP_N = 5  # fix-now items shown inline; rest in artifact
 
-          counts = {s: sum(1 for f in findings if f['severity'] == s) for s in SEVERITIES}
+          counts = {s: sum(1 for f in findings if f.get('severity') == s) for s in SEVERITIES}
 
+          total_note = f' ({total} total across all runs)' if total != new_count else ''
           lines = [
-              f'Automated tech-debt audit — **{total} finding{"s" if total != 1 else ""}** detected on {date}.',
+              f'Automated tech-debt audit — **{new_count} new finding{"s" if new_count != 1 else ""}** detected on {date}{total_note}.',
               '',
               '## Summary',
               '',
@@ -127,7 +140,7 @@ jobs:
               lines.append(f'| {cat} | {sev_counts["fix-now"]} | {sev_counts["fix-soon"]} | {sev_counts["low-priority"]} |')
 
           # Top fix-now items inline
-          fix_now = [f for f in findings if f['severity'] == 'fix-now']
+          fix_now = [f for f in findings if f.get('severity') == 'fix-now']
           if fix_now:
               shown = fix_now[:TOP_N]
               lines += ['', f'## 🚨 Top fix-now (showing {len(shown)} of {len(fix_now)})', '']
@@ -140,7 +153,7 @@ jobs:
           lines += [
               '',
               '---',
-              f'📎 [Workflow run artifacts]({run_url}) (includes findings.json, 7-day retention)',
+              f'📎 [View workflow run & artifacts]({run_url}) (includes findings.json, 7-day retention)',
           ]
 
           print('\n'.join(lines))
