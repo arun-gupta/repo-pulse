@@ -100,9 +100,15 @@ export type ActivityRollupValue = {
   leastActiveRepo: { repo: string; commits: number } | null
 }
 
-export type ResponsivenessRollupValue = {
+export type ResponsivenessRollupWindowValue = {
   weightedMedianFirstResponseHours: number | null
   weightedMedianPrMergeHours: number | null
+  contributingReposCount: number
+}
+
+export type ResponsivenessRollupValue = {
+  defaultWindow: ContributorDiversityWindow
+  byWindow: Record<ContributorDiversityWindow, ResponsivenessRollupWindowValue>
 }
 
 export type LicenseConsistencyValue = {
