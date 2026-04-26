@@ -1,12 +1,16 @@
 'use client'
 
 import type { AggregatePanel } from '@/lib/org-aggregation/types'
-import type { ResponsivenessRollupValue } from '@/lib/org-aggregation/aggregators/types'
+import type {
+  ContributorDiversityWindow,
+  ResponsivenessRollupValue,
+} from '@/lib/org-aggregation/aggregators/types'
 import { HelpLabel } from '@/components/shared/HelpLabel'
 import { PanelShell } from '../PanelShell'
 
 interface Props {
   panel: AggregatePanel<ResponsivenessRollupValue>
+  externalWindow?: ContributorDiversityWindow
 }
 
 function formatHours(hours: number): string {
@@ -16,7 +20,11 @@ function formatHours(hours: number): string {
   return `${days.toFixed(1)}d`
 }
 
-export function ResponsivenessRollupPanel({ panel }: Props) {
+export function ResponsivenessRollupPanel({ panel, externalWindow }: Props) {
+  const selectedWindow: ContributorDiversityWindow =
+    externalWindow ?? panel.value?.defaultWindow ?? 90
+  const windowValue = panel.value?.byWindow[selectedWindow]
+
   return (
     <PanelShell
       label="Responsiveness"
@@ -24,7 +32,7 @@ export function ResponsivenessRollupPanel({ panel }: Props) {
       panel={panel}
       noDataMessage="No responsiveness data available across this run."
     >
-      {panel.value ? (
+      {windowValue && windowValue.contributingReposCount > 0 ? (
         <dl className="grid grid-cols-2 gap-3">
           <div>
             <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -34,8 +42,8 @@ export function ResponsivenessRollupPanel({ panel }: Props) {
               />
             </dt>
             <dd className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-              {panel.value.weightedMedianFirstResponseHours !== null
-                ? formatHours(panel.value.weightedMedianFirstResponseHours)
+              {windowValue.weightedMedianFirstResponseHours !== null
+                ? formatHours(windowValue.weightedMedianFirstResponseHours)
                 : '—'}
             </dd>
           </div>
@@ -47,8 +55,8 @@ export function ResponsivenessRollupPanel({ panel }: Props) {
               />
             </dt>
             <dd className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-              {panel.value.weightedMedianPrMergeHours !== null
-                ? formatHours(panel.value.weightedMedianPrMergeHours)
+              {windowValue.weightedMedianPrMergeHours !== null
+                ? formatHours(windowValue.weightedMedianPrMergeHours)
                 : '—'}
             </dd>
           </div>

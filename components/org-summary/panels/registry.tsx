@@ -169,6 +169,9 @@ export function renderPanel(panelId: PanelId, panel: AggregatePanel<unknown>, se
   if (panelId === 'contributor-diversity') {
     return <ContributorDiversityPanel panel={panel as AggregatePanel<never>} externalWindow={selectedWindow as ContributorDiversityWindow | undefined} />
   }
+  if (panelId === 'responsiveness-rollup') {
+    return <ResponsivenessRollupPanel panel={panel as AggregatePanel<never>} externalWindow={selectedWindow as ContributorDiversityWindow | undefined} />
+  }
   const Real = REAL_PANELS[panelId]
   if (Real) {
     return <Real panel={panel as AggregatePanel<never>} />
