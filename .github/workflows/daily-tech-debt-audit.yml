@@ -231,6 +231,7 @@ jobs:
     if: needs.audit.outputs.new-count != '0'
 
     permissions:
+      actions: read
       contents: write
       pull-requests: write
       issues: read
