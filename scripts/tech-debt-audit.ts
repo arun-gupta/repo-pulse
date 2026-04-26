@@ -84,17 +84,17 @@ export function buildChunks(fileData: FileData[]): Array<{ payload: string; file
   let parts: string[] = []
   let chunkBytes = 0
 
-  for (const { relPath, content, size } of fileData) {
+  for (const { relPath, content } of fileData) {
     const entry = `// --- ${relPath} ---\n${content}`
     // If this single file already exceeds the budget, send it alone
-    if (parts.length > 0 && chunkBytes + size > maxBytes) {
+    if (parts.length > 0 && chunkBytes + entry.length > maxBytes) {
       const payload = parts.join('\n\n')
       chunks.push({ payload, fileCount: parts.length, estimatedTokens: Math.round(payload.length * TOKENS_PER_CHAR) })
       parts = []
       chunkBytes = 0
     }
     parts.push(entry)
-    chunkBytes += size
+    chunkBytes += entry.length
   }
 
   if (parts.length > 0) {

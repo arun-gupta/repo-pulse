@@ -52,7 +52,7 @@ describe('buildChunks', () => {
   })
 
   it('places an oversized single file alone in its own chunk', () => {
-    // A 30 000-char file exceeds 24 000 maxBytes; it should still be sent as its own chunk
+    // A 30_000-char file exceeds 24_000 maxBytes; it should still be sent as its own chunk
     const hugeContent = 'y'.repeat(30_000)
     const smallContent = 'z'.repeat(100)
     const fileData = [
@@ -64,6 +64,25 @@ describe('buildChunks', () => {
     expect(chunks.length).toBeGreaterThanOrEqual(2)
     const hugeChunk = chunks.find(c => c.payload.includes('// --- huge.ts ---'))
     expect(hugeChunk).toBeDefined()
+  })
+
+  it('places an oversized file alone when it is the first file', () => {
+    // If the oversized file is first, the parts.length > 0 guard skips the flush,
+    // so it begins a new chunk implicitly — it should still appear in its own chunk
+    const hugeContent = 'y'.repeat(30_000)
+    const smallContent = 'z'.repeat(100)
+    const fileData = [
+      { relPath: 'huge.ts', content: hugeContent, size: 30_000 },
+      { relPath: 'small.ts', content: smallContent, size: 100 },
+    ]
+    const chunks = buildChunks(fileData)
+    expect(chunks.length).toBeGreaterThanOrEqual(2)
+    // huge.ts must appear in one chunk, small.ts in another
+    const hugeChunk = chunks.find(c => c.payload.includes('// --- huge.ts ---'))
+    const smallChunk = chunks.find(c => c.payload.includes('// --- small.ts ---'))
+    expect(hugeChunk).toBeDefined()
+    expect(smallChunk).toBeDefined()
+    expect(hugeChunk).not.toBe(smallChunk)
   })
 
   it('fileCount matches the number of files in each chunk', () => {
