@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { buildChunks } from './tech-debt-audit'
+import { describe, expect, it, vi } from 'vitest'
+import { buildChunks, parseFindings } from './tech-debt-audit'
 
 // MAX_CHUNK_TOKENS = 6_000, TOKENS_PER_CHAR = 1/4
 // → maxBytes = 6_000 / 0.25 = 24_000 chars per chunk
@@ -102,5 +102,55 @@ describe('buildChunks', () => {
     const chunks = buildChunks(fileData)
     const totalFiles = chunks.reduce((sum, c) => sum + c.fileCount, 0)
     expect(totalFiles).toBe(5)
+  })
+})
+
+describe('parseFindings', () => {
+  const sampleFinding = {
+    id: 'DRY-1',
+    category: 'DRY',
+    file: 'lib/foo.ts',
+    lineStart: 1,
+    lineEnd: 10,
+    description: 'Duplicated logic',
+    severity: 'fix-soon',
+    recommendation: 'Extract a shared helper',
+  }
+
+  it('parses plain JSON array without fences', () => {
+    const raw = JSON.stringify([sampleFinding])
+    const result = parseFindings(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('DRY-1')
+  })
+
+  it('strips ```json fences before parsing', () => {
+    const raw = '```json\n' + JSON.stringify([sampleFinding]) + '\n```'
+    const result = parseFindings(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0].category).toBe('DRY')
+  })
+
+  it('strips plain ``` fences before parsing', () => {
+    const raw = '```\n' + JSON.stringify([sampleFinding]) + '\n```'
+    const result = parseFindings(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0].file).toBe('lib/foo.ts')
+  })
+
+  it('returns empty array and emits a warning for malformed JSON', () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    const result = parseFindings('not valid json {{{')
+    expect(result).toEqual([])
+    expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('could not parse findings JSON'))
+    stderrSpy.mockRestore()
+  })
+
+  it('returns empty array for malformed JSON wrapped in fences', () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    const raw = '```json\nbroken { json\n```'
+    const result = parseFindings(raw)
+    expect(result).toEqual([])
+    stderrSpy.mockRestore()
   })
 })
