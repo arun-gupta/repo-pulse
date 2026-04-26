@@ -17,7 +17,7 @@ env:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: Check out repository
@@ -75,9 +75,13 @@ jobs:
 
       - name: Format issue body
         if: steps.diff.outputs.new-count != '0'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          python3 - <<'PYEOF' > /tmp/issue-body.md
-          import json
+          python3 - "$RUN_URL" <<'PYEOF' > /tmp/issue-body.md
+          import json, sys
+
+          run_url = sys.argv[1]
 
           with open('findings.json') as f:
               data = json.load(f)
@@ -86,29 +90,55 @@ jobs:
           date = data.get('date', '')
           total = len(findings)
 
-          icons = {'fix-now': '🚨', 'fix-soon': '⚠️', 'low-priority': 'ℹ️'}
-          lines = [
-              f'Automated tech-debt audit — **{total} new finding{"s" if total != 1 else ""}** detected on {date}.',
-              '',
-              '_Grouped by severity, then category. New findings only (deduped via fingerprint)._',
-          ]
+          SEVERITIES = ['fix-now', 'fix-soon', 'low-priority']
+          ICONS = {'fix-now': '🚨', 'fix-soon': '⚠️', 'low-priority': 'ℹ️'}
+          TOP_N = 5  # fix-now items shown inline; rest in artifact
 
-          for sev in ['fix-now', 'fix-soon', 'low-priority']:
-              by_sev = [f for f in findings if f['severity'] == sev]
-              if not by_sev:
-                  continue
-              lines.append(f'\n## {icons.get(sev, "")} {sev} ({len(by_sev)})\n')
-              cats: dict[str, list] = {}
-              for item in by_sev:
-                  cats.setdefault(item['category'], []).append(item)
-              for cat, items in cats.items():
-                  lines.append(f'### {cat}\n')
-                  for item in items:
-                      lines.append(
-                          f'- **{item["id"]}** `{item["file"]}:{item["lineStart"]}` {item["description"]}'
-                      )
-                      lines.append(f'  > {item["recommendation"]}')
-                  lines.append('')
+          counts = {s: sum(1 for f in findings if f['severity'] == s) for s in SEVERITIES}
+
+          lines = [
+              f'Automated tech-debt audit — **{total} finding{"s" if total != 1 else ""}** detected on {date}.',
+              '',
+              '## Summary',
+              '',
+              '| Severity | Count |',
+              '|---|---|',
+          ]
+          for sev in SEVERITIES:
+              lines.append(f'| {ICONS[sev]} {sev} | {counts[sev]} |')
+
+          # Category breakdown table
+          cats: dict[str, dict[str, int]] = {}
+          for f in findings:
+              cats.setdefault(f['category'], {s: 0 for s in SEVERITIES})
+              cats[f['category']][f['severity']] += 1
+
+          lines += [
+              '',
+              '## By category',
+              '',
+              '| Category | 🚨 fix-now | ⚠️ fix-soon | ℹ️ low-priority |',
+              '|---|---|---|---|',
+          ]
+          for cat, sev_counts in sorted(cats.items()):
+              lines.append(f'| {cat} | {sev_counts["fix-now"]} | {sev_counts["fix-soon"]} | {sev_counts["low-priority"]} |')
+
+          # Top fix-now items inline
+          fix_now = [f for f in findings if f['severity'] == 'fix-now']
+          if fix_now:
+              shown = fix_now[:TOP_N]
+              lines += ['', f'## 🚨 Top fix-now (showing {len(shown)} of {len(fix_now)})', '']
+              for item in shown:
+                  lines.append(f'- **{item["id"]}** `{item["file"]}:{item["lineStart"]}` — {item["description"]}')
+                  lines.append(f'  > {item["recommendation"]}')
+              if len(fix_now) > TOP_N:
+                  lines.append(f'\n_...and {len(fix_now) - TOP_N} more. See the full findings in the workflow artifact._')
+
+          lines += [
+              '',
+              '---',
+              f'📎 [Full findings.json]({run_url}) (workflow artifact, 7-day retention)',
+          ]
 
           print('\n'.join(lines))
           PYEOF
@@ -151,6 +181,7 @@ jobs:
         run: |
           mkdir -p .artifact
           jq '.fingerprints' findings.json > .artifact/fingerprint.json
+          cp findings.json .artifact/findings.json
           ISSUE="${{ steps.create-issue.outputs.issue-number }}"
           if [ -z "$ISSUE" ]; then
             ISSUE="${{ steps.diff.outputs.prev-issue }}"
