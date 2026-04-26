@@ -11,7 +11,9 @@ import { readdirSync, readFileSync, writeFileSync } from 'fs'
 import { join, relative } from 'path'
 
 const ROOT = process.cwd()
-const MAX_PAYLOAD_BYTES = 200 * 1024
+// ~6 000 tokens of source text per chunk, leaving headroom for the prompt template and response
+const MAX_CHUNK_TOKENS = 6_000
+const TOKENS_PER_CHAR = 1 / 4 // rough heuristic: 1 token ≈ 4 chars
 
 interface Finding {
   id: string
@@ -54,7 +56,13 @@ function collectFiles(): string[] {
   return SOURCE_DIRS.flatMap(dir => walkDir(join(ROOT, dir)))
 }
 
-function buildPayload(files: string[]): string {
+interface FileData {
+  relPath: string
+  content: string
+  size: number
+}
+
+function loadFiles(files: string[]): FileData[] {
   const fileData = files.flatMap(filePath => {
     try {
       const content = readFileSync(filePath, 'utf8')
@@ -63,18 +71,37 @@ function buildPayload(files: string[]): string {
       return []
     }
   })
-
   // Largest files first — biggest debt risk and god-module signal
   fileData.sort((a, b) => b.size - a.size)
+  return fileData
+}
 
-  const parts: string[] = []
-  let total = 0
+function buildChunks(fileData: FileData[]): Array<{ payload: string; fileCount: number; estimatedTokens: number }> {
+  const chunks: Array<{ payload: string; fileCount: number; estimatedTokens: number }> = []
+  const maxBytes = MAX_CHUNK_TOKENS / TOKENS_PER_CHAR
+
+  let parts: string[] = []
+  let chunkBytes = 0
+
   for (const { relPath, content, size } of fileData) {
-    if (total + size > MAX_PAYLOAD_BYTES) break
-    parts.push(`// --- ${relPath} ---\n${content}`)
-    total += size
+    const entry = `// --- ${relPath} ---\n${content}`
+    // If this single file already exceeds the budget, send it alone
+    if (parts.length > 0 && chunkBytes + size > maxBytes) {
+      const payload = parts.join('\n\n')
+      chunks.push({ payload, fileCount: parts.length, estimatedTokens: Math.round(payload.length * TOKENS_PER_CHAR) })
+      parts = []
+      chunkBytes = 0
+    }
+    parts.push(entry)
+    chunkBytes += size
   }
-  return parts.join('\n\n')
+
+  if (parts.length > 0) {
+    const payload = parts.join('\n\n')
+    chunks.push({ payload, fileCount: parts.length, estimatedTokens: Math.round(payload.length * TOKENS_PER_CHAR) })
+  }
+
+  return chunks
 }
 
 const AUDIT_PROMPT = `You are a senior TypeScript/Next.js code quality auditor.
@@ -135,6 +162,10 @@ function fingerprint(f: Finding): string {
   return createHash('sha256').update(f.file + f.lineStart + f.category).digest('hex')
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 async function main(): Promise<void> {
   const pat = process.env.COPILOT_TOKEN
   if (!pat) {
@@ -146,22 +177,47 @@ async function main(): Promise<void> {
   const files = collectFiles()
   process.stderr.write(`  ${files.length} files found\n`)
 
-  const payload = buildPayload(files)
-  process.stderr.write(`  Payload: ${payload.length} bytes\n`)
+  const fileData = loadFiles(files)
+  const chunks = buildChunks(fileData)
+  process.stderr.write(`  Split into ${chunks.length} chunk(s)\n`)
 
   process.stderr.write('Running Copilot analysis...\n')
-  const findings = await callCopilot(pat, payload)
-  process.stderr.write(`  ${findings.length} findings returned\n`)
+
+  const seen = new Set<string>()
+  const allFindings: Finding[] = []
+
+  for (let i = 0; i < chunks.length; i++) {
+    const { payload, fileCount, estimatedTokens } = chunks[i]
+    process.stderr.write(`  Chunk ${i + 1}/${chunks.length}: ${fileCount} files, ~${estimatedTokens} tokens\n`)
+
+    if (i > 0) {
+      // Small delay between requests to avoid 429 rate-limit errors
+      await sleep(500)
+    }
+
+    const findings = await callCopilot(pat, payload)
+    process.stderr.write(`    ${findings.length} findings returned\n`)
+
+    for (const f of findings) {
+      const fp = fingerprint(f)
+      if (!seen.has(fp)) {
+        seen.add(fp)
+        allFindings.push(f)
+      }
+    }
+  }
+
+  process.stderr.write(`  ${allFindings.length} unique findings total\n`)
 
   const output = {
     date: new Date().toISOString().slice(0, 10),
-    findings,
-    fingerprints: findings.map(fingerprint),
+    findings: allFindings,
+    fingerprints: allFindings.map(fingerprint),
   }
 
   const outputPath = process.env.FINDINGS_OUTPUT ?? 'findings.json'
   writeFileSync(outputPath, JSON.stringify(output, null, 2))
-  process.stderr.write(`Wrote ${findings.length} findings to ${outputPath}\n`)
+  process.stderr.write(`Wrote ${allFindings.length} findings to ${outputPath}\n`)
 }
 
 main().catch(err => {
