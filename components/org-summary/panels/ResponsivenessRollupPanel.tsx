@@ -32,7 +32,11 @@ export function ResponsivenessRollupPanel({ panel, externalWindow }: Props) {
       panel={panel}
       noDataMessage="No responsiveness data available across this run."
     >
-      {windowValue && windowValue.contributingReposCount > 0 ? (
+      {!windowValue || windowValue.contributingReposCount === 0 ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          No responsiveness data for the selected window.
+        </p>
+      ) : (
         <dl className="grid grid-cols-2 gap-3">
           <div>
             <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -61,7 +65,7 @@ export function ResponsivenessRollupPanel({ panel, externalWindow }: Props) {
             </dd>
           </div>
         </dl>
-      ) : null}
+      )}
     </PanelShell>
   )
 }
