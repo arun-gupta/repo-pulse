@@ -133,7 +133,36 @@ Output ONLY a JSON array — no prose, no markdown fences:
   }
 ]`
 
-async function callCopilot(pat: string, payload: string): Promise<Finding[]> {
+const MAX_RETRIES = 3
+
+function parseRetryAfter(value: string | null): number {
+  if (!value) return 60
+  const seconds = Number(value)
+  if (!isNaN(seconds)) return seconds
+  // RFC 7231 HTTP-date format (e.g. "Wed, 21 Oct 2015 07:28:00 GMT")
+  const date = new Date(value)
+  if (!isNaN(date.getTime())) {
+    return Math.max(0, Math.ceil((date.getTime() - Date.now()) / 1000))
+  }
+  return 60
+}
+
+/**
+ * Strip optional markdown code fences and parse model output as a Finding array.
+ * Returns [] (with a warning) if the JSON is malformed.
+ */
+export function parseFindings(raw: string): Finding[] {
+  // Strip markdown code fences the model sometimes wraps around JSON
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  try {
+    return JSON.parse(cleaned) as Finding[]
+  } catch {
+    process.stderr.write(`  Warning: could not parse findings JSON from model response; skipping chunk\n`)
+    return []
+  }
+}
+
+async function callCopilot(pat: string, payload: string, attempt = 0): Promise<Finding[]> {
   const res = await fetch('https://models.inference.ai.azure.com/chat/completions', {
     method: 'POST',
     headers: {
@@ -153,6 +182,14 @@ async function callCopilot(pat: string, payload: string): Promise<Finding[]> {
   })
 
   if (!res.ok) {
+    if ((res.status === 429 || res.status === 503) && attempt < MAX_RETRIES) {
+      const wait = parseRetryAfter(res.headers.get('Retry-After'))
+      process.stderr.write(
+        `  Rate limited (${res.status}). Waiting ${wait}s before retrying (attempt ${attempt + 1} of ${MAX_RETRIES})...\n`,
+      )
+      await sleep(wait * 1000)
+      return callCopilot(pat, payload, attempt + 1)
+    }
     throw new Error(`Copilot API error: ${res.status} ${await res.text()}`)
   }
 
@@ -160,12 +197,7 @@ async function callCopilot(pat: string, payload: string): Promise<Finding[]> {
     choices: Array<{ message: { content: string } }>
   }
   const raw = data.choices[0]?.message?.content?.trim() ?? '[]'
-  try {
-    return JSON.parse(raw) as Finding[]
-  } catch {
-    process.stderr.write(`  Warning: could not parse findings JSON from model response; skipping chunk\n`)
-    return []
-  }
+  return parseFindings(raw)
 }
 
 function fingerprint(f: Finding): string {
@@ -201,8 +233,9 @@ async function main(): Promise<void> {
     process.stderr.write(`  Chunk ${i + 1}/${chunks.length}: ${fileCount} files, ~${estimatedTokens} tokens\n`)
 
     if (i > 0) {
-      // Small delay between requests to avoid 429 rate-limit errors
-      await sleep(500)
+      // GitHub Models free tier: 40 000 tokens/min. Each chunk is ~6 000 tokens in + prompt +
+      // response, so ~7 500 tokens/request → max ~5 requests/min → need ≥12 s between requests.
+      await sleep(12_000)
     }
 
     const findings = await callCopilot(pat, payload)
