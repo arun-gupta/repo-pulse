@@ -14,7 +14,6 @@ import { readFileSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 
 const ROOT = process.cwd()
-const MAX_FIX_PRS = 3
 const MAX_FILE_CHARS = 24_000 // stay within model token budget
 
 interface Finding {
@@ -97,6 +96,119 @@ ${content}`
   const data = (await res.json()) as { choices: Array<{ message: { content: string } }> }
   const raw = data.choices[0]?.message?.content?.trim() ?? ''
   return stripFences(raw) || null
+}
+
+async function openSourceFixPR(
+  pat: string,
+  sourceCandidates: Finding[],
+  baseBranch: string,
+  date: string,
+  issueNumber: string,
+): Promise<void> {
+  if (sourceCandidates.length === 0) return
+
+  const branch = `tech-debt-autofix/${date}-source-fixes`
+
+  try {
+    run(`git ls-remote --exit-code origin refs/heads/${branch}`)
+    process.stderr.write(`  Source-fix branch ${branch} already exists, skipping\n`)
+    return
+  } catch {
+    // Branch doesn't exist — proceed
+  }
+
+  // Group by file
+  const byFile = new Map<string, Finding[]>()
+  for (const f of sourceCandidates) {
+    const arr = byFile.get(f.file) ?? []
+    arr.push(f)
+    byFile.set(f.file, arr)
+  }
+
+  process.stderr.write(`\n  Generating source fixes for ${byFile.size} file(s)...\n`)
+
+  const patched: Array<{ filePath: string; fixedContent: string; findings: Finding[] }> = []
+
+  let i = 0
+  for (const [filePath, findings] of byFile) {
+    if (i > 0) await sleep(12_000)
+    process.stderr.write(`  [${i + 1}/${byFile.size}] ${filePath} (${findings.length} finding(s))\n`)
+
+    const fixedContent = await generateFix(pat, filePath, findings)
+    if (!fixedContent) {
+      process.stderr.write(`  Skipping ${filePath} — no fix generated\n`)
+      i++
+      continue
+    }
+
+    const original = readFileSync(filePath, 'utf8')
+    if (fixedContent === original) {
+      process.stderr.write(`  Skipping ${filePath} — model returned identical content\n`)
+      i++
+      continue
+    }
+
+    patched.push({ filePath, fixedContent, findings })
+    i++
+  }
+
+  if (patched.length === 0) {
+    process.stderr.write('  No source fixes to commit, skipping PR\n')
+    return
+  }
+
+  try {
+    run(`git checkout -b ${branch}`)
+
+    for (const { filePath, fixedContent } of patched) {
+      writeFileSync(filePath, fixedContent, 'utf8')
+      run(`git add "${filePath}"`)
+    }
+
+    const totalFindings = patched.reduce((n, p) => n + p.findings.length, 0)
+    run(`git commit -m "fix(tech-debt): ${totalFindings} high-confidence source fix(es) across ${patched.length} file(s)"`)
+    run(`git push origin ${branch}`)
+
+    const findingLines = patched
+      .flatMap(({ filePath: fp, findings }) =>
+        findings.map(f => `- **${f.id}** \`${fp}:${f.lineStart}\` — ${f.description}`),
+      )
+      .join('\n')
+
+    const issueRef = issueNumber ? `\nCloses part of #${issueNumber}` : ''
+    const prBody = [
+      `Automated source fixes for **${totalFindings}** high-confidence tech-debt finding(s) across **${patched.length}** file(s) (DRY / CONSISTENCY / PATTERNS).`,
+      '',
+      findingLines,
+      issueRef,
+      '',
+      '> ⚠️ Auto-generated — review the diff carefully before merging.',
+      '',
+      '🤖 Generated with [Claude Code](https://claude.com/claude-code)',
+    ]
+      .join('\n')
+      .trim()
+
+    execSync(
+      `gh pr create \
+        --title "fix(tech-debt): ${totalFindings} source fix(es) across ${patched.length} file(s)" \
+        --body-file - \
+        --label techdebt \
+        --label automated \
+        --base ${baseBranch}`,
+      { cwd: ROOT, input: prBody, stdio: ['pipe', 'inherit', 'inherit'], encoding: 'utf8' },
+    )
+
+    process.stderr.write(`  Source-fix PR opened (${patched.length} file(s), ${totalFindings} finding(s))\n`)
+  } catch (err) {
+    process.stderr.write(`  Error creating source-fix PR: ${String(err)}\n`)
+  } finally {
+    try {
+      run(`git checkout ${baseBranch}`)
+    } catch {
+      run(`git checkout -f ${baseBranch}`)
+    }
+  }
 }
 
 function testFilePath(sourceFile: string): string {
@@ -294,106 +406,16 @@ async function main(): Promise<void> {
     return
   }
 
-  // Group source candidates by file; take top MAX_FIX_PRS files (most findings first)
-  const byFile = new Map<string, Finding[]>()
-  for (const f of sourceCandidates) {
-    const existing = byFile.get(f.file) ?? []
-    existing.push(f)
-    byFile.set(f.file, existing)
-  }
-
-  const topFiles = [...byFile.entries()]
-    .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, MAX_FIX_PRS)
-
   // Configure git identity for CI commits
   run('git config user.email "github-actions[bot]@users.noreply.github.com"')
   run('git config user.name "github-actions[bot]"')
 
-  // --- Source-patch PRs (DRY / CONSISTENCY / PATTERNS) ---
-  for (let i = 0; i < topFiles.length; i++) {
-    const [filePath, findings] = topFiles[i]
-    const primaryId = findings[0].id.toLowerCase().replace(/[^a-z0-9-]/g, '-')
-    const branch = `tech-debt-autofix/${date}-${primaryId}`
+  // --- Consolidated source-fix PR (all DRY / CONSISTENCY / PATTERNS findings) ---
+  await openSourceFixPR(pat, sourceCandidates, baseBranch, date, issueNumber)
 
-    process.stderr.write(`\n  [${i + 1}/${topFiles.length}] ${filePath} (${findings.length} finding(s))\n`)
-
-    if (i > 0) await sleep(12_000) // respect rate limit between API calls
-
-    const fixedContent = await generateFix(pat, filePath, findings)
-    if (!fixedContent) {
-      process.stderr.write(`  Skipping ${filePath} — no fix generated\n`)
-      continue
-    }
-
-    const original = readFileSync(filePath, 'utf8')
-    if (fixedContent === original) {
-      process.stderr.write(`  Skipping ${filePath} — model returned identical content\n`)
-      continue
-    }
-
-    // Check if branch already exists remotely
-    try {
-      run(`git ls-remote --exit-code origin refs/heads/${branch}`)
-      process.stderr.write(`  Branch ${branch} already exists, skipping\n`)
-      continue
-    } catch {
-      // Branch doesn't exist — proceed
-    }
-
-    try {
-      run(`git checkout -b ${branch}`)
-      writeFileSync(filePath, fixedContent, 'utf8')
-      run(`git add "${filePath}"`)
-
-      const shortDesc = findings[0].description.slice(0, 60)
-      run(`git commit -m "fix(tech-debt): ${findings[0].id} — ${shortDesc}"`)
-      run(`git push origin ${branch}`)
-
-      const findingLines = findings
-        .map(f => `- **${f.id}** \`${f.file}:${f.lineStart}\` — ${f.description}`)
-        .join('\n')
-
-      const issueRef = issueNumber ? `\nCloses part of #${issueNumber}` : ''
-      const prBody = [
-        `Automated fix for **${findings.length}** high-confidence tech-debt finding(s) in \`${filePath}\`.`,
-        '',
-        findingLines,
-        issueRef,
-        '',
-        '> ⚠️ Auto-generated — review the diff carefully before merging.',
-        '',
-        '🤖 Generated with [Claude Code](https://claude.com/claude-code)',
-      ]
-        .join('\n')
-        .trim()
-
-      execSync(
-        `gh pr create \
-          --title "fix(tech-debt): ${findings[0].id} — ${shortDesc}" \
-          --body-file - \
-          --label techdebt \
-          --label automated \
-          --base ${baseBranch}`,
-        { cwd: ROOT, input: prBody, stdio: ['pipe', 'inherit', 'inherit'], encoding: 'utf8' },
-      )
-
-      process.stderr.write(`  PR opened for ${filePath}\n`)
-    } catch (err) {
-      process.stderr.write(`  Error processing ${filePath}: ${String(err)}\n`)
-    } finally {
-      // Return to base branch for next iteration
-      try {
-        run(`git checkout ${baseBranch}`)
-      } catch {
-        run(`git checkout -f ${baseBranch}`)
-      }
-    }
-  }
-
-  // --- Consolidated missing-tests PR (all MISSING_TESTS findings in one PR) ---
-  if (topFiles.length > 0 && testCandidates.length > 0) {
-    await sleep(12_000) // respect rate limit after source-fix loop
+  // --- Consolidated missing-tests PR (all MISSING_TESTS findings) ---
+  if (sourceCandidates.length > 0 && testCandidates.length > 0) {
+    await sleep(12_000) // respect rate limit between the two PR jobs
   }
   await openMissingTestsPR(pat, testCandidates, baseBranch, date, issueNumber)
 }
