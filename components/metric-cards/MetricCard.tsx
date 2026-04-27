@@ -44,12 +44,11 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       return false
     }
   })
+  useEffect(() => {
+    try { localStorage.setItem(localStorageKey, String(detailsExpanded)) } catch { /* storage unavailable */ }
+  }, [detailsExpanded, localStorageKey])
   const toggleDetails = () => {
-    setDetailsExpanded((prev) => {
-      const next = !prev
-      try { localStorage.setItem(localStorageKey, String(next)) } catch { /* storage unavailable */ }
-      return next
-    })
+    setDetailsExpanded((prev) => !prev)
   }
 
   const handleCopyScore = () => {
@@ -141,20 +140,21 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
 
   return (
     <article className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900" data-testid={`metric-card-${card.repo}`}>
-      <button
-        type="button"
-        onClick={() => setPaneCollapsed((prev) => !prev)}
-        className="flex w-full items-center gap-2 text-left"
-        aria-expanded={!paneCollapsed}
-      >
-        <CollapseChevron expanded={!paneCollapsed} />
-        <h3 className="font-semibold text-slate-900 dark:text-slate-100">{card.repo}</h3>
+      <div className="flex w-full items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setPaneCollapsed((prev) => !prev)}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          aria-expanded={!paneCollapsed}
+        >
+          <CollapseChevron expanded={!paneCollapsed} />
+          <h3 className="truncate font-semibold text-slate-900 dark:text-slate-100">{card.repo}</h3>
+        </button>
         {aspirantResult ? (
           <span
             data-testid={`cncf-badge-${card.repo}`}
-            className="ml-1 shrink-0"
+            className="shrink-0"
             aria-label={`CNCF Sandbox Readiness: ${aspirantResult.readinessScore} / 100`}
-            onClick={(e) => e.stopPropagation()}
           >
             <CNCFReadinessPill
               aspirantResult={aspirantResult}
@@ -165,8 +165,8 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
             />
           </span>
         ) : null}
-        <p className="ml-auto text-xs text-slate-400 dark:text-slate-500">Created: {card.createdAtLabel}</p>
-      </button>
+        <p className="ml-auto shrink-0 text-xs text-slate-400 dark:text-slate-500">Created: {card.createdAtLabel}</p>
+      </div>
       {!paneCollapsed ? (
       <>
       <p className={`mt-1 line-clamp-2 text-xs italic text-slate-400 dark:text-slate-500 ${card.description === '—' ? '' : 'not-italic text-slate-500 dark:text-slate-400'}`}>{card.description === '—' ? 'No description found' : card.description}</p>
@@ -262,8 +262,9 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
       ) : null}
 
       {/* Secondary tier: health-dimension tiles, lenses, raw stats, recommendations */}
-      {detailsExpanded ? (
-        <div id={`secondary-${card.repo}`}>
+      <div id={`secondary-${card.repo}`}>
+        {detailsExpanded ? (
+        <>
           {scoreCells.length > 0 ? (
             <div className={`mt-1.5 grid grid-cols-2 gap-1.5 ${SCORECARD_GRID_COLS[scoreCells.length] ?? 'sm:grid-cols-5'}`}>
               {scoreCells.map((cell) => (
@@ -332,8 +333,9 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
               </p>
             </div>
           ) : null}
-        </div>
-      ) : null}
+        </>
+        ) : null}
+      </div>
       </>
       ) : null}
     </article>

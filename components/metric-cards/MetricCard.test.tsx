@@ -39,6 +39,10 @@ function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
 }
 
 describe('MetricCard', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
   it('renders unified scorecard with all 6 dimensions', () => {
     const card = buildMetricCardViewModels([buildResult()])[0]!
 
