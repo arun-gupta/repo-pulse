@@ -22,7 +22,9 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
   const [paneCollapsed, setPaneCollapsed] = useState(false)
   const [copied, setCopied] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current) }, [])
+  useEffect(() => {
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current) }
+  }, [])
   // Session-scoped override for the solo-project scoring surface. null =
   // use the auto-detected profile from the precomputed health score.
   const [profileOverride, setProfileOverride] = useState<HealthScoreProfile | null>(null)
