@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { CollapseChevron } from '@/components/shared/CollapseChevron'
 import type { LensReadout, MetricCardViewModel } from '@/lib/metric-cards/view-model'
 import { formatPercentileLabel } from '@/lib/scoring/config-loader'
@@ -21,6 +21,8 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
 
   const [paneCollapsed, setPaneCollapsed] = useState(false)
   const [copied, setCopied] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current) }, [])
   // Session-scoped override for the solo-project scoring surface. null =
   // use the auto-detected profile from the precomputed health score.
   const [profileOverride, setProfileOverride] = useState<HealthScoreProfile | null>(null)
@@ -32,10 +34,16 @@ export function MetricCard({ card, activeTag, onTagChange }: MetricCardProps) {
     const visibleBuckets = hs.buckets.filter((b) => !b.hidden && b.percentile !== null)
     const bucketStr = visibleBuckets.map((b) => `${b.name}: ${b.label.replace(' percentile', '')}`).join(', ')
     const text = `RepoPulse: ${card.repo} — ${hs.label}${bucketStr ? ` (${bucketStr})` : ''}`
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }).catch(() => {/* clipboard unavailable */})
+    try {
+      if (!navigator.clipboard?.writeText) return
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true)
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        timeoutRef.current = setTimeout(() => setCopied(false), 2000)
+      }).catch(() => {/* clipboard unavailable */})
+    } catch {
+      /* clipboard unavailable */
+    }
   }
   const isSolo = hs.profile === 'solo'
   const autoSolo = card.healthScore.soloDetection.isSolo

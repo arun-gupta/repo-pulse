@@ -277,18 +277,21 @@ describe('MetricCard', () => {
 
     it('shows "Copied!" feedback after click and resets after 2s', async () => {
       vi.useFakeTimers()
-      const card = buildMetricCardViewModels([buildResult()])[0]!
-      render(<MetricCard card={card} />)
+      try {
+        const card = buildMetricCardViewModels([buildResult()])[0]!
+        render(<MetricCard card={card} />)
 
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /copy score to clipboard/i }))
-      })
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: /copy score to clipboard/i }))
+        })
 
-      expect(screen.getByText('Copied!')).toBeInTheDocument()
+        expect(screen.getByText('Copied!')).toBeInTheDocument()
 
-      await act(async () => { vi.advanceTimersByTime(2000) })
-      expect(screen.queryByText('Copied!')).not.toBeInTheDocument()
-      vi.useRealTimers()
+        await act(async () => { vi.advanceTimersByTime(2000) })
+        expect(screen.queryByText('Copied!')).not.toBeInTheDocument()
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     it('omits hidden buckets from the copy string for solo repos', async () => {
