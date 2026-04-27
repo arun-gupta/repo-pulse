@@ -4,19 +4,19 @@
  * Usage (in CI):
  *   COPILOT_TOKEN=<pat> TECH_DEBT_ISSUE=<issue#> npx tsx scripts/tech-debt-fix.ts
  *
- * Reads findings.json, picks the top MAX_FIX_PRS files with high-confidence
- * fix-now findings, asks the model to patch each file, then commits and opens
- * a draft PR per file referencing the tech-debt issue.
+ * Reads findings.json, partitions high-confidence fix-now findings into two
+ * buckets (source fixes: DRY/CONSISTENCY/PATTERNS; missing tests: MISSING_TESTS),
+ * and opens one consolidated PR per non-empty bucket.
  */
 
 import { execSync } from 'child_process'
-import { readFileSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 
 const ROOT = process.cwd()
 const MAX_FILE_CHARS = 24_000 // stay within model token budget
 
-interface Finding {
+export interface Finding {
   id: string
   category: string
   file: string
@@ -98,7 +98,7 @@ ${content}`
   return stripFences(raw) || null
 }
 
-async function openSourceFixPR(
+export async function openSourceFixPR(
   pat: string,
   sourceCandidates: Finding[],
   baseBranch: string,
@@ -211,7 +211,7 @@ async function openSourceFixPR(
   }
 }
 
-function testFilePath(sourceFile: string): string {
+export function testFilePath(sourceFile: string): string {
   // lib/foo/bar.ts → lib/foo/bar.test.ts
   return sourceFile.replace(/\.tsx?$/, '') + '.test.ts'
 }
@@ -270,7 +270,7 @@ ${content}`
   return stripFences(raw) || null
 }
 
-async function openMissingTestsPR(
+export async function openMissingTestsPR(
   pat: string,
   testCandidates: Finding[],
   baseBranch: string,
@@ -320,21 +320,34 @@ async function openMissingTestsPR(
   try {
     run(`git checkout -b ${branch}`)
 
-    for (const { testPath, content } of generated) {
+    const committed: Array<{ testPath: string; content: string; sourceFile: string; findings: Finding[] }> = []
+    for (const entry of generated) {
+      const { testPath, content } = entry
+      if (existsSync(testPath)) {
+        process.stderr.write(`  Skipping ${testPath} — file already exists\n`)
+        continue
+      }
       writeFileSync(testPath, content, 'utf8')
       run(`git add "${testPath}"`)
+      committed.push(entry)
     }
 
-    run(`git commit -m "test(tech-debt): add missing unit tests for ${generated.length} module(s)"`)
+    if (committed.length === 0) {
+      process.stderr.write('  All test paths already exist, skipping PR\n')
+      return
+    }
+
+    run(`git commit -m "test(tech-debt): add missing unit tests for ${committed.length} module(s)"`)
     run(`git push origin ${branch}`)
 
-    const fileLines = generated
+    const totalFindings = committed.reduce((n, g) => n + g.findings.length, 0)
+    const fileLines = committed
       .map(({ testPath, findings }) => `- \`${testPath}\` — covers ${findings.map(f => f.id).join(', ')}`)
       .join('\n')
 
     const issueRef = issueNumber ? `\nCloses part of #${issueNumber}` : ''
     const prBody = [
-      `Automated test generation for **${testCandidates.length}** high-confidence missing-test finding(s) across **${generated.length}** module(s).`,
+      `Automated test generation for **${totalFindings}** high-confidence missing-test finding(s) across **${committed.length}** module(s).`,
       '',
       '## Test files added',
       '',
@@ -350,7 +363,7 @@ async function openMissingTestsPR(
 
     execSync(
       `gh pr create \
-        --title "test(tech-debt): add missing unit tests (${testCandidates.length} finding(s))" \
+        --title "test(tech-debt): add missing unit tests (${totalFindings} finding(s))" \
         --body-file - \
         --label techdebt \
         --label automated \
@@ -358,7 +371,7 @@ async function openMissingTestsPR(
       { cwd: ROOT, input: prBody, stdio: ['pipe', 'inherit', 'inherit'], encoding: 'utf8' },
     )
 
-    process.stderr.write(`  Missing-tests PR opened (${generated.length} test file(s))\n`)
+    process.stderr.write(`  Missing-tests PR opened (${committed.length} test file(s))\n`)
   } catch (err) {
     process.stderr.write(`  Error creating missing-tests PR: ${String(err)}\n`)
   } finally {
@@ -367,6 +380,19 @@ async function openMissingTestsPR(
     } catch {
       run(`git checkout -f ${baseBranch}`)
     }
+  }
+}
+
+const SOURCE_FIX_CATEGORIES = new Set(['DRY', 'CONSISTENCY', 'PATTERNS'])
+
+export function partitionFindings(findings: Finding[]): {
+  sourceCandidates: Finding[]
+  testCandidates: Finding[]
+} {
+  const isHighFixNow = (f: Finding) => f.confidence === 'high' && f.severity === 'fix-now'
+  return {
+    sourceCandidates: findings.filter(f => isHighFixNow(f) && SOURCE_FIX_CATEGORIES.has(f.category)),
+    testCandidates: findings.filter(f => isHighFixNow(f) && f.category === 'MISSING_TESTS'),
   }
 }
 
@@ -386,15 +412,7 @@ async function main(): Promise<void> {
     findings: Finding[]
   }
 
-  // Source-patch categories: in-place edits are the correct fix
-  const SOURCE_FIX_CATEGORIES = new Set(['DRY', 'CONSISTENCY', 'PATTERNS'])
-
-  const sourceCandidates = (data.findings ?? []).filter(
-    f => f.confidence === 'high' && f.severity === 'fix-now' && SOURCE_FIX_CATEGORIES.has(f.category),
-  )
-  const testCandidates = (data.findings ?? []).filter(
-    f => f.confidence === 'high' && f.severity === 'fix-now' && f.category === 'MISSING_TESTS',
-  )
+  const { sourceCandidates, testCandidates } = partitionFindings(data.findings ?? [])
 
   process.stderr.write(
     `  ${sourceCandidates.length} source-fix candidates (DRY/CONSISTENCY/PATTERNS), ` +
