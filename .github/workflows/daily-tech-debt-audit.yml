@@ -17,7 +17,7 @@ env:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     outputs:
       new-count: ${{ steps.diff.outputs.new-count }}
@@ -233,7 +233,7 @@ jobs:
 
   auto-fix:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     needs: audit
     if: needs.audit.outputs.new-count != '0'
 

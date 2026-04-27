@@ -237,18 +237,24 @@ async function main(): Promise<void> {
   const seen = new Set<string>()
   const allFindings: Finding[] = []
 
+  // GitHub Models free tier: 40 000 tokens/min. Each chunk is ~6 000 tokens in + prompt +
+  // response ≈ 7 500 tokens/request → need ≥12 s between call *starts*.
+  // Sleep runs after the call and subtracts elapsed time so API latency is not double-counted.
+  const INTER_REQUEST_MS = 12_000
+
   for (let i = 0; i < chunks.length; i++) {
     const { payload, fileCount, estimatedTokens } = chunks[i]
     process.stderr.write(`  Chunk ${i + 1}/${chunks.length}: ${fileCount} files, ~${estimatedTokens} tokens\n`)
 
-    if (i > 0) {
-      // GitHub Models free tier: 40 000 tokens/min. Each chunk is ~6 000 tokens in + prompt +
-      // response, so ~7 500 tokens/request → max ~5 requests/min → need ≥12 s between requests.
-      await sleep(12_000)
-    }
-
+    const callStart = Date.now()
     const findings = await callCopilot(pat, payload)
     process.stderr.write(`    ${findings.length} findings returned\n`)
+
+    if (i < chunks.length - 1) {
+      const elapsed = Date.now() - callStart
+      const remaining = Math.max(0, INTER_REQUEST_MS - elapsed)
+      if (remaining > 0) await sleep(remaining)
+    }
 
     for (const f of findings) {
       const fp = fingerprint(f)
