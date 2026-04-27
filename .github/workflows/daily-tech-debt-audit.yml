@@ -128,7 +128,7 @@ jobs:
           total_note = f' ({total_all} total across all runs)' if total_all != new_count else ''
           lines = [
               f'Automated tech-debt audit — **{new_count} new finding{"s" if new_count != 1 else ""}** on {date}{total_note}.',
-              f'**{len(high_fix_now)}** are high-confidence fix-now — auto-fix PRs will be opened for the top 3.',
+              f'**{len(high_fix_now)}** are high-confidence fix-now — up to 2 consolidated auto-fix PRs will be opened: one for source fixes (DRY/CONSISTENCY/PATTERNS) and one for missing tests (MISSING_TESTS).',
               '',
               '## Summary',
               '',
