@@ -1,6 +1,6 @@
 import type { AnalysisResult, InclusiveNamingResult } from '@/lib/analyzer/analysis-result'
 
-const UNAVAILABLE = 'unavailable';
+const UNAVAILABLE = 'unavailable'
 
 export function buildResult(overrides: Partial<AnalysisResult> = {}): AnalysisResult {
   return {
