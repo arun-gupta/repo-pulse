@@ -3,15 +3,11 @@
 import { useState } from 'react'
 import { CNCFReadinessTab } from '@/components/cncf-readiness/CNCFReadinessTab'
 import { CNCFCandidacyPanel } from '@/components/cncf-candidacy/CNCFCandidacyPanel'
-import type { AnalyzeResponse, AnalysisResult } from '@/lib/analyzer/analysis-result'
-import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
-import type { SkippedIssue } from '@/lib/foundation/fetch-board-repos'
+import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+import type { FoundationResult } from '@/lib/foundation/types'
 import { downloadFoundationMarkdown } from '@/lib/export/foundation-markdown-export'
 
-export type FoundationResult =
-  | { kind: 'repos'; results: AnalyzeResponse }
-  | { kind: 'org'; inventory: OrgInventoryResponse }
-  | { kind: 'projects-board'; url: string; results: AnalyzeResponse; skipped: SkippedIssue[]; method: 'graphql' | 'labels' }
+export type { FoundationResult }
 
 interface FoundationResultsViewProps {
   result: FoundationResult | null

@@ -1,4 +1,4 @@
-import type { FoundationResult } from '@/components/foundation/FoundationResultsView'
+import type { FoundationResult } from '@/lib/foundation/types'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import { triggerDownload } from '@/lib/export/json-export'
 
@@ -17,8 +17,8 @@ function buildRepoSection(repoResult: AnalysisResult): string {
   const lines: string[] = [`## ${repoResult.repo}`, '']
 
   if (repoResult.landscapeOverride) {
-    const status = repoResult.landscapeStatus ?? 'CNCF'
-    lines.push(`> Already a CNCF ${status} project — not evaluated for sandbox readiness.`, '')
+    const statusText = repoResult.landscapeStatus ? ` ${repoResult.landscapeStatus}` : ''
+    lines.push(`> Already a CNCF${statusText} project — not evaluated for sandbox readiness.`, '')
     return lines.join('\n')
   }
 
@@ -45,7 +45,7 @@ function buildRepoSection(repoResult: AnalysisResult): string {
   }
 
   const readyFields = autoFields.filter((f) => f.status === 'ready')
-  const needsWorkFields = [...autoFields.filter((f) => f.status !== 'ready')].reverse()
+  const needsWorkFields = autoFields.filter((f) => f.status !== 'ready')
 
   if (needsWorkFields.length > 0) {
     lines.push('### Needs Work', '')
@@ -82,7 +82,7 @@ function buildReposMarkdown(result: Extract<FoundationResult, { kind: 'repos' | 
 
   const summaryRows = response.results.map((r) => {
     if (r.landscapeOverride) {
-      return `| ${r.repo} | — | Already CNCF ${r.landscapeStatus ?? 'project'} |`
+      return `| ${r.repo} | — | ${r.landscapeStatus ? `Already a CNCF ${r.landscapeStatus} project` : 'Already a CNCF project'} |`
     }
     if (!r.aspirantResult) return `| ${r.repo} | — | No data |`
     const { readinessScore } = r.aspirantResult

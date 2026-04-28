@@ -1,4 +1,12 @@
 import type { FoundationTarget } from '@/lib/cncf-sandbox/types'
+import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
+import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
+import type { SkippedIssue } from '@/lib/foundation/fetch-board-repos'
+
+export type FoundationResult =
+  | { kind: 'repos'; results: AnalyzeResponse }
+  | { kind: 'org'; inventory: OrgInventoryResponse }
+  | { kind: 'projects-board'; url: string; results: AnalyzeResponse; skipped: SkippedIssue[]; method: 'graphql' | 'labels' }
 
 export type FoundationInputKind = 'repos' | 'org' | 'projects-board' | 'invalid'
 
