@@ -122,11 +122,6 @@ export const LOADING_QUOTES: LoadingQuote[] = [
     context: 'Open source strategist, former Google OSPO',
   },
   {
-    text: 'Be the leader you need. Every contributor to open source is a leader, whether they\'re leading others, leading the community, or just leading themselves.',
-    author: 'Megan Byrd-Sanicki',
-    context: 'Open source strategist, former Google OSPO',
-  },
-  {
     text: 'If it\'s closed source, everyone\'s constantly redoing everything and sharing nothing. You never make progress because everyone has to reinvent the universe from first principles.',
     author: 'Limor Fried',
     context: 'Founder, Adafruit Industries',
