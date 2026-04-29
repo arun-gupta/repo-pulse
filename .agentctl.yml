@@ -1,0 +1,1 @@
+dev_server: "npx next dev --port {port}"
