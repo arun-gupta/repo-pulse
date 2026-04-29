@@ -7,7 +7,6 @@ import { buildContributorsViewModels } from '@/lib/contributors/view-model'
 import { CoreContributorsPane } from './CoreContributorsPane'
 import { ContributorsScorePane } from './ContributorsScorePane'
 import { OnboardingPane } from './OnboardingPane'
-import { CorporateContributionPanel } from './CorporateContributionPanel'
 import type { CNCFFieldBadge } from '@/lib/cncf-sandbox/types'
 
 interface ContributorsViewProps {
@@ -46,7 +45,6 @@ export function ContributorsView({ results, activeTag, onTagChange, cncfBadges =
           </div>
         </div>
       </div>
-      <CorporateContributionPanel results={results} windowDays={windowDays} />
       {sections.map((section, idx) => {
         const isCollapsed = collapsed.has(section.repo)
         const result = results[idx]

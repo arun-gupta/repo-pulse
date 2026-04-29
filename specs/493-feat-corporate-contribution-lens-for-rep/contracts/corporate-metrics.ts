@@ -59,5 +59,6 @@ export interface CorporateLensResult {
 /** Props for the CorporateContributionPanel UI component. */
 export interface CorporateContributionPanelProps {
   results: import('@/lib/analyzer/analysis-result').AnalysisResult[]
-  windowDays: ContributorWindowDays
+  /** Company name parsed from the search bar `company:` prefix. */
+  companyName: string
 }

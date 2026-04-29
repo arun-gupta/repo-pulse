@@ -87,25 +87,20 @@ function makeResultWithUnavailableSignals(): AnalysisResult {
 }
 
 describe('CorporateContributionPanel', () => {
-  it('renders only the company input when the input is empty', () => {
-    render(<CorporateContributionPanel results={[makeResultWithNoMatch()]} windowDays={30} />)
-
-    expect(screen.getByRole('textbox', { name: /company/i })).toBeInTheDocument()
-    expect(screen.queryByRole('table')).not.toBeInTheDocument()
-  })
-
-  it('shows the per-repo table when a company name is typed', async () => {
-    render(<CorporateContributionPanel results={[makeResultWithMatch()]} windowDays={30} />)
-
-    await userEvent.type(screen.getByRole('textbox', { name: /company/i }), 'microsoft')
+  it('renders the table immediately when companyName prop is provided', () => {
+    render(<CorporateContributionPanel results={[makeResultWithMatch()]} companyName="microsoft" />)
 
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
-  it('displays Corporate commits, Corporate authors, Corporate % column headers', async () => {
-    render(<CorporateContributionPanel results={[makeResultWithMatch()]} windowDays={30} />)
+  it('displays the company name in the header', () => {
+    render(<CorporateContributionPanel results={[makeResultWithMatch()]} companyName="microsoft" />)
 
-    await userEvent.type(screen.getByRole('textbox', { name: /company/i }), 'microsoft')
+    expect(screen.getByText('microsoft')).toBeInTheDocument()
+  })
+
+  it('displays Corporate commits, Corporate authors, Corporate % column headers', () => {
+    render(<CorporateContributionPanel results={[makeResultWithMatch()]} companyName="microsoft" />)
 
     const table = screen.getByRole('table')
     expect(within(table).getByText(/corporate commits/i)).toBeInTheDocument()
@@ -113,21 +108,8 @@ describe('CorporateContributionPanel', () => {
     expect(within(table).getByText(/corporate %/i)).toBeInTheDocument()
   })
 
-  it('hides the table when the company input is cleared', async () => {
-    render(<CorporateContributionPanel results={[makeResultWithMatch()]} windowDays={30} />)
-
-    const input = screen.getByRole('textbox', { name: /company/i })
-    await userEvent.type(input, 'microsoft')
-    expect(screen.getByRole('table')).toBeInTheDocument()
-
-    await userEvent.clear(input)
-    expect(screen.queryByRole('table')).not.toBeInTheDocument()
-  })
-
-  it('displays 0 (not "—") when the company matches no commits', async () => {
-    render(<CorporateContributionPanel results={[makeResultWithNoMatch()]} windowDays={30} />)
-
-    await userEvent.type(screen.getByRole('textbox', { name: /company/i }), 'microsoft')
+  it('displays 0 (not "—") when the company matches no commits', () => {
+    render(<CorporateContributionPanel results={[makeResultWithNoMatch()]} companyName="microsoft" />)
 
     const table = screen.getByRole('table')
     const cells = within(table).getAllByRole('cell')
@@ -136,36 +118,29 @@ describe('CorporateContributionPanel', () => {
     expect(within(table).queryByText('—')).not.toBeInTheDocument()
   })
 
-  it('displays "—" (not 0) in per-repo rows when attribution data is fully unavailable', async () => {
-    render(<CorporateContributionPanel results={[makeResultWithUnavailableSignals()]} windowDays={30} />)
-
-    await userEvent.type(screen.getByRole('textbox', { name: /company/i }), 'microsoft')
+  it('displays "—" (not 0) in per-repo rows when attribution data is fully unavailable', () => {
+    render(<CorporateContributionPanel results={[makeResultWithUnavailableSignals()]} companyName="microsoft" />)
 
     const table = screen.getByRole('table')
     const rows = within(table).getAllByRole('row')
-    // First data row is per-repo (index 1; index 0 is thead); summary row is last
     const perRepoRow = rows[1]!
     expect(within(perRepoRow).getAllByText('—').length).toBeGreaterThan(0)
     expect(within(perRepoRow).queryByText('0')).not.toBeInTheDocument()
   })
 
-  it('shows the FR-013 experimental caveat text alongside the metrics', async () => {
-    render(<CorporateContributionPanel results={[makeResultWithMatch()]} windowDays={30} />)
-
-    await userEvent.type(screen.getByRole('textbox', { name: /company/i }), 'microsoft')
+  it('shows the FR-013 experimental caveat text', () => {
+    render(<CorporateContributionPanel results={[makeResultWithMatch()]} companyName="microsoft" />)
 
     expect(screen.getByText(/experimental/i)).toBeInTheDocument()
   })
 
-  it('shows a summary row with total corporate commits and authors', async () => {
-    render(<CorporateContributionPanel results={[makeResultWithMatch()]} windowDays={30} />)
-
-    await userEvent.type(screen.getByRole('textbox', { name: /company/i }), 'microsoft')
+  it('shows a summary row with total corporate commits and authors', () => {
+    render(<CorporateContributionPanel results={[makeResultWithMatch()]} companyName="microsoft" />)
 
     expect(screen.getByText(/total/i)).toBeInTheDocument()
   })
 
-  it('updates metrics when the windowDays prop changes', async () => {
+  it('updates metrics when the window selector button is clicked', async () => {
     const window30 = makeContributorWindow({
       commitCountsByExperimentalOrg: { microsoft: 2 },
       commitAuthorsByExperimentalOrg: { microsoft: ['login:alice'] },
@@ -188,14 +163,14 @@ describe('CorporateContributionPanel', () => {
       } as Record<(typeof WINDOW_DAYS_LIST)[number], ContributorWindowMetrics>,
     })
 
-    const { rerender } = render(<CorporateContributionPanel results={[result]} windowDays={30} />)
-    await userEvent.type(screen.getByRole('textbox', { name: /company/i }), 'microsoft')
-    expect(screen.getByRole('table')).toBeInTheDocument()
+    render(<CorporateContributionPanel results={[result]} companyName="microsoft" />)
 
-    rerender(<CorporateContributionPanel results={[result]} windowDays={90} />)
-    const table = screen.getByRole('table')
-    // corporateAuthors=3 appears in the 90d window (3 unique authors); value 2 was the 30d count
-    expect(within(table).getAllByText('8').length).toBeGreaterThanOrEqual(1)
-    expect(within(table).queryByText('2')).not.toBeInTheDocument()
+    // Default window is 90d — verify 8 commits shown
+    expect(within(screen.getByRole('table')).getAllByText('8').length).toBeGreaterThanOrEqual(1)
+
+    // Switch to 30d via window selector button
+    await userEvent.click(screen.getByRole('button', { name: '30d' }))
+    expect(within(screen.getByRole('table')).getAllByText('2').length).toBeGreaterThanOrEqual(1)
+    expect(within(screen.getByRole('table')).queryByText('8')).not.toBeInTheDocument()
   })
 })
