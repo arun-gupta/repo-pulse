@@ -19,7 +19,7 @@ describe('CopyLinkButton', () => {
     expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument()
   })
 
-  it('copies window.location.href to clipboard on click', async () => {
+  it('copies the current URL (without hash) to clipboard on click', async () => {
     render(<CopyLinkButton />)
     await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
@@ -27,10 +27,22 @@ describe('CopyLinkButton', () => {
     )
   })
 
+  it('strips the URL hash before copying to avoid leaking auth tokens', async () => {
+    Object.defineProperty(window, 'location', {
+      value: { href: 'http://localhost:3000/?mode=repos#token=secret' },
+      writable: true,
+    })
+    render(<CopyLinkButton />)
+    await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      'http://localhost:3000/?mode=repos',
+    )
+  })
+
   it('shows "Copied!" after successful clipboard write', async () => {
     render(<CopyLinkButton />)
     await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
-    expect(screen.getByRole('button', { name: /copied/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /copied/i })).toBeInTheDocument()
   })
 
   it('stays silent when clipboard API fails', async () => {

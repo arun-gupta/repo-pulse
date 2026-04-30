@@ -1,15 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export function CopyLinkButton() {
   const [state, setState] = useState<'idle' | 'copied'>('idle')
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current !== null) {
+        clearTimeout(resetTimeoutRef.current)
+        resetTimeoutRef.current = null
+      }
+    }
+  }, [])
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      const url = new URL(window.location.href)
+      url.hash = ''
+      await navigator.clipboard.writeText(url.toString())
       setState('copied')
-      setTimeout(() => setState('idle'), 1500)
+
+      if (resetTimeoutRef.current !== null) {
+        clearTimeout(resetTimeoutRef.current)
+      }
+      resetTimeoutRef.current = setTimeout(() => {
+        setState('idle')
+        resetTimeoutRef.current = null
+      }, 1500)
     } catch {
       // clipboard unavailable — silently ignore
     }
