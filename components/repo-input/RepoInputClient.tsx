@@ -57,11 +57,18 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   })()
   const initialRepoValue = initialRawRepos.join('\n')
   const initialFoundationState = decodeFoundationUrl(searchParams.toString())
-  const urlMode = searchParams.get('mode') as 'repos' | 'org' | 'foundation' | null
-  const urlFoundation = searchParams.get('foundation') as FoundationTarget | null
-  const initialFoundationTarget = (
+  const rawUrlMode = searchParams.get('mode')
+  const rawUrlFoundation = searchParams.get('foundation')
+  const allowedModes = ['repos', 'org', 'foundation'] as const
+  const allowedFoundations = ['cncf-sandbox', 'none'] as const satisfies readonly FoundationTarget[]
+  const urlMode = allowedModes.includes(rawUrlMode as (typeof allowedModes)[number])
+    ? rawUrlMode
+    : null
+  const urlFoundation = allowedFoundations.includes(rawUrlFoundation as (typeof allowedFoundations)[number])
+    ? rawUrlFoundation
+    : null
+  const initialFoundationTarget: FoundationTarget =
     initialFoundationState?.foundation ?? urlFoundation ?? (urlMode === 'foundation' ? 'cncf-sandbox' : 'none')
-  ) as FoundationTarget
   const initialInputMode: 'repos' | 'org' | 'foundation' =
     initialFoundationState ? 'foundation' : urlMode === 'org' || urlMode === 'foundation' ? urlMode : 'repos'
   const initialTab = (searchParams.get('tab') ?? 'overview') as ResultTabId
