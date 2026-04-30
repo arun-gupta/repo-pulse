@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FoundationInputSection } from './FoundationInputSection'
 
@@ -122,5 +122,83 @@ describe('FoundationInputSection — picker tooltips', () => {
     const tooltips = screen.getAllByRole('tooltip')
     const comingSoon = tooltips.filter((t) => /coming soon/i.test(t.textContent ?? ''))
     expect(comingSoon.length).toBeGreaterThanOrEqual(3)
+  })
+})
+
+describe('FoundationInputSection — board URL button', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers()
+    vi.useRealTimers()
+  })
+
+  it('clicking the board URL button calls onInputChange with the board URL', () => {
+    const onInputChange = vi.fn()
+    render(<FoundationInputSection {...defaultProps} onInputChange={onInputChange} />)
+    fireEvent.click(screen.getByRole('button', { name: /use this board url/i }))
+    expect(onInputChange).toHaveBeenCalledWith('https://github.com/orgs/cncf/projects/14')
+  })
+
+  it('shows "Used" feedback immediately after clicking the board URL button', () => {
+    render(<FoundationInputSection {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /use this board url/i }))
+    expect(screen.getByText('Used')).toBeInTheDocument()
+  })
+
+  it('resets "Used" feedback after 1.5 seconds', () => {
+    render(<FoundationInputSection {...defaultProps} />)
+    fireEvent.click(screen.getByRole('button', { name: /use this board url/i }))
+    expect(screen.getByText('Used')).toBeInTheDocument()
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+    expect(screen.queryByText('Used')).not.toBeInTheDocument()
+  })
+
+  it('resets the timer when the button is clicked multiple times in quick succession', () => {
+    render(<FoundationInputSection {...defaultProps} />)
+    const btn = screen.getByRole('button', { name: /use this board url/i })
+    fireEvent.click(btn)
+    act(() => { vi.advanceTimersByTime(800) })
+    // Click again before the first timeout fires
+    fireEvent.click(btn)
+    act(() => { vi.advanceTimersByTime(800) })
+    // Should still show "Used" because the second click reset the timer
+    expect(screen.getByText('Used')).toBeInTheDocument()
+    act(() => { vi.advanceTimersByTime(700) })
+    // Now 1500ms after the second click, it should reset
+    expect(screen.queryByText('Used')).not.toBeInTheDocument()
+  })
+})
+
+describe('FoundationInputSection — verify repos checkbox', () => {
+  it('renders the verify repos checkbox', () => {
+    render(<FoundationInputSection {...defaultProps} />)
+    expect(screen.getByRole('checkbox', { name: /verify repos before analyzing/i })).toBeInTheDocument()
+  })
+
+  it('checkbox is unchecked by default', () => {
+    render(<FoundationInputSection {...defaultProps} />)
+    expect(screen.getByRole('checkbox', { name: /verify repos before analyzing/i })).not.toBeChecked()
+  })
+
+  it('checkbox is disabled when no onVerifyReposChange handler is provided', () => {
+    render(<FoundationInputSection {...defaultProps} />)
+    expect(screen.getByRole('checkbox', { name: /verify repos before analyzing/i })).toBeDisabled()
+  })
+
+  it('checkbox is enabled when onVerifyReposChange handler is provided', () => {
+    render(<FoundationInputSection {...defaultProps} onVerifyReposChange={vi.fn()} />)
+    expect(screen.getByRole('checkbox', { name: /verify repos before analyzing/i })).toBeEnabled()
+  })
+
+  it('calls onVerifyReposChange when the checkbox is toggled', async () => {
+    const onVerifyReposChange = vi.fn()
+    render(<FoundationInputSection {...defaultProps} onVerifyReposChange={onVerifyReposChange} />)
+    await userEvent.click(screen.getByRole('checkbox', { name: /verify repos before analyzing/i }))
+    expect(onVerifyReposChange).toHaveBeenCalledWith(true)
   })
 })

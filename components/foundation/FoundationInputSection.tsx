@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { FOUNDATION_REGISTRY } from '@/lib/foundation/types'
 import type { FoundationTarget } from '@/lib/cncf-sandbox/types'
 
+const CNCF_BOARD_URL = 'https://github.com/orgs/cncf/projects/14'
+
 interface FoundationInputSectionProps {
   foundationTarget: FoundationTarget
   onFoundationTargetChange: (target: FoundationTarget) => void
@@ -26,12 +28,27 @@ export function FoundationInputSection({
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const tooltipRef = useRef<HTMLDivElement | null>(null)
   const [boardFilled, setBoardFilled] = useState(false)
+  const boardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleUseBoardUrl() {
-    onInputChange('https://github.com/orgs/cncf/projects/14')
+    onInputChange(CNCF_BOARD_URL)
     setBoardFilled(true)
-    setTimeout(() => setBoardFilled(false), 1500)
+    if (boardTimeoutRef.current !== null) {
+      clearTimeout(boardTimeoutRef.current)
+    }
+    boardTimeoutRef.current = setTimeout(() => {
+      setBoardFilled(false)
+      boardTimeoutRef.current = null
+    }, 1500)
   }
+
+  useEffect(() => {
+    return () => {
+      if (boardTimeoutRef.current !== null) {
+        clearTimeout(boardTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (!tooltipOpen) return
@@ -92,7 +109,7 @@ export function FoundationInputSection({
             <span className="mx-2 text-slate-300 dark:text-slate-600">·</span>
             <span className="font-medium text-slate-700 dark:text-slate-300">Board:</span>{' '}
             <a
-              href="https://github.com/orgs/cncf/projects/14"
+              href={CNCF_BOARD_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="font-mono underline decoration-dotted hover:decoration-solid"
@@ -104,7 +121,7 @@ export function FoundationInputSection({
               onClick={handleUseBoardUrl}
               aria-label="Use this board URL"
               title="Use this board URL"
-              className="ml-1 inline-flex items-center rounded px-1 py-0.5 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+              className="ml-1 inline-flex items-center rounded px-1 py-0.5 text-slate-400 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:text-slate-500 dark:hover:text-slate-300 dark:focus-visible:ring-offset-slate-900"
             >
               {boardFilled ? (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3 text-emerald-500" aria-hidden="true">
@@ -178,11 +195,12 @@ export function FoundationInputSection({
         />
       </div>
 
-      <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+      <label className={`flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 ${onVerifyReposChange ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
         <input
           type="checkbox"
           checked={verifyRepos}
           onChange={(e) => onVerifyReposChange?.(e.target.checked)}
+          disabled={!onVerifyReposChange}
           className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
         />
         Verify repos before analyzing
