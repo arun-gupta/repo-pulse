@@ -132,6 +132,7 @@ export function applyNumericFilter(value: number | 'unavailable', filter: Numeri
     case '<': return value < filter.value
     case '>=': return value >= filter.value
     case '<=': return value <= filter.value
+    default: return false
   }
 }
 
@@ -145,5 +146,6 @@ export function applyDateFilter(value: string | 'unavailable', filter: DateFilte
     case '<': return rowMs < filterMs
     case '>=': return rowMs >= filterMs
     case '<=': return rowMs <= filterMs
+    default: return false
   }
 }
