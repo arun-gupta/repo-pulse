@@ -2478,7 +2478,7 @@ function buildExperimentalMetricsByWindow(
         const commitEmail = node.author?.email?.toLowerCase()?.trim()
         if (commitEmail) {
           const domain = commitEmail.split('@')[1]
-          if (domain && !domain.endsWith('noreply.github.com') && domain !== 'users.noreply.github.com') {
+          if (domain && domain !== 'users.noreply.github.com' && domain !== 'noreply.github.com') {
             commitCountsByEmailDomain.set(domain, (commitCountsByEmailDomain.get(domain) ?? 0) + 1)
             const dSet = commitAuthorsByEmailDomain.get(domain) ?? new Set<string>()
             if (dSet.size < 500) dSet.add(`login:${login}`)

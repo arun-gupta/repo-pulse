@@ -27,10 +27,10 @@ export function ReportSearchBar({ query, onQueryChange, totalMatches, matchedTab
         <div className="pointer-events-none absolute left-0 top-7 z-50 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg opacity-0 transition-opacity group-hover/help:pointer-events-auto group-hover/help:opacity-100 group-focus-within/help:pointer-events-auto group-focus-within/help:opacity-100 dark:border-slate-700 dark:bg-slate-900">
           <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-300">Search syntax</p>
           <dl className="space-y-1.5 text-xs">
-            <div className="group/company relative" tabIndex={0}>
+            <div className="group/company relative">
               <dt className="font-mono text-amber-700 dark:text-amber-400">company:microsoft</dt>
               <dd className="text-slate-500 dark:text-slate-400">Filter by corporate contributor</dd>
-              <div className="pointer-events-none absolute left-0 top-full z-10 mt-1 w-56 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-500 shadow-md opacity-0 transition-opacity group-hover/company:pointer-events-auto group-hover/company:opacity-100 group-focus-within/company:pointer-events-auto group-focus-within/company:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+              <div className="pointer-events-none absolute left-0 top-full z-10 mt-1 w-56 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-500 shadow-md opacity-0 transition-opacity group-hover/company:pointer-events-auto group-hover/company:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                 Enter the GitHub org handle — e.g. <span className="font-mono text-slate-700 dark:text-slate-200">facebook</span> for Meta, <span className="font-mono text-slate-700 dark:text-slate-200">google</span> for Google LLC.
               </div>
             </div>

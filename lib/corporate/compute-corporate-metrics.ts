@@ -76,10 +76,14 @@ export function computeCorporateMetrics(
 
     // Author count: 'unavailable' when both author-array fields are missing
     // (e.g., older serialised result without author arrays), otherwise combine.
-    const corporateAuthors: number | 'unavailable' =
-      orgAuthorsUnavailable && emailAuthorsUnavailable
-        ? 'unavailable'
-        : new Set([...orgAuthors, ...emailAuthors]).size
+    let corporateAuthors: number | 'unavailable'
+    if (orgAuthorsUnavailable && emailAuthorsUnavailable) {
+      corporateAuthors = 'unavailable'
+    } else {
+      const authorSet = new Set(orgAuthors)
+      for (const a of emailAuthors) authorSet.add(a)
+      corporateAuthors = authorSet.size
+    }
 
     // Sum commits from both signals. The org signal tracks org-member commits and
     // the email signal tracks corporate-email commits (which may include contributors
