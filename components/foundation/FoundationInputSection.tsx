@@ -10,6 +10,8 @@ interface FoundationInputSectionProps {
   inputValue: string
   onInputChange: (value: string) => void
   error: string | null
+  verifyRepos?: boolean
+  onVerifyReposChange?: (v: boolean) => void
 }
 
 export function FoundationInputSection({
@@ -18,6 +20,8 @@ export function FoundationInputSection({
   inputValue,
   onInputChange,
   error,
+  verifyRepos = false,
+  onVerifyReposChange,
 }: FoundationInputSectionProps) {
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const tooltipRef = useRef<HTMLDivElement | null>(null)
@@ -173,6 +177,16 @@ export function FoundationInputSection({
           aria-describedby={error ? 'foundation-input-error' : undefined}
         />
       </div>
+
+      <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+        <input
+          type="checkbox"
+          checked={verifyRepos}
+          onChange={(e) => onVerifyReposChange?.(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
+        />
+        Verify repos before analyzing
+      </label>
 
       {error ? (
         <p id="foundation-input-error" role="alert" data-testid="foundation-error" className="mt-1 text-sm text-red-600 dark:text-red-300">
