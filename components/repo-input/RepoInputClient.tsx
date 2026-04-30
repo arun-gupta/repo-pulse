@@ -59,18 +59,16 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const initialFoundationState = decodeFoundationUrl(searchParams.toString())
   const rawUrlMode = searchParams.get('mode')
   const rawUrlFoundation = searchParams.get('foundation')
-  const allowedModes = ['repos', 'org', 'foundation'] as const
-  const allowedFoundations = ['cncf-sandbox', 'none'] as const satisfies readonly FoundationTarget[]
-  const urlMode = allowedModes.includes(rawUrlMode as (typeof allowedModes)[number])
-    ? rawUrlMode
-    : null
-  const urlFoundation = allowedFoundations.includes(rawUrlFoundation as (typeof allowedFoundations)[number])
-    ? (rawUrlFoundation as FoundationTarget)
-    : null
+  const urlMode: 'repos' | 'org' | 'foundation' | null =
+    rawUrlMode === 'repos' || rawUrlMode === 'org' || rawUrlMode === 'foundation' ? rawUrlMode : null
+  const urlFoundation: FoundationTarget | null =
+    rawUrlFoundation === 'cncf-sandbox' || rawUrlFoundation === 'cncf-incubating' ||
+    rawUrlFoundation === 'cncf-graduation' || rawUrlFoundation === 'apache-incubator' || rawUrlFoundation === 'none'
+      ? rawUrlFoundation : null
   const initialFoundationTarget: FoundationTarget =
     initialFoundationState?.foundation ?? urlFoundation ?? (urlMode === 'foundation' ? 'cncf-sandbox' : 'none')
   const initialInputMode: 'repos' | 'org' | 'foundation' =
-    initialFoundationState ? 'foundation' : urlMode === 'org' || urlMode === 'foundation' ? urlMode : 'repos'
+    initialFoundationState ? 'foundation' : urlMode ?? 'repos'
   const initialTab = (searchParams.get('tab') ?? 'overview') as ResultTabId
   const autoTriggeredRef = useRef(false)
   const foundationAutoTriggeredRef = useRef(false)
