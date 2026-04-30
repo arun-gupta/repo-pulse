@@ -2473,6 +2473,17 @@ function buildExperimentalMetricsByWindow(
 
         const orgs = organizationsByLogin.get(login) ?? []
         if (orgs.length === 0) {
+          // No public org membership — fall back to email domain as a secondary signal
+          const email = node.author?.email?.toLowerCase()?.trim()
+          if (email) {
+            const domain = email.split('@')[1]
+            if (domain && !domain.endsWith('noreply.github.com')) {
+              commitCountsByEmailDomain.set(domain, (commitCountsByEmailDomain.get(domain) ?? 0) + 1)
+              const dSet = commitAuthorsByEmailDomain.get(domain) ?? new Set<string>()
+              dSet.add(`login:${login}`)
+              commitAuthorsByEmailDomain.set(domain, dSet)
+            }
+          }
           unattributedAuthors.add(actorKey)
           continue
         }

@@ -271,7 +271,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
 
   // Parse company: prefix from raw search query
   function parseSearchQuery(query: string): { companyName: string; freeText: string } {
-    const match = query.match(/(^|\s)company:(\S+)/i)
+    const match = query.match(/(^|\s)company:\s*(\S+)/i)
     if (!match) return { companyName: '', freeText: query.trim() }
     return { companyName: match[2], freeText: query.replace(match[0], '').trim() }
   }
@@ -632,6 +632,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
           onQueryChange={setSearchQuery}
           totalMatches={domTotalMatches}
           matchedTabCount={domMatchedTabCount}
+          freeText={searchFreeText}
         />
         <ExportControls analysisResponse={analysisResponse} analyzedRepos={analyzedRepos} />
       </div>
