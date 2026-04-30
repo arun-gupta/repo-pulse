@@ -903,8 +903,8 @@ describe('analyze', () => {
     expect(result.results[0]?.contributorMetricsByWindow?.[30]?.commitAuthorsByExperimentalOrg).toEqual({
       microsoft: ['login:alice'],
     })
-    expect(result.results[0]?.contributorMetricsByWindow?.[30]?.commitCountsByEmailDomain).toEqual({})
-    expect(result.results[0]?.contributorMetricsByWindow?.[30]?.commitAuthorsByEmailDomain).toEqual({})
+    expect(result.results[0]?.contributorMetricsByWindow?.[30]?.commitCountsByEmailDomain).toEqual({ 'microsoft.com': 1 })
+    expect(result.results[0]?.contributorMetricsByWindow?.[30]?.commitAuthorsByEmailDomain).toEqual({ 'microsoft.com': ['login:alice'] })
   })
 
   it('populates commitCountsByEmailDomain and commitAuthorsByEmailDomain for email-based authors', async () => {

@@ -32,16 +32,16 @@ export function computeCorporateMetrics(
     const orgAuthorsField = cwm?.commitAuthorsByExperimentalOrg
 
     // Treat undefined (pre-feature or old serialised results) as unavailable,
-    // distinct from an explicitly empty {} which means "known zero"
-    const orgSignalUnavailable =
-      orgCountsField === undefined ||
-      orgAuthorsField === undefined ||
-      orgCountsField === 'unavailable' ||
-      orgAuthorsField === 'unavailable'
-    const orgCommits = orgSignalUnavailable
+    // distinct from an explicitly empty {} which means "known zero".
+    // Commit-count and author-array availability are tracked independently so
+    // older results that have counts but no author arrays can still contribute
+    // corporate-commit and corporate-% values.
+    const orgCountsUnavailable = orgCountsField === undefined || orgCountsField === 'unavailable'
+    const orgAuthorsUnavailable = orgAuthorsField === undefined || orgAuthorsField === 'unavailable'
+    const orgCommits = orgCountsUnavailable
       ? 0
       : ((orgCountsField as Record<string, number>)[orgHandle] ?? 0)
-    const orgAuthors: string[] = orgSignalUnavailable
+    const orgAuthors: string[] = orgAuthorsUnavailable
       ? []
       : ((orgAuthorsField as Record<string, string[]>)[orgHandle] ?? [])
 
@@ -49,21 +49,19 @@ export function computeCorporateMetrics(
     const emailCountsField = cwm?.commitCountsByEmailDomain
     const emailAuthorsField = cwm?.commitAuthorsByEmailDomain
 
-    // Treat undefined (pre-feature or old serialised results) as unavailable,
-    // distinct from an explicitly empty {} which means "known zero"
-    const emailSignalMissing = emailCountsField === undefined || emailAuthorsField === undefined
-    const emailSignalUnavailable =
-      emailSignalMissing || emailCountsField === 'unavailable' || emailAuthorsField === 'unavailable'
-    const emailCommits = emailSignalUnavailable
+    // Same decoupling for email signal: counts and author arrays are independent.
+    const emailCountsUnavailable = emailCountsField === undefined || emailCountsField === 'unavailable'
+    const emailAuthorsUnavailable = emailAuthorsField === undefined || emailAuthorsField === 'unavailable'
+    const emailCommits = emailCountsUnavailable
       ? 0
       : ((emailCountsField as Record<string, number>)[emailDomain] ?? 0)
-    const emailAuthors: string[] = emailSignalUnavailable
+    const emailAuthors: string[] = emailAuthorsUnavailable
       ? []
       : ((emailAuthorsField as Record<string, string[]>)[emailDomain] ?? [])
 
-    // Both signals unavailable → check totalCommits before returning 'unavailable':
-    // if the window had zero commits the corporate values are deterministically 0
-    if (orgSignalUnavailable && emailSignalUnavailable) {
+    // Both commit-count signals unavailable → can't compute corporate commits.
+    // Special case: if totalCommits is 0 the result is deterministically 0.
+    if (orgCountsUnavailable && emailCountsUnavailable) {
       const totalCommits = awm?.commits
       if (totalCommits === 0) {
         return { repo: result.repo, corporateCommits: 0, corporateAuthors: 0, corporatePct: 0 }
@@ -76,13 +74,18 @@ export function computeCorporateMetrics(
       }
     }
 
-    // Use max(org, email) for commits: both signals may count the same commit (an author
-    // who is in the company's GitHub org AND uses a corporate email), so summing would
-    // double-count. Taking the max gives a conservative lower bound with no inflation.
-    const corporateCommits = Math.max(orgCommits, emailCommits)
-    // Deduplicate authors across both signals per repo
-    const corporateAuthorSet = new Set([...orgAuthors, ...emailAuthors])
-    const corporateAuthors = corporateAuthorSet.size
+    // Author count: 'unavailable' when both author-array fields are missing
+    // (e.g., older serialised result without author arrays), otherwise combine.
+    const corporateAuthors: number | 'unavailable' =
+      orgAuthorsUnavailable && emailAuthorsUnavailable
+        ? 'unavailable'
+        : new Set([...orgAuthors, ...emailAuthors]).size
+
+    // Sum commits from both signals. The org signal tracks org-member commits and
+    // the email signal tracks corporate-email commits (which may include contributors
+    // without public org membership). Potential double-counting when the same person
+    // appears in both signals is a known heuristic limitation disclosed in the UI caveat.
+    const corporateCommits = orgCommits + emailCommits
 
     if (orgAuthors.length > 0) allOrgAuthorArrays.push(orgAuthors)
     if (emailAuthors.length > 0) allEmailAuthorArrays.push(emailAuthors)

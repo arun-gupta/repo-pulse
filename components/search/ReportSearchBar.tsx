@@ -20,17 +20,17 @@ export function ReportSearchBar({ query, onQueryChange, totalMatches, matchedTab
         <button
           type="button"
           aria-label="Search syntax help"
-          className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-xs font-medium text-slate-400 hover:border-slate-400 hover:text-slate-600 dark:border-slate-600 dark:text-slate-500 dark:hover:border-slate-400 dark:hover:text-slate-300"
+          className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-xs font-medium text-slate-400 hover:border-slate-400 hover:text-slate-600 focus-visible:border-slate-400 focus-visible:text-slate-600 focus-visible:outline-none dark:border-slate-600 dark:text-slate-500 dark:hover:border-slate-400 dark:hover:text-slate-300 dark:focus-visible:border-slate-400 dark:focus-visible:text-slate-300"
         >
           ?
         </button>
-        <div className="pointer-events-none absolute left-0 top-7 z-50 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg opacity-0 transition-opacity group-hover/help:opacity-100 dark:border-slate-700 dark:bg-slate-900">
+        <div className="pointer-events-none absolute left-0 top-7 z-50 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-lg opacity-0 transition-opacity group-hover/help:pointer-events-auto group-hover/help:opacity-100 group-focus-within/help:pointer-events-auto group-focus-within/help:opacity-100 dark:border-slate-700 dark:bg-slate-900">
           <p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-300">Search syntax</p>
           <dl className="space-y-1.5 text-xs">
-            <div className="group/company relative">
+            <div className="group/company relative" tabIndex={0}>
               <dt className="font-mono text-amber-700 dark:text-amber-400">company:microsoft</dt>
               <dd className="text-slate-500 dark:text-slate-400">Filter by corporate contributor</dd>
-              <div className="pointer-events-none absolute left-0 top-full z-10 mt-1 w-56 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-500 shadow-md opacity-0 transition-opacity group-hover/company:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+              <div className="pointer-events-none absolute left-0 top-full z-10 mt-1 w-56 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-500 shadow-md opacity-0 transition-opacity group-hover/company:pointer-events-auto group-hover/company:opacity-100 group-focus-within/company:pointer-events-auto group-focus-within/company:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                 Enter the GitHub org handle — e.g. <span className="font-mono text-slate-700 dark:text-slate-200">facebook</span> for Meta, <span className="font-mono text-slate-700 dark:text-slate-200">google</span> for Google LLC.
               </div>
             </div>
@@ -82,7 +82,9 @@ export function ReportSearchBar({ query, onQueryChange, totalMatches, matchedTab
       {showSummary ? (
         <span className="text-xs text-slate-500 whitespace-nowrap dark:text-slate-400">
           {totalMatches === 0
-            ? '0 matches in report'
+            ? hasPrefix
+              ? '0 matches in report'
+              : `0 matches across ${matchedTabCount} tab${matchedTabCount === 1 ? '' : 's'}`
             : hasPrefix
               ? `${totalMatches} match${totalMatches === 1 ? '' : 'es'} in report`
               : `${totalMatches} match${totalMatches === 1 ? '' : 'es'} across ${matchedTabCount} tab${matchedTabCount === 1 ? '' : 's'}`}

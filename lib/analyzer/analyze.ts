@@ -2463,7 +2463,7 @@ function buildExperimentalMetricsByWindow(
             if (domain) {
               commitCountsByEmailDomain.set(domain, (commitCountsByEmailDomain.get(domain) ?? 0) + 1)
               const dSet = commitAuthorsByEmailDomain.get(domain) ?? new Set<string>()
-              dSet.add(`email:${email}`)
+              if (dSet.size < 500) dSet.add(`email:${email}`)
               commitAuthorsByEmailDomain.set(domain, dSet)
             }
           }
@@ -2481,7 +2481,7 @@ function buildExperimentalMetricsByWindow(
           if (domain && !domain.endsWith('noreply.github.com') && domain !== 'users.noreply.github.com') {
             commitCountsByEmailDomain.set(domain, (commitCountsByEmailDomain.get(domain) ?? 0) + 1)
             const dSet = commitAuthorsByEmailDomain.get(domain) ?? new Set<string>()
-            dSet.add(`login:${login}`)
+            if (dSet.size < 500) dSet.add(`login:${login}`)
             commitAuthorsByEmailDomain.set(domain, dSet)
           }
         }
@@ -2497,7 +2497,7 @@ function buildExperimentalMetricsByWindow(
         for (const org of orgs) {
           commitCountsByExperimentalOrg.set(org, (commitCountsByExperimentalOrg.get(org) ?? 0) + 1)
           const aSet = commitAuthorsByExperimentalOrg.get(org) ?? new Set<string>()
-          aSet.add(actorKey)
+          if (aSet.size < 500) aSet.add(actorKey)
           commitAuthorsByExperimentalOrg.set(org, aSet)
         }
       }

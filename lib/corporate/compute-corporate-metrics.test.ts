@@ -282,6 +282,39 @@ describe('computeCorporateMetrics — per-repo', () => {
   })
 
 
+  it('returns corporateCommits/corporatePct from counts even when author-array field is absent (decoupled)', () => {
+    // Simulates an older serialised result: commitCountsByExperimentalOrg is present
+    // but commitAuthorsByExperimentalOrg was not collected (field absent).
+    // The reviewer wants corporateCommits to be computable while corporateAuthors
+    // stays 'unavailable' rather than forcing the entire org signal unavailable.
+    const contributorWindow: ContributorWindowMetrics = {
+      uniqueCommitAuthors: 'unavailable',
+      commitCountsByAuthor: 'unavailable',
+      repeatContributors: 'unavailable',
+      newContributors: 'unavailable',
+      commitCountsByExperimentalOrg: { microsoft: 3 },
+      experimentalAttributedAuthors: 'unavailable',
+      experimentalUnattributedAuthors: 'unavailable',
+      // commitAuthorsByExperimentalOrg absent — older result without author arrays
+      // commitCountsByEmailDomain, commitAuthorsByEmailDomain absent
+    }
+    const result = buildResult({
+      repo: 'owner/repo',
+      activityMetricsByWindow: Object.fromEntries(
+        WINDOW_DAYS_LIST.map((w) => [w, makeActivityWindow(10)]),
+      ) as Record<(typeof WINDOW_DAYS_LIST)[number], ActivityWindowMetrics>,
+      contributorMetricsByWindow: Object.fromEntries(
+        WINDOW_DAYS_LIST.map((w) => [w, contributorWindow]),
+      ) as Record<(typeof WINDOW_DAYS_LIST)[number], ContributorWindowMetrics>,
+    })
+    const output = computeCorporateMetrics([result], 'microsoft', 30)
+
+    expect(output.perRepo[0]?.corporateCommits).toBe(3)
+    expect(output.perRepo[0]?.corporatePct).toBe(30)
+    expect(output.perRepo[0]?.corporateAuthors).toBe('unavailable')
+  })
+
+
   it('handles a domain-style company name input (strips TLD for orgHandle)', () => {
     const result = makeResult('owner/repo', 'microsoft', 5, ['login:alice'], 'microsoft.com', 0, [], 10)
     const output = computeCorporateMetrics([result], 'microsoft.com', 30)

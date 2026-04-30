@@ -90,7 +90,8 @@ The corporate contribution numbers must reflect the same time window (30d / 60d 
 
 ### Functional Requirements
 
-- **FR-001**: The results view for a manually-specified repo set MUST provide a single **"Company"** text input field. The user types their company name or identifier (e.g., `microsoft`). The field MUST have a placeholder that makes clear a company name is expected (not an email address, not a URL).
+- **FR-001**: The results view for a manually-specified repo set MUST provide a `company:` search prefix in the existing report search bar. Typing `company:microsoft` in the search bar activates the corporate contribution panel. The corporate panel MUST appear above the tab content and MUST remain active as long as the `company:` prefix is present in the search bar.
+- **FR-001a**: A `?` help tooltip on the search bar MUST document the `company:` prefix and provide an example value (e.g. `company:microsoft`). The nested hint MUST be reachable by hovering or keyboard focus so the help content is actually usable.
 - **FR-002**: Matching MUST be case-insensitive.
 - **FR-003**: From the single entered value the system MUST automatically derive two attribution signals and apply both:
   - **Org signal**: treat the entered value (lowercased, with any trailing domain suffix such as `.com` / `.io` / `.org` stripped) as a GitHub org handle and match commits from authors who publicly list that org.
@@ -102,13 +103,13 @@ The corporate contribution numbers must reflect the same time window (30d / 60d 
 - **FR-008**: When attribution data is fully unavailable for a repo, all three corporate columns for that repo MUST display "—", never `0`.
 - **FR-009**: When one signal is available and the other unavailable for a repo, the available signal MUST be used and the result displayed normally (no "—").
 - **FR-010**: A summary row MUST appear below the per-repo table showing: (a) total corporate commits across all repos, (b) unique corporate author keys de-duplicated across all repos, (c) overall corporate % (total corporate commits / total commits across all repos with available data).
-- **FR-011**: When the filter field is empty, the corporate columns and summary row MUST be hidden; the results view returns to its default state.
+- **FR-011**: When the `company:` prefix is removed from the search bar, the corporate columns and summary row MUST be hidden; the results view returns to its default state.
 - **FR-012**: All corporate metrics MUST reflect the same time window as the rest of the analysis; changing the time-window selector MUST update the corporate columns.
 - **FR-013**: The corporate contribution section MUST be rendered inside the existing Experimental UI boundary and MUST include a visible caveat covering: (a) email matching misses employees who commit with personal emails; (b) org matching misses employees whose GitHub org membership is private; (c) a developer whose commits appear under both a login-based and email-based identifier may be counted as two separate authors.
 
 ### Key Entities
 
-- **Corporate filter**: A single text input where the user types their company name (e.g., `microsoft`). The system automatically derives both an org handle and an email domain from this single value and applies both attribution signals.
+- **Corporate filter**: The `company:` prefix in the report search bar. Typing `company:microsoft` activates the corporate contribution panel. An optional free-text portion after the prefix (e.g. `company:microsoft react`) simultaneously drives the standard report search. The system automatically derives both an org handle and an email domain from the company name value and applies both attribution signals.
 - **Per-repo corporate metrics**: Corporate commits, corporate authors, and corporate % for one analyzed repo within a given time window — derived from commit data and org membership data already collected during the analysis run, without new API calls at filter time.
 - **Summary totals**: Aggregated corporate metrics across all analyzed repos, with author identities de-duplicated by actor key.
 
@@ -116,10 +117,10 @@ The corporate contribution numbers must reflect the same time window (30d / 60d 
 
 ### Measurable Outcomes
 
-- **SC-001**: A user who has analyzed a set of repos can type their company name into a single field and immediately see per-repo corporate contribution data without re-running the analysis.
+- **SC-001**: A user who has analyzed a set of repos can type `company:their-company` into the report search bar and immediately see per-repo corporate contribution data without re-running the analysis.
 - **SC-002**: Every analyzed repo shows a value (a count or "—") in each corporate column — no cell is blank or missing.
 - **SC-003**: The summary row totals are consistent with the per-repo values (verifiable by manual addition), with unique authors correctly de-duplicated.
-- **SC-004**: Clearing the company name field removes the corporate columns entirely and leaves the rest of the results view unchanged.
+- **SC-004**: Removing the `company:` prefix from the search bar removes the corporate columns entirely and leaves the rest of the results view unchanged.
 - **SC-005**: All corporate metrics update correctly when the time-window selector is changed.
 - **SC-006**: The "—" unavailability indicator is always visually distinct from the number `0`.
 - **SC-007**: The heuristic caveats are visible on the same surface as the corporate metrics — not hidden behind a collapsed section or tooltip.
