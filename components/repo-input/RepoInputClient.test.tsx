@@ -867,4 +867,41 @@ describe('RepoInputClient — tab deep-links', () => {
     await userEvent.click(screen.getByRole('button', { name: /^repositories$/i }))
     expect(replaceState).toHaveBeenCalledWith(null, '', '/')
   })
+
+  it('writes ?input= to the URL as the user types in the Foundation input', async () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('mode=foundation'))
+    renderWithAuth(<RepoInputClient />)
+    await userEvent.type(screen.getByRole('textbox', { name: /foundation input/i }), 'kubernetes/kubernetes')
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null, '', '/?mode=foundation&foundation=cncf-sandbox&input=kubernetes%2Fkubernetes',
+    )
+  })
+
+  it('omits ?input= from the URL when the Foundation input is cleared', async () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('mode=foundation&foundation=cncf-sandbox&input=kubernetes%2Fkubernetes'))
+    renderWithAuth(<RepoInputClient />)
+    const textarea = screen.getByRole('textbox', { name: /foundation input/i })
+    await userEvent.clear(textarea)
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/?mode=foundation&foundation=cncf-sandbox')
+  })
+
+  it('includes ?input= when switching to the Foundation tab with existing input', async () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('mode=foundation&foundation=cncf-sandbox&input=kubernetes%2Fkubernetes'))
+    renderWithAuth(<RepoInputClient />)
+    await userEvent.click(screen.getByRole('button', { name: /^repositories$/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^foundation$/i }))
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null, '', '/?mode=foundation&foundation=cncf-sandbox&input=kubernetes%2Fkubernetes',
+    )
+  })
+
+  it('preserves ?input= in the URL when switching Foundation sub-tabs while input is non-empty', async () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('mode=foundation&foundation=cncf-sandbox'))
+    renderWithAuth(<RepoInputClient />)
+    await userEvent.type(screen.getByRole('textbox', { name: /foundation input/i }), 'kubernetes/kubernetes')
+    await userEvent.click(screen.getByRole('button', { name: /^cncf sandbox$/i }))
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null, '', '/?mode=foundation&foundation=cncf-sandbox&input=kubernetes%2Fkubernetes',
+    )
+  })
 })
