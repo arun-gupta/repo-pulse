@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
+import { parseStructuredSearchQuery } from '@/lib/org-inventory/structured-search'
 import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext, type OrgSortBy } from './serialize-context'
 
 // ---- Types ----------------------------------------------------------------
@@ -33,6 +34,9 @@ export interface ChatPanelProps {
   orgInventory?: OrgInventoryResponse
   githubToken: string
   resetKey?: number
+  /** Controlled repo filter query — synced with the org inventory table */
+  repoQuery?: string
+  onRepoQueryChange?: (q: string) => void
 }
 
 // ---- Constants ------------------------------------------------------------
@@ -201,6 +205,7 @@ function KeyEntryForm({ onSave }: { onSave: (key: string) => void }) {
 
 export function ChatPanel({
   contextType, repoResults, orgView, org, orgRepos = [], orgInventory, githubToken, resetKey,
+  repoQuery = '', onRepoQueryChange,
 }: ChatPanelProps) {
   const [expanded, setExpanded] = useState(false)
   const [model, setModel] = useState<Model>('claude-haiku-4-5')
@@ -453,7 +458,14 @@ export function ChatPanel({
             className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             <span aria-hidden="true" className="text-base">✨</span>
-            <span className="flex-1">Ask a question about this analysis</span>
+            <span className="flex-1">
+              Ask a question about this analysis
+              {repoQuery && (
+                <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                  {repoQuery}
+                </span>
+              )}
+            </span>
             <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 10l4-4 4 4" />
             </svg>
@@ -559,6 +571,45 @@ export function ChatPanel({
               <KeyEntryForm onSave={handleSaveKey} />
             ) : (
               <>
+                {/* Structured search filter (org tab only) */}
+                {contextType === 'org' && onRepoQueryChange && (() => {
+                  const parsed = parseStructuredSearchQuery(repoQuery)
+                  return (
+                    <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
+                      <div className="flex items-center gap-2">
+                        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5 shrink-0 text-slate-400">
+                          <circle cx="6.5" cy="6.5" r="4" /><path strokeLinecap="round" d="M11 11l3 3" />
+                        </svg>
+                        <input
+                          type="text"
+                          value={repoQuery}
+                          onChange={(e) => onRepoQueryChange(e.target.value)}
+                          placeholder="Filter repos: lang:go stars:>500 archived:false"
+                          className="flex-1 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                        />
+                        {repoQuery && (
+                          <button
+                            type="button"
+                            onClick={() => onRepoQueryChange('')}
+                            className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                            aria-label="Clear filter"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                      {parsed.invalidTokens.length > 0 && (
+                        <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">
+                          Ignored: {parsed.invalidTokens.join(', ')}
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                        Prefixes: lang: archived: stars: forks: issues: pushed: topic: license:
+                      </p>
+                    </div>
+                  )
+                })()}
+
                 {/* Message history */}
                 <div
                   className="flex h-[40vh] flex-col overflow-y-auto px-4 py-3 space-y-3"

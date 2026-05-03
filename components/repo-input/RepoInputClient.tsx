@@ -75,6 +75,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [analysisResponse, setAnalysisResponse] = useState<AnalyzeResponse | null>(null)
   const [analyzedRepos, setAnalyzedRepos] = useState<string[]>([])
   const [orgInventoryResponse, setOrgInventoryResponse] = useState<OrgInventoryResponse | null>(null)
+  const [orgRepoQuery, setOrgRepoQuery] = useState('')
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [loadingRepos, setLoadingRepos] = useState<string[]>([])
   const [loadingOrg, setLoadingOrg] = useState<string | null>(null)
@@ -915,6 +916,8 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
                 summary={orgInventoryResponse.summary}
                 results={orgInventoryResponse.results}
                 rateLimit={orgInventoryResponse.rateLimit}
+                repoQuery={orgRepoQuery}
+                onRepoQueryChange={setOrgRepoQuery}
                 onAnalyzeRepo={(repo) => {
                   void handleSubmit([repo])
                 }}
@@ -1108,6 +1111,8 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
               orgInventory={orgAnalysisComplete ? undefined : orgInventoryResponse}
               githubToken={session.token}
               resetKey={resultsResetKey}
+              repoQuery={orgRepoQuery}
+              onRepoQueryChange={setOrgRepoQuery}
             />
           ) : null
         ) : null

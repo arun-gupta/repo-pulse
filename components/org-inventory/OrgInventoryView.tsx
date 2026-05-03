@@ -28,6 +28,9 @@ interface OrgInventoryViewProps {
   onAnalyzeSelected: (repos: string[]) => void
   onAnalyzeAllActive?: (repos: string[]) => void
   afterSummary?: React.ReactNode
+  /** Controlled repo query — when provided the structured search UI moves to the chat panel */
+  repoQuery?: string
+  onRepoQueryChange?: (q: string) => void
 }
 
 export function OrgInventoryView({
@@ -39,7 +42,10 @@ export function OrgInventoryView({
   onAnalyzeSelected,
   onAnalyzeAllActive,
   afterSummary,
+  repoQuery: controlledRepoQuery,
+  onRepoQueryChange,
 }: OrgInventoryViewProps) {
+  const controlled = controlledRepoQuery !== undefined
   const [filters, setFilters] = useState<OrgInventoryFilters>({
     repoQuery: '',
   })
@@ -53,11 +59,14 @@ export function OrgInventoryView({
   const [selectedRepos, setSelectedRepos] = useState<string[]>([])
   const [selectedOnly, setSelectedOnly] = useState<boolean>(false)
   const [repoTableExpanded, setRepoTableExpanded] = useState(true)
-  const parsedQuery = useMemo(() => parseStructuredSearchQuery(filters.repoQuery), [filters.repoQuery])
+  const effectiveRepoQuery = controlled ? (controlledRepoQuery ?? '') : filters.repoQuery
+  const effectiveFilters: OrgInventoryFilters = { ...filters, repoQuery: effectiveRepoQuery }
+  const parsedQuery = useMemo(() => parseStructuredSearchQuery(effectiveRepoQuery), [effectiveRepoQuery])
 
   const filteredRows = useMemo(
-    () => filterOrgInventoryRows(results, filters, { selectedOnly, selectedRepos }),
-    [results, filters, selectedOnly, selectedRepos],
+    () => filterOrgInventoryRows(results, effectiveFilters, { selectedOnly, selectedRepos }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [results, effectiveRepoQuery, selectedOnly, selectedRepos],
   )
   const effectiveSortState = useMemo(
     () => getEffectiveSortState(sortState, visibleColumns),
@@ -126,47 +135,51 @@ export function OrgInventoryView({
             {repoTableExpanded ? (
               <div className="space-y-4 px-3 pb-3">
                 <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800 dark:bg-slate-900">
-                <div className="flex flex-wrap items-end gap-2">
-                  <label className="flex-1 min-w-[140px]">
-                    <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Structured search</span>
-                    <input
-                      value={filters.repoQuery}
-                      onChange={(event) => {
-                        setCurrentPage(1)
-                        setFilters((current) => ({ ...current, repoQuery: event.target.value }))
-                      }}
-                      className="mt-0.5 w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-                      placeholder="repo name lang:go stars:>500 archived:false"
-                    />
-                  </label>
-                  <div className="flex items-center gap-3 text-xs text-slate-700 dark:text-slate-300 dark:text-slate-200">
-                    <label className="inline-flex items-center gap-1">
+                {!controlled && (
+                  <>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="flex-1 min-w-[140px]">
+                      <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Structured search</span>
                       <input
-                        type="checkbox"
-                        checked={selectedOnly}
-                        onChange={(e) => {
+                        value={filters.repoQuery}
+                        onChange={(event) => {
                           setCurrentPage(1)
-                          setSelectedOnly(e.target.checked)
+                          setFilters((current) => ({ ...current, repoQuery: event.target.value }))
                         }}
-                        aria-label="Show only selected repositories"
+                        className="mt-0.5 w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                        placeholder="repo name lang:go stars:>500 archived:false"
                       />
-                      Selected only
                     </label>
+                    <div className="flex items-center gap-3 text-xs text-slate-700 dark:text-slate-300 dark:text-slate-200">
+                      <label className="inline-flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedOnly}
+                          onChange={(e) => {
+                            setCurrentPage(1)
+                            setSelectedOnly(e.target.checked)
+                          }}
+                          aria-label="Show only selected repositories"
+                        />
+                        Selected only
+                      </label>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Prefixes: <code>lang:</code>, <code>archived:</code>, <code>stars:</code>, <code>forks:</code>, <code>watchers:</code>, <code>issues:</code>, <code>pushed:</code>, <code>fork:</code>, <code>topic:</code>, <code>size:</code>, <code>visibility:</code>, <code>license:</code>.
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Analyze all defaults to active non-forks unless your query includes <code>archived:</code> or <code>fork:</code>.
-                  </p>
-                  {parsedQuery.invalidTokens.length > 0 ? (
-                    <p className="text-xs text-amber-700 dark:text-amber-300">
-                      Ignored invalid token{parsedQuery.invalidTokens.length === 1 ? '' : 's'}: {parsedQuery.invalidTokens.join(', ')}
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Prefixes: <code>lang:</code>, <code>archived:</code>, <code>stars:</code>, <code>forks:</code>, <code>watchers:</code>, <code>issues:</code>, <code>pushed:</code>, <code>fork:</code>, <code>topic:</code>, <code>size:</code>, <code>visibility:</code>, <code>license:</code>.
                     </p>
-                  ) : null}
-                </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Analyze all defaults to active non-forks unless your query includes <code>archived:</code> or <code>fork:</code>.
+                    </p>
+                    {parsedQuery.invalidTokens.length > 0 ? (
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        Ignored invalid token{parsedQuery.invalidTokens.length === 1 ? '' : 's'}: {parsedQuery.invalidTokens.join(', ')}
+                      </p>
+                    ) : null}
+                  </div>
+                  </>
+                )}
 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -232,7 +245,7 @@ export function OrgInventoryView({
                     </select>
                   </label>
                 </div>
-                </div>
+                </div>{/* closes div.rounded-lg */}
 
                 {sortedRows.length === 0 ? (
                   selectedOnly && selectedRepos.length === 0 ? (
