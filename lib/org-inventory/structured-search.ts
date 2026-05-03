@@ -35,7 +35,9 @@ const BOOLEAN_KEYS = new Set<StructuredSearchKey>(['archived', 'fork'])
 const TEXT_KEYS = new Set<StructuredSearchKey>(['company', 'lang', 'topic', 'visibility', 'license'])
 
 export function parseStructuredSearchQuery(query: string): StructuredSearchParseResult {
-  const parts = query.trim().split(/\s+/).filter(Boolean)
+  // Collapse "key: value" (space after colon) → "key:value"
+  const normalized = query.trim().replace(/([a-z]+):\s+/gi, '$1:')
+  const parts = normalized.split(/\s+/).filter(Boolean)
   const freeTextTerms: string[] = []
   const tokens: StructuredSearchToken[] = []
   const invalidTokens: string[] = []

@@ -39,6 +39,7 @@ import { LOADING_QUOTES, getRandomQuoteIndex } from '@/lib/loading-quotes'
 import { RepoInputForm } from './RepoInputForm'
 import { FoundationResultsView, type FoundationResult } from '@/components/foundation/FoundationResultsView'
 import { FoundationNudge } from '@/components/foundation/FoundationNudge'
+import { ChatPanel } from '@/components/chat/ChatPanel'
 
 interface RepoInputClientProps {
   onAnalyze?: (repos: string[], token: string) => Promise<AnalyzeResponse> | AnalyzeResponse | void
@@ -74,6 +75,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [analysisResponse, setAnalysisResponse] = useState<AnalyzeResponse | null>(null)
   const [analyzedRepos, setAnalyzedRepos] = useState<string[]>([])
   const [orgInventoryResponse, setOrgInventoryResponse] = useState<OrgInventoryResponse | null>(null)
+  const [orgRepoQuery, setOrgRepoQuery] = useState('')
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [loadingRepos, setLoadingRepos] = useState<string[]>([])
   const [loadingOrg, setLoadingOrg] = useState<string | null>(null)
@@ -914,6 +916,8 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
                 summary={orgInventoryResponse.summary}
                 results={orgInventoryResponse.results}
                 rateLimit={orgInventoryResponse.rateLimit}
+                repoQuery={orgRepoQuery}
+                onRepoQueryChange={setOrgRepoQuery}
                 onAnalyzeRepo={(repo) => {
                   void handleSubmit([repo])
                 }}
@@ -1086,6 +1090,33 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       searchQuery={debouncedQuery}
       onDomMatchCounts={handleDomMatchCounts}
       tagMatchCounts={analysisResponse ? computeTabTagCounts(analysisResponse.results, activeTag) : undefined}
+      chatPanel={
+        session?.token && inputMode !== 'foundation' && (
+          (inputMode === 'repos' && analysisResponse) ||
+          (inputMode === 'org' && orgInventoryResponse)
+        ) ? (
+          inputMode === 'repos' && analysisResponse ? (
+            <ChatPanel
+              contextType="repos"
+              repoResults={analysisResponse.results}
+              githubToken={session.token}
+              resetKey={resultsResetKey}
+            />
+          ) : inputMode === 'org' && orgInventoryResponse ? (
+            <ChatPanel
+              contextType="org"
+              orgView={orgAnalysisComplete && orgAggregation.view ? orgAggregation.view : undefined}
+              org={orgInventoryResponse.org}
+              orgRepos={orgInventoryResponse.results}
+              orgInventory={orgAnalysisComplete ? undefined : orgInventoryResponse}
+              githubToken={session.token}
+              resetKey={resultsResetKey}
+              repoQuery={orgRepoQuery}
+              onRepoQueryChange={setOrgRepoQuery}
+            />
+          ) : null
+        ) : null
+      }
       slots={{
         overview: overviewContent,
         contributors: inputMode === 'org' && orgAnalysisComplete && orgAggregation.view ? (
