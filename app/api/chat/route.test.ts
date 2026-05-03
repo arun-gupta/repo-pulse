@@ -8,9 +8,8 @@ const mockStream = vi.hoisted(() => vi.fn())
 
 vi.mock('@anthropic-ai/sdk', () => {
   // Must use a regular function (not arrow) so it can be used with `new`
-  const AnthropicMock = vi.fn(function (this: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(this as any).messages = { stream: mockStream }
+  const AnthropicMock = vi.fn(function (this: { messages: { stream: typeof mockStream } }) {
+    this.messages = { stream: mockStream }
   })
   return { default: AnthropicMock }
 })
@@ -37,12 +36,14 @@ const validBody = {
   githubToken: 'ghp_valid',
 }
 
-/** Make fetch return a successful 200 response (GitHub token validation) */
+/** Make fetch return a successful 200 response (GitHub token validation).
+ * Cleanup is handled by vi.unstubAllGlobals() in afterEach. */
 function stubFetchOk() {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 200 })))
 }
 
-/** Make fetch return a 401 response (invalid GitHub token) */
+/** Make fetch return a 401 response (invalid GitHub token).
+ * Cleanup is handled by vi.unstubAllGlobals() in afterEach. */
 function stubFetchUnauth() {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 401 })))
 }
