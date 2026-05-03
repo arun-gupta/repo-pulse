@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ACTIVITY_WINDOW_DAYS } from '@/lib/analyzer/analysis-result'
 import { buildResult } from '@/lib/testing/fixtures'
 import {
   buildResponsivenessSections,
@@ -8,9 +9,8 @@ import {
 describe('getResponsivenessWindowOptions', () => {
   it('returns an entry for each ACTIVITY_WINDOW_DAYS value', () => {
     const opts = getResponsivenessWindowOptions()
-    expect(opts.length).toBeGreaterThan(0)
+    expect(opts.map((o) => o.days)).toEqual([...ACTIVITY_WINDOW_DAYS])
     for (const opt of opts) {
-      expect(typeof opt.days).toBe('number')
       expect(typeof opt.label).toBe('string')
     }
   })
@@ -89,7 +89,7 @@ describe('buildResponsivenessSections', () => {
 
   it('produces consistent output across all supported window sizes', () => {
     const result = buildResult()
-    for (const days of [30, 60, 90, 180, 365] as const) {
+    for (const days of ACTIVITY_WINDOW_DAYS) {
       const sections = buildResponsivenessSections([result], days)
       expect(sections[0].panes).toHaveLength(5)
     }

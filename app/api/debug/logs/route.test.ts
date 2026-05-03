@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/lib/debug/logger', () => ({
+  getEntries: vi.fn(() => []),
+  installLogger: vi.fn(),
+  subscribe: vi.fn(() => vi.fn()),
+}))
+
 describe('GET /api/debug/logs', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
