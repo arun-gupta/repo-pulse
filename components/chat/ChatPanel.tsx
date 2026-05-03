@@ -605,6 +605,12 @@ export function ChatPanel({
               )
             })()}
 
+            {/* Chat section label */}
+            <div className="flex items-center gap-2 px-4 pt-2 pb-0">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Chat with Claude</span>
+              <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
+            </div>
+
             {/* Key entry form or chat */}
             {!hasKey ? (
               <KeyEntryForm onSave={handleSaveKey} />
