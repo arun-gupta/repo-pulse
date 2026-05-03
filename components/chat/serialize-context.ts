@@ -1,5 +1,5 @@
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
-import type { OrgRepoSummary } from '@/lib/analyzer/org-inventory'
+import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
 
 export type ChatContextType = 'repos' | 'org'
@@ -151,6 +151,64 @@ export function serializeOrgContext(
     '',
     '```json',
     JSON.stringify(summary, null, 2),
+    '```',
+  ].join('\n')
+
+  return { contextType: 'org', text }
+}
+
+function sortInventoryRepos(results: OrgRepoSummary[], sortBy: OrgSortBy): OrgRepoSummary[] {
+  const list = [...results]
+  if (sortBy === 'stars') {
+    list.sort((a, b) => {
+      const na = typeof a.stars === 'number' ? a.stars : -1
+      const nb = typeof b.stars === 'number' ? b.stars : -1
+      return nb - na
+    })
+  } else if (sortBy === 'activity') {
+    list.sort((a, b) => {
+      const da = typeof a.pushedAt === 'string' ? a.pushedAt : ''
+      const db = typeof b.pushedAt === 'string' ? b.pushedAt : ''
+      return db.localeCompare(da)
+    })
+  }
+  // 'health' not meaningful at inventory phase — keep fetch order
+  return list
+}
+
+export function serializeOrgInventoryContext(
+  inventory: OrgInventoryResponse,
+  opts: { maxRepos?: number; sortBy?: OrgSortBy } = {},
+): SerializedChatContext {
+  const { maxRepos = 500, sortBy = 'stars' } = opts
+  const sorted = sortInventoryRepos(inventory.results, sortBy).slice(0, maxRepos)
+
+  const payload = {
+    org: inventory.org,
+    phase: 'inventory',
+    summary: inventory.summary,
+    sortedBy: sortBy,
+    maxReposIncluded: maxRepos,
+    repos: sorted.map((r) => ({
+      repo: r.repo,
+      language: r.primaryLanguage,
+      stars: r.stars,
+      forks: r.forks,
+      openIssues: r.openIssues,
+      pushedAt: r.pushedAt,
+      archived: r.archived,
+      isFork: r.isFork,
+      topics: r.topics,
+      description: r.description,
+    })),
+  }
+
+  const text = [
+    `# Org Inventory Context (pre-analysis)`,
+    `Organization: ${inventory.org} · ${inventory.results.length} repos fetched, analysis not yet run`,
+    '',
+    '```json',
+    JSON.stringify(payload, null, 2),
     '```',
   ].join('\n')
 

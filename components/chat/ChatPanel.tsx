@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
-import type { OrgRepoSummary } from '@/lib/analyzer/org-inventory'
+import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
-import { serializeReposContext, serializeOrgContext, type OrgSortBy } from './serialize-context'
+import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext, type OrgSortBy } from './serialize-context'
 
 // ---- Types ----------------------------------------------------------------
 
@@ -30,6 +30,7 @@ export interface ChatPanelProps {
   orgView?: OrgSummaryViewModel
   org?: string
   orgRepos?: OrgRepoSummary[]
+  orgInventory?: OrgInventoryResponse
   githubToken: string
   resetKey?: number
 }
@@ -48,6 +49,13 @@ const ORG_STARTER_CHIPS = [
   "What's the overall security posture?",
   'Which repos are best positioned for CNCF Sandbox?',
   'Are there repos with low activity but high star counts?',
+]
+
+const ORG_INVENTORY_STARTER_CHIPS = [
+  "Which repos haven't been active in over a year?",
+  'What languages are most common across this org?',
+  'Which repos have the most open issues?',
+  'Are there any archived or forked repos?',
 ]
 
 const MODEL_META: Record<Model, { icon: string; label: string; hint: string; inputRate: number; outputRate: number; cacheReadRate: number }> = {
@@ -192,7 +200,7 @@ function KeyEntryForm({ onSave }: { onSave: (key: string) => void }) {
 // ---- Main component -------------------------------------------------------
 
 export function ChatPanel({
-  contextType, repoResults, orgView, org, orgRepos = [], githubToken, resetKey,
+  contextType, repoResults, orgView, org, orgRepos = [], orgInventory, githubToken, resetKey,
 }: ChatPanelProps) {
   const [expanded, setExpanded] = useState(false)
   const [model, setModel] = useState<Model>('claude-haiku-4-5')
@@ -275,6 +283,8 @@ export function ChatPanel({
       return serializeReposContext(repoResults).text
     if (contextType === 'org' && orgView && org)
       return serializeOrgContext(org, orgView, { maxRepos: orgRepoCount, sortBy, orgRepos }).text
+    if (contextType === 'org' && orgInventory)
+      return serializeOrgInventoryContext(orgInventory, { maxRepos: orgRepoCount, sortBy }).text
     return ''
   }
 
@@ -420,9 +430,15 @@ export function ChatPanel({
     setIsStreaming(false)
   }
 
-  const starterChips = contextType === 'repos' ? REPOS_STARTER_CHIPS : ORG_STARTER_CHIPS
+  const isInventoryPhase = contextType === 'org' && !orgView && !!orgInventory
+  const starterChips = contextType === 'repos'
+    ? REPOS_STARTER_CHIPS
+    : isInventoryPhase
+      ? ORG_INVENTORY_STARTER_CHIPS
+      : ORG_STARTER_CHIPS
   const showChips = messages.length === 0 && !isStreaming
-  const isOrgAndLarge = contextType === 'org' && (orgView?.status.total ?? 0) > 500
+  const orgTotal = orgView?.status.total ?? orgInventory?.results.length ?? 0
+  const isOrgAndLarge = contextType === 'org' && orgTotal > 500
   const hasKey = !!anthropicKey
 
   return (

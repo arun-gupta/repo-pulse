@@ -1090,7 +1090,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       chatPanel={
         session?.token && inputMode !== 'foundation' && (
           (inputMode === 'repos' && analysisResponse) ||
-          (inputMode === 'org' && orgAnalysisComplete && orgAggregation.view)
+          (inputMode === 'org' && orgInventoryResponse)
         ) ? (
           inputMode === 'repos' && analysisResponse ? (
             <ChatPanel
@@ -1099,12 +1099,13 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
               githubToken={session.token}
               resetKey={resultsResetKey}
             />
-          ) : inputMode === 'org' && orgAnalysisComplete && orgAggregation.view && orgInventoryResponse ? (
+          ) : inputMode === 'org' && orgInventoryResponse ? (
             <ChatPanel
               contextType="org"
-              orgView={orgAggregation.view}
+              orgView={orgAnalysisComplete && orgAggregation.view ? orgAggregation.view : undefined}
               org={orgInventoryResponse.org}
               orgRepos={orgInventoryResponse.results}
+              orgInventory={orgAnalysisComplete ? undefined : orgInventoryResponse}
               githubToken={session.token}
               resetKey={resultsResetKey}
             />
