@@ -168,6 +168,7 @@ export async function POST(request: Request) {
       result.mergeIntoDataStream(writer)
     },
     onError: (error) => {
+      console.error('[chat] streamText error:', error)
       const msg = (error as { message?: string }).message ?? ''
       if (msg.includes('401') || msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('unauthorized')) {
         return 'Invalid API key — check it and try again.'

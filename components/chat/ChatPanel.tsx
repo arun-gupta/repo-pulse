@@ -369,7 +369,7 @@ export function ChatPanel({
 
   const activeProvider = userKey ? provider : ('anthropic' as ProviderId)
 
-  const { messages, input, setInput, handleSubmit, isLoading, stop, setMessages, data, append } = useChat({
+  const { messages, input, setInput, handleSubmit, isLoading, stop, setMessages, data, append, error: chatError } = useChat({
     api: '/api/chat',
     body: {
       context,
@@ -653,6 +653,16 @@ export function ChatPanel({
                   })}
                   <div ref={messagesEndRef} />
                 </div>
+
+                {/* Error banner */}
+                {chatError && (
+                  <div className="mx-4 mb-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-200">
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0">
+                      <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                    </svg>
+                    <span>{chatError.message || 'Something went wrong — please try again.'}</span>
+                  </div>
+                )}
 
                 {/* Input */}
                 <form onSubmit={handleSubmit} className="border-t border-slate-200 px-4 py-3 dark:border-slate-700">
