@@ -10,7 +10,13 @@ const VALID_ROLES = ['user', 'assistant'] as const
 
 const MAX_HISTORY_TURNS = 10
 
-async function validateGitHubToken(token: string): Promise<boolean> {
+// Free tier: 5 requests per GitHub login per server lifetime.
+// Resets on deployment — this is intentional for a lightweight demo gate.
+const FREE_LIMIT = 5
+const freeUsage = new Map<string, number>()
+
+// Returns the GitHub username, or null if the token is invalid.
+async function validateGitHubToken(token: string): Promise<string | null> {
   try {
     const res = await fetch('https://api.github.com/graphql', {
       method: 'POST',
@@ -20,9 +26,11 @@ async function validateGitHubToken(token: string): Promise<boolean> {
       },
       body: JSON.stringify({ query: '{ viewer { login } }' }),
     })
-    return res.ok
+    if (!res.ok) return null
+    const data = (await res.json()) as { data?: { viewer?: { login?: string } } }
+    return data.data?.viewer?.login ?? null
   } catch {
-    return false
+    return null
   }
 }
 
@@ -72,6 +80,7 @@ export async function POST(request: Request) {
   const { messages, context, contextType, githubToken, anthropicKey, model: requestedModel } = body
 
   // Resolve API key: user-provided key takes precedence over server env var
+  const hasOwnKey = !!anthropicKey?.trim()
   const apiKey = anthropicKey?.trim() || process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     return Response.json(
@@ -115,12 +124,33 @@ export async function POST(request: Request) {
     )
   }
 
-  const isValidToken = await validateGitHubToken(githubToken)
-  if (!isValidToken) {
+  const username = await validateGitHubToken(githubToken)
+  if (!username) {
     return Response.json(
       { error: { code: 'UNAUTHENTICATED', message: 'Invalid GitHub token.' } },
       { status: 401 },
     )
+  }
+
+  // Enforce free tier limit when no own key is provided
+  const usedCount = freeUsage.get(username) ?? 0
+  if (!hasOwnKey && usedCount >= FREE_LIMIT) {
+    return Response.json(
+      {
+        error: {
+          code: 'FREE_LIMIT_REACHED',
+          message: `You've used all ${FREE_LIMIT} free chats. Add your Anthropic API key to continue with unlimited access.`,
+          remaining: 0,
+          limit: FREE_LIMIT,
+        },
+      },
+      { status: 402 },
+    )
+  }
+
+  // Consume one free slot before streaming (charge on attempt, not on success)
+  if (!hasOwnKey) {
+    freeUsage.set(username, usedCount + 1)
   }
 
   const model: SupportedModel =
@@ -134,6 +164,8 @@ export async function POST(request: Request) {
   const systemPrompt = buildSystemPrompt(contextType, context)
 
   const client = new Anthropic({ apiKey })
+
+  const remaining = hasOwnKey ? undefined : FREE_LIMIT - (freeUsage.get(username) ?? 0)
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -175,7 +207,7 @@ export async function POST(request: Request) {
           }
         }
 
-        emit(`data: ${JSON.stringify({ type: 'usage', inputTokens, outputTokens, cacheReadTokens })}\n\n`)
+        emit(`data: ${JSON.stringify({ type: 'usage', inputTokens, outputTokens, cacheReadTokens, remaining })}\n\n`)
         emit(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
       } catch (error: unknown) {
         const status = (error as { status?: number }).status

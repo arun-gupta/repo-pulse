@@ -123,6 +123,8 @@ function applyCompletion(query: string, completion: string): string {
   return query.replace(/(\s*)(\S*)$/, (_, space) => `${space}${completion} `).trimStart()
 }
 
+const FREE_LIMIT = 5
+
 const SS_KEY_ANTHROPIC = 'repopulse:chat:anthropicKey'
 const LS_KEY_MODEL = 'repopulse:chat:model'
 const SS_KEY_EXPANDED = 'repopulse:chat:expanded'
@@ -295,10 +297,18 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
 
 // ---- Key entry form -------------------------------------------------------
 
-function KeyEntryForm({ onSave }: { onSave: (key: string) => void }) {
+function KeyEntryForm({ onSave, exhausted = false }: { onSave: (key: string) => void; exhausted?: boolean }) {
   const [value, setValue] = useState('')
   return (
     <div className="flex flex-col gap-3 p-4">
+      {exhausted && (
+        <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0">
+            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+          </svg>
+          You&apos;ve used all {FREE_LIMIT} free chats. Add your Anthropic API key for unlimited access.
+        </div>
+      )}
       <div>
         <label htmlFor="chat-anthropic-key" className="block text-sm font-medium text-slate-800 dark:text-slate-200">
           Anthropic API key
@@ -355,6 +365,7 @@ export function ChatPanel({
   const [orgRepoCount, setOrgRepoCount] = useState(500)
   const [sortBy, setSortBy] = useState<OrgSortBy>('stars')
   const [sessionUsage, setSessionUsage] = useState<{ messages: number; totalCost: number }>({ messages: 0, totalCost: 0 })
+  const [freeRemaining, setFreeRemaining] = useState<number>(FREE_LIMIT)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -468,8 +479,13 @@ export function ChatPanel({
       })
 
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({})) as { error?: { message?: string; code?: string } }
+        const payload = await response.json().catch(() => ({})) as { error?: { message?: string; code?: string; remaining?: number } }
         const code = payload.error?.code
+        if (code === 'FREE_LIMIT_REACHED') {
+          setFreeRemaining(0)
+          setMessages((prev) => prev.filter((m) => m.id !== assistantId))
+          return
+        }
         const msg =
           code === 'NOT_CONFIGURED'
             ? "AI chat isn't available — please provide an Anthropic API key."
@@ -505,7 +521,7 @@ export function ChatPanel({
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
-          let event: { type: string; text?: string; code?: string; message?: string; inputTokens?: number; outputTokens?: number; cacheReadTokens?: number }
+          let event: { type: string; text?: string; code?: string; message?: string; inputTokens?: number; outputTokens?: number; cacheReadTokens?: number; remaining?: number }
           try { event = JSON.parse(line.slice(6)) } catch { continue }
 
           if (event.type === 'delta' && event.text) {
@@ -523,6 +539,9 @@ export function ChatPanel({
             )
             const cost = calcCost(msgUsage, model)
             setSessionUsage((prev) => ({ messages: prev.messages + 1, totalCost: prev.totalCost + cost }))
+            if (typeof event.remaining === 'number') {
+              setFreeRemaining(event.remaining)
+            }
           } else if (event.type === 'error') {
             const noRetry = event.code === 'NOT_CONFIGURED' || event.code === 'CONTEXT_TOO_LARGE'
             const showKeyLink = event.code === 'INVALID_KEY'
@@ -671,6 +690,23 @@ export function ChatPanel({
                 </span>
               )}
 
+              {/* Free chat indicator (shown when no own key) */}
+              {!hasKey && (
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: FREE_LIMIT }, (_, i) => (
+                    <span
+                      key={i}
+                      className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${i < freeRemaining ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                    />
+                  ))}
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    {freeRemaining > 0
+                      ? `${freeRemaining} free ${freeRemaining === 1 ? 'chat' : 'chats'} left`
+                      : 'Free limit reached'}
+                  </span>
+                </div>
+              )}
+
               <div className="ml-auto flex items-center gap-2">
                 {/* Change key */}
                 {hasKey && (
@@ -716,9 +752,9 @@ export function ChatPanel({
               <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
             </div>
 
-            {/* Key entry form or chat */}
-            {!hasKey ? (
-              <KeyEntryForm onSave={handleSaveKey} />
+            {/* Key entry form (no key, or free limit exhausted) or chat */}
+            {!hasKey || freeRemaining === 0 ? (
+              <KeyEntryForm onSave={handleSaveKey} exhausted={!hasKey && freeRemaining === 0} />
             ) : (
               <>
                 {/* Message history */}
