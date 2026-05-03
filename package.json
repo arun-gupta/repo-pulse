@@ -25,7 +25,12 @@
     "pre-commit": "npm run typecheck"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.12",
+    "@ai-sdk/google": "^1.2.22",
+    "@ai-sdk/groq": "^1.2.9",
+    "@ai-sdk/openai": "^1.3.24",
     "@anthropic-ai/sdk": "^0.92.0",
+    "ai": "^4.3.19",
     "chart.js": "^4.5.1",
     "chartjs-plugin-zoom": "^2.2.0",
     "hammerjs": "^2.0.8",

@@ -1,29 +1,16 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useChat } from 'ai/react'
+import type { Message } from 'ai'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
 import { parseStructuredSearchQuery } from '@/lib/org-inventory/structured-search'
 import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext, type OrgSortBy } from './serialize-context'
+import { PROVIDERS, type ProviderId, type ModelTier } from './providers'
 
 // ---- Types ----------------------------------------------------------------
-
-type Model = 'claude-haiku-4-5' | 'claude-sonnet-4-6'
-
-interface MessageUsage {
-  inputTokens: number
-  outputTokens: number
-  cacheReadTokens: number
-}
-
-interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant' | 'error'
-  content: string
-  usage?: MessageUsage
-  retryContent?: string
-}
 
 export interface ChatPanelProps {
   contextType: 'repos' | 'org'
@@ -34,62 +21,36 @@ export interface ChatPanelProps {
   orgInventory?: OrgInventoryResponse
   githubToken: string
   resetKey?: number
-  /** Controlled repo filter query — synced with the org inventory table */
   repoQuery?: string
   onRepoQueryChange?: (q: string) => void
 }
 
 // ---- Constants ------------------------------------------------------------
 
+const FREE_LIMIT = 5
+
 const REPOS_STARTER_CHIPS = [
   'Why is the security score low?',
   "What's the biggest gap between these repos?",
   'Which repo should I fix first?',
-  'What do these repos have in common?',
 ]
 
 const ORG_STARTER_CHIPS = [
   'Which repos need the most urgent attention?',
   "What's the overall security posture?",
   'Which repos are best positioned for CNCF Sandbox?',
-  'Are there repos with low activity but high star counts?',
 ]
 
 const ORG_INVENTORY_STARTER_CHIPS = [
   "Which repos haven't been active in over a year?",
   'What languages are most common across this org?',
   'Which repos have the most open issues?',
-  'Are there any archived or forked repos?',
 ]
-
-const MODEL_META: Record<Model, { icon: string; label: string; hint: string; inputRate: number; outputRate: number; cacheReadRate: number }> = {
-  'claude-haiku-4-5': {
-    icon: '⚡', label: 'Fast',
-    hint: 'Best for quick lookups and factual questions about the data',
-    inputRate: 0.80, outputRate: 4.00, cacheReadRate: 0.08,
-  },
-  'claude-sonnet-4-6': {
-    icon: '🧠', label: 'Deep',
-    hint: 'Better for multi-hop reasoning, comparisons, and nuanced recommendations',
-    inputRate: 3.00, outputRate: 15.00, cacheReadRate: 0.30,
-  },
-}
 
 const SORT_OPTIONS: { value: OrgSortBy; label: string }[] = [
-  { value: 'stars', label: '⭐ Top by stars' },
-  { value: 'health', label: '🔴 Lowest health first' },
+  { value: 'stars',    label: '⭐ Top by stars' },
+  { value: 'health',   label: '🔴 Lowest health first' },
   { value: 'activity', label: '⚡ Most recently active' },
-]
-
-const SEARCH_PREFIX_HINTS: { key: string; description: string; example: string }[] = [
-  { key: 'lang',     description: 'Programming language',  example: 'lang:go' },
-  { key: 'archived', description: 'Archived status',       example: 'archived:false' },
-  { key: 'stars',    description: 'Star count',            example: 'stars:>500' },
-  { key: 'forks',    description: 'Fork count',            example: 'forks:>10' },
-  { key: 'issues',   description: 'Open issues count',     example: 'issues:<50' },
-  { key: 'pushed',   description: 'Last push date',        example: 'pushed:>2024-01-01' },
-  { key: 'topic',    description: 'Repository topic',      example: 'topic:kubernetes' },
-  { key: 'license',  description: 'License type',          example: 'license:apache-2.0' },
 ]
 
 const COMPLETION_VALUES: Record<string, string[]> = {
@@ -102,6 +63,25 @@ const COMPLETION_VALUES: Record<string, string[]> = {
   topic:    ['kubernetes', 'machine-learning', 'security', 'cli', 'api', 'docker', 'ai', 'devops'],
   license:  ['apache-2.0', 'mit', 'gpl-3.0', 'bsd-3-clause', 'mpl-2.0'],
 }
+
+const SEARCH_PREFIX_HINTS: { key: string; description: string; example: string }[] = [
+  { key: 'lang',     description: 'Programming language',  example: 'lang:go' },
+  { key: 'archived', description: 'Archived status',       example: 'archived:false' },
+  { key: 'stars',    description: 'Star count',            example: 'stars:>500' },
+  { key: 'forks',    description: 'Fork count',            example: 'forks:>10' },
+  { key: 'issues',   description: 'Open issues count',     example: 'issues:<50' },
+  { key: 'pushed',   description: 'Last push date',        example: 'pushed:>2024-01-01' },
+  { key: 'topic',    description: 'Repository topic',      example: 'topic:kubernetes' },
+  { key: 'license',  description: 'License type',          example: 'license:apache-2.0' },
+]
+
+const LS_KEY_PROVIDER  = 'repopulse:chat:provider'
+const LS_KEY_MODEL_TIER = 'repopulse:chat:modelTier'
+const SS_KEY_EXPANDED  = 'repopulse:chat:expanded'
+const SS_KEY_PROVIDER  = 'repopulse:chat:provider:session'
+const SS_KEY_API_KEY   = 'repopulse:chat:apiKey'
+
+// ---- Helpers --------------------------------------------------------------
 
 function computeCompletions(query: string): string[] {
   const lastToken = query.match(/(?:^|\s)(\S*)$/)?.[1] ?? ''
@@ -123,46 +103,6 @@ function applyCompletion(query: string, completion: string): string {
   return query.replace(/(\s*)(\S*)$/, (_, space) => `${space}${completion} `).trimStart()
 }
 
-const FREE_LIMIT = 5
-
-const SS_KEY_ANTHROPIC = 'repopulse:chat:anthropicKey'
-const LS_KEY_MODEL = 'repopulse:chat:model'
-const SS_KEY_EXPANDED = 'repopulse:chat:expanded'
-
-// ---- Helpers --------------------------------------------------------------
-
-function uid(): string {
-  return Math.random().toString(36).slice(2)
-}
-
-function readStoredModel(): Model {
-  try {
-    const v = localStorage.getItem(LS_KEY_MODEL)
-    if (v === 'claude-haiku-4-5' || v === 'claude-sonnet-4-6') return v
-  } catch {}
-  return 'claude-haiku-4-5'
-}
-
-function readStoredExpanded(): boolean {
-  try { return sessionStorage.getItem(SS_KEY_EXPANDED) === 'true' } catch {}
-  return false
-}
-
-function readStoredKey(): string {
-  try { return sessionStorage.getItem(SS_KEY_ANTHROPIC) ?? '' } catch {}
-  return ''
-}
-
-function calcCost(usage: MessageUsage, model: Model): number {
-  const { inputRate, outputRate, cacheReadRate } = MODEL_META[model]
-  return (
-    (usage.inputTokens * inputRate +
-      usage.outputTokens * outputRate +
-      usage.cacheReadTokens * cacheReadRate) /
-    1_000_000
-  )
-}
-
 function formatCost(usd: number): string {
   if (usd < 0.0001) return '<$0.0001'
   return `$${usd.toFixed(4)}`
@@ -172,7 +112,12 @@ function formatTokens(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
 }
 
-// ---- Markdown renderer (paragraphs, bold, inline code, fenced code) -------
+function calcCost(promptTokens: number, completionTokens: number, provider: ProviderId, modelTier: ModelTier): number {
+  const spec = PROVIDERS[provider].models[modelTier]
+  return (promptTokens * spec.inputRate + completionTokens * spec.outputRate) / 1_000_000
+}
+
+// ---- Markdown renderer ----------------------------------------------------
 
 function renderMarkdown(text: string): React.ReactNode {
   const parts = text.split(/(```[\s\S]*?```)/g)
@@ -206,20 +151,9 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
   const blurRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const parsed = parseStructuredSearchQuery(value)
 
-  function open(q: string) {
-    const c = computeCompletions(q)
-    setCompletions(c)
-    setActiveIdx(-1)
-  }
-
+  function open(q: string) { const c = computeCompletions(q); setCompletions(c); setActiveIdx(-1) }
   function close() { setCompletions([]); setActiveIdx(-1) }
-
-  function pick(completion: string) {
-    onChange(applyCompletion(value, completion))
-    close()
-  }
-
-  function handleChange(q: string) { onChange(q); open(q) }
+  function pick(c: string) { onChange(applyCompletion(value, c)); close() }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (completions.length === 0) return
@@ -227,10 +161,7 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx((i) => Math.max(i - 1, -1)) }
     else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); pick(completions[activeIdx]) }
     else if (e.key === 'Escape') close()
-    else if (e.key === 'Tab' && completions.length > 0) {
-      e.preventDefault()
-      pick(completions[activeIdx >= 0 ? activeIdx : 0])
-    }
+    else if (e.key === 'Tab' && completions.length > 0) { e.preventDefault(); pick(completions[activeIdx >= 0 ? activeIdx : 0]) }
   }
 
   return (
@@ -243,7 +174,7 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
           <input
             type="text"
             value={value}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={(e) => { onChange(e.target.value); open(e.target.value) }}
             onFocus={() => open(value)}
             onBlur={() => { blurRef.current = setTimeout(close, 150) }}
             onKeyDown={handleKeyDown}
@@ -253,10 +184,7 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
             className="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
           {completions.length > 0 && (
-            <ul
-              role="listbox"
-              className="absolute bottom-full left-0 z-50 mb-1 w-full overflow-hidden rounded border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
-            >
+            <ul role="listbox" className="absolute bottom-full left-0 z-50 mb-1 w-full overflow-hidden rounded border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
               {completions.map((c, i) => (
                 <li key={c} role="option" aria-selected={i === activeIdx}>
                   <button
@@ -297,50 +225,102 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
 
 // ---- Key entry form -------------------------------------------------------
 
-function KeyEntryForm({ onSave, exhausted = false }: { onSave: (key: string) => void; exhausted?: boolean }) {
-  const [value, setValue] = useState('')
+const DIRECT_PROVIDERS: ProviderId[] = ['anthropic', 'openai', 'google', 'groq']
+
+function KeyEntryForm({
+  onSave,
+  exhausted = false,
+}: {
+  onSave: (provider: ProviderId, key: string) => void
+  exhausted?: boolean
+}) {
+  const [tab, setTab] = useState<'openrouter' | 'direct'>('openrouter')
+  const [directProvider, setDirectProvider] = useState<ProviderId>('anthropic')
+  const [keyValue, setKeyValue] = useState('')
+
+  const activeProvider: ProviderId = tab === 'openrouter' ? 'openrouter' : directProvider
+  const config = PROVIDERS[activeProvider]
+
+  function handleSave() {
+    if (!keyValue.trim()) return
+    onSave(activeProvider, keyValue.trim())
+  }
+
   return (
     <div className="flex flex-col gap-3 p-4">
       {exhausted && (
-        <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0">
+        <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0">
             <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
           </svg>
-          You&apos;ve used all {FREE_LIMIT} free chats. Add your Anthropic API key for unlimited access.
+          You&apos;ve used all {FREE_LIMIT} free chats. Add an API key for unlimited access.
         </div>
       )}
+
+      {/* Provider tabs */}
+      <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
+        <button
+          type="button"
+          onClick={() => { setTab('openrouter'); setKeyValue('') }}
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${tab === 'openrouter' ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+        >
+          OpenRouter
+          <span className="ml-1.5 rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">recommended</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => { setTab('direct'); setKeyValue('') }}
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${tab === 'direct' ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+        >
+          Direct provider
+        </button>
+      </div>
+
+      {/* Direct provider selector */}
+      {tab === 'direct' && (
+        <div className="flex gap-1">
+          {DIRECT_PROVIDERS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => { setDirectProvider(p); setKeyValue('') }}
+              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${directProvider === p ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900' : 'border border-slate-200 text-slate-600 hover:border-slate-400 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-500'}`}
+            >
+              {PROVIDERS[p].name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tagline */}
+      <p className="text-xs text-slate-500 dark:text-slate-400">{config.tagline}</p>
+
+      {/* Key input */}
       <div>
-        <label htmlFor="chat-anthropic-key" className="block text-sm font-medium text-slate-800 dark:text-slate-200">
-          Anthropic API key
-        </label>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          Your key is sent only to Anthropic to generate responses. It is never logged, stored on our
-          servers, or used for anything other than this chat session.
+        <input
+          type="password"
+          value={keyValue}
+          onChange={(e) => setKeyValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSave() }}
+          placeholder={config.keyPlaceholder}
+          autoComplete="off"
+          spellCheck={false}
+          className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+        />
+        <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+          Your key is sent only to {config.name} to generate responses. Never logged or stored on our servers.
         </p>
       </div>
-      <input
-        id="chat-anthropic-key"
-        type="password"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="sk-ant-…"
-        autoComplete="off"
-        spellCheck={false}
-        className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-      />
-      <div className="flex items-center justify-between gap-3">
-        <a
-          href="https://console.anthropic.com/settings/keys"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-sky-700 hover:underline dark:text-sky-400"
-        >
-          Get a free key at console.anthropic.com →
+
+      <div className="flex items-center justify-between">
+        <a href={config.consoleUrl} target="_blank" rel="noopener noreferrer"
+          className="text-xs text-sky-700 hover:underline dark:text-sky-400">
+          Get a key at {config.consoleLabel} →
         </a>
         <button
           type="button"
-          disabled={!value.trim()}
-          onClick={() => onSave(value.trim())}
+          disabled={!keyValue.trim()}
+          onClick={handleSave}
           className="rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-40 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
         >
           Save key
@@ -357,42 +337,87 @@ export function ChatPanel({
   repoQuery = '', onRepoQueryChange,
 }: ChatPanelProps) {
   const [expanded, setExpanded] = useState(false)
-  const [model, setModel] = useState<Model>('claude-haiku-4-5')
-  const [anthropicKey, setAnthropicKey] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [inputValue, setInputValue] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
+  const [provider, setProvider] = useState<ProviderId>('openrouter')
+  const [modelTier, setModelTier] = useState<ModelTier>('fast')
+  const [userKey, setUserKey] = useState('')
   const [orgRepoCount, setOrgRepoCount] = useState(500)
   const [sortBy, setSortBy] = useState<OrgSortBy>('stars')
-  const [sessionUsage, setSessionUsage] = useState<{ messages: number; totalCost: number }>({ messages: 0, totalCost: 0 })
-  const [freeRemaining, setFreeRemaining] = useState<number>(FREE_LIMIT)
+  const [freeRemaining, setFreeRemaining] = useState(FREE_LIMIT)
+  const [sessionCost, setSessionCost] = useState(0)
+  const [sessionMsgCount, setSessionMsgCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const abortRef = useRef<AbortController | null>(null)
 
   // Hydrate from storage after mount
   useEffect(() => {
-    setModel(readStoredModel())
-    setExpanded(readStoredExpanded())
-    setAnthropicKey(readStoredKey())
+    try {
+      const p = sessionStorage.getItem(SS_KEY_PROVIDER) ?? localStorage.getItem(LS_KEY_PROVIDER)
+      if (p && p in PROVIDERS) setProvider(p as ProviderId)
+      const t = localStorage.getItem(LS_KEY_MODEL_TIER)
+      if (t === 'fast' || t === 'smart') setModelTier(t)
+      const k = sessionStorage.getItem(SS_KEY_API_KEY) ?? ''
+      setUserKey(k)
+      setExpanded(sessionStorage.getItem(SS_KEY_EXPANDED) === 'true')
+    } catch {}
   }, [])
 
-  // Reset conversation when resetKey changes
+  const context = useMemo(() => {
+    if (contextType === 'repos' && repoResults) return serializeReposContext(repoResults).text
+    if (contextType === 'org' && orgView && org) return serializeOrgContext(org, orgView, { maxRepos: orgRepoCount, sortBy, orgRepos }).text
+    if (contextType === 'org' && orgInventory) return serializeOrgInventoryContext(orgInventory, { maxRepos: orgRepoCount, sortBy }).text
+    return ''
+  }, [contextType, repoResults, orgView, org, orgRepos, orgInventory, orgRepoCount, sortBy])
+
+  const activeProvider = userKey ? provider : ('anthropic' as ProviderId)
+
+  const { messages, input, setInput, handleSubmit, isLoading, stop, setMessages, data, append } = useChat({
+    api: '/api/chat',
+    body: {
+      context,
+      contextType,
+      githubToken,
+      provider: activeProvider,
+      model: PROVIDERS[activeProvider].models[modelTier].id,
+      apiKey: userKey || undefined,
+    },
+    onFinish: (_message: Message, options: { usage?: { promptTokens: number; completionTokens: number } }) => {
+      const usage = options?.usage
+      if (usage) {
+        const cost = calcCost(usage.promptTokens, usage.completionTokens, activeProvider, modelTier)
+        setSessionCost((prev) => prev + cost)
+        setSessionMsgCount((prev) => prev + 1)
+      }
+    },
+    onError: (error: Error) => {
+      if (error.message.includes('FREE_LIMIT_REACHED') || error.message.includes('free chats')) {
+        setFreeRemaining(0)
+      }
+    },
+  })
+
+  // Sync freeRemaining from stream data
   useEffect(() => {
-    if (resetKey === undefined) return
-    setMessages([])
-    setInputValue('')
-    setSessionUsage({ messages: 0, totalCost: 0 })
-    abortRef.current?.abort()
-    abortRef.current = null
-    setIsStreaming(false)
-    try { sessionStorage.removeItem(SS_KEY_EXPANDED) } catch {}
-    setExpanded(false)
-  }, [resetKey])
+    if (!data?.length) return
+    const last = [...data].reverse().find((d) => typeof (d as { remaining?: number }).remaining === 'number')
+    if (last) setFreeRemaining((last as { remaining: number }).remaining)
+  }, [data])
 
   // Scroll to latest message
   useEffect(() => {
     if (expanded) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, expanded])
+
+  // Reset on resetKey change
+  useEffect(() => {
+    if (resetKey === undefined) return
+    setMessages([])
+    setInput('')
+    setSessionCost(0)
+    setSessionMsgCount(0)
+    stop()
+    try { sessionStorage.removeItem(SS_KEY_EXPANDED) } catch {}
+    setExpanded(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey])
 
   function handleExpandToggle() {
     const next = !expanded
@@ -400,28 +425,44 @@ export function ChatPanel({
     try { sessionStorage.setItem(SS_KEY_EXPANDED, String(next)) } catch {}
   }
 
-  function handleModelChange(m: Model) {
-    setModel(m)
-    try { localStorage.setItem(LS_KEY_MODEL, m) } catch {}
-  }
-
-  function handleSaveKey(key: string) {
-    setAnthropicKey(key)
-    try { sessionStorage.setItem(SS_KEY_ANTHROPIC, key) } catch {}
+  function handleSaveKey(p: ProviderId, key: string) {
+    setProvider(p)
+    setUserKey(key)
+    try {
+      sessionStorage.setItem(SS_KEY_PROVIDER, p)
+      sessionStorage.setItem(SS_KEY_API_KEY, key)
+      localStorage.setItem(LS_KEY_PROVIDER, p)
+    } catch {}
+    setMessages([])
+    setSessionCost(0)
+    setSessionMsgCount(0)
   }
 
   function handleClearKey() {
-    setAnthropicKey('')
-    try { sessionStorage.removeItem(SS_KEY_ANTHROPIC) } catch {}
+    setUserKey('')
+    try {
+      sessionStorage.removeItem(SS_KEY_API_KEY)
+      sessionStorage.removeItem(SS_KEY_PROVIDER)
+    } catch {}
     setMessages([])
-    setSessionUsage({ messages: 0, totalCost: 0 })
+    setSessionCost(0)
+    setSessionMsgCount(0)
+  }
+
+  function handleModelTierChange(t: ModelTier) {
+    setModelTier(t)
+    try { localStorage.setItem(LS_KEY_MODEL_TIER, t) } catch {}
+    setMessages([])
+    setSessionCost(0)
+    setSessionMsgCount(0)
   }
 
   function handleOrgRepoCountChange(count: number) {
     if (count !== orgRepoCount) {
       setOrgRepoCount(count)
       setMessages([])
-      setSessionUsage({ messages: 0, totalCost: 0 })
+      setSessionCost(0)
+      setSessionMsgCount(0)
     }
   }
 
@@ -429,180 +470,26 @@ export function ChatPanel({
     if (s !== sortBy) {
       setSortBy(s)
       setMessages([])
-      setSessionUsage({ messages: 0, totalCost: 0 })
+      setSessionCost(0)
+      setSessionMsgCount(0)
     }
-  }
-
-  function buildContext(): string {
-    if (contextType === 'repos' && repoResults)
-      return serializeReposContext(repoResults).text
-    if (contextType === 'org' && orgView && org)
-      return serializeOrgContext(org, orgView, { maxRepos: orgRepoCount, sortBy, orgRepos }).text
-    if (contextType === 'org' && orgInventory)
-      return serializeOrgInventoryContext(orgInventory, { maxRepos: orgRepoCount, sortBy }).text
-    return ''
-  }
-
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isStreaming) return
-
-    const userMsg: ChatMessage = { id: uid(), role: 'user', content: text }
-    const assistantId = uid()
-
-    setMessages((prev) => [...prev, userMsg, { id: assistantId, role: 'assistant', content: '' }])
-    setInputValue('')
-    setIsStreaming(true)
-
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    const apiMessages = [
-      ...messages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-      { role: 'user' as const, content: text },
-    ]
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: apiMessages,
-          context: buildContext(),
-          contextType,
-          githubToken,
-          anthropicKey: anthropicKey || undefined,
-          model,
-        }),
-        signal: controller.signal,
-      })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({})) as { error?: { message?: string; code?: string; remaining?: number } }
-        const code = payload.error?.code
-        if (code === 'FREE_LIMIT_REACHED') {
-          setFreeRemaining(0)
-          setMessages((prev) => prev.filter((m) => m.id !== assistantId))
-          return
-        }
-        const msg =
-          code === 'NOT_CONFIGURED'
-            ? "AI chat isn't available — please provide an Anthropic API key."
-            : payload.error?.message ?? 'Something went wrong — please try again in a moment.'
-        setMessages((prev) =>
-          prev.map((m) => m.id === assistantId ? { ...m, role: 'error', content: msg, retryContent: text } : m),
-        )
-        return
-      }
-
-      const reader = response.body?.getReader()
-      if (!reader) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId
-              ? { ...m, role: 'error', content: 'Streaming is not supported in this environment.', retryContent: text }
-              : m,
-          ),
-        )
-        return
-      }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-      let msgUsage: MessageUsage | undefined
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          let event: { type: string; text?: string; code?: string; message?: string; inputTokens?: number; outputTokens?: number; cacheReadTokens?: number; remaining?: number }
-          try { event = JSON.parse(line.slice(6)) } catch { continue }
-
-          if (event.type === 'delta' && event.text) {
-            setMessages((prev) =>
-              prev.map((m) => m.id === assistantId ? { ...m, content: m.content + event.text! } : m),
-            )
-          } else if (event.type === 'usage') {
-            msgUsage = {
-              inputTokens: event.inputTokens ?? 0,
-              outputTokens: event.outputTokens ?? 0,
-              cacheReadTokens: event.cacheReadTokens ?? 0,
-            }
-            setMessages((prev) =>
-              prev.map((m) => m.id === assistantId ? { ...m, usage: msgUsage } : m),
-            )
-            const cost = calcCost(msgUsage, model)
-            setSessionUsage((prev) => ({ messages: prev.messages + 1, totalCost: prev.totalCost + cost }))
-            if (typeof event.remaining === 'number') {
-              setFreeRemaining(event.remaining)
-            }
-          } else if (event.type === 'error') {
-            const noRetry = event.code === 'NOT_CONFIGURED' || event.code === 'CONTEXT_TOO_LARGE'
-            const showKeyLink = event.code === 'INVALID_KEY'
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantId
-                  ? { ...m, role: 'error', content: event.message ?? 'Something went wrong.', retryContent: noRetry ? undefined : text, ...(showKeyLink ? { isKeyError: true } : {}) }
-                  : m,
-              ),
-            )
-          }
-        }
-      }
-    } catch (err: unknown) {
-      if ((err as { name?: string }).name === 'AbortError') return
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, role: 'error', content: 'Something went wrong — please try again in a moment.', retryContent: text }
-            : m,
-        ),
-      )
-    } finally {
-      setIsStreaming(false)
-      abortRef.current = null
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStreaming, messages, contextType, githubToken, anthropicKey, model, orgRepoCount, sortBy, repoResults, orgView, org, orgRepos])
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    void sendMessage(inputValue)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void sendMessage(inputValue) }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit(e as unknown as React.FormEvent)
+    }
   }
 
-  function handleRetry(retryContent: string) {
-    setMessages((prev) => prev.filter((m) => m.retryContent !== retryContent))
-    void sendMessage(retryContent)
-  }
-
-  function handleNewConversation() {
-    abortRef.current?.abort()
-    abortRef.current = null
-    setMessages([])
-    setSessionUsage({ messages: 0, totalCost: 0 })
-    setIsStreaming(false)
-  }
-
+  const hasKey = !!userKey
+  const limitReached = !hasKey && freeRemaining === 0
   const isInventoryPhase = contextType === 'org' && !orgView && !!orgInventory
-  const starterChips = contextType === 'repos'
-    ? REPOS_STARTER_CHIPS
-    : isInventoryPhase
-      ? ORG_INVENTORY_STARTER_CHIPS
-      : ORG_STARTER_CHIPS
-  const showChips = messages.length === 0 && !isStreaming
+  const starterChips = contextType === 'repos' ? REPOS_STARTER_CHIPS : isInventoryPhase ? ORG_INVENTORY_STARTER_CHIPS : ORG_STARTER_CHIPS
+  const showChips = messages.length === 0 && !isLoading
   const orgTotal = orgView?.status.total ?? orgInventory?.results.length ?? 0
   const isOrgAndLarge = contextType === 'org' && orgTotal > 500
-  const hasKey = !!anthropicKey
+  const activeModelSpec = PROVIDERS[activeProvider].models[modelTier]
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-5xl px-4">
@@ -610,11 +497,8 @@ export function ChatPanel({
 
         {/* Collapsed bar */}
         {!expanded ? (
-          <button
-            type="button"
-            onClick={handleExpandToggle}
-            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
+          <button type="button" onClick={handleExpandToggle}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
             <span aria-hidden="true" className="text-base">✨</span>
             <span className="flex-1">
               Ask a question about this analysis
@@ -634,106 +518,82 @@ export function ChatPanel({
             <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-4 py-2 dark:border-slate-700">
               <span className="mr-1 font-semibold text-slate-900 dark:text-slate-100">Ask Claude</span>
 
-              {/* Model switcher */}
+              {/* Model tier switcher */}
               <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800">
-                {(Object.entries(MODEL_META) as [Model, typeof MODEL_META[Model]][]).map(([m, info]) => (
-                  <button
-                    key={m}
-                    type="button"
-                    title={`${info.hint} · Input $${info.inputRate}/1M · Output $${info.outputRate}/1M`}
-                    onClick={() => handleModelChange(m)}
-                    className={
-                      model === m
-                        ? 'rounded-full bg-white px-2.5 py-1 text-xs font-medium shadow-sm dark:bg-slate-700 text-slate-900 dark:text-slate-100'
-                        : 'rounded-full px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                    }
-                  >
-                    {info.icon} {info.label}
-                  </button>
-                ))}
+                {(['fast', 'smart'] as ModelTier[]).map((t) => {
+                  const spec = PROVIDERS[activeProvider].models[t]
+                  return (
+                    <button key={t} type="button"
+                      title={`${spec.label} · $${PROVIDERS[activeProvider].models[t].inputRate}/1M in · $${PROVIDERS[activeProvider].models[t].outputRate}/1M out`}
+                      onClick={() => handleModelTierChange(t)}
+                      className={modelTier === t
+                        ? 'rounded-full bg-white px-2.5 py-1 text-xs font-medium shadow-sm text-slate-900 dark:bg-slate-700 dark:text-slate-100'
+                        : 'rounded-full px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}>
+                      {t === 'fast' ? '⚡' : '🧠'} {t === 'fast' ? 'Fast' : 'Smart'}
+                    </button>
+                  )
+                })}
               </div>
+
+              {/* Provider badge (when key set) */}
+              {hasKey && (
+                <span className="rounded border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  {PROVIDERS[provider].name} · {activeModelSpec.label}
+                </span>
+              )}
 
               {/* Org controls */}
               {isOrgAndLarge && (
                 <>
                   <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                     <label htmlFor="chat-repo-count" className="whitespace-nowrap">Top</label>
-                    <input
-                      id="chat-repo-count"
-                      type="range"
-                      min="50"
-                      max="500"
-                      step="50"
-                      value={orgRepoCount}
-                      onChange={(e) => handleOrgRepoCountChange(Number(e.target.value))}
-                      className="w-20 accent-sky-600"
-                    />
+                    <input id="chat-repo-count" type="range" min="50" max="500" step="50"
+                      value={orgRepoCount} onChange={(e) => handleOrgRepoCountChange(Number(e.target.value))}
+                      className="w-20 accent-sky-600" />
                     <span className="w-8 text-right font-medium">{orgRepoCount}</span>
                     <span>repos</span>
                   </div>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => handleSortByChange(e.target.value as OrgSortBy)}
-                    className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  >
-                    {SORT_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
+                  <select value={sortBy} onChange={(e) => handleSortByChange(e.target.value as OrgSortBy)}
+                    className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </>
               )}
 
               {/* Session cost */}
-              {sessionUsage.messages > 0 && (
+              {sessionMsgCount > 0 && (
                 <span className="text-xs text-slate-400 dark:text-slate-500">
-                  Session: {sessionUsage.messages} {sessionUsage.messages === 1 ? 'msg' : 'msgs'} · {formatCost(sessionUsage.totalCost)}
+                  {sessionMsgCount} {sessionMsgCount === 1 ? 'msg' : 'msgs'} · {formatCost(sessionCost)}
                 </span>
               )}
 
-              {/* Free chat indicator (shown when no own key) */}
+              {/* Free chat indicator */}
               {!hasKey && (
                 <div className="flex items-center gap-1.5">
                   {Array.from({ length: FREE_LIMIT }, (_, i) => (
-                    <span
-                      key={i}
-                      className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${i < freeRemaining ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`}
-                    />
+                    <span key={i} className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${i < freeRemaining ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                   ))}
                   <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                    {freeRemaining > 0
-                      ? `${freeRemaining} free ${freeRemaining === 1 ? 'chat' : 'chats'} left`
-                      : 'Free limit reached'}
+                    {freeRemaining > 0 ? `${freeRemaining} free ${freeRemaining === 1 ? 'chat' : 'chats'} left` : 'Free limit reached'}
                   </span>
                 </div>
               )}
 
               <div className="ml-auto flex items-center gap-2">
-                {/* Change key */}
                 {hasKey && (
-                  <button
-                    type="button"
-                    onClick={handleClearKey}
-                    className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
-                    title="Clear stored API key"
-                  >
+                  <button type="button" onClick={handleClearKey}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
                     Change key
                   </button>
                 )}
                 {messages.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleNewConversation}
-                    className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                  >
+                  <button type="button" onClick={() => { setMessages([]); setSessionCost(0); setSessionMsgCount(0); stop() }}
+                    className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     New conversation
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={handleExpandToggle}
-                  aria-label="Collapse chat"
-                  className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                >
+                <button type="button" onClick={handleExpandToggle} aria-label="Collapse chat"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200">
                   <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
                   </svg>
@@ -741,7 +601,7 @@ export function ChatPanel({
               </div>
             </div>
 
-            {/* Structured search filter (org tab only, always visible when expanded) */}
+            {/* Structured search filter */}
             {contextType === 'org' && onRepoQueryChange && (
               <SearchFilter value={repoQuery} onChange={onRepoQueryChange} />
             )}
@@ -752,26 +612,19 @@ export function ChatPanel({
               <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
             </div>
 
-            {/* Key entry form (no key, or free limit exhausted) or chat */}
-            {!hasKey || freeRemaining === 0 ? (
-              <KeyEntryForm onSave={handleSaveKey} exhausted={!hasKey && freeRemaining === 0} />
+            {/* Key entry or chat */}
+            {!hasKey || limitReached ? (
+              <KeyEntryForm onSave={handleSaveKey} exhausted={limitReached} />
             ) : (
               <>
                 {/* Message history */}
-                <div
-                  className="flex h-[40vh] flex-col overflow-y-auto px-4 py-3 space-y-3"
-                  aria-live="polite"
-                  aria-label="Chat messages"
-                >
+                <div className="flex h-[40vh] flex-col overflow-y-auto px-4 py-3 space-y-3" aria-live="polite" aria-label="Chat messages">
                   {showChips && (
                     <div className="flex flex-wrap gap-2">
                       {starterChips.map((chip) => (
-                        <button
-                          key={chip}
-                          type="button"
-                          onClick={() => void sendMessage(chip)}
-                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                        >
+                        <button key={chip} type="button"
+                          onClick={() => void append({ role: 'user', content: chip })}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                           {chip}
                         </button>
                       ))}
@@ -782,82 +635,53 @@ export function ChatPanel({
                     if (msg.role === 'user') {
                       return (
                         <div key={msg.id} className="flex justify-end">
-                          <div className="max-w-[80%] rounded-2xl bg-sky-600 px-4 py-2 text-sm text-white">
-                            {msg.content}
-                          </div>
+                          <div className="max-w-[80%] rounded-2xl bg-sky-600 px-4 py-2 text-sm text-white">{msg.content}</div>
                         </div>
                       )
                     }
-
-                    if (msg.role === 'error') {
-                      return (
-                        <div key={msg.id} className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-200">
-                          <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0">
-                            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                          </svg>
-                          <div className="flex-1">
-                            <p>{msg.content}</p>
-                            {msg.retryContent && (
-                              <button
-                                type="button"
-                                onClick={() => handleRetry(msg.retryContent!)}
-                                className="mt-1 text-xs font-medium underline hover:no-underline"
-                              >
-                                Retry
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    // assistant
                     return (
                       <div key={msg.id} className="flex flex-col items-start gap-1">
                         <div className="max-w-[85%] rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">
                           {msg.content ? (
-                            <div className="prose prose-sm max-w-none dark:prose-invert">
-                              {renderMarkdown(msg.content)}
-                            </div>
+                            <div className="prose prose-sm max-w-none dark:prose-invert">{renderMarkdown(msg.content)}</div>
                           ) : (
                             <span className="animate-pulse text-slate-400">●</span>
                           )}
                         </div>
-                        {msg.usage && (
-                          <p className="px-1 text-[10px] text-slate-400 dark:text-slate-500">
-                            ↑ {formatTokens(msg.usage.inputTokens)} · ↓ {formatTokens(msg.usage.outputTokens)} · {formatCost(calcCost(msg.usage, model))}
-                            {msg.usage.cacheReadTokens > 0 && ` · ${formatTokens(msg.usage.cacheReadTokens)} cached`}
-                          </p>
-                        )}
                       </div>
                     )
                   })}
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input area */}
+                {/* Input */}
                 <form onSubmit={handleSubmit} className="border-t border-slate-200 px-4 py-3 dark:border-slate-700">
                   <div className="flex items-end gap-2">
                     <textarea
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Ask a question…"
                       rows={1}
-                      disabled={isStreaming}
+                      disabled={isLoading}
                       className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                       style={{ minHeight: '38px', maxHeight: '120px' }}
                     />
-                    <button
-                      type="submit"
-                      disabled={!inputValue.trim() || isStreaming}
-                      aria-label="Send message"
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40 dark:bg-sky-500 dark:hover:bg-sky-400"
-                    >
-                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                        <path d="M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.925A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.087L2.28 16.762a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.208-7.787.75.75 0 0 0 0-1.049A28.897 28.897 0 0 0 3.105 2.288Z" />
-                      </svg>
-                    </button>
+                    {isLoading ? (
+                      <button type="button" onClick={stop}
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300">
+                        <svg aria-label="Stop" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                          <rect x="4" y="4" width="12" height="12" rx="1" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <button type="submit" disabled={!input.trim()} aria-label="Send message"
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40 dark:bg-sky-500 dark:hover:bg-sky-400">
+                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                          <path d="M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.925A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.087L2.28 16.762a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.208-7.787.75.75 0 0 0 0-1.049A28.897 28.897 0 0 0 3.105 2.288Z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </form>
               </>

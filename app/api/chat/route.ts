@@ -1,29 +1,27 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { streamText, createDataStreamResponse } from 'ai'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { createOpenAI } from '@ai-sdk/openai'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { createGroq } from '@ai-sdk/groq'
+import type { ProviderId } from '@/components/chat/providers'
+import { PROVIDERS, FREE_TIER_PROVIDER, FREE_TIER_MODEL } from '@/components/chat/providers'
 
 export const runtime = 'nodejs'
 
-const SUPPORTED_MODELS = ['claude-haiku-4-5', 'claude-sonnet-4-6'] as const
-type SupportedModel = (typeof SUPPORTED_MODELS)[number]
-
-const VALID_CONTEXT_TYPES = ['repos', 'org'] as const
-const VALID_ROLES = ['user', 'assistant'] as const
-
-const MAX_HISTORY_TURNS = 10
-
 // Free tier: 5 requests per GitHub login per server lifetime.
-// Resets on deployment — this is intentional for a lightweight demo gate.
+// Resets on deployment — intentional for a lightweight demo gate.
 const FREE_LIMIT = 5
 const freeUsage = new Map<string, number>()
 
-// Returns the GitHub username, or null if the token is invalid.
-async function validateGitHubToken(token: string): Promise<string | null> {
+const VALID_CONTEXT_TYPES = ['repos', 'org'] as const
+const VALID_ROLES = ['user', 'assistant'] as const
+const MAX_HISTORY_TURNS = 10
+
+async function getGitHubUsername(token: string): Promise<string | null> {
   try {
     const res = await fetch('https://api.github.com/graphql', {
       method: 'POST',
-      headers: {
-        Authorization: `bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { Authorization: `bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: '{ viewer { login } }' }),
     })
     if (!res.ok) return null
@@ -31,6 +29,21 @@ async function validateGitHubToken(token: string): Promise<string | null> {
     return data.data?.viewer?.login ?? null
   } catch {
     return null
+  }
+}
+
+function resolveModel(provider: ProviderId, modelId: string, apiKey: string) {
+  switch (provider) {
+    case 'openrouter':
+      return createOpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey })(modelId)
+    case 'anthropic':
+      return createAnthropic({ apiKey })(modelId)
+    case 'openai':
+      return createOpenAI({ apiKey })(modelId)
+    case 'google':
+      return createGoogleGenerativeAI({ apiKey })(modelId)
+    case 'groq':
+      return createGroq({ apiKey })(modelId)
   }
 }
 
@@ -44,8 +57,9 @@ interface ChatRequest {
   context: string
   contextType: 'repos' | 'org'
   githubToken?: string
-  anthropicKey?: string
+  provider?: ProviderId
   model?: string
+  apiKey?: string
 }
 
 function buildSystemPrompt(contextType: 'repos' | 'org', context: string): string {
@@ -55,13 +69,13 @@ function buildSystemPrompt(contextType: 'repos' | 'org', context: string): strin
       : 'a GitHub organization and all its analyzed repositories'
 
   return [
-    `You are RepoPulse Assistant, an expert on open-source project health metrics.`,
+    'You are RepoPulse Assistant, an expert on open-source project health metrics.',
     `You have been given analysis data for ${scope}.`,
-    `Answer questions strictly from the provided data. Do not invent metrics, scores, or repository details.`,
-    `If the data does not contain enough information to answer a question, say so clearly.`,
-    `Be concise and specific. Format responses in Markdown where helpful.`,
-    ``,
-    `## Analysis Data`,
+    'Answer questions strictly from the provided data. Do not invent metrics, scores, or repository details.',
+    'If the data does not contain enough information to answer a question, say so clearly.',
+    'Be concise and specific. Format responses in Markdown where helpful.',
+    '',
+    '## Analysis Data',
     context,
   ].join('\n')
 }
@@ -71,174 +85,98 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as ChatRequest
   } catch {
-    return Response.json(
-      { error: { code: 'INVALID_INPUT', message: 'Invalid request body.' } },
-      { status: 400 },
-    )
+    return Response.json({ error: { code: 'INVALID_INPUT', message: 'Invalid request body.' } }, { status: 400 })
   }
 
-  const { messages, context, contextType, githubToken, anthropicKey, model: requestedModel } = body
-
-  // Resolve API key: user-provided key takes precedence over server env var
-  const hasOwnKey = !!anthropicKey?.trim()
-  const apiKey = anthropicKey?.trim() || process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    return Response.json(
-      { error: { code: 'NOT_CONFIGURED', message: "AI chat isn't available — please provide an Anthropic API key." } },
-      { status: 503 },
-    )
-  }
+  const { messages, context, contextType, githubToken, provider: reqProvider, model: reqModel, apiKey } = body
 
   if (!githubToken) {
-    return Response.json(
-      { error: { code: 'UNAUTHENTICATED', message: 'Authentication required.' } },
-      { status: 401 },
-    )
+    return Response.json({ error: { code: 'UNAUTHENTICATED', message: 'Authentication required.' } }, { status: 401 })
   }
 
-  if (!context || !contextType) {
-    return Response.json(
-      { error: { code: 'INVALID_INPUT', message: 'context and contextType are required.' } },
-      { status: 400 },
-    )
+  if (!context || !contextType || !(VALID_CONTEXT_TYPES as readonly string[]).includes(contextType)) {
+    return Response.json({ error: { code: 'INVALID_INPUT', message: 'context and contextType are required.' } }, { status: 400 })
   }
 
-  if (!(VALID_CONTEXT_TYPES as readonly string[]).includes(contextType)) {
-    return Response.json(
-      { error: { code: 'INVALID_INPUT', message: `contextType must be one of: ${VALID_CONTEXT_TYPES.join(', ')}.` } },
-      { status: 400 },
-    )
+  if (!Array.isArray(messages) || messages.length === 0 ||
+      messages.some((m) => !(VALID_ROLES as readonly string[]).includes(m.role))) {
+    return Response.json({ error: { code: 'INVALID_INPUT', message: 'messages must be a non-empty array of {role, content}.' } }, { status: 400 })
   }
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return Response.json(
-      { error: { code: 'INVALID_INPUT', message: 'At least one message is required.' } },
-      { status: 400 },
-    )
-  }
-
-  if (messages.some((m) => !(VALID_ROLES as readonly string[]).includes(m.role))) {
-    return Response.json(
-      { error: { code: 'INVALID_INPUT', message: `Message roles must be one of: ${VALID_ROLES.join(', ')}.` } },
-      { status: 400 },
-    )
-  }
-
-  const username = await validateGitHubToken(githubToken)
+  const username = await getGitHubUsername(githubToken)
   if (!username) {
-    return Response.json(
-      { error: { code: 'UNAUTHENTICATED', message: 'Invalid GitHub token.' } },
-      { status: 401 },
-    )
+    return Response.json({ error: { code: 'UNAUTHENTICATED', message: 'Invalid GitHub token.' } }, { status: 401 })
   }
 
-  // Enforce free tier limit when no own key is provided
-  const usedCount = freeUsage.get(username) ?? 0
-  if (!hasOwnKey && usedCount >= FREE_LIMIT) {
-    return Response.json(
-      {
-        error: {
-          code: 'FREE_LIMIT_REACHED',
-          message: `You've used all ${FREE_LIMIT} free chats. Add your Anthropic API key to continue with unlimited access.`,
-          remaining: 0,
-          limit: FREE_LIMIT,
+  const hasOwnKey = !!apiKey?.trim()
+
+  // Resolve provider + model + key
+  let provider: ProviderId
+  let modelId: string
+  let resolvedKey: string
+
+  if (hasOwnKey) {
+    provider = reqProvider && reqProvider in PROVIDERS ? reqProvider : FREE_TIER_PROVIDER
+    modelId = reqModel ?? PROVIDERS[provider].models[FREE_TIER_MODEL].id
+    resolvedKey = apiKey!.trim()
+  } else {
+    const serverKey = process.env.ANTHROPIC_API_KEY
+    if (!serverKey) {
+      return Response.json(
+        { error: { code: 'NOT_CONFIGURED', message: "AI chat isn't available — please provide an API key." } },
+        { status: 503 },
+      )
+    }
+    const usedCount = freeUsage.get(username) ?? 0
+    if (usedCount >= FREE_LIMIT) {
+      return Response.json(
+        {
+          error: {
+            code: 'FREE_LIMIT_REACHED',
+            message: `You've used all ${FREE_LIMIT} free chats. Add an API key to continue.`,
+            remaining: 0,
+            limit: FREE_LIMIT,
+          },
         },
-      },
-      { status: 402 },
-    )
-  }
-
-  // Consume one free slot before streaming (charge on attempt, not on success)
-  if (!hasOwnKey) {
+        { status: 402 },
+      )
+    }
     freeUsage.set(username, usedCount + 1)
+    provider = FREE_TIER_PROVIDER
+    modelId = PROVIDERS[FREE_TIER_PROVIDER].models[FREE_TIER_MODEL].id
+    resolvedKey = serverKey
   }
 
-  const model: SupportedModel =
-    requestedModel && (SUPPORTED_MODELS as readonly string[]).includes(requestedModel)
-      ? (requestedModel as SupportedModel)
-      : 'claude-haiku-4-5'
-
-  // Keep last MAX_HISTORY_TURNS conversation turns (each turn = 1 user + 1 assistant message)
+  const model = resolveModel(provider, modelId, resolvedKey)
   const trimmedMessages = messages.slice(-(MAX_HISTORY_TURNS * 2))
-
   const systemPrompt = buildSystemPrompt(contextType, context)
-
-  const client = new Anthropic({ apiKey })
-
   const remaining = hasOwnKey ? undefined : FREE_LIMIT - (freeUsage.get(username) ?? 0)
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder()
-
-      function emit(chunk: string) {
-        controller.enqueue(encoder.encode(chunk))
+  return createDataStreamResponse({
+    execute: async (writer) => {
+      if (remaining !== undefined) {
+        writer.writeData({ remaining, limit: FREE_LIMIT })
       }
 
-      try {
-        const response = await client.messages.stream({
-          model,
-          max_tokens: 1024,
-          system: [
-            {
-              type: 'text',
-              text: systemPrompt,
-              cache_control: { type: 'ephemeral' },
-            },
-          ],
-          messages: trimmedMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        })
+      const result = streamText({
+        model,
+        system: systemPrompt,
+        messages: trimmedMessages,
+        maxTokens: 1024,
+      })
 
-        let inputTokens = 0
-        let cacheReadTokens = 0
-        let outputTokens = 0
-
-        for await (const event of response) {
-          if (event.type === 'message_start') {
-            inputTokens = event.message.usage.input_tokens
-            cacheReadTokens = (event.message.usage as { cache_read_input_tokens?: number }).cache_read_input_tokens ?? 0
-          } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-            emit(`data: ${JSON.stringify({ type: 'delta', text: event.delta.text })}\n\n`)
-          } else if (event.type === 'message_delta') {
-            outputTokens = event.usage.output_tokens
-          }
-        }
-
-        emit(`data: ${JSON.stringify({ type: 'usage', inputTokens, outputTokens, cacheReadTokens, remaining })}\n\n`)
-        emit(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
-      } catch (error: unknown) {
-        const status = (error as { status?: number }).status
-        if (status === 401) {
-          emit(
-            `data: ${JSON.stringify({ type: 'error', code: 'INVALID_KEY', message: 'Invalid API key — check it and try again.' })}\n\n`,
-          )
-        } else if (status === 429) {
-          emit(
-            `data: ${JSON.stringify({ type: 'error', code: 'RATE_LIMITED', message: 'Too many requests — please wait a moment and try again.' })}\n\n`,
-          )
-        } else if (status === 400 && (error as { message?: string }).message?.includes('too large')) {
-          emit(
-            `data: ${JSON.stringify({ type: 'error', code: 'CONTEXT_TOO_LARGE', message: 'This analysis is too large to chat about. Try reducing the repo count using the slider.' })}\n\n`,
-          )
-        } else {
-          emit(
-            `data: ${JSON.stringify({ type: 'error', code: 'API_ERROR', message: 'Something went wrong — please try again in a moment.' })}\n\n`,
-          )
-        }
-      } finally {
-        controller.close()
-      }
+      result.mergeIntoDataStream(writer)
     },
-  })
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
+    onError: (error) => {
+      const msg = (error as { message?: string }).message ?? ''
+      if (msg.includes('401') || msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('unauthorized')) {
+        return 'Invalid API key — check it and try again.'
+      }
+      if (msg.includes('429')) return 'Too many requests — please wait a moment and try again.'
+      if (msg.includes('too large') || msg.includes('context_length')) {
+        return 'This analysis is too large to chat about. Try reducing the repo count using the slider.'
+      }
+      return 'Something went wrong — please try again in a moment.'
     },
   })
 }
