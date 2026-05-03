@@ -92,6 +92,37 @@ const SEARCH_PREFIX_HINTS: { key: string; description: string; example: string }
   { key: 'license',  description: 'License type',          example: 'license:apache-2.0' },
 ]
 
+const COMPLETION_VALUES: Record<string, string[]> = {
+  lang:     ['go', 'python', 'typescript', 'javascript', 'java', 'rust', 'c++', 'c', 'ruby', 'kotlin', 'swift', 'scala', 'shell'],
+  archived: ['false', 'true'],
+  stars:    ['>100', '>500', '>1000', '>5000', '<100', '<50'],
+  forks:    ['>10', '>50', '>100', '<10'],
+  issues:   ['>10', '>50', '>100', '0', '<10'],
+  pushed:   ['>2025-01-01', '>2024-01-01', '>2023-01-01', '<2023-01-01', '<2022-01-01'],
+  topic:    ['kubernetes', 'machine-learning', 'security', 'cli', 'api', 'docker', 'ai', 'devops'],
+  license:  ['apache-2.0', 'mit', 'gpl-3.0', 'bsd-3-clause', 'mpl-2.0'],
+}
+
+function computeCompletions(query: string): string[] {
+  const lastToken = query.match(/(?:^|\s)(\S*)$/)?.[1] ?? ''
+  if (!lastToken) return []
+  const colonIdx = lastToken.indexOf(':')
+  if (colonIdx !== -1) {
+    const key = lastToken.slice(0, colonIdx).toLowerCase()
+    const valuePrefix = lastToken.slice(colonIdx + 1)
+    const values = COMPLETION_VALUES[key]
+    if (!values) return []
+    return values.filter((v) => v.startsWith(valuePrefix)).map((v) => `${key}:${v}`)
+  }
+  return SEARCH_PREFIX_HINTS
+    .filter((p) => p.key.startsWith(lastToken.toLowerCase()))
+    .map((p) => `${p.key}:`)
+}
+
+function applyCompletion(query: string, completion: string): string {
+  return query.replace(/(\s*)(\S*)$/, (_, space) => `${space}${completion} `).trimStart()
+}
+
 const SS_KEY_ANTHROPIC = 'repopulse:chat:anthropicKey'
 const LS_KEY_MODEL = 'repopulse:chat:model'
 const SS_KEY_EXPANDED = 'repopulse:chat:expanded'
@@ -163,6 +194,103 @@ function renderMarkdown(text: string): React.ReactNode {
       return <p key={`${i}-${j}`} className="mb-2 last:mb-0">{spans}</p>
     })
   })
+}
+
+// ---- Structured search filter with completion -----------------------------
+
+function SearchFilter({ value, onChange }: { value: string; onChange: (q: string) => void }) {
+  const [completions, setCompletions] = useState<string[]>([])
+  const [activeIdx, setActiveIdx] = useState(-1)
+  const blurRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const parsed = parseStructuredSearchQuery(value)
+
+  function open(q: string) {
+    const c = computeCompletions(q)
+    setCompletions(c)
+    setActiveIdx(-1)
+  }
+
+  function close() { setCompletions([]); setActiveIdx(-1) }
+
+  function pick(completion: string) {
+    onChange(applyCompletion(value, completion))
+    close()
+  }
+
+  function handleChange(q: string) { onChange(q); open(q) }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (completions.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx((i) => Math.min(i + 1, completions.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx((i) => Math.max(i - 1, -1)) }
+    else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); pick(completions[activeIdx]) }
+    else if (e.key === 'Escape') close()
+    else if (e.key === 'Tab' && completions.length > 0) {
+      e.preventDefault()
+      pick(completions[activeIdx >= 0 ? activeIdx : 0])
+    }
+  }
+
+  return (
+    <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
+      <div className="relative flex items-center gap-2">
+        <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5 shrink-0 text-slate-400">
+          <circle cx="6.5" cy="6.5" r="4" /><path strokeLinecap="round" d="M11 11l3 3" />
+        </svg>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            onFocus={() => open(value)}
+            onBlur={() => { blurRef.current = setTimeout(close, 150) }}
+            onKeyDown={handleKeyDown}
+            placeholder="Filter repos: lang:go stars:>500 archived:false"
+            autoComplete="off"
+            spellCheck={false}
+            className="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+          />
+          {completions.length > 0 && (
+            <ul
+              role="listbox"
+              className="absolute bottom-full left-0 z-50 mb-1 w-full overflow-hidden rounded border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
+            >
+              {completions.map((c, i) => (
+                <li key={c} role="option" aria-selected={i === activeIdx}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); if (blurRef.current) clearTimeout(blurRef.current); pick(c) }}
+                    className={`w-full px-3 py-1.5 text-left font-mono text-xs ${i === activeIdx ? 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+                  >
+                    {c}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {value && (
+          <button type="button" onClick={() => onChange('')} aria-label="Clear filter"
+            className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">✕</button>
+        )}
+      </div>
+      {parsed.invalidTokens.length > 0 && (
+        <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">Ignored: {parsed.invalidTokens.join(', ')}</p>
+      )}
+      <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
+        {SEARCH_PREFIX_HINTS.map(({ key, description, example }) => (
+          <span key={key} className="group relative cursor-help">
+            <span className="text-[10px] text-slate-400 underline decoration-dotted underline-offset-2 dark:text-slate-500">{key}:</span>
+            <span className="pointer-events-none invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2.5 py-1.5 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-slate-700">
+              <span className="block text-[11px] font-medium text-white">{description}</span>
+              <span className="block font-mono text-[10px] text-slate-300">{example}</span>
+              <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // ---- Key entry form -------------------------------------------------------
@@ -578,54 +706,9 @@ export function ChatPanel({
             </div>
 
             {/* Structured search filter (org tab only, always visible when expanded) */}
-            {contextType === 'org' && onRepoQueryChange && (() => {
-              const parsed = parseStructuredSearchQuery(repoQuery)
-              return (
-                <div className="border-b border-slate-200 px-4 py-2 dark:border-slate-700">
-                  <div className="flex items-center gap-2">
-                    <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5 shrink-0 text-slate-400">
-                      <circle cx="6.5" cy="6.5" r="4" /><path strokeLinecap="round" d="M11 11l3 3" />
-                    </svg>
-                    <input
-                      type="text"
-                      value={repoQuery}
-                      onChange={(e) => onRepoQueryChange(e.target.value)}
-                      placeholder="Filter repos: lang:go stars:>500 archived:false"
-                      className="flex-1 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-                    />
-                    {repoQuery && (
-                      <button
-                        type="button"
-                        onClick={() => onRepoQueryChange('')}
-                        className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                        aria-label="Clear filter"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                  {parsed.invalidTokens.length > 0 && (
-                    <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">
-                      Ignored: {parsed.invalidTokens.join(', ')}
-                    </p>
-                  )}
-                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
-                    {SEARCH_PREFIX_HINTS.map(({ key, description, example }) => (
-                      <span key={key} className="group relative cursor-help">
-                        <span className="text-[10px] text-slate-400 underline decoration-dotted underline-offset-2 dark:text-slate-500">
-                          {key}:
-                        </span>
-                        <span className="pointer-events-none invisible absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2.5 py-1.5 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-slate-700">
-                          <span className="block text-[11px] font-medium text-white">{description}</span>
-                          <span className="block text-[10px] text-slate-300 font-mono">{example}</span>
-                          <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
-                        </span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )
-            })()}
+            {contextType === 'org' && onRepoQueryChange && (
+              <SearchFilter value={repoQuery} onChange={onRepoQueryChange} />
+            )}
 
             {/* Chat section label */}
             <div className="flex items-center gap-2 px-4 pt-2 pb-0">
