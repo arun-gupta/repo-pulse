@@ -613,8 +613,8 @@ export function ChatPanel({
             </div>
 
             {/* Key entry or chat */}
-            {!hasKey || limitReached ? (
-              <KeyEntryForm onSave={handleSaveKey} exhausted={limitReached} />
+            {limitReached ? (
+              <KeyEntryForm onSave={handleSaveKey} exhausted />
             ) : (
               <>
                 {/* Message history */}
