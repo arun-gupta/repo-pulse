@@ -275,7 +275,7 @@ function KeyEntryForm({
             <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
           </svg>
           {exhausted
-            ? `You've used all ${FREE_LIMIT} free chats. Add an API key for unlimited access.`
+            ? `You've used all ${FREE_LIMIT} free chats for today. Add an API key for unlimited access, or try again tomorrow.`
             : 'No server API key configured — add your own key to start chatting.'}
         </div>
       )}
@@ -612,11 +612,11 @@ export function ChatPanel({
                     <span key={i} className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${freeRemaining === null ? 'bg-slate-200 dark:bg-slate-700' : i < freeRemaining ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                   ))}
                   <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                    {freeRemaining === null ? `${FREE_LIMIT} free` : freeRemaining > 0 ? `${freeRemaining} free` : 'limit reached'}
+                    {freeRemaining === null ? `${FREE_LIMIT} free/day` : freeRemaining > 0 ? `${freeRemaining} free today` : 'limit reached'}
                   </span>
                   {freeRemaining === null && (
                     <span className="pointer-events-none invisible absolute bottom-full left-0 z-50 mb-2 w-52 rounded bg-slate-800 px-2.5 py-2 opacity-0 shadow-lg transition-opacity group-hover/free:visible group-hover/free:opacity-100 dark:bg-slate-700">
-                      <span className="block text-[11px] leading-snug text-white">Free quota requires a server API key (<code className="rounded bg-slate-700 px-1 font-mono text-[10px]">ANTHROPIC_API_KEY</code>, <code className="rounded bg-slate-700 px-1 font-mono text-[10px]">OPENAI_API_KEY</code>, etc.). Add your own key below to chat without limits.</span>
+                      <span className="block text-[11px] leading-snug text-white">Free quota requires a server API key. Each GitHub login gets {FREE_LIMIT} free chats per day. Add your own key below to chat without limits.</span>
                       <span className="absolute left-3 top-full border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
                     </span>
                   )}
@@ -681,11 +681,11 @@ export function ChatPanel({
                                   <span key={i} className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${freeRemaining === null ? 'bg-slate-200 dark:bg-slate-700' : i < freeRemaining ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
                                 ))}
                                 <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                                  {freeRemaining === null ? `${FREE_LIMIT} free` : freeRemaining > 0 ? `${freeRemaining} free` : 'limit reached'}
+                                  {freeRemaining === null ? `${FREE_LIMIT} free/day` : freeRemaining > 0 ? `${freeRemaining} free today` : 'limit reached'}
                                 </span>
                                 {freeRemaining === null && (
                                   <span className="pointer-events-none invisible absolute bottom-full left-0 z-50 mb-2 w-52 rounded bg-slate-800 px-2.5 py-2 opacity-0 shadow-lg transition-opacity group-hover/free:visible group-hover/free:opacity-100 dark:bg-slate-700">
-                                    <span className="block text-[11px] leading-snug text-white">Free quota requires a server API key (<code className="rounded bg-slate-700 px-1 font-mono text-[10px]">ANTHROPIC_API_KEY</code>, <code className="rounded bg-slate-700 px-1 font-mono text-[10px]">OPENAI_API_KEY</code>, etc.). Add your own key below to chat without limits.</span>
+                                    <span className="block text-[11px] leading-snug text-white">Free quota requires a server API key. Each GitHub login gets {FREE_LIMIT} free chats per day. Add your own key below to chat without limits.</span>
                                     <span className="absolute left-3 top-full border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
                                   </span>
                                 )}
