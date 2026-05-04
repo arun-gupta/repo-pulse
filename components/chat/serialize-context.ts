@@ -193,7 +193,7 @@ export function serializeOrgInventoryContext(
     totalRepos: sorted.length,
     archived: sorted.filter((r) => r.archived).length,
     forks: sorted.filter((r) => r.isFork).length,
-    languages: [...new Set(sorted.map((r) => r.primaryLanguage).filter((lang) => !!lang && lang !== 'unavailable'))].sort(),
+    languages: [...new Set(sorted.map((r) => r.primaryLanguage).filter((lang) => lang && lang !== 'unavailable'))].sort(),
   }
 
   const payload = {

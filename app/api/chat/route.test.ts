@@ -37,6 +37,13 @@ function makeDataStreamResponseMock(captureWriter?: (w: { writeData: ReturnType<
   }
 }
 
+/** Sets up a one-shot writer-capturing mock and returns a getter for the captured writer */
+function setupWriterCapture(): { getWriter: () => { writeData: ReturnType<typeof vi.fn> } } {
+  let capturedWriter: { writeData: ReturnType<typeof vi.fn> } | null = null
+  mockCreateDataStreamResponse.mockImplementationOnce(makeDataStreamResponseMock((w) => { capturedWriter = w }))
+  return { getWriter: () => capturedWriter! }
+}
+
 mockCreateDataStreamResponse.mockImplementation(makeDataStreamResponseMock())
 
 // ---------------------------------------------------------------------------
@@ -260,28 +267,24 @@ describe('POST /api/chat', () => {
     vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test')
     stubFetchGitHubOk('remaining-count-user-unique')
 
-    let capturedWriter: { writeData: ReturnType<typeof vi.fn> } | null = null
-    mockCreateDataStreamResponse.mockImplementationOnce(makeDataStreamResponseMock((w) => { capturedWriter = w }))
-
+    const { getWriter } = setupWriterCapture()
     await POST(makeRequest(validBody))
 
-    expect(capturedWriter).not.toBeNull()
-    expect(capturedWriter!.writeData).toHaveBeenCalledWith(expect.objectContaining({ remaining: expect.any(Number), limit: 5 }))
+    expect(getWriter()).not.toBeNull()
+    expect(getWriter().writeData).toHaveBeenCalledWith(expect.objectContaining({ remaining: expect.any(Number), limit: 5 }))
   })
 
   it('uses BYOK without passing quota data to the stream writer', async () => {
     delete process.env.ANTHROPIC_API_KEY
     stubFetchGitHubOk('byok-user-unique')
 
-    let capturedWriter: { writeData: ReturnType<typeof vi.fn> } | null = null
-    mockCreateDataStreamResponse.mockImplementationOnce(makeDataStreamResponseMock((w) => { capturedWriter = w }))
-
+    const { getWriter } = setupWriterCapture()
     const byokBody = { ...validBody, provider: 'anthropic', apiKey: 'sk-ant-user-key' }
     const res = await POST(makeRequest(byokBody))
 
     expect(res.status).toBe(200)
-    expect(capturedWriter).not.toBeNull()
+    expect(getWriter()).not.toBeNull()
     // With BYOK the writer should NOT receive remaining/limit data
-    expect(capturedWriter!.writeData).not.toHaveBeenCalled()
+    expect(getWriter().writeData).not.toHaveBeenCalled()
   })
 })
