@@ -32,6 +32,11 @@ function incrementUsage(username: string): void {
   freeUsage.set(username, { count: getUsageCount(username) + 1, resetAt: getNextMidnightUTC() })
 }
 
+function decrementUsage(username: string): void {
+  const r = freeUsage.get(username)
+  if (r && r.count > 0) freeUsage.set(username, { ...r, count: r.count - 1 })
+}
+
 const VALID_CONTEXT_TYPES = ['repos', 'org'] as const
 const VALID_ROLES = ['user', 'assistant'] as const
 const MAX_HISTORY_TURNS = 10
@@ -211,10 +216,7 @@ export async function POST(request: Request) {
     onError: (error) => {
       console.error('[chat] streamText error:', error)
       // Revert the free-tier counter so a failed provider call doesn't burn quota
-      if (!hasOwnKey) {
-        const currentCount = freeUsage.get(username) ?? 0
-        if (currentCount > 0) freeUsage.set(username, currentCount - 1)
-      }
+      if (!hasOwnKey) decrementUsage(username)
       const msg = (error as { message?: string }).message ?? ''
       if (msg.includes('401') || msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('unauthorized')) {
         return 'Invalid API key — check it and try again.'
