@@ -8,7 +8,10 @@ import { PROVIDERS, FREE_TIER_PROVIDER, FREE_TIER_MODEL } from '@/components/cha
 
 export const runtime = 'nodejs'
 
-// Free tier: 5 requests per GitHub login per calendar day (UTC).
+// Free tier: up to 5 requests per GitHub login per calendar day (UTC).
+// Tracking is best-effort in-memory — it resets on deploy and is not
+// enforced across serverless instances. Users can always bypass by adding
+// their own API key.
 const FREE_LIMIT = 5
 
 interface UsageRecord {
@@ -24,7 +27,11 @@ function getNextMidnightUTC(): number {
 
 function getUsageCount(username: string): number {
   const r = freeUsage.get(username)
-  if (!r || Date.now() >= r.resetAt) return 0
+  if (!r) return 0
+  if (Date.now() >= r.resetAt) {
+    freeUsage.delete(username)
+    return 0
+  }
   return r.count
 }
 
