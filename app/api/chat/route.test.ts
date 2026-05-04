@@ -248,6 +248,69 @@ describe('POST /api/chat', () => {
     expect(body.error.remaining).toBe(0)
   })
 
+  it('resets the free-tier counter after UTC midnight (daily reset)', async () => {
+    vi.useFakeTimers()
+    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test')
+    stubFetchGitHubOk('daily-reset-user-unique')
+
+    // Exhaust all 5 free chats
+    for (let i = 0; i < 5; i++) {
+      await POST(makeRequest(validBody))
+    }
+
+    // Confirm quota is exhausted
+    const beforeReset = await POST(makeRequest(validBody))
+    expect(beforeReset.status).toBe(402)
+
+    // Simulate UTC midnight passing: advance to 00:01 UTC tomorrow
+    const tomorrow = new Date()
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+    tomorrow.setUTCHours(0, 1, 0, 0)
+    vi.setSystemTime(tomorrow)
+
+    // The counter should have reset — request should succeed
+    const afterReset = await POST(makeRequest(validBody))
+    expect(afterReset.status).toBe(200)
+
+    vi.useRealTimers()
+  })
+
+  it('cleans up expired usage records from the map on access', async () => {
+    vi.useFakeTimers()
+    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test')
+    stubFetchGitHubOk('cleanup-user-unique')
+
+    // Use 1 free chat to create a map entry
+    await POST(makeRequest(validBody))
+
+    // Advance past midnight so the entry is expired
+    const tomorrow = new Date()
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+    tomorrow.setUTCHours(0, 1, 0, 0)
+    vi.setSystemTime(tomorrow)
+
+    // A new request must succeed (counter reset to 0 and old entry cleaned up)
+    const res = await POST(makeRequest(validBody))
+    expect(res.status).toBe(200)
+
+    vi.useRealTimers()
+  })
+
+  it('decrements remaining count by 1 per free chat', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test')
+    stubFetchGitHubOk('decrement-user-unique')
+
+    // First chat: remaining should be 4 (5 - 1)
+    const { getWriter: getWriter1 } = setupWriterCapture()
+    await POST(makeRequest(validBody))
+    expect(getWriter1().writeData).toHaveBeenCalledWith(expect.objectContaining({ remaining: 4, limit: 5 }))
+
+    // Second chat: remaining should be 3
+    const { getWriter: getWriter2 } = setupWriterCapture()
+    await POST(makeRequest(validBody))
+    expect(getWriter2().writeData).toHaveBeenCalledWith(expect.objectContaining({ remaining: 3, limit: 5 }))
+  })
+
   // -------------------------------------------------------------------------
   // Successful streaming
   // -------------------------------------------------------------------------

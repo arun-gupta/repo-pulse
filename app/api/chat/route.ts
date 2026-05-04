@@ -8,10 +8,41 @@ import { PROVIDERS, FREE_TIER_PROVIDER, FREE_TIER_MODEL } from '@/components/cha
 
 export const runtime = 'nodejs'
 
-// Free tier: 5 requests per GitHub login per server lifetime.
-// Resets on deployment — intentional for a lightweight demo gate.
+// Free tier: up to 5 requests per GitHub login per calendar day (UTC).
+// Tracking is best-effort in-memory — it resets on deploy and is not
+// enforced across serverless instances. Users can always bypass by adding
+// their own API key.
 const FREE_LIMIT = 5
-const freeUsage = new Map<string, number>()
+
+interface UsageRecord {
+  count: number
+  resetAt: number // next midnight UTC
+}
+const freeUsage = new Map<string, UsageRecord>()
+
+function getNextMidnightUTC(): number {
+  const now = new Date()
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
+}
+
+function getUsageCount(username: string): number {
+  const r = freeUsage.get(username)
+  if (!r) return 0
+  if (Date.now() >= r.resetAt) {
+    freeUsage.delete(username)
+    return 0
+  }
+  return r.count
+}
+
+function incrementUsage(username: string): void {
+  freeUsage.set(username, { count: getUsageCount(username) + 1, resetAt: getNextMidnightUTC() })
+}
+
+function decrementUsage(username: string): void {
+  const r = freeUsage.get(username)
+  if (r && r.count > 0) freeUsage.set(username, { ...r, count: r.count - 1 })
+}
 
 const VALID_CONTEXT_TYPES = ['repos', 'org'] as const
 const VALID_ROLES = ['user', 'assistant'] as const
@@ -149,13 +180,13 @@ export async function POST(request: Request) {
         { status: 503 },
       )
     }
-    const usedCount = freeUsage.get(username) ?? 0
+    const usedCount = getUsageCount(username)
     if (usedCount >= FREE_LIMIT) {
       return Response.json(
         {
           error: {
             code: 'FREE_LIMIT_REACHED',
-            message: `You've used all ${FREE_LIMIT} free chats. Add an API key to continue.`,
+            message: `You've used all ${FREE_LIMIT} free chats for today. Add an API key to continue, or try again tomorrow.`,
             remaining: 0,
             limit: FREE_LIMIT,
           },
@@ -163,7 +194,7 @@ export async function POST(request: Request) {
         { status: 402 },
       )
     }
-    freeUsage.set(username, usedCount + 1)
+    incrementUsage(username)
     provider = serverConfig.provider
     modelId = serverConfig.modelId
     resolvedKey = serverConfig.key
@@ -172,7 +203,7 @@ export async function POST(request: Request) {
   const model = resolveModel(provider, modelId, resolvedKey)
   const trimmedMessages = messages.slice(-(MAX_HISTORY_TURNS * 2))
   const systemPrompt = buildSystemPrompt(contextType, context)
-  const remaining = hasOwnKey ? undefined : FREE_LIMIT - (freeUsage.get(username) ?? 0)
+  const remaining = hasOwnKey ? undefined : FREE_LIMIT - getUsageCount(username)
 
   return createDataStreamResponse({
     execute: async (writer) => {
@@ -184,7 +215,7 @@ export async function POST(request: Request) {
         model,
         system: systemPrompt,
         messages: trimmedMessages,
-        maxTokens: 1024,
+        maxTokens: 4096,
       })
 
       result.mergeIntoDataStream(writer)
@@ -192,10 +223,7 @@ export async function POST(request: Request) {
     onError: (error) => {
       console.error('[chat] streamText error:', error)
       // Revert the free-tier counter so a failed provider call doesn't burn quota
-      if (!hasOwnKey) {
-        const currentCount = freeUsage.get(username) ?? 0
-        if (currentCount > 0) freeUsage.set(username, currentCount - 1)
-      }
+      if (!hasOwnKey) decrementUsage(username)
       const msg = (error as { message?: string }).message ?? ''
       if (msg.includes('401') || msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('unauthorized')) {
         return 'Invalid API key — check it and try again.'
