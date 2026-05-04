@@ -176,6 +176,12 @@ function sortInventoryRepos(results: OrgRepoSummary[], sortBy: OrgSortBy): OrgRe
   return list
 }
 
+function resolveLicense(spdxId: string | null | undefined, name: string | null | undefined): string | null {
+  if (spdxId && spdxId !== 'unavailable') return spdxId
+  if (name && name !== 'unavailable') return name
+  return null
+}
+
 export function serializeOrgInventoryContext(
   inventory: OrgInventoryResponse,
   opts: { maxRepos?: number; sortBy?: OrgSortBy } = {},
@@ -183,10 +189,18 @@ export function serializeOrgInventoryContext(
   const { maxRepos = 500, sortBy = 'stars' } = opts
   const sorted = sortInventoryRepos(inventory.results, sortBy).slice(0, maxRepos)
 
+  const sliceSummary = {
+    totalRepos: sorted.length,
+    archived: sorted.filter((r) => r.archived).length,
+    forks: sorted.filter((r) => r.isFork).length,
+    languages: [...new Set(sorted.map((r) => r.primaryLanguage).filter((lang) => lang && lang !== 'unavailable'))].sort(),
+  }
+
   const payload = {
     org: inventory.org,
     phase: 'inventory',
-    summary: inventory.summary,
+    summary: sliceSummary,
+    totalOrgRepos: inventory.results.length,
     sortedBy: sortBy,
     maxReposIncluded: maxRepos,
     repos: sorted.map((r) => ({
@@ -198,6 +212,7 @@ export function serializeOrgInventoryContext(
       pushedAt: r.pushedAt,
       archived: r.archived,
       isFork: r.isFork,
+      license: resolveLicense(r.licenseSpdxId, r.licenseName),
       topics: r.topics,
       description: r.description,
     })),
@@ -205,7 +220,7 @@ export function serializeOrgInventoryContext(
 
   const text = [
     `# Org Inventory Context (pre-analysis)`,
-    `Organization: ${inventory.org} · ${inventory.results.length} repos fetched, analysis not yet run`,
+    `Organization: ${inventory.org} · showing top ${sorted.length} of ${inventory.results.length} repos by ${sortBy}, analysis not yet run`,
     '',
     '```json',
     JSON.stringify(payload, null, 2),

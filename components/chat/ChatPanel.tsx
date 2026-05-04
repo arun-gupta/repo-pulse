@@ -1,29 +1,16 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
+import { useChat } from 'ai/react'
+import type { Message } from 'ai'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
-import { parseStructuredSearchQuery } from '@/lib/org-inventory/structured-search'
-import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext, type OrgSortBy } from './serialize-context'
+import { parseStructuredSearchQuery, matchesStructuredSearch } from '@/lib/org-inventory/structured-search'
+import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext } from './serialize-context'
+import { PROVIDERS, type ProviderId } from './providers'
 
 // ---- Types ----------------------------------------------------------------
-
-type Model = 'claude-haiku-4-5' | 'claude-sonnet-4-6'
-
-interface MessageUsage {
-  inputTokens: number
-  outputTokens: number
-  cacheReadTokens: number
-}
-
-interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant' | 'error'
-  content: string
-  usage?: MessageUsage
-  retryContent?: string
-}
 
 export interface ChatPanelProps {
   contextType: 'repos' | 'org'
@@ -34,52 +21,53 @@ export interface ChatPanelProps {
   orgInventory?: OrgInventoryResponse
   githubToken: string
   resetKey?: number
-  /** Controlled repo filter query — synced with the org inventory table */
   repoQuery?: string
   onRepoQueryChange?: (q: string) => void
 }
 
 // ---- Constants ------------------------------------------------------------
 
+const FREE_LIMIT = 5
+
 const REPOS_STARTER_CHIPS = [
   'Why is the security score low?',
   "What's the biggest gap between these repos?",
   'Which repo should I fix first?',
-  'What do these repos have in common?',
+  'Which repos are missing a CODE_OF_CONDUCT?',
+  "What's the most common issue across these repos?",
+  'Which repos have the best documentation?',
 ]
 
 const ORG_STARTER_CHIPS = [
   'Which repos need the most urgent attention?',
   "What's the overall security posture?",
   'Which repos are best positioned for CNCF Sandbox?',
-  'Are there repos with low activity but high star counts?',
+  'What are the biggest contributors to low health scores?',
+  'Which repos need contributors the most?',
+  'Compare the top 3 repos by health score',
 ]
 
 const ORG_INVENTORY_STARTER_CHIPS = [
   "Which repos haven't been active in over a year?",
   'What languages are most common across this org?',
   'Which repos have the most open issues?',
-  'Are there any archived or forked repos?',
+  'Which repos have no license?',
+  'Which repos are forks?',
+  'Show repos with high stars but no recent activity',
 ]
 
-const MODEL_META: Record<Model, { icon: string; label: string; hint: string; inputRate: number; outputRate: number; cacheReadRate: number }> = {
-  'claude-haiku-4-5': {
-    icon: '⚡', label: 'Fast',
-    hint: 'Best for quick lookups and factual questions about the data',
-    inputRate: 0.80, outputRate: 4.00, cacheReadRate: 0.08,
-  },
-  'claude-sonnet-4-6': {
-    icon: '🧠', label: 'Deep',
-    hint: 'Better for multi-hop reasoning, comparisons, and nuanced recommendations',
-    inputRate: 3.00, outputRate: 15.00, cacheReadRate: 0.30,
-  },
+const MAX_CONTEXT_REPOS = 300
+
+const COMPLETION_VALUES: Record<string, string[]> = {
+  lang:     ['go', 'python', 'typescript', 'javascript', 'java', 'rust', 'c++', 'c', 'ruby', 'kotlin', 'swift', 'scala', 'shell'],
+  archived: ['false', 'true'],
+  stars:    ['>100', '>500', '>1000', '>5000', '<100', '<50'],
+  forks:    ['>10', '>50', '>100', '<10'],
+  issues:   ['>10', '>50', '>100', '0', '<10'],
+  pushed:   ['>2025-01-01', '>2024-01-01', '>2023-01-01', '<2023-01-01', '<2022-01-01'],
+  topic:    ['kubernetes', 'machine-learning', 'security', 'cli', 'api', 'docker', 'ai', 'devops'],
+  license:  ['apache-2.0', 'mit', 'gpl-3.0', 'bsd-3-clause', 'mpl-2.0'],
 }
-
-const SORT_OPTIONS: { value: OrgSortBy; label: string }[] = [
-  { value: 'stars', label: '⭐ Top by stars' },
-  { value: 'health', label: '🔴 Lowest health first' },
-  { value: 'activity', label: '⚡ Most recently active' },
-]
 
 const SEARCH_PREFIX_HINTS: { key: string; description: string; example: string }[] = [
   { key: 'lang',     description: 'Programming language',  example: 'lang:go' },
@@ -92,16 +80,12 @@ const SEARCH_PREFIX_HINTS: { key: string; description: string; example: string }
   { key: 'license',  description: 'License type',          example: 'license:apache-2.0' },
 ]
 
-const COMPLETION_VALUES: Record<string, string[]> = {
-  lang:     ['go', 'python', 'typescript', 'javascript', 'java', 'rust', 'c++', 'c', 'ruby', 'kotlin', 'swift', 'scala', 'shell'],
-  archived: ['false', 'true'],
-  stars:    ['>100', '>500', '>1000', '>5000', '<100', '<50'],
-  forks:    ['>10', '>50', '>100', '<10'],
-  issues:   ['>10', '>50', '>100', '0', '<10'],
-  pushed:   ['>2025-01-01', '>2024-01-01', '>2023-01-01', '<2023-01-01', '<2022-01-01'],
-  topic:    ['kubernetes', 'machine-learning', 'security', 'cli', 'api', 'docker', 'ai', 'devops'],
-  license:  ['apache-2.0', 'mit', 'gpl-3.0', 'bsd-3-clause', 'mpl-2.0'],
-}
+const LS_KEY_PROVIDER  = 'repopulse:chat:provider'
+const SS_KEY_EXPANDED  = 'repopulse:chat:expanded'
+const SS_KEY_PROVIDER  = 'repopulse:chat:provider:session'
+const SS_KEY_API_KEY   = 'repopulse:chat:apiKey'
+
+// ---- Helpers --------------------------------------------------------------
 
 function computeCompletions(query: string): string[] {
   const lastToken = query.match(/(?:^|\s)(\S*)$/)?.[1] ?? ''
@@ -123,42 +107,14 @@ function applyCompletion(query: string, completion: string): string {
   return query.replace(/(\s*)(\S*)$/, (_, space) => `${space}${completion} `).trimStart()
 }
 
-const SS_KEY_ANTHROPIC = 'repopulse:chat:anthropicKey'
-const LS_KEY_MODEL = 'repopulse:chat:model'
-const SS_KEY_EXPANDED = 'repopulse:chat:expanded'
-
-// ---- Helpers --------------------------------------------------------------
-
-function uid(): string {
-  return Math.random().toString(36).slice(2)
-}
-
-function readStoredModel(): Model {
+function parseApiError(message: string): { code: string; userMessage: string } | null {
   try {
-    const v = localStorage.getItem(LS_KEY_MODEL)
-    if (v === 'claude-haiku-4-5' || v === 'claude-sonnet-4-6') return v
+    const parsed = JSON.parse(message) as { error?: { code?: string; message?: string } }
+    if (parsed.error?.code) {
+      return { code: parsed.error.code, userMessage: parsed.error.message ?? message }
+    }
   } catch {}
-  return 'claude-haiku-4-5'
-}
-
-function readStoredExpanded(): boolean {
-  try { return sessionStorage.getItem(SS_KEY_EXPANDED) === 'true' } catch {}
-  return false
-}
-
-function readStoredKey(): string {
-  try { return sessionStorage.getItem(SS_KEY_ANTHROPIC) ?? '' } catch {}
-  return ''
-}
-
-function calcCost(usage: MessageUsage, model: Model): number {
-  const { inputRate, outputRate, cacheReadRate } = MODEL_META[model]
-  return (
-    (usage.inputTokens * inputRate +
-      usage.outputTokens * outputRate +
-      usage.cacheReadTokens * cacheReadRate) /
-    1_000_000
-  )
+  return null
 }
 
 function formatCost(usd: number): string {
@@ -166,11 +122,12 @@ function formatCost(usd: number): string {
   return `$${usd.toFixed(4)}`
 }
 
-function formatTokens(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
+function calcCost(promptTokens: number, completionTokens: number, provider: ProviderId): number {
+  const spec = PROVIDERS[provider].models['fast']
+  return (promptTokens * spec.inputRate + completionTokens * spec.outputRate) / 1_000_000
 }
 
-// ---- Markdown renderer (paragraphs, bold, inline code, fenced code) -------
+// ---- Markdown renderer ----------------------------------------------------
 
 function renderMarkdown(text: string): React.ReactNode {
   const parts = text.split(/(```[\s\S]*?```)/g)
@@ -204,20 +161,9 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
   const blurRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const parsed = parseStructuredSearchQuery(value)
 
-  function open(q: string) {
-    const c = computeCompletions(q)
-    setCompletions(c)
-    setActiveIdx(-1)
-  }
-
+  function open(q: string) { const c = computeCompletions(q); setCompletions(c); setActiveIdx(-1) }
   function close() { setCompletions([]); setActiveIdx(-1) }
-
-  function pick(completion: string) {
-    onChange(applyCompletion(value, completion))
-    close()
-  }
-
-  function handleChange(q: string) { onChange(q); open(q) }
+  function pick(c: string) { onChange(applyCompletion(value, c)); close() }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (completions.length === 0) return
@@ -225,10 +171,7 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx((i) => Math.max(i - 1, -1)) }
     else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); pick(completions[activeIdx]) }
     else if (e.key === 'Escape') close()
-    else if (e.key === 'Tab' && completions.length > 0) {
-      e.preventDefault()
-      pick(completions[activeIdx >= 0 ? activeIdx : 0])
-    }
+    else if (e.key === 'Tab' && completions.length > 0) { e.preventDefault(); pick(completions[activeIdx >= 0 ? activeIdx : 0]) }
   }
 
   return (
@@ -241,7 +184,7 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
           <input
             type="text"
             value={value}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={(e) => { onChange(e.target.value); open(e.target.value) }}
             onFocus={() => open(value)}
             onBlur={() => { blurRef.current = setTimeout(close, 150) }}
             onKeyDown={handleKeyDown}
@@ -251,10 +194,7 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
             className="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
           {completions.length > 0 && (
-            <ul
-              role="listbox"
-              className="absolute bottom-full left-0 z-50 mb-1 w-full overflow-hidden rounded border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
-            >
+            <ul role="listbox" className="absolute bottom-full left-0 z-50 mb-1 w-full overflow-hidden rounded border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
               {completions.map((c, i) => (
                 <li key={c} role="option" aria-selected={i === activeIdx}>
                   <button
@@ -295,46 +235,123 @@ function SearchFilter({ value, onChange }: { value: string; onChange: (q: string
 
 // ---- Key entry form -------------------------------------------------------
 
-function KeyEntryForm({ onSave }: { onSave: (key: string) => void }) {
-  const [value, setValue] = useState('')
+const DIRECT_PROVIDERS: ProviderId[] = ['anthropic', 'openai', 'google', 'groq']
+
+function KeyEntryForm({
+  onSave,
+  onCancel,
+  exhausted = false,
+  notConfigured = false,
+}: {
+  onSave: (provider: ProviderId, key: string) => void
+  onCancel?: () => void
+  exhausted?: boolean
+  notConfigured?: boolean
+}) {
+  const [tab, setTab] = useState<'openrouter' | 'direct'>('openrouter')
+  const [directProvider, setDirectProvider] = useState<ProviderId>('anthropic')
+  const [keyValue, setKeyValue] = useState('')
+
+  const activeProvider: ProviderId = tab === 'openrouter' ? 'openrouter' : directProvider
+  const config = PROVIDERS[activeProvider]
+
+  function handleSave() {
+    if (!keyValue.trim()) return
+    onSave(activeProvider, keyValue.trim())
+  }
+
   return (
     <div className="flex flex-col gap-3 p-4">
-      <div>
-        <label htmlFor="chat-anthropic-key" className="block text-sm font-medium text-slate-800 dark:text-slate-200">
-          Anthropic API key
-        </label>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          Your key is sent only to Anthropic to generate responses. It is never logged, stored on our
-          servers, or used for anything other than this chat session.
-        </p>
-      </div>
-      <input
-        id="chat-anthropic-key"
-        type="password"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="sk-ant-…"
-        autoComplete="off"
-        spellCheck={false}
-        className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
-      />
-      <div className="flex items-center justify-between gap-3">
-        <a
-          href="https://console.anthropic.com/settings/keys"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-sky-700 hover:underline dark:text-sky-400"
-        >
-          Get a free key at console.anthropic.com →
-        </a>
+      {onCancel && (
+        <button type="button" onClick={onCancel}
+          className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10 4L6 8l4 4" /></svg>
+          Back to free chat
+        </button>
+      )}
+      {(exhausted || notConfigured) && (
+        <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0">
+            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+          </svg>
+          {exhausted
+            ? `You've used all ${FREE_LIMIT} free chats. Add an API key for unlimited access.`
+            : 'No server API key configured — add your own key to start chatting.'}
+        </div>
+      )}
+
+      {/* Provider tabs */}
+      <div className="flex gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
         <button
           type="button"
-          disabled={!value.trim()}
-          onClick={() => onSave(value.trim())}
-          className="rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-40 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white"
+          onClick={() => { setTab('openrouter'); setKeyValue('') }}
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${tab === 'openrouter' ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
-          Save key
+          OpenRouter
+          <span className="ml-1.5 rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">recommended</span>
         </button>
+        <button
+          type="button"
+          onClick={() => { setTab('direct'); setKeyValue('') }}
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${tab === 'direct' ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+        >
+          Direct provider
+        </button>
+      </div>
+
+      {/* Direct provider selector */}
+      {tab === 'direct' && (
+        <div className="flex gap-1">
+          {DIRECT_PROVIDERS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => { setDirectProvider(p); setKeyValue('') }}
+              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${directProvider === p ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900' : 'border border-slate-200 text-slate-600 hover:border-slate-400 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-500'}`}
+            >
+              {PROVIDERS[p].name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tagline */}
+      <p className="text-xs text-slate-500 dark:text-slate-400">{config.tagline}</p>
+
+      {/* Key input */}
+      <div>
+        <input
+          type="password"
+          value={keyValue}
+          onChange={(e) => setKeyValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSave() }}
+          placeholder={config.keyPlaceholder}
+          autoComplete="off"
+          spellCheck={false}
+          className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+        />
+        <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+          Your key is transmitted via the RepoPulse API route to {config.name} to generate responses. It is never logged or persisted on our servers.
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <a href={config.consoleUrl} target="_blank" rel="noopener noreferrer"
+          className="text-xs text-sky-700 hover:underline dark:text-sky-400">
+          Get a key at {config.consoleLabel} →
+        </a>
+        <div className="flex items-center gap-2">
+          {onCancel && (
+            <button type="button" onClick={onCancel}
+              className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+              Cancel
+            </button>
+          )}
+          <button type="button" disabled={!keyValue.trim()} onClick={handleSave}
+            className="rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-40 dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white">
+            Save key
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -347,41 +364,125 @@ export function ChatPanel({
   repoQuery = '', onRepoQueryChange,
 }: ChatPanelProps) {
   const [expanded, setExpanded] = useState(false)
-  const [model, setModel] = useState<Model>('claude-haiku-4-5')
-  const [anthropicKey, setAnthropicKey] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [inputValue, setInputValue] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
-  const [orgRepoCount, setOrgRepoCount] = useState(500)
-  const [sortBy, setSortBy] = useState<OrgSortBy>('stars')
-  const [sessionUsage, setSessionUsage] = useState<{ messages: number; totalCost: number }>({ messages: 0, totalCost: 0 })
+  const [provider, setProvider] = useState<ProviderId>('openrouter')
+  const [userKey, setUserKey] = useState('')
+  const [freeRemaining, setFreeRemaining] = useState<number | null>(null)
+  const [needsKey, setNeedsKey] = useState(false)
+  const [keyFormOpen, setKeyFormOpen] = useState(false)
+  const [serverProvider, setServerProvider] = useState<ProviderId | null>(null)
+  const [sessionCost, setSessionCost] = useState(0)
+  const [sessionMsgCount, setSessionMsgCount] = useState(0)
+  const [contextNotices, setContextNotices] = useState<{ afterIndex: number; label: string }[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const abortRef = useRef<AbortController | null>(null)
 
   // Hydrate from storage after mount
   useEffect(() => {
-    setModel(readStoredModel())
-    setExpanded(readStoredExpanded())
-    setAnthropicKey(readStoredKey())
+    try {
+      const p = sessionStorage.getItem(SS_KEY_PROVIDER) ?? localStorage.getItem(LS_KEY_PROVIDER)
+      if (p && p in PROVIDERS) setProvider(p as ProviderId)
+      const k = sessionStorage.getItem(SS_KEY_API_KEY) ?? ''
+      setUserKey(k)
+      setExpanded(sessionStorage.getItem(SS_KEY_EXPANDED) === 'true')
+    } catch {}
   }, [])
 
-  // Reset conversation when resetKey changes
+  // Check server key configuration on mount
   useEffect(() => {
-    if (resetKey === undefined) return
-    setMessages([])
-    setInputValue('')
-    setSessionUsage({ messages: 0, totalCost: 0 })
-    abortRef.current?.abort()
-    abortRef.current = null
-    setIsStreaming(false)
-    try { sessionStorage.removeItem(SS_KEY_EXPANDED) } catch {}
-    setExpanded(false)
-  }, [resetKey])
+    fetch('/api/chat')
+      .then((r) => r.json())
+      .then((data: { configured: boolean; provider?: ProviderId }) => {
+        if (data.configured) {
+          setFreeRemaining(FREE_LIMIT)
+          if (data.provider) setServerProvider(data.provider)
+        } else {
+          setNeedsKey(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Insert context notice when filter changes during an active conversation
+  const prevRepoQuery = useRef(repoQuery)
+  useEffect(() => {
+    const prev = prevRepoQuery.current
+    prevRepoQuery.current = repoQuery
+    if (prev === repoQuery || messages.length === 0) return
+    const label = repoQuery.trim()
+      ? `Context updated: scoped to filter "${repoQuery.trim()}"`
+      : 'Context updated: filter cleared — using full org'
+    setContextNotices((n) => [...n, { afterIndex: messages.length, label }])
+  }, [repoQuery])
+
+  const filteredInventory = useMemo(() => {
+    if (!orgInventory || !repoQuery.trim()) return orgInventory
+    const parsed = parseStructuredSearchQuery(repoQuery)
+    return { ...orgInventory, results: orgInventory.results.filter((r) => matchesStructuredSearch(r, parsed)) }
+  }, [orgInventory, repoQuery])
+
+  const context = useMemo(() => {
+    if (contextType === 'repos' && repoResults) return serializeReposContext(repoResults).text
+    if (contextType === 'org' && orgView && org) return serializeOrgContext(org, orgView, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars', orgRepos }).text
+    if (contextType === 'org' && filteredInventory) return serializeOrgInventoryContext(filteredInventory, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars' }).text
+    return ''
+  }, [contextType, repoResults, orgView, org, orgRepos, filteredInventory])
+
+  const activeProvider = userKey ? provider : (serverProvider ?? 'anthropic')
+
+  const { messages, input, setInput, handleSubmit, isLoading, stop, setMessages, data, append, error: chatError } = useChat({
+    api: '/api/chat',
+    body: {
+      context,
+      contextType,
+      githubToken,
+      provider: activeProvider,
+      model: PROVIDERS[activeProvider].models['fast'].id,
+      apiKey: userKey || undefined,
+    },
+    onFinish: (_message: Message, options: { usage?: { promptTokens: number; completionTokens: number } }) => {
+      const usage = options?.usage
+      if (usage && Number.isFinite(usage.promptTokens) && Number.isFinite(usage.completionTokens)) {
+        const cost = calcCost(usage.promptTokens, usage.completionTokens, activeProvider)
+        setSessionCost((prev) => prev + cost)
+      }
+      setSessionMsgCount((prev) => prev + 1)
+    },
+    onError: (error: Error) => {
+      const parsed = parseApiError(error.message)
+      const code = parsed?.code ?? ''
+      if (code === 'FREE_LIMIT_REACHED' || error.message.includes('free chats')) {
+        setFreeRemaining(0)
+      }
+      if (code === 'NOT_CONFIGURED') {
+        setNeedsKey(true)
+      }
+    },
+  })
+
+  // Sync freeRemaining from stream data
+  useEffect(() => {
+    if (!data?.length) return
+    const last = [...data].reverse().find((d) => typeof (d as { remaining?: number }).remaining === 'number')
+    if (last) setFreeRemaining((last as { remaining: number }).remaining)
+  }, [data])
 
   // Scroll to latest message
   useEffect(() => {
     if (expanded) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, expanded])
+
+  // Reset on resetKey change
+  useEffect(() => {
+    if (resetKey === undefined) return
+    setMessages([])
+    setInput('')
+    setSessionCost(0)
+    setSessionMsgCount(0)
+    setContextNotices([])
+    stop()
+    try { sessionStorage.removeItem(SS_KEY_EXPANDED) } catch {}
+    setExpanded(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey])
 
   function handleExpandToggle() {
     const next = !expanded
@@ -389,201 +490,46 @@ export function ChatPanel({
     try { sessionStorage.setItem(SS_KEY_EXPANDED, String(next)) } catch {}
   }
 
-  function handleModelChange(m: Model) {
-    setModel(m)
-    try { localStorage.setItem(LS_KEY_MODEL, m) } catch {}
-  }
-
-  function handleSaveKey(key: string) {
-    setAnthropicKey(key)
-    try { sessionStorage.setItem(SS_KEY_ANTHROPIC, key) } catch {}
+  function handleSaveKey(p: ProviderId, key: string) {
+    setProvider(p)
+    setUserKey(key)
+    setNeedsKey(false)
+    setKeyFormOpen(false)
+    try {
+      sessionStorage.setItem(SS_KEY_PROVIDER, p)
+      sessionStorage.setItem(SS_KEY_API_KEY, key)
+      localStorage.setItem(LS_KEY_PROVIDER, p)
+    } catch {}
+    setMessages([])
+    setSessionCost(0)
+    setSessionMsgCount(0)
   }
 
   function handleClearKey() {
-    setAnthropicKey('')
-    try { sessionStorage.removeItem(SS_KEY_ANTHROPIC) } catch {}
-    setMessages([])
-    setSessionUsage({ messages: 0, totalCost: 0 })
-  }
-
-  function handleOrgRepoCountChange(count: number) {
-    if (count !== orgRepoCount) {
-      setOrgRepoCount(count)
-      setMessages([])
-      setSessionUsage({ messages: 0, totalCost: 0 })
-    }
-  }
-
-  function handleSortByChange(s: OrgSortBy) {
-    if (s !== sortBy) {
-      setSortBy(s)
-      setMessages([])
-      setSessionUsage({ messages: 0, totalCost: 0 })
-    }
-  }
-
-  function buildContext(): string {
-    if (contextType === 'repos' && repoResults)
-      return serializeReposContext(repoResults).text
-    if (contextType === 'org' && orgView && org)
-      return serializeOrgContext(org, orgView, { maxRepos: orgRepoCount, sortBy, orgRepos }).text
-    if (contextType === 'org' && orgInventory)
-      return serializeOrgInventoryContext(orgInventory, { maxRepos: orgRepoCount, sortBy }).text
-    return ''
-  }
-
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isStreaming) return
-
-    const userMsg: ChatMessage = { id: uid(), role: 'user', content: text }
-    const assistantId = uid()
-
-    setMessages((prev) => [...prev, userMsg, { id: assistantId, role: 'assistant', content: '' }])
-    setInputValue('')
-    setIsStreaming(true)
-
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    const apiMessages = [
-      ...messages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-      { role: 'user' as const, content: text },
-    ]
-
+    setUserKey('')
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: apiMessages,
-          context: buildContext(),
-          contextType,
-          githubToken,
-          anthropicKey: anthropicKey || undefined,
-          model,
-        }),
-        signal: controller.signal,
-      })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({})) as { error?: { message?: string; code?: string } }
-        const code = payload.error?.code
-        const msg =
-          code === 'NOT_CONFIGURED'
-            ? "AI chat isn't available — please provide an Anthropic API key."
-            : payload.error?.message ?? 'Something went wrong — please try again in a moment.'
-        setMessages((prev) =>
-          prev.map((m) => m.id === assistantId ? { ...m, role: 'error', content: msg, retryContent: text } : m),
-        )
-        return
-      }
-
-      const reader = response.body?.getReader()
-      if (!reader) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId
-              ? { ...m, role: 'error', content: 'Streaming is not supported in this environment.', retryContent: text }
-              : m,
-          ),
-        )
-        return
-      }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-      let msgUsage: MessageUsage | undefined
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          let event: { type: string; text?: string; code?: string; message?: string; inputTokens?: number; outputTokens?: number; cacheReadTokens?: number }
-          try { event = JSON.parse(line.slice(6)) } catch { continue }
-
-          if (event.type === 'delta' && event.text) {
-            setMessages((prev) =>
-              prev.map((m) => m.id === assistantId ? { ...m, content: m.content + event.text! } : m),
-            )
-          } else if (event.type === 'usage') {
-            msgUsage = {
-              inputTokens: event.inputTokens ?? 0,
-              outputTokens: event.outputTokens ?? 0,
-              cacheReadTokens: event.cacheReadTokens ?? 0,
-            }
-            setMessages((prev) =>
-              prev.map((m) => m.id === assistantId ? { ...m, usage: msgUsage } : m),
-            )
-            const cost = calcCost(msgUsage, model)
-            setSessionUsage((prev) => ({ messages: prev.messages + 1, totalCost: prev.totalCost + cost }))
-          } else if (event.type === 'error') {
-            const noRetry = event.code === 'NOT_CONFIGURED' || event.code === 'CONTEXT_TOO_LARGE'
-            const showKeyLink = event.code === 'INVALID_KEY'
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantId
-                  ? { ...m, role: 'error', content: event.message ?? 'Something went wrong.', retryContent: noRetry ? undefined : text, ...(showKeyLink ? { isKeyError: true } : {}) }
-                  : m,
-              ),
-            )
-          }
-        }
-      }
-    } catch (err: unknown) {
-      if ((err as { name?: string }).name === 'AbortError') return
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, role: 'error', content: 'Something went wrong — please try again in a moment.', retryContent: text }
-            : m,
-        ),
-      )
-    } finally {
-      setIsStreaming(false)
-      abortRef.current = null
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStreaming, messages, contextType, githubToken, anthropicKey, model, orgRepoCount, sortBy, repoResults, orgView, org, orgRepos])
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    void sendMessage(inputValue)
+      sessionStorage.removeItem(SS_KEY_API_KEY)
+      sessionStorage.removeItem(SS_KEY_PROVIDER)
+    } catch {}
+    setMessages([])
+    setSessionCost(0)
+    setSessionMsgCount(0)
   }
+
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void sendMessage(inputValue) }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit(e as unknown as React.FormEvent)
+    }
   }
 
-  function handleRetry(retryContent: string) {
-    setMessages((prev) => prev.filter((m) => m.retryContent !== retryContent))
-    void sendMessage(retryContent)
-  }
-
-  function handleNewConversation() {
-    abortRef.current?.abort()
-    abortRef.current = null
-    setMessages([])
-    setSessionUsage({ messages: 0, totalCost: 0 })
-    setIsStreaming(false)
-  }
-
+  const hasKey = !!userKey
+  const limitReached = !hasKey && freeRemaining !== null && freeRemaining === 0
+  const showKeyForm = limitReached || needsKey || keyFormOpen
   const isInventoryPhase = contextType === 'org' && !orgView && !!orgInventory
-  const starterChips = contextType === 'repos'
-    ? REPOS_STARTER_CHIPS
-    : isInventoryPhase
-      ? ORG_INVENTORY_STARTER_CHIPS
-      : ORG_STARTER_CHIPS
-  const showChips = messages.length === 0 && !isStreaming
-  const orgTotal = orgView?.status.total ?? orgInventory?.results.length ?? 0
-  const isOrgAndLarge = contextType === 'org' && orgTotal > 500
-  const hasKey = !!anthropicKey
+  const starterChips = contextType === 'repos' ? REPOS_STARTER_CHIPS : isInventoryPhase ? ORG_INVENTORY_STARTER_CHIPS : ORG_STARTER_CHIPS
+  const showChips = messages.length === 0 && !isLoading
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-5xl px-4">
@@ -591,11 +537,8 @@ export function ChatPanel({
 
         {/* Collapsed bar */}
         {!expanded ? (
-          <button
-            type="button"
-            onClick={handleExpandToggle}
-            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
+          <button type="button" onClick={handleExpandToggle}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
             <span aria-hidden="true" className="text-base">✨</span>
             <span className="flex-1">
               Ask a question about this analysis
@@ -613,91 +556,35 @@ export function ChatPanel({
           <>
             {/* Panel header */}
             <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-4 py-2 dark:border-slate-700">
-              <span className="mr-1 font-semibold text-slate-900 dark:text-slate-100">Ask Claude</span>
+              <span className="mr-1 font-semibold text-slate-900 dark:text-slate-100">Ask AI</span>
+              <span className="rounded border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                {PROVIDERS[activeProvider].name}
+              </span>
 
-              {/* Model switcher */}
-              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800">
-                {(Object.entries(MODEL_META) as [Model, typeof MODEL_META[Model]][]).map(([m, info]) => (
-                  <button
-                    key={m}
-                    type="button"
-                    title={`${info.hint} · Input $${info.inputRate}/1M · Output $${info.outputRate}/1M`}
-                    onClick={() => handleModelChange(m)}
-                    className={
-                      model === m
-                        ? 'rounded-full bg-white px-2.5 py-1 text-xs font-medium shadow-sm dark:bg-slate-700 text-slate-900 dark:text-slate-100'
-                        : 'rounded-full px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                    }
-                  >
-                    {info.icon} {info.label}
-                  </button>
-                ))}
-              </div>
 
-              {/* Org controls */}
-              {isOrgAndLarge && (
-                <>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-                    <label htmlFor="chat-repo-count" className="whitespace-nowrap">Top</label>
-                    <input
-                      id="chat-repo-count"
-                      type="range"
-                      min="50"
-                      max="500"
-                      step="50"
-                      value={orgRepoCount}
-                      onChange={(e) => handleOrgRepoCountChange(Number(e.target.value))}
-                      className="w-20 accent-sky-600"
-                    />
-                    <span className="w-8 text-right font-medium">{orgRepoCount}</span>
-                    <span>repos</span>
-                  </div>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => handleSortByChange(e.target.value as OrgSortBy)}
-                    className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  >
-                    {SORT_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                </>
-              )}
 
-              {/* Session cost */}
-              {sessionUsage.messages > 0 && (
+              {/* Session cost — only shown when user has their own key */}
+              {hasKey && sessionMsgCount > 0 && (
                 <span className="text-xs text-slate-400 dark:text-slate-500">
-                  Session: {sessionUsage.messages} {sessionUsage.messages === 1 ? 'msg' : 'msgs'} · {formatCost(sessionUsage.totalCost)}
+                  {sessionMsgCount} {sessionMsgCount === 1 ? 'msg' : 'msgs'}{sessionCost > 0 ? ` · ${formatCost(sessionCost)}` : ''}
                 </span>
               )}
 
+
               <div className="ml-auto flex items-center gap-2">
-                {/* Change key */}
-                {hasKey && (
-                  <button
-                    type="button"
-                    onClick={handleClearKey}
-                    className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
-                    title="Clear stored API key"
-                  >
-                    Change key
-                  </button>
-                )}
+                <button type="button"
+                  onClick={() => { if (hasKey) handleClearKey(); else setKeyFormOpen((v) => !v) }}
+                  className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+                  {hasKey ? 'Change key' : keyFormOpen ? 'Cancel' : 'Add key'}
+                </button>
                 {messages.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleNewConversation}
-                    className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                  >
+                  <button type="button" onClick={() => { setMessages([]); setSessionCost(0); setSessionMsgCount(0); setContextNotices([]); stop() }}
+                    className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     New conversation
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={handleExpandToggle}
-                  aria-label="Collapse chat"
-                  className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                >
+                <button type="button" onClick={handleExpandToggle} aria-label="Collapse chat"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200">
                   <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
                   </svg>
@@ -705,123 +592,214 @@ export function ChatPanel({
               </div>
             </div>
 
-            {/* Structured search filter (org tab only, always visible when expanded) */}
+            {/* Structured search filter */}
             {contextType === 'org' && onRepoQueryChange && (
               <SearchFilter value={repoQuery} onChange={onRepoQueryChange} />
             )}
 
             {/* Chat section label */}
             <div className="flex items-center gap-2 px-4 pt-2 pb-0">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Chat with Claude</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Chat with AI</span>
+              {repoQuery.trim() && filteredInventory && (
+                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                  scoped to {filteredInventory.results.length} filtered repos
+                </span>
+              )}
+              {/* Show dots here only when the flow guide isn't visible */}
+              {!hasKey && !(isInventoryPhase && showChips) && (
+                <div className={`relative flex items-center gap-1 ${freeRemaining === null ? 'group/free cursor-help' : ''}`}>
+                  {Array.from({ length: FREE_LIMIT }, (_, i) => (
+                    <span key={i} className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${freeRemaining === null ? 'bg-slate-200 dark:bg-slate-700' : i < freeRemaining ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                  ))}
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    {freeRemaining === null ? `${FREE_LIMIT} free` : freeRemaining > 0 ? `${freeRemaining} free` : 'limit reached'}
+                  </span>
+                  {freeRemaining === null && (
+                    <span className="pointer-events-none invisible absolute bottom-full left-0 z-50 mb-2 w-52 rounded bg-slate-800 px-2.5 py-2 opacity-0 shadow-lg transition-opacity group-hover/free:visible group-hover/free:opacity-100 dark:bg-slate-700">
+                      <span className="block text-[11px] leading-snug text-white">Free quota requires a server API key (<code className="rounded bg-slate-700 px-1 font-mono text-[10px]">ANTHROPIC_API_KEY</code>, <code className="rounded bg-slate-700 px-1 font-mono text-[10px]">OPENAI_API_KEY</code>, etc.). Add your own key below to chat without limits.</span>
+                      <span className="absolute left-3 top-full border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
+                    </span>
+                  )}
+                </div>
+              )}
               <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
             </div>
 
-            {/* Key entry form or chat */}
-            {!hasKey ? (
-              <KeyEntryForm onSave={handleSaveKey} />
+            {/* Key entry or chat */}
+            {showKeyForm ? (
+              <KeyEntryForm onSave={handleSaveKey} exhausted={limitReached} notConfigured={needsKey && !limitReached}
+                onCancel={keyFormOpen && !limitReached && !needsKey ? () => setKeyFormOpen(false) : undefined} />
             ) : (
               <>
                 {/* Message history */}
-                <div
-                  className="flex h-[40vh] flex-col overflow-y-auto px-4 py-3 space-y-3"
-                  aria-live="polite"
-                  aria-label="Chat messages"
-                >
-                  {showChips && (
-                    <div className="flex flex-wrap gap-2">
+                <div className="flex h-[40vh] flex-col overflow-y-auto px-4 py-3 space-y-3" aria-live="polite" aria-label="Chat messages">
+                  {showChips && isInventoryPhase ? (
+                    <div className="flex flex-col gap-3 py-2">
+                      {/* Step 1 */}
+                      <div className="flex gap-3">
+                        {repoQuery.trim() ? (
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-500 text-white">
+                            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3"><path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" /></svg>
+                          </span>
+                        ) : (
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white">1</span>
+                        )}
+                        <div className="flex flex-col gap-1.5">
+                          <p className={`text-xs font-medium ${repoQuery.trim() ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}`}>
+                            Filter repos above to narrow your scope
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {['lang:go', 'archived:false', 'stars:>500', 'pushed:>2024-01-01'].map((f) => (
+                              <button key={f} type="button"
+                                onClick={() => {
+                                  const tokens = repoQuery.trim().split(/\s+/).filter(Boolean)
+                                  const next = tokens.includes(f)
+                                    ? tokens.filter((t) => t !== f).join(' ')
+                                    : [...tokens, f].join(' ')
+                                  onRepoQueryChange?.(next)
+                                }}
+                                className={`rounded border px-2 py-0.5 font-mono text-[11px] transition-colors ${repoQuery.split(/\s+/).includes(f) ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-300' : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500 dark:hover:bg-sky-900/20 dark:hover:text-sky-300'}`}>
+                                {f}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Connector */}
+                      <div className="ml-2.5 h-4 w-px bg-slate-200 dark:bg-slate-700" />
+                      {/* Step 2 */}
+                      <div className="flex gap-3">
+                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${repoQuery.trim() ? 'bg-sky-600 text-white' : 'border border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-500'}`}>2</span>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <p className={`text-xs ${repoQuery.trim() ? 'font-medium text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                              Ask AI about the filtered repos
+                            </p>
+                            {!hasKey && (
+                              <div className={`relative flex items-center gap-1 ${freeRemaining === null ? 'group/free cursor-help' : ''}`}>
+                                {Array.from({ length: FREE_LIMIT }, (_, i) => (
+                                  <span key={i} className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${freeRemaining === null ? 'bg-slate-200 dark:bg-slate-700' : i < freeRemaining ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                                ))}
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                  {freeRemaining === null ? `${FREE_LIMIT} free` : freeRemaining > 0 ? `${freeRemaining} free` : 'limit reached'}
+                                </span>
+                                {freeRemaining === null && (
+                                  <span className="pointer-events-none invisible absolute bottom-full left-0 z-50 mb-2 w-52 rounded bg-slate-800 px-2.5 py-2 opacity-0 shadow-lg transition-opacity group-hover/free:visible group-hover/free:opacity-100 dark:bg-slate-700">
+                                    <span className="block text-[11px] leading-snug text-white">Free quota requires a server API key (<code className="rounded bg-slate-700 px-1 font-mono text-[10px]">ANTHROPIC_API_KEY</code>, <code className="rounded bg-slate-700 px-1 font-mono text-[10px]">OPENAI_API_KEY</code>, etc.). Add your own key below to chat without limits.</span>
+                                    <span className="absolute left-3 top-full border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {ORG_INVENTORY_STARTER_CHIPS.map((chip) => (
+                              <button key={chip} type="button"
+                                disabled={!repoQuery.trim()}
+                                onClick={() => void append({ role: 'user', content: chip })}
+                                className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${repoQuery.trim() ? 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700' : 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-600'}`}>
+                                {chip}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {messages.map((msg, idx) => (
+                    <React.Fragment key={msg.id}>
+                      {contextNotices.filter((n) => n.afterIndex === idx).map((n, ni) => (
+                        <div key={`notice-${idx}-${ni}`} className="flex items-center gap-2 py-1">
+                          <div className="flex-1 border-t border-dashed border-slate-200 dark:border-slate-700" />
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500">{n.label}</span>
+                          <div className="flex-1 border-t border-dashed border-slate-200 dark:border-slate-700" />
+                        </div>
+                      ))}
+                      {msg.role === 'user' ? (
+                        <div className="flex justify-end">
+                          <div className="max-w-[80%] rounded-2xl bg-sky-600 px-4 py-2 text-sm text-white">{msg.content}</div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-start gap-1">
+                          <div className="max-w-[85%] rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                            {msg.content ? (
+                              <div className="prose prose-sm max-w-none dark:prose-invert">{renderMarkdown(msg.content)}</div>
+                            ) : (
+                              <span className="animate-pulse text-slate-400">●</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                  {/* Notices added after all current messages */}
+                  {contextNotices.filter((n) => n.afterIndex >= messages.length).map((n, ni) => (
+                    <div key={`notice-end-${ni}`} className="flex items-center gap-2 py-1">
+                      <div className="flex-1 border-t border-dashed border-slate-200 dark:border-slate-700" />
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">{n.label}</span>
+                      <div className="flex-1 border-t border-dashed border-slate-200 dark:border-slate-700" />
+                    </div>
+                  ))}
+
+                  {/* Persistent suggestion chips — always visible, not just before first message */}
+                  {!isLoading && !(isInventoryPhase && showChips) && (
+                    <div className="flex flex-wrap gap-2 pt-1">
                       {starterChips.map((chip) => (
-                        <button
-                          key={chip}
-                          type="button"
-                          onClick={() => void sendMessage(chip)}
-                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                        >
+                        <button key={chip} type="button"
+                          onClick={() => void append({ role: 'user', content: chip })}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                           {chip}
                         </button>
                       ))}
                     </div>
                   )}
-
-                  {messages.map((msg) => {
-                    if (msg.role === 'user') {
-                      return (
-                        <div key={msg.id} className="flex justify-end">
-                          <div className="max-w-[80%] rounded-2xl bg-sky-600 px-4 py-2 text-sm text-white">
-                            {msg.content}
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    if (msg.role === 'error') {
-                      return (
-                        <div key={msg.id} className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-200">
-                          <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0">
-                            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                          </svg>
-                          <div className="flex-1">
-                            <p>{msg.content}</p>
-                            {msg.retryContent && (
-                              <button
-                                type="button"
-                                onClick={() => handleRetry(msg.retryContent!)}
-                                className="mt-1 text-xs font-medium underline hover:no-underline"
-                              >
-                                Retry
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    // assistant
-                    return (
-                      <div key={msg.id} className="flex flex-col items-start gap-1">
-                        <div className="max-w-[85%] rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">
-                          {msg.content ? (
-                            <div className="prose prose-sm max-w-none dark:prose-invert">
-                              {renderMarkdown(msg.content)}
-                            </div>
-                          ) : (
-                            <span className="animate-pulse text-slate-400">●</span>
-                          )}
-                        </div>
-                        {msg.usage && (
-                          <p className="px-1 text-[10px] text-slate-400 dark:text-slate-500">
-                            ↑ {formatTokens(msg.usage.inputTokens)} · ↓ {formatTokens(msg.usage.outputTokens)} · {formatCost(calcCost(msg.usage, model))}
-                            {msg.usage.cacheReadTokens > 0 && ` · ${formatTokens(msg.usage.cacheReadTokens)} cached`}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })}
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input area */}
+                {/* Error banner — only for errors that aren't handled by showing the key form */}
+                {chatError && (() => {
+                  const parsed = parseApiError(chatError.message)
+                  if (parsed?.code === 'NOT_CONFIGURED' || parsed?.code === 'FREE_LIMIT_REACHED') return null
+                  const displayMsg = parsed?.userMessage ?? chatError.message ?? 'Something went wrong — please try again.'
+                  return (
+                    <div className="mx-4 mb-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-200">
+                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0">
+                        <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                      </svg>
+                      <span>{displayMsg}</span>
+                    </div>
+                  )
+                })()}
+
+                {/* Input */}
                 <form onSubmit={handleSubmit} className="border-t border-slate-200 px-4 py-3 dark:border-slate-700">
                   <div className="flex items-end gap-2">
                     <textarea
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Ask a question…"
                       rows={1}
-                      disabled={isStreaming}
+                      disabled={isLoading}
                       className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                       style={{ minHeight: '38px', maxHeight: '120px' }}
                     />
-                    <button
-                      type="submit"
-                      disabled={!inputValue.trim() || isStreaming}
-                      aria-label="Send message"
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40 dark:bg-sky-500 dark:hover:bg-sky-400"
-                    >
-                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                        <path d="M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.925A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.087L2.28 16.762a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.208-7.787.75.75 0 0 0 0-1.049A28.897 28.897 0 0 0 3.105 2.288Z" />
-                      </svg>
-                    </button>
+                    {isLoading ? (
+                      <button type="button" onClick={stop}
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300">
+                        <svg aria-label="Stop" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                          <rect x="4" y="4" width="12" height="12" rx="1" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <button type="submit" disabled={!input.trim()} aria-label="Send message"
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-40 dark:bg-sky-500 dark:hover:bg-sky-400">
+                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                          <path d="M3.105 2.288a.75.75 0 0 0-.826.95l1.414 4.925A1.5 1.5 0 0 0 5.135 9.25h6.115a.75.75 0 0 1 0 1.5H5.135a1.5 1.5 0 0 0-1.442 1.087L2.28 16.762a.75.75 0 0 0 .826.95 28.897 28.897 0 0 0 15.208-7.787.75.75 0 0 0 0-1.049A28.897 28.897 0 0 0 3.105 2.288Z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </form>
               </>
