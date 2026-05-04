@@ -122,10 +122,6 @@ function formatCost(usd: number): string {
   return `$${usd.toFixed(4)}`
 }
 
-function formatTokens(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
-}
-
 function calcCost(promptTokens: number, completionTokens: number, provider: ProviderId): number {
   const spec = PROVIDERS[provider].models['fast']
   return (promptTokens * spec.inputRate + completionTokens * spec.outputRate) / 1_000_000
@@ -335,7 +331,7 @@ function KeyEntryForm({
           className="w-full rounded border border-slate-300 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
         <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
-          Your key is sent only to {config.name} to generate responses. Never logged or stored on our servers.
+          Your key is transmitted via the RepoPulse API route to {config.name} to generate responses. It is never logged or persisted on our servers.
         </p>
       </div>
 
@@ -534,7 +530,6 @@ export function ChatPanel({
   const isInventoryPhase = contextType === 'org' && !orgView && !!orgInventory
   const starterChips = contextType === 'repos' ? REPOS_STARTER_CHIPS : isInventoryPhase ? ORG_INVENTORY_STARTER_CHIPS : ORG_STARTER_CHIPS
   const showChips = messages.length === 0 && !isLoading
-  const activeModelSpec = PROVIDERS[activeProvider].models['fast']
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-5xl px-4">

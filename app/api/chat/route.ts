@@ -121,8 +121,8 @@ export async function POST(request: Request) {
   }
 
   if (!Array.isArray(messages) || messages.length === 0 ||
-      messages.some((m) => !(VALID_ROLES as readonly string[]).includes(m.role))) {
-    return Response.json({ error: { code: 'INVALID_INPUT', message: 'messages must be a non-empty array of {role, content}.' } }, { status: 400 })
+      messages.some((m) => !(VALID_ROLES as readonly string[]).includes(m.role) || typeof m.content !== 'string' || !m.content.trim())) {
+    return Response.json({ error: { code: 'INVALID_INPUT', message: 'messages must be a non-empty array of {role, content} where content is a non-empty string.' } }, { status: 400 })
   }
 
   const username = await getGitHubUsername(githubToken)
@@ -191,6 +191,11 @@ export async function POST(request: Request) {
     },
     onError: (error) => {
       console.error('[chat] streamText error:', error)
+      // Revert the free-tier counter so a failed provider call doesn't burn quota
+      if (!hasOwnKey) {
+        const currentCount = freeUsage.get(username) ?? 0
+        if (currentCount > 0) freeUsage.set(username, currentCount - 1)
+      }
       const msg = (error as { message?: string }).message ?? ''
       if (msg.includes('401') || msg.toLowerCase().includes('invalid api key') || msg.toLowerCase().includes('unauthorized')) {
         return 'Invalid API key — check it and try again.'

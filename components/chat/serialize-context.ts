@@ -176,6 +176,12 @@ function sortInventoryRepos(results: OrgRepoSummary[], sortBy: OrgSortBy): OrgRe
   return list
 }
 
+function resolveLicense(spdxId: string | null | undefined, name: string | null | undefined): string | null {
+  if (spdxId && spdxId !== 'unavailable') return spdxId
+  if (name && name !== 'unavailable') return name
+  return null
+}
+
 export function serializeOrgInventoryContext(
   inventory: OrgInventoryResponse,
   opts: { maxRepos?: number; sortBy?: OrgSortBy } = {},
@@ -187,7 +193,7 @@ export function serializeOrgInventoryContext(
     totalRepos: sorted.length,
     archived: sorted.filter((r) => r.archived).length,
     forks: sorted.filter((r) => r.isFork).length,
-    languages: [...new Set(sorted.map((r) => r.primaryLanguage).filter(Boolean))],
+    languages: [...new Set(sorted.map((r) => r.primaryLanguage).filter((lang) => !!lang && lang !== 'unavailable'))].sort(),
   }
 
   const payload = {
@@ -206,7 +212,7 @@ export function serializeOrgInventoryContext(
       pushedAt: r.pushedAt,
       archived: r.archived,
       isFork: r.isFork,
-      license: r.licenseSpdxId !== 'unavailable' ? r.licenseSpdxId : r.licenseName !== 'unavailable' ? r.licenseName : null,
+      license: resolveLicense(r.licenseSpdxId, r.licenseName),
       topics: r.topics,
       description: r.description,
     })),
