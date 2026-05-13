@@ -7,8 +7,8 @@ import { getHealthScore } from '@/lib/scoring/health-score'
 type SortKey = 'repo' | 'stars' | 'forks' | 'issuesOpen' | 'prsOpened90d' | 'uniqueCommitAuthors90d' | 'totalContributors' | 'percentile'
 type SortDir = 'asc' | 'desc'
 
-function num(v: unknown): number {
-  return typeof v === 'number' ? v : -1
+function num(v: unknown): number | null {
+  return typeof v === 'number' ? v : null
 }
 
 function fmt(v: unknown): string {
@@ -51,12 +51,12 @@ const COLUMNS: ColHeader[] = [
 
 interface Row {
   result: AnalysisResult
-  stars: number
-  forks: number
-  issuesOpen: number
-  prsOpened90d: number
-  uniqueCommitAuthors90d: number
-  totalContributors: number
+  stars: number | null
+  forks: number | null
+  issuesOpen: number | null
+  prsOpened90d: number | null
+  uniqueCommitAuthors90d: number | null
+  totalContributors: number | null
   percentile: number | null
 }
 
@@ -86,15 +86,17 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
   const [activeOnly, setActiveOnly] = useState(false)
 
   const rows = useMemo(() => buildRows(results), [results])
-  const maxStars = useMemo(() => Math.max(0, ...rows.map((r) => r.stars).filter((s) => s >= 0)), [rows])
+  const maxStars = useMemo(() => Math.max(0, ...rows.map((r) => r.stars).filter((s): s is number => s !== null)), [rows])
 
   const filtered = useMemo(() => {
     const q = nameFilter.toLowerCase()
     return rows.filter((r) => {
       if (q && !r.result.repo.toLowerCase().includes(q)) return false
-      if (activeOnly && r.uniqueCommitAuthors90d <= 0) return false
-      if (minStars > 0 && r.stars < minStars) return false
-      if (minHealth > 0 && (r.percentile ?? -1) < minHealth) return false
+      // Active-only: only exclude repos definitively known to have zero authors; unavailable data is kept
+      if (activeOnly && r.uniqueCommitAuthors90d !== null && r.uniqueCommitAuthors90d === 0) return false
+      // Stars / health filters: skip repos whose data is unavailable rather than treating them as low
+      if (minStars > 0 && r.stars !== null && r.stars < minStars) return false
+      if (minHealth > 0 && r.percentile !== null && r.percentile < minHealth) return false
       return true
     })
   }, [rows, nameFilter, minHealth, minStars, activeOnly])
@@ -105,9 +107,19 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
       if (sortKey === 'repo') {
         cmp = a.result.repo.localeCompare(b.result.repo)
       } else if (sortKey === 'percentile') {
-        cmp = (a.percentile ?? -1) - (b.percentile ?? -1)
+        const av = a.percentile
+        const bv = b.percentile
+        if (av === null && bv === null) return 0
+        if (av === null) return 1
+        if (bv === null) return -1
+        cmp = av - bv
       } else {
-        cmp = a[sortKey] - b[sortKey]
+        const av = a[sortKey] as number | null
+        const bv = b[sortKey] as number | null
+        if (av === null && bv === null) return 0
+        if (av === null) return 1
+        if (bv === null) return -1
+        cmp = av - bv
       }
       return sortDir === 'asc' ? cmp : -cmp
     })
@@ -190,7 +202,7 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
               <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
             </svg>
             <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-56 -translate-x-1/2 rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-100 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-slate-700">
-              Repos with at least one commit author in the last 90 days
+              Repos with at least one commit author in the last 90 days. Repos with unavailable data are included.
               <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
             </span>
           </span>
