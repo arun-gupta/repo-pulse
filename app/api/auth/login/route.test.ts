@@ -41,10 +41,14 @@ describe('GET /api/auth/login', () => {
     expect(location).toContain('scope=')
   })
 
-  it('includes a state parameter', async () => {
-    const response = await GET(mockRequest())
+  it('includes a state parameter containing a csrf token and the return origin', async () => {
+    const response = await GET(mockRequest('http://localhost:3010/api/auth/login'))
     const location = response.headers.get('location') ?? ''
-    expect(location).toMatch(/state=[a-zA-Z0-9_-]+/)
+    const stateParam = new URL(location).searchParams.get('state') ?? ''
+    // Format: "{uuid}|{origin}"
+    const [csrf, returnOrigin] = stateParam.split('|')
+    expect(csrf).toMatch(/^[0-9a-f-]{36}$/)
+    expect(returnOrigin).toBe('http://localhost:3010')
   })
 
   it('returns 500 when GITHUB_CLIENT_ID is not configured (and no dev PAT)', async () => {

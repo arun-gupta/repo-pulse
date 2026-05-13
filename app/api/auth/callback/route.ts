@@ -8,21 +8,28 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const error = url.searchParams.get('error')
   const code = url.searchParams.get('code')
-  const state = url.searchParams.get('state')
+  const state = url.searchParams.get('state') ?? ''
 
+  // State format: "{csrf}|{returnOrigin}" — extract both parts.
+  // The return origin is the host that initiated the login (may differ from
+  // the callback host when GitHub's registered callback URL is on Vercel but
+  // the user started the flow on localhost or a preview deployment).
+  const pipeIdx = state.indexOf('|')
+  const csrfFromState = pipeIdx >= 0 ? state.slice(0, pipeIdx) : state
+  const returnOriginFromState = pipeIdx >= 0 ? state.slice(pipeIdx + 1) : ''
   const { origin } = new URL(request.url)
-  const appUrl = origin
+  const appUrl = returnOriginFromState || origin
 
   // Handle user denial or GitHub error
   if (error) {
     return Response.redirect(`${appUrl}/?auth_error=${encodeURIComponent(error)}`, 302)
   }
 
-  // Validate CSRF state
+  // Validate CSRF state — compare cookie against the csrf portion of state.
   const cookieStore = await cookies()
   const storedState = cookieStore.get(OAUTH_STATE_COOKIE)?.value
 
-  if (!storedState || storedState !== state) {
+  if (!storedState || storedState !== csrfFromState) {
     return Response.redirect(`${appUrl}/?auth_error=invalid_state`, 302)
   }
 
