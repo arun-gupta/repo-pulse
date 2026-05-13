@@ -1,0 +1,150 @@
+#!/usr/bin/env npx tsx
+/**
+ * Fetches the university repo list from the repofinder fork, runs health
+ * scoring in batches via /api/analyze, and writes the scored fixture to the
+ * repofinder fork's exports/universities/ directory so repo-pulse can fetch
+ * it at runtime without bundling large JSON files.
+ *
+ * Usage:
+ *   GITHUB_TOKEN_1=ghp_... npx tsx scripts/score-university.ts \
+ *     [--slug ucsc] [--limit N] [--batch-size 25] \
+ *     [--repofinder-dir ../repofinder]
+ */
+
+import fs from 'fs'
+import path from 'path'
+import type { AnalysisResult, AnalyzeResponse } from '../lib/analyzer/analysis-result'
+
+const REPOFINDER_RAW_BASE =
+  'https://raw.githubusercontent.com/arun-gupta/repofinder/repo-pulse-integration/exports/universities'
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
+const TOKEN = process.env.GITHUB_TOKEN_1 ?? ''
+
+interface UniversityRepo {
+  full_name: string
+  university: string
+  affiliation_score: number
+}
+
+interface UniversityFixture extends AnalyzeResponse {
+  university: string
+  slug: string
+  totalRepos: number
+  generatedAt: string
+}
+
+function parseArgs() {
+  const args = process.argv.slice(2)
+  const get = (flag: string, def: string) => {
+    const i = args.indexOf(flag)
+    return i !== -1 ? args[i + 1] : def
+  }
+  return {
+    slug: get('--slug', 'ucsc'),
+    limit: parseInt(get('--limit', '0')),
+    batchSize: parseInt(get('--batch-size', '25')),
+    repofinderDir: get('--repofinder-dir', '../repofinder'),
+  }
+}
+
+interface ManifestEntry {
+  slug: string
+  university: string
+  totalRepos: number
+  analyzedRepos: number
+  generatedAt: string
+}
+
+function updateManifest(exportsDir: string, entry: ManifestEntry) {
+  const manifestPath = path.join(exportsDir, 'manifest.json')
+  let entries: ManifestEntry[] = []
+  if (fs.existsSync(manifestPath)) {
+    entries = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as ManifestEntry[]
+  }
+  const idx = entries.findIndex((e) => e.slug === entry.slug)
+  if (idx >= 0) entries[idx] = entry
+  else entries.push(entry)
+  entries.sort((a, b) => a.university.localeCompare(b.university))
+  fs.writeFileSync(manifestPath, JSON.stringify(entries, null, 2))
+}
+
+async function fetchRepoList(slug: string): Promise<UniversityRepo[]> {
+  const url = `${REPOFINDER_RAW_BASE}/${slug}.json`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Failed to fetch repo list for "${slug}": HTTP ${res.status}`)
+  return res.json() as Promise<UniversityRepo[]>
+}
+
+async function analyzeBatch(repos: string[], token: string): Promise<AnalyzeResponse> {
+  const res = await fetch(`${BASE_URL}/api/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repos, token }),
+  })
+  if (!res.ok) throw new Error(`/api/analyze failed: HTTP ${res.status}`)
+  return res.json() as Promise<AnalyzeResponse>
+}
+
+async function main() {
+  const { slug, limit, batchSize, repofinderDir } = parseArgs()
+
+  if (!TOKEN) {
+    console.error('Error: GITHUB_TOKEN_1 environment variable is required')
+    process.exit(1)
+  }
+
+  console.log(`Fetching repo list for "${slug}" from repofinder fork...`)
+  const allRepos = await fetchRepoList(slug)
+  const repos = limit > 0 ? allRepos.slice(0, limit) : allRepos
+  const universityName = allRepos[0]?.university ?? slug
+
+  console.log(`Scoring ${repos.length} of ${allRepos.length} repos in batches of ${batchSize}...\n`)
+
+  const results: AnalysisResult[] = []
+  const failures: AnalyzeResponse['failures'] = []
+
+  for (let i = 0; i < repos.length; i += batchSize) {
+    const batch = repos.slice(i, i + batchSize).map((r) => r.full_name)
+    const batchNum = Math.floor(i / batchSize) + 1
+    const totalBatches = Math.ceil(repos.length / batchSize)
+    process.stdout.write(`  Batch ${batchNum}/${totalBatches} (${batch.length} repos)...`)
+
+    const response = await analyzeBatch(batch, TOKEN)
+    results.push(...response.results)
+    failures.push(...(response.failures ?? []))
+    console.log(` done (${response.results.length} ok, ${response.failures?.length ?? 0} failed)`)
+  }
+
+  const generatedAt = new Date().toISOString()
+  const fixture: UniversityFixture = {
+    university: universityName,
+    slug,
+    totalRepos: allRepos.length,
+    generatedAt,
+    results,
+    failures,
+    rateLimit: null,
+  }
+
+  const exportsDir = path.resolve(repofinderDir, 'exports', 'universities')
+  fs.mkdirSync(exportsDir, { recursive: true })
+  const outPath = path.join(exportsDir, `${slug}-scored.json`)
+  fs.writeFileSync(outPath, JSON.stringify(fixture, null, 2))
+  updateManifest(exportsDir, {
+    slug,
+    university: universityName,
+    totalRepos: allRepos.length,
+    analyzedRepos: results.length,
+    generatedAt,
+  })
+
+  console.log(`\nDone: ${results.length} scored, ${failures.length} failed`)
+  console.log(`Written to ${outPath}`)
+  console.log(`Manifest updated at ${path.join(exportsDir, 'manifest.json')}`)
+  console.log(`\nNext: cd ${repofinderDir} && git add exports/universities/ && git push`)
+}
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
