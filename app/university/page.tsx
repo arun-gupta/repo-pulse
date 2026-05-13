@@ -34,7 +34,7 @@ export default async function UniversitiesPage() {
 
   return (
     <AuthProvider>
-      <DemoBanner generatedAt={latestGeneratedAt} label="Static snapshot" showSignIn={false} />
+      {latestGeneratedAt && <DemoBanner generatedAt={latestGeneratedAt} label="Static snapshot" showSignIn={false} />}
       <main className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:py-16">
         <div className="mx-auto max-w-4xl space-y-8">
           <header>
