@@ -16,7 +16,7 @@ export function DemoBanner({ generatedAt, label = 'Demo data', showSignIn = true
   return (
     <div
       role="status"
-      aria-label="Demo data banner"
+      aria-label={`${label} banner`}
       data-testid="demo-banner"
       className="w-full border-b border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800/60 dark:bg-sky-950/40 dark:text-sky-100"
     >
