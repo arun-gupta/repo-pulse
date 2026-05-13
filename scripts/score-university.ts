@@ -39,10 +39,21 @@ function parseArgs() {
     const i = args.indexOf(flag)
     return i !== -1 ? args[i + 1] : def
   }
+
+  const limitValue = parseInt(get('--limit', '0'), 10)
+  if (!Number.isFinite(limitValue) || !Number.isInteger(limitValue) || limitValue < 0) {
+    throw new Error('--limit must be a non-negative integer')
+  }
+
+  const batchSizeValue = parseInt(get('--batch-size', '25'), 10)
+  if (!Number.isFinite(batchSizeValue) || !Number.isInteger(batchSizeValue) || batchSizeValue <= 0) {
+    throw new Error('--batch-size must be a positive integer')
+  }
+
   return {
     slug: get('--slug', 'ucsc'),
-    limit: parseInt(get('--limit', '0')),
-    batchSize: parseInt(get('--batch-size', '25')),
+    limit: limitValue,
+    batchSize: batchSizeValue,
     repofinderDir: get('--repofinder-dir', '../repofinder'),
   }
 }
