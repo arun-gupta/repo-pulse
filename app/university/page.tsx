@@ -17,7 +17,9 @@ async function fetchManifest(): Promise<ManifestEntry[]> {
   const res = await fetch(`${REPOFINDER_RAW_BASE}/manifest.json`, {
     next: { revalidate: 3600 },
   })
-  if (!res.ok) return []
+  if (!res.ok) {
+    throw new Error(`Failed to load universities manifest: ${res.status} ${res.statusText}`)
+  }
   return res.json() as Promise<ManifestEntry[]>
 }
 
