@@ -13,52 +13,55 @@ vi.mock('next/headers', () => ({
 
 global.fetch = vi.fn()
 
-// State format: "{csrf}|{returnOrigin}". Cookie stores just the csrf portion.
+// Callback host and matching return origin (same-origin path)
+const CALLBACK_ORIGIN = 'http://localhost:3000'
 const CSRF = 'valid_state'
-const RETURN_ORIGIN = 'http://localhost:3010'
-const VALID_STATE = `${CSRF}|${RETURN_ORIGIN}`
+// State where returnOrigin matches the callback host → same-origin path
+const SAME_ORIGIN_STATE = `${CSRF}|${CALLBACK_ORIGIN}`
 
 describe('GET /api/auth/callback', () => {
   beforeEach(() => {
     vi.stubEnv('GITHUB_CLIENT_ID', 'test_client_id')
     vi.stubEnv('GITHUB_CLIENT_SECRET', 'test_client_secret')
     vi.resetAllMocks()
-    // Cookie stores only the csrf token (not the full state string)
     mockCookieGet.mockReturnValue({ value: CSRF })
   })
 
-  function makeRequest(params: Record<string, string>) {
-    const url = new URL('http://localhost/api/auth/callback')
+  function makeRequest(params: Record<string, string>, callbackOrigin = CALLBACK_ORIGIN) {
+    const url = new URL(`${callbackOrigin}/api/auth/callback`)
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
     return new Request(url.toString())
   }
 
-  it('redirects to error page when error param is present', async () => {
-    const req = makeRequest({ error: 'access_denied', state: VALID_STATE })
+  // ── Error handling ────────────────────────────────────────────────────────
+
+  it('redirects to error page (at return origin) when error param is present', async () => {
+    const req = makeRequest({ error: 'access_denied', state: SAME_ORIGIN_STATE })
     const response = await GET(req)
     expect(response.status).toBe(302)
     const location = response.headers.get('location') ?? ''
     expect(location).toContain('auth_error=access_denied')
-    // Should redirect to the return origin extracted from state, not the callback host
-    expect(location).toContain(RETURN_ORIGIN)
+    expect(location.startsWith(CALLBACK_ORIGIN)).toBe(true)
   })
 
-  it('redirects to error page when state is missing', async () => {
+  // ── Same-origin path (returnOrigin === callback host) ─────────────────────
+
+  it('redirects to invalid_state when CSRF cookie is missing', async () => {
     mockCookieGet.mockReturnValue(undefined)
-    const req = makeRequest({ code: 'abc123', state: VALID_STATE })
+    const req = makeRequest({ code: 'abc123', state: SAME_ORIGIN_STATE })
     const response = await GET(req)
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toContain('auth_error=invalid_state')
   })
 
-  it('redirects to error page when csrf portion of state does not match cookie', async () => {
-    const req = makeRequest({ code: 'abc123', state: `wrong_csrf|${RETURN_ORIGIN}` })
+  it('redirects to invalid_state when CSRF portion of state does not match cookie', async () => {
+    const req = makeRequest({ code: 'abc123', state: `wrong_csrf|${CALLBACK_ORIGIN}` })
     const response = await GET(req)
     expect(response.status).toBe(302)
     expect(response.headers.get('location')).toContain('auth_error=invalid_state')
   })
 
-  it('exchanges code for token and redirects with fragment to the return origin', async () => {
+  it('exchanges code for token and redirects with fragment on same-origin success', async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ access_token: 'gho_token123' }), {
@@ -71,19 +74,31 @@ describe('GET /api/auth/callback', () => {
         }),
       )
 
-    const req = makeRequest({ code: 'abc123', state: VALID_STATE })
+    const req = makeRequest({ code: 'abc123', state: SAME_ORIGIN_STATE })
     const response = await GET(req)
     expect(response.status).toBe(302)
     const location = response.headers.get('location') ?? ''
     expect(location).toContain('token=gho_token123')
     expect(location).toContain('username=arun-gupta')
     expect(location).toContain('#')
-    // Should redirect to the return origin from the state, not the callback's own host
-    expect(location.startsWith(RETURN_ORIGIN)).toBe(true)
+    expect(location.startsWith(CALLBACK_ORIGIN)).toBe(true)
+  })
+
+  it('redirects to error page when token exchange fails (same-origin)', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'bad_verification_code' }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    const req = makeRequest({ code: 'bad_code', state: SAME_ORIGIN_STATE })
+    const response = await GET(req)
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toContain('auth_error=token_exchange_failed')
   })
 
   it('falls back to the callback host origin when state has no return origin', async () => {
-    // Handles old-format state (no pipe separator) gracefully
+    // Old-format state (no pipe separator) — graceful fallback
     mockCookieGet.mockReturnValue({ value: 'bare_csrf' })
     vi.mocked(fetch)
       .mockResolvedValueOnce(
@@ -101,20 +116,43 @@ describe('GET /api/auth/callback', () => {
     const response = await GET(req)
     expect(response.status).toBe(302)
     const location = response.headers.get('location') ?? ''
-    // Falls back to the request origin (localhost in this test)
-    expect(location.startsWith('http://localhost')).toBe(true)
+    expect(location.startsWith(CALLBACK_ORIGIN)).toBe(true)
   })
 
-  it('redirects to error page when token exchange fails', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(
-      new Response(JSON.stringify({ error: 'bad_verification_code' }), {
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    )
+  // ── Cross-domain relay path ────────────────────────────────────────────────
 
-    const req = makeRequest({ code: 'bad_code', state: VALID_STATE })
+  it('relays to originating host when returnOrigin differs from callback host', async () => {
+    const loginOrigin = 'http://localhost:3010'
+    const crossDomainState = `${CSRF}|${loginOrigin}`
+
+    // Callback is on Vercel; login was on localhost:3010
+    const req = makeRequest(
+      { code: 'abc123', state: crossDomainState },
+      'https://repopulse-arun-gupta.vercel.app',
+    )
     const response = await GET(req)
     expect(response.status).toBe(302)
-    expect(response.headers.get('location')).toContain('auth_error=token_exchange_failed')
+    const location = response.headers.get('location') ?? ''
+    // Should relay to the originating host's relay endpoint
+    expect(location.startsWith(`${loginOrigin}/api/auth/relay`)).toBe(true)
+    expect(location).toContain('code=abc123')
+    expect(location).toContain(encodeURIComponent(crossDomainState))
+    // Should NOT exchange the token itself
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled()
+  })
+
+  it('redirects to error page on the return origin when code is missing in cross-domain case', async () => {
+    const loginOrigin = 'http://localhost:3010'
+    const crossDomainState = `${CSRF}|${loginOrigin}`
+
+    const req = makeRequest(
+      { state: crossDomainState },
+      'https://repopulse-arun-gupta.vercel.app',
+    )
+    const response = await GET(req)
+    expect(response.status).toBe(302)
+    const location = response.headers.get('location') ?? ''
+    expect(location).toContain('auth_error=missing_code')
+    expect(location.startsWith(loginOrigin)).toBe(true)
   })
 })
