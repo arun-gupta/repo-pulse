@@ -35,7 +35,7 @@ export default function DemoLanding() {
             </p>
           </header>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Link
               href="/demo/repositories"
               className="group block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-500"
@@ -88,31 +88,6 @@ export default function DemoLanding() {
               </p>
             </Link>
           </div>
-
-          <Link
-            href="/university"
-            className="group block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-500"
-          >
-            <div className="flex items-center gap-3">
-              <span
-                aria-hidden="true"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg text-sky-700 dark:bg-sky-900/40 dark:text-sky-200"
-              >
-                🎓
-              </span>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-300">
-                Universities
-              </h2>
-            </div>
-            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-              Browse OSS health scores for GitHub repositories affiliated with universities,
-              discovered and classified by repofinder. Filter by health tier, stars, and
-              activity to surface the most impactful projects.
-            </p>
-            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              University of California, Santa Cruz — 249 repositories scored
-            </p>
-          </Link>
 
           <p className="text-center text-xs text-slate-500 dark:text-slate-400">
             Data refreshes weekly. When you&apos;re ready to analyze your own projects,{' '}

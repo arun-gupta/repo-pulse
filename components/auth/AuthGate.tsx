@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth, type AuthSession } from './AuthContext'
 import { SignInButton } from './SignInButton'
@@ -102,13 +103,22 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
         <SignInButton />
 
-        <a
-          href="/demo"
-          data-testid="demo-link"
-          className="text-sm font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-300 dark:hover:text-sky-200"
-        >
-          See an example without signing in →
-        </a>
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1">
+          <a
+            href="/demo"
+            data-testid="demo-link"
+            className="text-sm font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-300 dark:hover:text-sky-200"
+          >
+            See an example without signing in →
+          </a>
+          <Link
+            href="/university"
+            data-testid="university-link"
+            className="text-sm font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-300 dark:hover:text-sky-200"
+          >
+            Browse university repos →
+          </Link>
+        </div>
 
         <PATForm onSuccess={signIn} />
 
