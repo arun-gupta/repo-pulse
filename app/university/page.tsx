@@ -70,6 +70,64 @@ export default async function UniversitiesPage() {
               ))}
             </div>
           )}
+
+          <details className="group rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 [&::-webkit-details-marker]:hidden">
+              How is this data generated?
+              <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"
+                className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
+              </svg>
+            </summary>
+            <div className="border-t border-slate-100 px-5 py-4 text-sm text-slate-600 dark:border-slate-700/60 dark:text-slate-400 space-y-3">
+              <div>
+                <p className="font-medium text-slate-800 dark:text-slate-200 mb-1">1 — Repo discovery</p>
+                <p>
+                  <a href="https://github.com/arun-gupta/repofinder" target="_blank" rel="noopener noreferrer"
+                    className="text-sky-700 hover:underline dark:text-sky-400">repofinder</a>{' '}
+                  scrapes GitHub to collect public repositories whose owners (users or orgs) have a university affiliation.
+                  Affiliation is predicted from profile bios, locations, and email domains using an LLM classifier.
+                  {(() => {
+                    const ucsc = universities.find((u) => u.slug === 'ucsc')
+                    if (!ucsc) return null
+                    const skipped = ucsc.totalRepos - ucsc.analyzedRepos
+                    return (
+                      <>
+                        {' '}For UCSC this surfaces{' '}
+                        <strong className="font-medium text-slate-800 dark:text-slate-200">{ucsc.totalRepos.toLocaleString()} candidate repos</strong>.
+                        Of those, <strong className="font-medium text-slate-800 dark:text-slate-200">{ucsc.analyzedRepos.toLocaleString()} were successfully scored</strong>.
+                        {skipped > 0 && (
+                          <>{' '}The remaining {skipped} could not be scored — typically because the repo was empty, deleted,
+                          or made private between discovery and scoring, or a transient GitHub API error occurred during the batch run.</>
+                        )}
+                      </>
+                    )
+                  })()}
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-slate-800 dark:text-slate-200 mb-1">2 — Health scoring</p>
+                <p>
+                  Each repo is scored through RepoPulse&apos;s analysis pipeline — the same pipeline used for the live Repos and Organization tabs.
+                  Metrics include activity (commits, PRs, issues), contributor health, documentation, security, licensing, and responsiveness.
+                  Scores are calibrated as percentiles against a baseline of{' '}
+                  <strong className="font-medium text-slate-800 dark:text-slate-200">~2,400 repos across 6 star brackets</strong>{' '}
+                  (solo-tiny, solo-small, emerging, growing, established, popular), so each repo is compared to similar-sized peers rather than the full GitHub population.
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-slate-800 dark:text-slate-200 mb-1">3 — Static snapshots</p>
+                <p>
+                  Results are exported to the{' '}
+                  <a href="https://github.com/arun-gupta/repofinder/tree/repo-pulse-integration/exports/universities"
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-sky-700 hover:underline dark:text-sky-400">repofinder fork</a>{' '}
+                  as pre-scored JSON and served as static snapshots — no live GitHub API calls are made when you browse a university page.
+                  Snapshots are refreshed periodically; the scored date is shown on each university&apos;s page.
+                </p>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     </AuthProvider>
