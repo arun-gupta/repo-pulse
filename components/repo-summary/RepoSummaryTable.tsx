@@ -28,6 +28,8 @@ function getAuthors(result: AnalysisResult, window: ContributorWindowDays): numb
   return null
 }
 
+const HEALTH_TOOLTIP = 'Composite OSS health percentile. Weighted from Contributors (23%), Activity (25%), Responsiveness (25%), Documentation (12%), and Security (15%). Score is a percentile rank within a calibration set of ~2,400 repos across 6 star brackets (solo-tiny, solo-small, emerging, growing, established, popular). Higher = healthier relative to peers.'
+
 function PercentileBadge({ value }: { value: number | null }) {
   if (value === null) return <span className="text-slate-400 dark:text-slate-500">N/A</span>
   const color =
@@ -36,7 +38,7 @@ function PercentileBadge({ value }: { value: number | null }) {
     : value >= 25 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
     : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>
+    <span title={HEALTH_TOOLTIP} className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>
       {value}th
     </span>
   )
@@ -47,6 +49,7 @@ interface ColHeader {
   label: string
   group?: string
   align?: 'left' | 'right'
+  tooltip?: string
 }
 
 const COLUMNS: ColHeader[] = [
@@ -57,7 +60,7 @@ const COLUMNS: ColHeader[] = [
   { key: 'prsOpened90d',     label: 'PRs (90d)',     group: 'Attention',  align: 'right' },
   { key: 'authors',          label: 'Authors',       group: 'Engagement', align: 'right' },
   { key: 'totalContributors',label: 'Contributors',  group: 'Engagement', align: 'right' },
-  { key: 'percentile',       label: 'Health',        align: 'right' },
+  { key: 'percentile',       label: 'Health',        align: 'right', tooltip: HEALTH_TOOLTIP },
 ]
 
 interface Row {
@@ -269,7 +272,16 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
                   }`}
                   onClick={() => handleSort(col.key)}
                 >
-                  {col.key === 'authors' ? `Authors (${activeWindow}d)` : col.label}
+                  <span className="inline-flex items-center gap-1">
+                    {col.key === 'authors' ? `Authors (${activeWindow}d)` : col.label}
+                    {col.tooltip && (
+                      <span title={col.tooltip} className="cursor-help text-slate-400 dark:text-slate-500">
+                        <svg viewBox="0 0 14 14" className="h-3 w-3 fill-current" aria-hidden="true">
+                          <path fillRule="evenodd" clipRule="evenodd" d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1ZM6.25 5a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0ZM6 7a1 1 0 0 1 2 0v2.5a.5.5 0 0 1-1 0V8a.25.25 0 0 0-.25-.25H6.5A.5.5 0 0 1 6 7.25V7Z" />
+                        </svg>
+                      </span>
+                    )}
+                  </span>
                   {sortKey === col.key && (
                     <span className="ml-1 text-sky-600 dark:text-sky-400">
                       {sortDir === 'desc' ? '↓' : '↑'}
