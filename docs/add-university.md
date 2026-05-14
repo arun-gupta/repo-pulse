@@ -3,7 +3,7 @@
 This runbook covers the full pipeline for adding a new university to RepoPulse's Universities tab. The pipeline has three stages:
 
 1. **Repo discovery** — [repofinder](https://github.com/UC-OSPO-Network/repofinder) scrapes GitHub and produces a list of repos affiliated with the university
-2. **Health scoring** — `score-university.ts` runs each repo through RepoPulse's analysis pipeline
+2. **Health scoring** — `scripts/score-university.ts` (in this repo) runs each repo through RepoPulse's analysis pipeline
 3. **Publish** — push the scored JSON to the repofinder fork so the app can fetch it
 
 ## Prerequisites
