@@ -7,7 +7,7 @@ export function buildUniversitySummary(results: AnalysisResult[]): OrgInventoryS
 
   const languageCounts = new Map<string, number>()
   for (const r of results) {
-    const lang = r.primaryLanguage === 'unavailable' ? 'Unavailable' : (r.primaryLanguage ?? 'Unavailable')
+    const lang = r.primaryLanguage === 'unavailable' ? 'Unavailable' : r.primaryLanguage
     languageCounts.set(lang, (languageCounts.get(lang) ?? 0) + 1)
   }
 
