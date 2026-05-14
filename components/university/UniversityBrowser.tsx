@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { OrgInventorySummary } from '@/components/org-inventory/OrgInventorySummary'
 import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import { UniversityChatPanel } from './UniversityChatPanel'
+import { UniversityScoreDistribution } from './UniversityScoreDistribution'
 import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import { buildUniversitySummary } from '@/lib/university/summary'
 
@@ -117,6 +118,7 @@ export function UniversityBrowser() {
             </div>
           </div>
         </header>
+        <UniversityScoreDistribution results={selected.results} />
         <OrgInventorySummary summary={summary} />
         <RepoSummaryTable results={selected.results} />
         <UniversityChatPanel university={selected.entry.university} results={selected.results} />
