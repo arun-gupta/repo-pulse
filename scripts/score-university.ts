@@ -50,9 +50,15 @@ function parseArgs() {
     throw new Error('--batch-size must be a positive integer')
   }
 
+  const offsetValue = parseInt(get('--offset', '0'), 10)
+  if (!Number.isFinite(offsetValue) || !Number.isInteger(offsetValue) || offsetValue < 0) {
+    throw new Error('--offset must be a non-negative integer')
+  }
+
   return {
     slug: get('--slug', 'ucsc'),
     limit: limitValue,
+    offset: offsetValue,
     batchSize: batchSizeValue,
     repofinderDir: get('--repofinder-dir', '../repofinder'),
   }
@@ -97,7 +103,7 @@ async function analyzeBatch(repos: string[], token: string): Promise<AnalyzeResp
 }
 
 async function main() {
-  const { slug, limit, batchSize, repofinderDir } = parseArgs()
+  const { slug, limit, offset, batchSize, repofinderDir } = parseArgs()
 
   if (!TOKEN) {
     console.error('Error: GITHUB_TOKEN_1 environment variable is required')
@@ -106,10 +112,11 @@ async function main() {
 
   console.log(`Fetching repo list for "${slug}" from repofinder fork...`)
   const allRepos = await fetchRepoList(slug)
-  const repos = limit > 0 ? allRepos.slice(0, limit) : allRepos
   const universityName = allRepos[0]?.university ?? slug
+  const sliced = allRepos.slice(offset)
+  const repos = limit > 0 ? sliced.slice(0, limit) : sliced
 
-  console.log(`Scoring ${repos.length} of ${allRepos.length} repos in batches of ${batchSize}...\n`)
+  console.log(`Scoring ${repos.length} repos (offset ${offset}, limit ${limit || 'none'}) of ${allRepos.length} total in batches of ${batchSize}...\n`)
 
   const results: AnalysisResult[] = []
   const failures: AnalyzeResponse['failures'] = []
@@ -127,29 +134,42 @@ async function main() {
   }
 
   const generatedAt = new Date().toISOString()
+  const exportsDir = path.resolve(repofinderDir, 'exports', 'universities')
+  fs.mkdirSync(exportsDir, { recursive: true })
+  const outPath = path.join(exportsDir, `${slug}-scored.json`)
+
+  // Merge with existing scored results so --offset runs accumulate
+  let existingResults: AnalysisResult[] = []
+  let existingFailures: AnalyzeResponse['failures'] = []
+  if (fs.existsSync(outPath)) {
+    const existing = JSON.parse(fs.readFileSync(outPath, 'utf-8')) as UniversityFixture
+    existingResults = existing.results ?? []
+    existingFailures = existing.failures ?? []
+  }
+  const existingRepos = new Set(existingResults.map((r) => r.repo))
+  const mergedResults = [...existingResults, ...results.filter((r) => !existingRepos.has(r.repo))]
+  const mergedFailures = [...existingFailures, ...failures]
+
   const fixture: UniversityFixture = {
     university: universityName,
     slug,
     totalRepos: allRepos.length,
     generatedAt,
-    results,
-    failures,
+    results: mergedResults,
+    failures: mergedFailures,
     rateLimit: null,
   }
 
-  const exportsDir = path.resolve(repofinderDir, 'exports', 'universities')
-  fs.mkdirSync(exportsDir, { recursive: true })
-  const outPath = path.join(exportsDir, `${slug}-scored.json`)
   fs.writeFileSync(outPath, JSON.stringify(fixture, null, 2))
   updateManifest(exportsDir, {
     slug,
     university: universityName,
     totalRepos: allRepos.length,
-    analyzedRepos: results.length,
+    analyzedRepos: mergedResults.length,
     generatedAt,
   })
 
-  console.log(`\nDone: ${results.length} scored, ${failures.length} failed`)
+  console.log(`\nDone: ${results.length} new scored, ${failures.length} failed (${mergedResults.length} total)`)
   console.log(`Written to ${outPath}`)
   console.log(`Manifest updated at ${path.join(exportsDir, 'manifest.json')}`)
   console.log(`\nNext: cd ${repofinderDir} && git add exports/universities/ && git push`)
