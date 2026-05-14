@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from 'react'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+import { CONTRIBUTOR_WINDOW_DAYS, type ContributorWindowDays } from '@/lib/analyzer/analysis-result'
 import { getHealthScore } from '@/lib/scoring/health-score'
 
-type SortKey = 'repo' | 'stars' | 'forks' | 'issuesOpen' | 'prsOpened90d' | 'uniqueCommitAuthors90d' | 'totalContributors' | 'percentile'
+type SortKey = 'repo' | 'stars' | 'forks' | 'issuesOpen' | 'prsOpened90d' | 'authors' | 'totalContributors' | 'percentile'
 type SortDir = 'asc' | 'desc'
 
 function num(v: unknown): number | null {
@@ -15,6 +16,16 @@ function fmt(v: unknown): string {
   if (typeof v !== 'number') return '—'
   if (v >= 1000) return `${(v / 1000).toFixed(1)}k`
   return v.toString()
+}
+
+function getAuthors(result: AnalysisResult, window: ContributorWindowDays): number | null {
+  const windowData = result.contributorMetricsByWindow?.[window]
+  if (windowData) {
+    const v = windowData.uniqueCommitAuthors
+    return typeof v === 'number' ? v : null
+  }
+  if (window === 90) return num(result.uniqueCommitAuthors90d)
+  return null
 }
 
 function PercentileBadge({ value }: { value: number | null }) {
@@ -39,14 +50,14 @@ interface ColHeader {
 }
 
 const COLUMNS: ColHeader[] = [
-  { key: 'repo',                   label: 'Repository',    align: 'left' },
-  { key: 'stars',                  label: 'Stars',         group: 'Reach',      align: 'right' },
-  { key: 'forks',                  label: 'Forks',         group: 'Reach',      align: 'right' },
-  { key: 'issuesOpen',             label: 'Open Issues',   group: 'Attention',  align: 'right' },
-  { key: 'prsOpened90d',           label: 'PRs (90d)',     group: 'Attention',  align: 'right' },
-  { key: 'uniqueCommitAuthors90d', label: 'Authors (90d)', group: 'Engagement', align: 'right' },
-  { key: 'totalContributors',      label: 'Contributors',  group: 'Engagement', align: 'right' },
-  { key: 'percentile',             label: 'Health',        align: 'right' },
+  { key: 'repo',             label: 'Repository',    align: 'left' },
+  { key: 'stars',            label: 'Stars',         group: 'Reach',      align: 'right' },
+  { key: 'forks',            label: 'Forks',         group: 'Reach',      align: 'right' },
+  { key: 'issuesOpen',       label: 'Open Issues',   group: 'Attention',  align: 'right' },
+  { key: 'prsOpened90d',     label: 'PRs (90d)',     group: 'Attention',  align: 'right' },
+  { key: 'authors',          label: 'Authors',       group: 'Engagement', align: 'right' },
+  { key: 'totalContributors',label: 'Contributors',  group: 'Engagement', align: 'right' },
+  { key: 'percentile',       label: 'Health',        align: 'right' },
 ]
 
 interface Row {
@@ -55,7 +66,6 @@ interface Row {
   forks: number | null
   issuesOpen: number | null
   prsOpened90d: number | null
-  uniqueCommitAuthors90d: number | null
   totalContributors: number | null
   percentile: number | null
 }
@@ -67,7 +77,6 @@ function buildRows(results: AnalysisResult[]): Row[] {
     forks: num(r.forks),
     issuesOpen: num(r.issuesOpen),
     prsOpened90d: num(r.prsOpened90d),
-    uniqueCommitAuthors90d: num(r.uniqueCommitAuthors90d),
     totalContributors: num(r.totalContributors),
     percentile: getHealthScore(r).percentile,
   }))
@@ -84,6 +93,7 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
   const [minHealth, setMinHealth] = useState(0)
   const [minStars, setMinStars] = useState(0)
   const [activeOnly, setActiveOnly] = useState(false)
+  const [activeWindow, setActiveWindow] = useState<ContributorWindowDays>(90)
 
   const rows = useMemo(() => buildRows(results), [results])
   const maxStars = useMemo(() => Math.max(0, ...rows.map((r) => r.stars).filter((s): s is number => s !== null)), [rows])
@@ -92,14 +102,15 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
     const q = nameFilter.toLowerCase()
     return rows.filter((r) => {
       if (q && !r.result.repo.toLowerCase().includes(q)) return false
-      // Active-only: only exclude repos definitively known to have zero authors; unavailable data is kept
-      if (activeOnly && r.uniqueCommitAuthors90d !== null && r.uniqueCommitAuthors90d === 0) return false
-      // Stars / health filters: skip repos whose data is unavailable rather than treating them as low
+      if (activeOnly) {
+        const authors = getAuthors(r.result, activeWindow)
+        if (authors !== null && authors === 0) return false
+      }
       if (minStars > 0 && r.stars !== null && r.stars < minStars) return false
       if (minHealth > 0 && r.percentile !== null && r.percentile < minHealth) return false
       return true
     })
-  }, [rows, nameFilter, minHealth, minStars, activeOnly])
+  }, [rows, nameFilter, minHealth, minStars, activeOnly, activeWindow])
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -113,17 +124,24 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
         if (av === null) return 1
         if (bv === null) return -1
         cmp = av - bv
-      } else {
-        const av = a[sortKey] as number | null
-        const bv = b[sortKey] as number | null
+      } else if (sortKey === 'authors') {
+        const av = getAuthors(a.result, activeWindow)
+        const bv = getAuthors(b.result, activeWindow)
         if (av === null && bv === null) return 0
         if (av === null) return 1
         if (bv === null) return -1
         cmp = av - bv
+      } else {
+        const av = a[sortKey as keyof Row] as number | null
+        const bv = b[sortKey as keyof Row] as number | null
+        if (av === null && bv === null) return 0
+        if (av === null) return 1
+        if (bv === null) return -1
+        cmp = (av as number) - (bv as number)
       }
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [filtered, sortKey, sortDir])
+  }, [filtered, sortKey, sortDir, activeWindow])
 
   function handleSort(key: SortKey) {
     if (key === sortKey) {
@@ -189,24 +207,37 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
           </span>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-          <input
-            type="checkbox"
-            checked={activeOnly}
-            onChange={(e) => setActiveOnly(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 accent-sky-600"
-          />
-          Active only
-          <span className="group relative -top-1">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 text-slate-400 dark:text-slate-500">
-              <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
-            </svg>
-            <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-56 -translate-x-1/2 rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-100 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-slate-700">
-              Repos with at least one commit author in the last 90 days. Repos with unavailable data are included.
-              <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
+        <div className="flex items-center gap-2">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={activeOnly}
+              onChange={(e) => setActiveOnly(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 accent-sky-600"
+            />
+            Active only
+            <span className="group relative -top-1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 text-slate-400 dark:text-slate-500">
+                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
+              </svg>
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 w-56 -translate-x-1/2 rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-100 opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-slate-700">
+                Repos with at least one commit author in the last {activeWindow} days. Repos with unavailable data are included.
+                <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-800 dark:border-t-slate-700" />
+              </span>
             </span>
-          </span>
-        </label>
+          </label>
+          <select
+            value={activeWindow}
+            onChange={(e) => setActiveWindow(Number(e.target.value) as ContributorWindowDays)}
+            className="rounded border border-slate-200 bg-white px-1.5 py-1 text-xs text-slate-600 shadow-sm focus:border-sky-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            aria-label="Active window"
+          >
+            {CONTRIBUTOR_WINDOW_DAYS.map((d) => (
+              <option key={d} value={d}>{d}d</option>
+            ))}
+          </select>
+        </div>
+
         {(nameFilter || minHealth > 0 || minStars > 0 || activeOnly) && (
           <span className="ml-auto text-sm tabular-nums text-slate-500 dark:text-slate-400">
             {filtered.length} of {results.length} shown
@@ -238,7 +269,7 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
                   }`}
                   onClick={() => handleSort(col.key)}
                 >
-                  {col.label}
+                  {col.key === 'authors' ? `Authors (${activeWindow}d)` : col.label}
                   {sortKey === col.key && (
                     <span className="ml-1 text-sky-600 dark:text-sky-400">
                       {sortDir === 'desc' ? '↓' : '↑'}
@@ -270,7 +301,7 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{fmt(row.forks)}</td>
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{fmt(row.issuesOpen)}</td>
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{fmt(row.prsOpened90d)}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{fmt(row.uniqueCommitAuthors90d)}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{fmt(getAuthors(row.result, activeWindow))}</td>
                 <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{fmt(row.totalContributors)}</td>
                 <td className="px-3 py-2 text-right">
                   <PercentileBadge value={row.percentile} />
