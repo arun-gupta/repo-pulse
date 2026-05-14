@@ -63,10 +63,17 @@ export async function GET(request: Request) {
     return Response.json({ error: 'GitHub OAuth is not configured.' }, { status: 500 })
   }
 
-  const state = crypto.randomUUID()
+  const csrf = crypto.randomUUID()
+  const returnOrigin = new URL(request.url).origin
+  // Encode return origin into the state so the callback can redirect the user
+  // back to whichever host initiated the flow, even if GitHub sends the
+  // callback to a different registered URL (e.g. the Vercel deployment).
+  const state = `${csrf}|${returnOrigin}`
   const cookieStore = await cookies()
 
-  cookieStore.set(OAUTH_STATE_COOKIE, state, {
+  // Store only the CSRF token in the cookie — the return origin travels via
+  // the state parameter, which GitHub echoes back in the callback URL.
+  cookieStore.set(OAUTH_STATE_COOKIE, csrf, {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
