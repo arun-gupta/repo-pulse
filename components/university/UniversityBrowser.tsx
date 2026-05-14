@@ -103,6 +103,11 @@ export function UniversityBrowser() {
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
+                {selected.results.length < selected.entry.totalRepos && (
+                  <span className="ml-1 text-slate-400 dark:text-slate-500">
+                    · {(selected.entry.totalRepos - selected.results.length).toLocaleString()} could not be scored (empty, deleted, or private)
+                  </span>
+                )}
               </p>
             </div>
           </div>
