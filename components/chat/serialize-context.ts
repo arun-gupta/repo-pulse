@@ -182,12 +182,40 @@ function resolveLicense(spdxId: string | null | undefined, name: string | null |
   return null
 }
 
+function summarizeRepoForUniversity(r: AnalysisResult): object {
+  const doc = r.documentationResult && typeof r.documentationResult === 'object' && 'fileChecks' in r.documentationResult
+    ? r.documentationResult as import('@/lib/analyzer/analysis-result').DocumentationResult
+    : null
+  const sec = r.securityResult && typeof r.securityResult === 'object' && 'directChecks' in r.securityResult
+    ? r.securityResult as import('@/lib/security/analysis-result').SecurityResult
+    : null
+  const lic = r.licensingResult && typeof r.licensingResult === 'object' && 'license' in r.licensingResult
+    ? r.licensingResult as import('@/lib/analyzer/analysis-result').LicensingResult
+    : null
+  return {
+    repo: r.repo,
+    lang: r.primaryLanguage && r.primaryLanguage !== 'unavailable' ? r.primaryLanguage : null,
+    stars: typeof r.stars === 'number' ? r.stars : null,
+    forks: typeof r.forks === 'number' ? r.forks : null,
+    commits90d: typeof r.commits90d === 'number' ? r.commits90d : null,
+    prsOpened90d: typeof r.prsOpened90d === 'number' ? r.prsOpened90d : null,
+    issuesOpen: typeof r.issuesOpen === 'number' ? r.issuesOpen : null,
+    authors90d: typeof r.uniqueCommitAuthors90d === 'number' ? r.uniqueCommitAuthors90d : null,
+    contributors: typeof r.totalContributors === 'number' ? r.totalContributors : null,
+    releases12mo: typeof r.releases12mo === 'number' ? r.releases12mo : null,
+    hasReadme: doc ? doc.fileChecks?.some((f) => f.name === 'readme' && f.found) ?? false : null,
+    hasLicense: lic ? (lic.license?.spdxId !== null && lic.license?.spdxId !== 'NOASSERTION') : null,
+    securityScore: sec && sec.scorecard && typeof sec.scorecard === 'object' && 'overallScore' in sec.scorecard
+      ? sec.scorecard.overallScore : null,
+  }
+}
+
 export function serializeUniversityContext(
   university: string,
   results: AnalysisResult[],
   opts: { maxRepos?: number } = {},
 ): SerializedChatContext {
-  const { maxRepos = 300 } = opts
+  const { maxRepos = 150 } = opts
 
   const stars = results.flatMap((r) => (typeof r.stars === 'number' ? [r.stars] : []))
   const totalStars = stars.reduce((s, v) => s + v, 0)
@@ -218,7 +246,7 @@ export function serializeUniversityContext(
       activeRepos,
       languageDistribution,
     },
-    repos: sorted.slice(0, maxRepos).map(summarizeRepo),
+    repos: sorted.slice(0, maxRepos).map(summarizeRepoForUniversity),
   }
 
   const text = [
@@ -226,7 +254,7 @@ export function serializeUniversityContext(
     `University: ${university} (${results.length} repos analyzed, ${totalStars.toLocaleString()} total stars)`,
     '',
     '```json',
-    JSON.stringify(payload, null, 2),
+    JSON.stringify(payload),
     '```',
   ].join('\n')
 
