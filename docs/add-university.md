@@ -10,7 +10,7 @@ This runbook covers the full pipeline for adding a new university to RepoPulse's
 
 | Requirement | Notes |
 |---|---|
-| `../repofinder` cloned | The fork at `arun-gupta/repofinder`, `repo-pulse-integration` branch checked out |
+| `../repofinder` cloned | The fork at [arun-gupta/repofinder](https://github.com/arun-gupta/repofinder), `repo-pulse-integration` branch checked out |
 | Python ≥ 3.10 + `pip install -r requirements.txt` | Run inside `workspaces/repofinder/` |
 | `GITHUB_TOKEN` in `repofinder/.env` | Used by the scraper; needs `public_repo` scope |
 | `GITHUB_TOKEN_1` env var | Used by `score-university.ts`; needs `public_repo` scope |
