@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { getCalibrationMeta } from '@/lib/scoring/config-loader'
 import { resultTabs } from '@/lib/results-shell/tabs'
 import type { ResultTabId } from '@/specs/006-results-shell/contracts/results-shell-props'
@@ -129,6 +130,12 @@ export function ResultsShell({
 
           {/* Desktop nav */}
           <div className="hidden items-center gap-3 sm:flex">
+            <Link
+              href="/university"
+              className="rounded-full border border-sky-700 bg-sky-950/25 px-3 py-2 text-xs font-medium text-sky-50 transition hover:border-sky-400 hover:bg-sky-950/40 hover:text-white"
+            >
+              Universities
+            </Link>
             <a
               href="/baseline"
               target="_blank"
@@ -177,6 +184,12 @@ export function ResultsShell({
             {mobileMenuOpen ? (
               <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-sky-700 bg-sky-900 p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900 sm:w-56">
                 <nav className="flex flex-col gap-2">
+                  <Link
+                    href="/university"
+                    className="rounded-md px-3 py-2 text-sm font-medium text-sky-50 transition hover:bg-sky-800"
+                  >
+                    Universities
+                  </Link>
                   <a
                     href="/baseline"
                     target="_blank"
