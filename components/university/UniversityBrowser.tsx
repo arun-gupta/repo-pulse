@@ -40,7 +40,7 @@ export function UniversityBrowser() {
   useEffect(() => {
     fetch(`${RAW_BASE}/manifest.json`)
       .then((r) => r.json())
-      .then((data: ManifestEntry[]) => setManifest(data))
+      .then((data: ManifestEntry[]) => setManifest([...data].sort((a, b) => a.university.localeCompare(b.university))))
       .catch(() => setManifestError(true))
   }, [])
 
