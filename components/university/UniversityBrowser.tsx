@@ -107,7 +107,15 @@ export function UniversityBrowser() {
         >
           repofinder
         </a>
-        . Data is pre-scored and refreshed periodically.
+        . Data is pre-scored and refreshed periodically.{' '}
+        <a
+          href="https://github.com/arun-gupta/repo-pulse/blob/main/docs/add-university.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sky-700 hover:underline dark:text-sky-400"
+        >
+          Add your university →
+        </a>
       </p>
       {detailError && (
         <p className="text-sm text-red-600 dark:text-red-400">{detailError}</p>
