@@ -39,6 +39,13 @@ describe('RepoInputForm — US1 (valid input)', () => {
 
     expect(screen.getByRole('button', { name: /^analyze$/i })).toHaveAttribute('title', expect.stringContaining('health dashboard'))
   })
+
+  it('keeps Foundation as a local toggle and renders Universities as a route link', () => {
+    render(<RepoInputForm onSubmitRepos={vi.fn()} onSubmitOrg={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: /^foundation$/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^universities$/i })).toHaveAttribute('href', '/university')
+  })
 })
 
 describe('RepoInputForm — format tooltip', () => {
