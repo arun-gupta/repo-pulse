@@ -18,6 +18,13 @@ This runbook covers the full pipeline for adding a new university to RepoPulse's
 
 ## Stage 1 — Repo discovery (repofinder)
 
+All steps in this stage run inside the **forked** repofinder repo at [arun-gupta/repofinder](https://github.com/arun-gupta/repofinder), on the `repo-pulse-integration` branch — not the upstream repofinder repo.
+
+```bash
+cd workspaces/repofinder        # the fork
+git checkout repo-pulse-integration
+```
+
 ### 1a. Check whether a config already exists
 
 Config files for all UC campuses are pre-built:
