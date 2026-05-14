@@ -1,9 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AuthProvider } from '@/components/auth/AuthContext'
-import { DemoBanner } from '@/components/demo/DemoBanner'
+import { AppHeader } from '@/components/app-shell/AppHeader'
+import { OrgInventorySummary } from '@/components/org-inventory/OrgInventorySummary'
 import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
+import { buildUniversitySummary } from '@/lib/university/summary'
 
 const REPOFINDER_RAW_BASE =
   'https://raw.githubusercontent.com/arun-gupta/repofinder/repo-pulse-integration/exports/universities'
@@ -39,24 +41,31 @@ export default async function UniversityPage({ params }: { params: Promise<{ slu
   if (!fixture) notFound()
 
   const { generatedAt, university, slug: _slug, totalRepos, results } = fixture
+  const summary = buildUniversitySummary(results)
 
   return (
     <AuthProvider>
-      <DemoBanner generatedAt={generatedAt} label="Static snapshot" showSignIn={false} />
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-          <Link href="/university" className="hover:text-sky-700 dark:hover:text-sky-300">Universities</Link>
-          <span aria-hidden="true">/</span>
-          <span className="text-slate-900 dark:text-slate-100">{university}</span>
-        </nav>
-        <header className="mb-6">
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{university}</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {results.length} of {totalRepos} repositories scored
-          </p>
-        </header>
-        <RepoSummaryTable results={results} />
-      </main>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:bg-slate-800/60">
+        <AppHeader />
+        <div className="mx-auto max-w-5xl px-4 py-6">
+          <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+            <Link href="/university" className="hover:text-sky-700 dark:hover:text-sky-300">Universities</Link>
+            <span aria-hidden="true">/</span>
+            <span className="text-slate-900 dark:text-slate-100">{university}</span>
+          </nav>
+          <header className="mb-6">
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{university}</h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {results.length} of {totalRepos} repositories scored
+              {generatedAt ? <> · scored {new Date(generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</> : null}
+            </p>
+          </header>
+          <div className="mb-8">
+            <OrgInventorySummary summary={summary} />
+          </div>
+          <RepoSummaryTable results={results} />
+        </div>
+      </div>
     </AuthProvider>
   )
 }
