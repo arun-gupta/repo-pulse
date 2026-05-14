@@ -15,6 +15,7 @@ interface ManifestEntry {
   totalRepos: number
   analyzedRepos: number
   generatedAt: string
+  discoveryThreshold?: number
 }
 
 interface UniversityFixture extends AnalyzeResponse {
@@ -39,7 +40,7 @@ export function UniversityBrowser() {
   useEffect(() => {
     fetch(`${RAW_BASE}/manifest.json`)
       .then((r) => r.json())
-      .then((data: ManifestEntry[]) => setManifest(data))
+      .then((data: ManifestEntry[]) => setManifest([...data].sort((a, b) => a.university.localeCompare(b.university))))
       .catch(() => setManifestError(true))
   }, [])
 
@@ -134,7 +135,17 @@ export function UniversityBrowser() {
             </h3>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               {u.analyzedRepos.toLocaleString()} of {u.totalRepos.toLocaleString()} repositories scored
+              {u.analyzedRepos < u.totalRepos && (
+                <span className="ml-1 text-slate-400 dark:text-slate-500">
+                  · {(u.totalRepos - u.analyzedRepos).toLocaleString()} could not be scored (empty, deleted, or private)
+                </span>
+              )}
             </p>
+            {u.discoveryThreshold !== undefined && (
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                Affiliation threshold: {u.discoveryThreshold}
+              </p>
+            )}
           </button>
         ))}
       </div>
