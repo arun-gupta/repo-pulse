@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { OrgInventorySummary } from '@/components/org-inventory/OrgInventorySummary'
 import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import { UniversityChatPanel } from './UniversityChatPanel'
@@ -38,11 +39,13 @@ interface Selected {
 }
 
 export function UniversityBrowser() {
+  const searchParams = useSearchParams()
   const [manifest, setManifest] = useState<ManifestEntry[] | null>(null)
   const [manifestError, setManifestError] = useState(false)
   const [selected, setSelected] = useState<Selected | null>(null)
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const autoSelectDone = useRef(false)
 
   useEffect(() => {
     fetch(`${RAW_BASE}/manifest.json`)
@@ -51,9 +54,26 @@ export function UniversityBrowser() {
       .catch(() => setManifestError(true))
   }, [])
 
+  // Auto-select university from ?u= param on initial manifest load
+  useEffect(() => {
+    if (!manifest || autoSelectDone.current) return
+    const slug = searchParams.get('u')
+    if (!slug) return
+    const entry = manifest.find((e) => e.slug === slug)
+    if (entry) {
+      autoSelectDone.current = true
+      void handleSelect(entry)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manifest])
+
   async function handleSelect(entry: ManifestEntry) {
     setLoadingSlug(entry.slug)
     setDetailError(null)
+    const params = new URLSearchParams(window.location.search)
+    params.set('mode', 'university')
+    params.set('u', entry.slug)
+    window.history.replaceState(null, '', `/?${params.toString()}`)
     try {
       const res = await fetch(`${RAW_BASE}/${entry.slug}-scored.json`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -64,6 +84,13 @@ export function UniversityBrowser() {
     } finally {
       setLoadingSlug(null)
     }
+  }
+
+  function handleBack() {
+    const params = new URLSearchParams(window.location.search)
+    params.delete('u')
+    window.history.replaceState(null, '', `/?${params.toString()}`)
+    setSelected(null)
   }
 
   if (manifestError) {
@@ -82,7 +109,7 @@ export function UniversityBrowser() {
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
           <button
             type="button"
-            onClick={() => setSelected(null)}
+            onClick={handleBack}
             className="hover:text-sky-700 dark:hover:text-sky-300"
           >
             Universities
