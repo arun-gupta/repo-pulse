@@ -5,6 +5,7 @@ import { normalizeOrgInput } from '@/lib/analyzer/org-inventory'
 import { parseRepos } from '@/lib/parse-repos'
 import type { FoundationTarget } from '@/lib/cncf-sandbox/types'
 import { FoundationInputSection } from '@/components/foundation/FoundationInputSection'
+import Link from 'next/link'
 import { CopyLinkButton } from '@/components/shared/CopyLinkButton'
 
 interface RepoInputFormProps {
@@ -120,6 +121,12 @@ export function RepoInputForm({
               {m === 'repos' ? 'Repositories' : m === 'org' ? 'Organization' : 'Foundation'}
             </button>
           ))}
+          <Link
+            href="/university"
+            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
+            Universities
+          </Link>
         </div>
         <div className="ml-auto">
           <CopyLinkButton />
