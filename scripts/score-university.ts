@@ -55,12 +55,19 @@ function parseArgs() {
     throw new Error('--offset must be a non-negative integer')
   }
 
+  const discoveryThresholdRaw = get('--discovery-threshold', '')
+  const discoveryThreshold = discoveryThresholdRaw ? parseFloat(discoveryThresholdRaw) : undefined
+  if (discoveryThreshold !== undefined && (!Number.isFinite(discoveryThreshold) || discoveryThreshold < 0 || discoveryThreshold > 1)) {
+    throw new Error('--discovery-threshold must be a number between 0 and 1')
+  }
+
   return {
     slug: get('--slug', 'ucsc'),
     limit: limitValue,
     offset: offsetValue,
     batchSize: batchSizeValue,
     repofinderDir: get('--repofinder-dir', '../repofinder'),
+    discoveryThreshold,
   }
 }
 
@@ -70,6 +77,7 @@ interface ManifestEntry {
   totalRepos: number
   analyzedRepos: number
   generatedAt: string
+  discoveryThreshold?: number
 }
 
 function updateManifest(exportsDir: string, entry: ManifestEntry) {
@@ -103,7 +111,7 @@ async function analyzeBatch(repos: string[], token: string): Promise<AnalyzeResp
 }
 
 async function main() {
-  const { slug, limit, offset, batchSize, repofinderDir } = parseArgs()
+  const { slug, limit, offset, batchSize, repofinderDir, discoveryThreshold } = parseArgs()
 
   if (!TOKEN) {
     console.error('Error: GITHUB_TOKEN_1 environment variable is required')
@@ -167,6 +175,7 @@ async function main() {
     totalRepos: allRepos.length,
     analyzedRepos: mergedResults.length,
     generatedAt,
+    ...(discoveryThreshold !== undefined && { discoveryThreshold }),
   })
 
   console.log(`\nDone: ${results.length} new scored, ${failures.length} failed (${mergedResults.length} total)`)
