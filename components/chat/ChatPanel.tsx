@@ -6,7 +6,7 @@ import type { Message } from 'ai'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
-import { parseStructuredSearchQuery, matchesStructuredSearch } from '@/lib/org-inventory/structured-search'
+import { parseStructuredSearchQuery, matchesStructuredSearch, analysisResultToFilterable } from '@/lib/org-inventory/structured-search'
 import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext, serializeUniversityContext } from './serialize-context'
 import { PROVIDERS, type ProviderId } from './providers'
 
@@ -430,13 +430,19 @@ export function ChatPanel({
     return { ...orgInventory, results: orgInventory.results.filter((r) => matchesStructuredSearch(r, parsed)) }
   }, [orgInventory, repoQuery])
 
+  const filteredUniversityResults = useMemo(() => {
+    if (!universityResults || !repoQuery.trim()) return universityResults
+    const parsed = parseStructuredSearchQuery(repoQuery)
+    return universityResults.filter((r) => matchesStructuredSearch(analysisResultToFilterable(r), parsed))
+  }, [universityResults, repoQuery])
+
   const context = useMemo(() => {
     if (contextType === 'repos' && repoResults) return serializeReposContext(repoResults).text
     if (contextType === 'org' && orgView && org) return serializeOrgContext(org, orgView, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars', orgRepos }).text
     if (contextType === 'org' && filteredInventory) return serializeOrgInventoryContext(filteredInventory, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars' }).text
-    if (contextType === 'university' && university && universityResults) return serializeUniversityContext(university, universityResults, { maxRepos: MAX_CONTEXT_REPOS }).text
+    if (contextType === 'university' && university && filteredUniversityResults) return serializeUniversityContext(university, filteredUniversityResults, { maxRepos: MAX_CONTEXT_REPOS }).text
     return ''
-  }, [contextType, repoResults, orgView, org, orgRepos, filteredInventory, university, universityResults])
+  }, [contextType, repoResults, orgView, org, orgRepos, filteredInventory, university, filteredUniversityResults])
 
   const activeProvider = userKey ? provider : (serverProvider ?? 'anthropic')
 
@@ -605,7 +611,7 @@ export function ChatPanel({
             </div>
 
             {/* Structured search filter */}
-            {contextType === 'org' && onRepoQueryChange && (
+            {(contextType === 'org' || contextType === 'university') && onRepoQueryChange && (
               <SearchFilter value={repoQuery} onChange={onRepoQueryChange} />
             )}
 
@@ -615,6 +621,11 @@ export function ChatPanel({
               {repoQuery.trim() && filteredInventory && (
                 <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
                   scoped to {filteredInventory.results.length} filtered repos
+                </span>
+              )}
+              {repoQuery.trim() && filteredUniversityResults && (
+                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                  scoped to {filteredUniversityResults.length} filtered repos
                 </span>
               )}
               {/* Show dots here only when the flow guide isn't visible */}

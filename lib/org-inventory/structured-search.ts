@@ -1,4 +1,44 @@
 import type { OrgRepoSummary } from '@/lib/analyzer/org-inventory'
+import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
+
+export interface FilterableRepo {
+  repo: string
+  name?: string | null
+  primaryLanguage?: string | null
+  stars?: number | 'unavailable'
+  forks?: number | 'unavailable'
+  watchers?: number | 'unavailable'
+  openIssues?: number | 'unavailable'
+  sizeKb?: number | 'unavailable'
+  pushedAt?: string | 'unavailable'
+  archived?: boolean
+  isFork?: boolean
+  visibility?: string | null
+  licenseSpdxId?: string | null
+  licenseName?: string | null
+  topics?: string[] | null
+}
+
+export function orgRepoSummaryToFilterable(r: OrgRepoSummary): FilterableRepo {
+  return r
+}
+
+export function analysisResultToFilterable(r: AnalysisResult): FilterableRepo {
+  const latestCommit = Array.isArray(r.commitTimestamps365d) && r.commitTimestamps365d.length > 0
+    ? [...r.commitTimestamps365d].sort().at(-1)
+    : undefined
+  return {
+    repo: r.repo,
+    name: r.name,
+    primaryLanguage: r.primaryLanguage,
+    stars: r.stars,
+    forks: r.forks,
+    watchers: r.watchers,
+    openIssues: r.issuesOpen,
+    pushedAt: latestCommit ?? 'unavailable',
+    topics: r.topics,
+  }
+}
 
 export type StructuredSearchKey =
   | 'company'
@@ -87,7 +127,7 @@ export function parseStructuredSearchQuery(query: string): StructuredSearchParse
   return { freeTextTerms, tokens, invalidTokens, hasArchivedToken, hasForkToken }
 }
 
-export function matchesStructuredSearch(row: OrgRepoSummary, parsed: StructuredSearchParseResult): boolean {
+export function matchesStructuredSearch(row: FilterableRepo, parsed: StructuredSearchParseResult): boolean {
   const searchableText = `${row.repo} ${row.name}`.toLowerCase()
 
   if (parsed.freeTextTerms.some((term) => !searchableText.includes(term))) {
@@ -103,16 +143,16 @@ export function matchesStructuredSearch(row: OrgRepoSummary, parsed: StructuredS
   return true
 }
 
-function matchesToken(row: OrgRepoSummary, token: StructuredSearchToken): boolean {
+function matchesToken(row: FilterableRepo, token: StructuredSearchToken): boolean {
   switch (token.key) {
     case 'company':
       return row.repo.split('/')[0]?.toLowerCase() === token.raw.toLowerCase()
     case 'lang':
-      return row.primaryLanguage !== 'unavailable' && row.primaryLanguage.toLowerCase() === token.raw.toLowerCase()
+      return row.primaryLanguage != null && row.primaryLanguage !== 'unavailable' && row.primaryLanguage.toLowerCase() === token.raw.toLowerCase()
     case 'archived':
-      return row.archived === parseBooleanValue(token.raw)
+      return row.archived != null && row.archived === parseBooleanValue(token.raw)
     case 'fork':
-      return row.isFork === parseBooleanValue(token.raw)
+      return row.isFork != null && row.isFork === parseBooleanValue(token.raw)
     case 'topic':
       return (row.topics ?? []).some((topic) => topic.toLowerCase() === token.raw.toLowerCase())
     case 'visibility':
@@ -123,17 +163,17 @@ function matchesToken(row: OrgRepoSummary, token: StructuredSearchToken): boolea
       }
       return row.licenseName != null && row.licenseName !== 'unavailable' && row.licenseName.toLowerCase() === token.raw.toLowerCase()
     case 'stars':
-      return matchesNumericValue(row.stars, token.raw)
+      return matchesNumericValue(row.stars ?? 'unavailable', token.raw)
     case 'forks':
-      return matchesNumericValue(row.forks, token.raw)
+      return matchesNumericValue(row.forks ?? 'unavailable', token.raw)
     case 'watchers':
-      return matchesNumericValue(row.watchers, token.raw)
+      return matchesNumericValue(row.watchers ?? 'unavailable', token.raw)
     case 'issues':
-      return matchesNumericValue(row.openIssues, token.raw)
+      return matchesNumericValue(row.openIssues ?? 'unavailable', token.raw)
     case 'size':
       return matchesNumericValue(row.sizeKb ?? 'unavailable', token.raw)
     case 'pushed':
-      return matchesDateValue(row.pushedAt, token.raw)
+      return matchesDateValue(row.pushedAt ?? 'unavailable', token.raw)
   }
 }
 
