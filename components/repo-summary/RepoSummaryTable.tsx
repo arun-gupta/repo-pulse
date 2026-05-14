@@ -148,7 +148,7 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
   return (
     <div className="space-y-3">
       {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 justify-between">
         <input
           type="search"
           placeholder="Filter by name…"
@@ -207,6 +207,11 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
             </span>
           </span>
         </label>
+        {(nameFilter || minHealth > 0 || minStars > 0 || activeOnly) && (
+          <span className="ml-auto text-sm tabular-nums text-slate-500 dark:text-slate-400">
+            {filtered.length} of {results.length} shown
+          </span>
+        )}
       </div>
 
       {/* Table */}
@@ -281,9 +286,6 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
             )}
           </tbody>
         </table>
-        <div className="px-3 py-2 text-xs text-slate-400 dark:text-slate-500">
-          {sorted.length} of {results.length} repositories
-        </div>
       </div>
     </div>
   )
