@@ -87,7 +87,22 @@ export default async function UniversitiesPage() {
                     className="text-sky-700 hover:underline dark:text-sky-400">repofinder</a>{' '}
                   scrapes GitHub to collect public repositories whose owners (users or orgs) have a university affiliation.
                   Affiliation is predicted from profile bios, locations, and email domains using an LLM classifier.
-                  For UCSC this surfaces {universities.find((u) => u.slug === 'ucsc')?.totalRepos?.toLocaleString() ?? 'thousands of'} candidate repos.
+                  {(() => {
+                    const ucsc = universities.find((u) => u.slug === 'ucsc')
+                    if (!ucsc) return null
+                    const skipped = ucsc.totalRepos - ucsc.analyzedRepos
+                    return (
+                      <>
+                        {' '}For UCSC this surfaces{' '}
+                        <strong className="font-medium text-slate-800 dark:text-slate-200">{ucsc.totalRepos.toLocaleString()} candidate repos</strong>.
+                        Of those, <strong className="font-medium text-slate-800 dark:text-slate-200">{ucsc.analyzedRepos.toLocaleString()} were successfully scored</strong>.
+                        {skipped > 0 && (
+                          <>{' '}The remaining {skipped} could not be scored — typically because the repo was empty, deleted,
+                          or made private between discovery and scoring, or a transient GitHub API error occurred during the batch run.</>
+                        )}
+                      </>
+                    )
+                  })()}
                 </p>
               </div>
               <div>
@@ -95,7 +110,9 @@ export default async function UniversitiesPage() {
                 <p>
                   Each repo is scored through RepoPulse&apos;s analysis pipeline — the same pipeline used for the live Repos and Organization tabs.
                   Metrics include activity (commits, PRs, issues), contributor health, documentation, security, licensing, and responsiveness.
-                  Scores are calibrated as percentiles against a baseline of ~10 000 public GitHub repos.
+                  Scores are calibrated as percentiles against a baseline of{' '}
+                  <strong className="font-medium text-slate-800 dark:text-slate-200">~400 repos per star bracket</strong>{' '}
+                  (e.g. emerging, growing, established, popular), so each repo is compared to similar-sized peers rather than the full GitHub population.
                 </p>
               </div>
               <div>
