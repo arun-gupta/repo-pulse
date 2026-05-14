@@ -194,7 +194,7 @@ export function RepoInputForm({
             </p>
           ) : null}
         </div>
-      ) : (
+      ) : mode === 'university' ? null : (
         <div>
           <input
             value={orgValue}
