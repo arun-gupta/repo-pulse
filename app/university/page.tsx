@@ -111,8 +111,8 @@ export default async function UniversitiesPage() {
                   Each repo is scored through RepoPulse&apos;s analysis pipeline — the same pipeline used for the live Repos and Organization tabs.
                   Metrics include activity (commits, PRs, issues), contributor health, documentation, security, licensing, and responsiveness.
                   Scores are calibrated as percentiles against a baseline of{' '}
-                  <strong className="font-medium text-slate-800 dark:text-slate-200">~400 repos per star bracket</strong>{' '}
-                  (e.g. emerging, growing, established, popular), so each repo is compared to similar-sized peers rather than the full GitHub population.
+                  <strong className="font-medium text-slate-800 dark:text-slate-200">~2,400 repos across 6 star brackets</strong>{' '}
+                  (solo-tiny, solo-small, emerging, growing, established, popular), so each repo is compared to similar-sized peers rather than the full GitHub population.
                 </p>
               </div>
               <div>
