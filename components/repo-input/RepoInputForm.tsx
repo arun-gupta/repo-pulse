@@ -123,6 +123,8 @@ export function RepoInputForm({
           ))}
           <Link
             href="/university"
+            target="_blank"
+            rel="noopener noreferrer"
             title="Pre-scored static data — refreshed periodically"
             className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-500 transition hover:border-slate-400 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:text-slate-200"
           >
