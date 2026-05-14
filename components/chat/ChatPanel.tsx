@@ -7,18 +7,20 @@ import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
 import { parseStructuredSearchQuery, matchesStructuredSearch } from '@/lib/org-inventory/structured-search'
-import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext } from './serialize-context'
+import { serializeReposContext, serializeOrgContext, serializeOrgInventoryContext, serializeUniversityContext } from './serialize-context'
 import { PROVIDERS, type ProviderId } from './providers'
 
 // ---- Types ----------------------------------------------------------------
 
 export interface ChatPanelProps {
-  contextType: 'repos' | 'org'
+  contextType: 'repos' | 'org' | 'university'
   repoResults?: AnalysisResult[]
   orgView?: OrgSummaryViewModel
   org?: string
   orgRepos?: OrgRepoSummary[]
   orgInventory?: OrgInventoryResponse
+  university?: string
+  universityResults?: AnalysisResult[]
   githubToken: string
   resetKey?: number
   repoQuery?: string
@@ -45,6 +47,15 @@ const ORG_STARTER_CHIPS = [
   'What are the biggest contributors to low health scores?',
   'Which repos need contributors the most?',
   'Compare the top 3 repos by health score',
+]
+
+const UNIVERSITY_STARTER_CHIPS = [
+  'Which repos are most suitable for JOSS submission?',
+  'What are the most active research software projects?',
+  'Which repos have the weakest documentation?',
+  'What languages dominate this university\'s open source output?',
+  'Which repos need contributors the most?',
+  'Which repos have the best security posture?',
 ]
 
 const ORG_INVENTORY_STARTER_CHIPS = [
@@ -360,8 +371,8 @@ function KeyEntryForm({
 // ---- Main component -------------------------------------------------------
 
 export function ChatPanel({
-  contextType, repoResults, orgView, org, orgRepos = [], orgInventory, githubToken, resetKey,
-  repoQuery = '', onRepoQueryChange,
+  contextType, repoResults, orgView, org, orgRepos = [], orgInventory, university, universityResults,
+  githubToken, resetKey, repoQuery = '', onRepoQueryChange,
 }: ChatPanelProps) {
   const [expanded, setExpanded] = useState(false)
   const [provider, setProvider] = useState<ProviderId>('openrouter')
@@ -423,8 +434,9 @@ export function ChatPanel({
     if (contextType === 'repos' && repoResults) return serializeReposContext(repoResults).text
     if (contextType === 'org' && orgView && org) return serializeOrgContext(org, orgView, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars', orgRepos }).text
     if (contextType === 'org' && filteredInventory) return serializeOrgInventoryContext(filteredInventory, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars' }).text
+    if (contextType === 'university' && university && universityResults) return serializeUniversityContext(university, universityResults, { maxRepos: MAX_CONTEXT_REPOS }).text
     return ''
-  }, [contextType, repoResults, orgView, org, orgRepos, filteredInventory])
+  }, [contextType, repoResults, orgView, org, orgRepos, filteredInventory, university, universityResults])
 
   const activeProvider = userKey ? provider : (serverProvider ?? 'anthropic')
 
@@ -528,7 +540,7 @@ export function ChatPanel({
   const limitReached = !hasKey && freeRemaining !== null && freeRemaining === 0
   const showKeyForm = limitReached || needsKey || keyFormOpen
   const isInventoryPhase = contextType === 'org' && !orgView && !!orgInventory
-  const starterChips = contextType === 'repos' ? REPOS_STARTER_CHIPS : isInventoryPhase ? ORG_INVENTORY_STARTER_CHIPS : ORG_STARTER_CHIPS
+  const starterChips = contextType === 'repos' ? REPOS_STARTER_CHIPS : contextType === 'university' ? UNIVERSITY_STARTER_CHIPS : isInventoryPhase ? ORG_INVENTORY_STARTER_CHIPS : ORG_STARTER_CHIPS
   const showChips = messages.length === 0 && !isLoading
 
   return (

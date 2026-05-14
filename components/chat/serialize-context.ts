@@ -2,7 +2,7 @@ import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import type { OrgInventoryResponse, OrgRepoSummary } from '@/lib/analyzer/org-inventory'
 import type { OrgSummaryViewModel } from '@/lib/org-aggregation/types'
 
-export type ChatContextType = 'repos' | 'org'
+export type ChatContextType = 'repos' | 'org' | 'university'
 
 export interface SerializedChatContext {
   contextType: ChatContextType
@@ -180,6 +180,57 @@ function resolveLicense(spdxId: string | null | undefined, name: string | null |
   if (spdxId && spdxId !== 'unavailable') return spdxId
   if (name && name !== 'unavailable') return name
   return null
+}
+
+export function serializeUniversityContext(
+  university: string,
+  results: AnalysisResult[],
+  opts: { maxRepos?: number } = {},
+): SerializedChatContext {
+  const { maxRepos = 300 } = opts
+
+  const stars = results.flatMap((r) => (typeof r.stars === 'number' ? [r.stars] : []))
+  const totalStars = stars.reduce((s, v) => s + v, 0)
+
+  const langCounts = new Map<string, number>()
+  for (const r of results) {
+    const lang = r.primaryLanguage && r.primaryLanguage !== 'unavailable' ? r.primaryLanguage : 'Unknown'
+    langCounts.set(lang, (langCounts.get(lang) ?? 0) + 1)
+  }
+  const languageDistribution = [...langCounts.entries()]
+    .map(([language, count]) => ({ language, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+
+  const activeRepos = results.filter((r) => typeof r.commits90d === 'number' && r.commits90d > 0).length
+
+  const sorted = [...results].sort((a, b) => {
+    const sa = typeof a.stars === 'number' ? a.stars : -1
+    const sb = typeof b.stars === 'number' ? b.stars : -1
+    return sb - sa
+  })
+
+  const payload = {
+    university,
+    summary: {
+      totalReposAnalyzed: results.length,
+      totalStars,
+      activeRepos,
+      languageDistribution,
+    },
+    repos: sorted.slice(0, maxRepos).map(summarizeRepo),
+  }
+
+  const text = [
+    `# University Analysis Context`,
+    `University: ${university} (${results.length} repos analyzed, ${totalStars.toLocaleString()} total stars)`,
+    '',
+    '```json',
+    JSON.stringify(payload, null, 2),
+    '```',
+  ].join('\n')
+
+  return { contextType: 'university', text }
 }
 
 export function serializeOrgInventoryContext(
