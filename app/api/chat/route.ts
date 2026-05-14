@@ -44,7 +44,7 @@ function decrementUsage(username: string): void {
   if (r && r.count > 0) freeUsage.set(username, { ...r, count: r.count - 1 })
 }
 
-const VALID_CONTEXT_TYPES = ['repos', 'org'] as const
+const VALID_CONTEXT_TYPES = ['repos', 'org', 'university'] as const
 const VALID_ROLES = ['user', 'assistant'] as const
 const MAX_HISTORY_TURNS = 10
 

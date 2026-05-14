@@ -68,6 +68,7 @@ const ORG_INVENTORY_STARTER_CHIPS = [
 ]
 
 const MAX_CONTEXT_REPOS = 300
+const MAX_UNIVERSITY_CONTEXT_REPOS = 150
 
 const COMPLETION_VALUES: Record<string, string[]> = {
   lang:     ['go', 'python', 'typescript', 'javascript', 'java', 'rust', 'c++', 'c', 'ruby', 'kotlin', 'swift', 'scala', 'shell'],
@@ -440,7 +441,7 @@ export function ChatPanel({
     if (contextType === 'repos' && repoResults) return serializeReposContext(repoResults).text
     if (contextType === 'org' && orgView && org) return serializeOrgContext(org, orgView, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars', orgRepos }).text
     if (contextType === 'org' && filteredInventory) return serializeOrgInventoryContext(filteredInventory, { maxRepos: MAX_CONTEXT_REPOS, sortBy: 'stars' }).text
-    if (contextType === 'university' && university && filteredUniversityResults) return serializeUniversityContext(university, filteredUniversityResults, { maxRepos: MAX_CONTEXT_REPOS }).text
+    if (contextType === 'university' && university && filteredUniversityResults) return serializeUniversityContext(university, filteredUniversityResults, { maxRepos: MAX_UNIVERSITY_CONTEXT_REPOS }).text
     return ''
   }, [contextType, repoResults, orgView, org, orgRepos, filteredInventory, university, filteredUniversityResults])
 
