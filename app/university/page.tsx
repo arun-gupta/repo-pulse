@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { AuthProvider } from '@/components/auth/AuthContext'
-import { DemoBanner } from '@/components/demo/DemoBanner'
+import { AppHeader } from '@/components/app-shell/AppHeader'
 
 const REPOFINDER_RAW_BASE =
   'https://raw.githubusercontent.com/arun-gupta/repofinder/repo-pulse-integration/exports/universities'
@@ -30,13 +30,12 @@ export const metadata = {
 
 export default async function UniversitiesPage() {
   const universities = await fetchManifest()
-  const latestGeneratedAt = universities.reduce((latest, u) => u.generatedAt > latest ? u.generatedAt : latest, '')
 
   return (
     <AuthProvider>
-      {latestGeneratedAt && <DemoBanner generatedAt={latestGeneratedAt} label="Static snapshot" showSignIn={false} />}
-      <main className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:py-16">
-        <div className="mx-auto max-w-4xl space-y-8">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:bg-slate-800/60">
+        <AppHeader />
+        <div className="mx-auto max-w-5xl px-4 py-6 space-y-6">
           <header>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Universities</h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -44,7 +43,7 @@ export default async function UniversitiesPage() {
               <a href="https://github.com/arun-gupta/repofinder" className="text-sky-700 hover:underline dark:text-sky-300">
                 repofinder
               </a>
-              .
+              . Data is pre-scored and refreshed periodically.
             </p>
           </header>
 
@@ -72,7 +71,7 @@ export default async function UniversitiesPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </AuthProvider>
   )
 }

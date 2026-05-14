@@ -123,9 +123,13 @@ export function RepoInputForm({
           ))}
           <Link
             href="/university"
-            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            title="Pre-scored static data — refreshed periodically"
+            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-500 transition hover:border-slate-400 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:text-slate-200"
           >
             Universities
+            <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3 opacity-60" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 9.5 9.5 2.5M5 2.5h4.5V7" />
+            </svg>
           </Link>
         </div>
         <div className="ml-auto">
