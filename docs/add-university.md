@@ -6,6 +6,43 @@ This runbook covers the full pipeline for adding a new university to RepoPulse's
 2. **Health scoring** — `scripts/score-university.ts` (in this repo) runs each repo through RepoPulse's analysis pipeline
 3. **Publish** — push the scored JSON to the repofinder fork so the app can fetch it
 
+```mermaid
+flowchart TD
+    GH[("GitHub API")]
+
+    subgraph S1["Stage 1 — Repo discovery (arun-gupta/repofinder fork)"]
+        direction TB
+        CFG["config/config_{ACRONYM}.json\n(university keywords & email domain)"]
+        SCR["main_scraping_minimal.py\n(search repos · orgs · users)"]
+        EXP["export.py\n(affiliation scoring → {slug}.json)"]
+        CFG --> SCR
+        GH --> SCR
+        SCR --> EXP
+    end
+
+    subgraph S2["Stage 2 — Health scoring (repo-pulse)"]
+        direction TB
+        API["/api/analyze\n(RepoPulse dev server)"]
+        SCO["scripts/score-university.ts\n(batch scoring · merges results)"]
+        OUT["{slug}-scored.json\n+ manifest.json"]
+        GH --> API
+        EXP -->|"{slug}.json fetched\nfrom fork"| SCO
+        SCO --> API
+        API --> SCO
+        SCO --> OUT
+    end
+
+    subgraph S3["Stage 3 — Publish"]
+        direction TB
+        PUSH["git push\narun-gupta/repofinder\nrepo-pulse-integration"]
+        APP["RepoPulse app\n(Universities tab)"]
+        OUT --> PUSH
+        PUSH -->|"manifest + scored JSON\nfetched at runtime"| APP
+    end
+
+    S1 --> S2 --> S3
+```
+
 ## Prerequisites
 
 | Requirement | Notes |
