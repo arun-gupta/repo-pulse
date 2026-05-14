@@ -4,6 +4,7 @@ import { AuthProvider } from '@/components/auth/AuthContext'
 import { AppHeader } from '@/components/app-shell/AppHeader'
 import { OrgInventorySummary } from '@/components/org-inventory/OrgInventorySummary'
 import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
+import { UniversityChatPanel } from '@/components/university/UniversityChatPanel'
 import type { AnalyzeResponse } from '@/lib/analyzer/analysis-result'
 import { buildUniversitySummary } from '@/lib/university/summary'
 
@@ -47,7 +48,7 @@ export default async function UniversityPage({ params }: { params: Promise<{ slu
     <AuthProvider>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:bg-slate-800/60">
         <AppHeader />
-        <div className="mx-auto max-w-5xl px-4 py-6">
+        <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
           <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
             <Link href="/university" className="hover:text-sky-700 dark:hover:text-sky-300">Universities</Link>
             <span aria-hidden="true">/</span>
@@ -65,6 +66,7 @@ export default async function UniversityPage({ params }: { params: Promise<{ slu
           </div>
           <RepoSummaryTable results={results} />
         </div>
+        <UniversityChatPanel university={university} results={results} />
       </div>
     </AuthProvider>
   )
