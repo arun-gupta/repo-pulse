@@ -37,6 +37,7 @@ import { parseFoundationInput } from '@/lib/foundation/parse-foundation-input'
 import { fetchBoardRepos, type SkippedIssue } from '@/lib/foundation/fetch-board-repos'
 import { LOADING_QUOTES, getRandomQuoteIndex } from '@/lib/loading-quotes'
 import { RepoInputForm } from './RepoInputForm'
+import { UniversityBrowser } from '@/components/university/UniversityBrowser'
 import { FoundationResultsView, type FoundationResult } from '@/components/foundation/FoundationResultsView'
 import { FoundationNudge } from '@/components/foundation/FoundationNudge'
 import { ChatPanel } from '@/components/chat/ChatPanel'
@@ -60,15 +61,15 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const initialFoundationState = decodeFoundationUrl(searchParams.toString())
   const rawUrlMode = searchParams.get('mode')
   const rawUrlFoundation = searchParams.get('foundation')
-  const urlMode: 'repos' | 'org' | 'foundation' | null =
-    rawUrlMode === 'repos' || rawUrlMode === 'org' || rawUrlMode === 'foundation' ? rawUrlMode : null
+  const urlMode: 'repos' | 'org' | 'foundation' | 'university' | null =
+    rawUrlMode === 'repos' || rawUrlMode === 'org' || rawUrlMode === 'foundation' || rawUrlMode === 'university' ? rawUrlMode : null
   const urlFoundation: FoundationTarget | null =
     rawUrlFoundation === 'cncf-sandbox' || rawUrlFoundation === 'cncf-incubating' ||
     rawUrlFoundation === 'cncf-graduation' || rawUrlFoundation === 'apache-incubator' || rawUrlFoundation === 'none'
       ? rawUrlFoundation : null
   const initialFoundationTarget: FoundationTarget =
     initialFoundationState?.foundation ?? urlFoundation ?? (urlMode === 'foundation' ? 'cncf-sandbox' : 'none')
-  const initialInputMode: 'repos' | 'org' | 'foundation' =
+  const initialInputMode: 'repos' | 'org' | 'foundation' | 'university' =
     initialFoundationState ? 'foundation' : urlMode ?? 'repos'
   const initialTab = (searchParams.get('tab') ?? 'overview') as ResultTabId
   const autoTriggeredRef = useRef(false)
@@ -80,7 +81,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [loadingRepos, setLoadingRepos] = useState<string[]>([])
   const [loadingOrg, setLoadingOrg] = useState<string | null>(null)
   const [resultsResetKey, setResultsResetKey] = useState(0)
-  const [inputMode, setInputMode] = useState<'repos' | 'org' | 'foundation'>(initialInputMode)
+  const [inputMode, setInputMode] = useState<'repos' | 'org' | 'foundation' | 'university'>(initialInputMode)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [emptyQuoteIndex, setEmptyQuoteIndex] = useState(() => getRandomQuoteIndex(null))
   const [quoteIndex, setQuoteIndex] = useState<number | null>(null)
@@ -301,13 +302,15 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     return () => clearTimeout(timeout)
   }, [searchQuery])
 
-  function handleModeChange(mode: 'repos' | 'org' | 'foundation') {
+  function handleModeChange(mode: 'repos' | 'org' | 'foundation' | 'university') {
     setInputMode(mode)
     if (mode === 'org') {
       setAspirantResult(null)
     }
     const params = new URLSearchParams()
-    if (mode === 'org') {
+    if (mode === 'university') {
+      params.set('mode', 'university')
+    } else if (mode === 'org') {
       params.set('mode', 'org')
     } else if (mode === 'foundation') {
       params.set('mode', 'foundation')
@@ -715,6 +718,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
 
   const overviewContent = (
     <div className="space-y-4">
+      {inputMode === 'university' ? <UniversityBrowser /> : null}
       {inputMode === 'foundation' && !foundationResult && !foundationError && !loadingFoundation && !pendingBoardScan ? (
         <div className="space-y-3">
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -1084,7 +1088,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       initialActiveTab={initialTab}
       onReset={handleReset}
       analysisPanel={analysisPanel}
-      hideTabs={inputMode === 'foundation'}
+      hideTabs={inputMode === 'foundation' || inputMode === 'university'}
       toolbar={inputMode === 'org' && orgAnalysisComplete ? <OrgWindowSelector selected={orgWindow} onChange={setOrgWindow} /> : exportToolbar}
       tabs={showOrgWorkspace ? orgInventoryTabs : repoTabs}
       searchQuery={debouncedQuery}

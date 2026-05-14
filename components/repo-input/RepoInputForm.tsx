@@ -5,15 +5,16 @@ import { normalizeOrgInput } from '@/lib/analyzer/org-inventory'
 import { parseRepos } from '@/lib/parse-repos'
 import type { FoundationTarget } from '@/lib/cncf-sandbox/types'
 import { FoundationInputSection } from '@/components/foundation/FoundationInputSection'
-import Link from 'next/link'
 import { CopyLinkButton } from '@/components/shared/CopyLinkButton'
+
+export type InputMode = 'repos' | 'org' | 'foundation' | 'university'
 
 interface RepoInputFormProps {
   onSubmitRepos: (repos: string[]) => void
   onSubmitOrg: (org: string) => void
   onSubmitFoundation?: (input: string) => void
-  mode?: 'repos' | 'org' | 'foundation'
-  onModeChange?: (mode: 'repos' | 'org' | 'foundation') => void
+  mode?: InputMode
+  onModeChange?: (mode: InputMode) => void
   initialRepoValue?: string
   foundationTarget?: FoundationTarget
   onFoundationTargetChange?: (target: FoundationTarget) => void
@@ -39,7 +40,7 @@ export function RepoInputForm({
   verifyRepos = false,
   onVerifyReposChange,
 }: RepoInputFormProps) {
-  const [uncontrolledMode, setUncontrolledMode] = useState<'repos' | 'org' | 'foundation'>('repos')
+  const [uncontrolledMode, setUncontrolledMode] = useState<InputMode>('repos')
   const [repoValue, setRepoValue] = useState(initialRepoValue)
   const [orgValue, setOrgValue] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -67,7 +68,7 @@ export function RepoInputForm({
     textarea.style.height = `${textarea.scrollHeight}px`
   }, [mode, repoValue])
 
-  function updateMode(nextMode: 'repos' | 'org' | 'foundation') {
+  function updateMode(nextMode: InputMode) {
     onModeChange?.(nextMode)
     if (controlledMode === undefined) {
       setUncontrolledMode(nextMode)
@@ -121,16 +122,14 @@ export function RepoInputForm({
               {m === 'repos' ? 'Repositories' : m === 'org' ? 'Organization' : 'Foundation'}
             </button>
           ))}
-          <Link
-            href="/university"
+          <button
+            type="button"
             title="Pre-scored static data — refreshed periodically"
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-500 transition hover:border-slate-400 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:text-slate-200"
+            className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition ${mode === 'university' ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900' : 'border-dashed border-slate-300 bg-white text-slate-500 hover:border-slate-400 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:text-slate-200'}`}
+            onClick={() => { updateMode('university'); setError(null) }}
           >
             Universities
-            <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3 opacity-60" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 9.5 9.5 2.5M5 2.5h4.5V7" />
-            </svg>
-          </Link>
+          </button>
         </div>
         <div className="ml-auto">
           <CopyLinkButton />
@@ -212,13 +211,15 @@ export function RepoInputForm({
           ) : null}
         </div>
       )}
-      <button
-        type="submit"
-        title="Analyze repositories and open the health dashboard"
-        className="mt-3 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-2 dark:focus:ring-offset-slate-900"
-      >
-        Analyze
-      </button>
+      {mode !== 'university' && (
+        <button
+          type="submit"
+          title="Analyze repositories and open the health dashboard"
+          className="mt-3 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+        >
+          Analyze
+        </button>
+      )}
     </form>
   )
 }
