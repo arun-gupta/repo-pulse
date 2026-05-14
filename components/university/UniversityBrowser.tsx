@@ -109,6 +109,11 @@ export function UniversityBrowser() {
                   </span>
                 )}
               </p>
+              {selected.entry.discoveryThreshold !== undefined && (
+                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                  Affiliation threshold: {selected.entry.discoveryThreshold}
+                </p>
+              )}
             </div>
           </div>
         </header>
