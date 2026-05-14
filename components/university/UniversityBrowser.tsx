@@ -90,10 +90,22 @@ export function UniversityBrowser() {
           <span className="text-slate-900 dark:text-slate-100">{selected.entry.university}</span>
         </nav>
         <header>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
-          </p>
+          <div className="flex items-center gap-3">
+            {UNIVERSITY_LOGOS[selected.entry.slug] && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={UNIVERSITY_LOGOS[selected.entry.slug]}
+                alt=""
+                className="h-12 w-12 rounded-full object-contain flex-shrink-0 bg-white"
+              />
+            )}
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
+              </p>
+            </div>
+          </div>
         </header>
         <OrgInventorySummary summary={summary} />
         <RepoSummaryTable results={selected.results} />
