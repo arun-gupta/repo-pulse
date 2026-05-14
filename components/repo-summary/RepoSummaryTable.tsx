@@ -28,7 +28,7 @@ function getAuthors(result: AnalysisResult, window: ContributorWindowDays): numb
   return null
 }
 
-const HEALTH_TOOLTIP = 'Composite OSS health percentile ranked against ~10 000 public GitHub repos. Weighted from Contributors (23%), Activity (25%), Responsiveness (25%), Documentation (12%), and Security (15%). Higher = healthier relative to peers.'
+const HEALTH_TOOLTIP = 'Composite OSS health percentile. Weighted from Contributors (23%), Activity (25%), Responsiveness (25%), Documentation (12%), and Security (15%). Score is a percentile rank within a calibration set of ~400 repos per star bracket (emerging/growing/established/popular). Higher = healthier relative to peers.'
 
 function PercentileBadge({ value }: { value: number | null }) {
   if (value === null) return <span className="text-slate-400 dark:text-slate-500">N/A</span>
