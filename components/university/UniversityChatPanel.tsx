@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthContext'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
@@ -11,6 +12,7 @@ interface Props {
 
 export function UniversityChatPanel({ university, results }: Props) {
   const { session } = useAuth()
+  const [repoQuery, setRepoQuery] = useState('')
   if (!session?.token) return null
   return (
     <ChatPanel
@@ -18,6 +20,8 @@ export function UniversityChatPanel({ university, results }: Props) {
       university={university}
       universityResults={results}
       githubToken={session.token}
+      repoQuery={repoQuery}
+      onRepoQueryChange={setRepoQuery}
     />
   )
 }
