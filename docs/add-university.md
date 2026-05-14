@@ -50,17 +50,13 @@ For a university not on this list, create `config/config_{ACRONYM}.json`:
 
 ### 1b. Run the scraper
 
-From `workspaces/repofinder/`:
+From `workspaces/repofinder/`, pass the acronym directly via Python's `-c` flag:
 
 ```bash
-python main_scraping_minimal.py
+python -c "from main_scraping_minimal import scrape_minimal; scrape_minimal(['UCLA'])"
 ```
 
-By default this runs UCSC. Edit the `scrape_minimal(university_acronyms=["UCSC"])` call at the bottom to target your university:
-
-```python
-scrape_minimal(university_acronyms=["UCLA"])
-```
+Replace `UCLA` with your university's acronym (must match the config filename, e.g. `UCSB` for `config_ucsb.json`).
 
 This takes 10–30 minutes depending on the size of the university. It writes intermediate JSON files to `Data/json/` and a SQLite database to `Data/db/`.
 
