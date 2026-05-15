@@ -6,7 +6,7 @@ import { OrgInventorySummary } from '@/components/org-inventory/OrgInventorySumm
 import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import { UniversityChatPanel } from './UniversityChatPanel'
 import { UniversityScoreDistribution } from './UniversityScoreDistribution'
-import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-result'
+import type { AnalysisResult, AnalyzeResponse, RepositoryFetchFailure } from '@/lib/analyzer/analysis-result'
 import { buildUniversitySummary } from '@/lib/university/summary'
 
 const RAW_BASE = 'https://raw.githubusercontent.com/arun-gupta/repofinder/repo-pulse-integration/exports/universities'
@@ -56,6 +56,7 @@ interface UniversityFixture extends AnalyzeResponse {
 interface Selected {
   entry: ManifestEntry
   results: AnalysisResult[]
+  unscoredRepos: RepositoryFetchFailure[]
   generatedAt: string
 }
 
@@ -100,7 +101,15 @@ export function UniversityBrowser() {
       const res = await fetch(`${RAW_BASE}/${entry.slug}-scored.json`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const fixture: UniversityFixture = await res.json()
-      setSelected({ entry, results: fixture.results, generatedAt: fixture.generatedAt })
+      // Deduplicate failures by repo name (keep last), then exclude repos that were
+      // successfully scored — earlier runs may have failed before a later run succeeded.
+      const scoredSet = new Set(fixture.results.map((r) => r.repo.toLowerCase()))
+      const dedupedFailures = new Map<string, RepositoryFetchFailure>()
+      for (const f of (fixture.failures ?? [])) {
+        dedupedFailures.set(f.repo.toLowerCase(), f)
+      }
+      const unscoredRepos = [...dedupedFailures.values()].filter((f) => !scoredSet.has(f.repo.toLowerCase()))
+      setSelected({ entry, results: fixture.results, unscoredRepos, generatedAt: fixture.generatedAt })
     } catch {
       setDetailError(`Failed to load data for ${entry.university}.`)
     } finally {
@@ -153,9 +162,9 @@ export function UniversityBrowser() {
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
-                {selected.results.length < selected.entry.totalRepos && (
+                {selected.unscoredRepos.length > 0 && (
                   <span className="ml-1 text-slate-400 dark:text-slate-500">
-                    · {(selected.entry.totalRepos - selected.results.length).toLocaleString()} could not be scored (empty, deleted, or private)
+                    · {selected.unscoredRepos.length.toLocaleString()} could not be scored
                   </span>
                 )}
               </p>
@@ -170,6 +179,41 @@ export function UniversityBrowser() {
         <UniversityScoreDistribution results={selected.results} />
         <OrgInventorySummary summary={summary} />
         <RepoSummaryTable results={selected.results} />
+        {selected.unscoredRepos.length > 0 && (
+          <details className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+            <summary className="cursor-pointer px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300 select-none list-none flex items-center justify-between">
+              <span>{selected.unscoredRepos.length.toLocaleString()} unscored repositories</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">click to expand</span>
+            </summary>
+            <div className="px-6 pb-4 overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800">
+                    <th className="py-2 pr-4 font-medium text-slate-500 dark:text-slate-400">Repository</th>
+                    <th className="py-2 font-medium text-slate-500 dark:text-slate-400">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selected.unscoredRepos.map((f) => (
+                    <tr key={f.repo} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                      <td className="py-1.5 pr-4 font-mono">
+                        <a
+                          href={`https://github.com/${f.repo}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sky-700 hover:underline dark:text-sky-400"
+                        >
+                          {f.repo}
+                        </a>
+                      </td>
+                      <td className="py-1.5 text-slate-500 dark:text-slate-400">{f.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
         <UniversityChatPanel university={selected.entry.university} results={selected.results} />
       </div>
     )
