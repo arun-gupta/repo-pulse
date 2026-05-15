@@ -16,7 +16,7 @@ const UNIVERSITY_LOGOS: Record<string, string> = {
   ucd: 'https://upload.wikimedia.org/wikipedia/commons/f/f3/The_University_of_California_Davis.svg',
   ucsc: 'https://upload.wikimedia.org/wikipedia/commons/5/53/The_University_of_California_1868_UCSC.svg',
   stanford: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/Seal_of_Leland_Stanford_Junior_University.svg',
-  mit: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/MIT_logo.svg',
+  mit: 'https://upload.wikimedia.org/wikipedia/en/4/44/MIT_Seal.svg',
 }
 
 type SortOption = 'name' | 'repos' | 'updated'
