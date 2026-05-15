@@ -308,9 +308,8 @@ export function UniversityBrowser() {
             disabled={loadingSlug !== null}
             className="group block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm text-left transition hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-500"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-3">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
                   {UNIVERSITY_LOGOS[u.slug] && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -335,15 +334,6 @@ export function UniversityBrowser() {
                   {u.discoveryThreshold !== undefined && <>Affiliation threshold: {u.discoveryThreshold} · </>}
                   Data from {new Date(u.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </p>
-              </div>
-              {(() => {
-                const s = summaries.find((s) => s.slug === u.slug)
-                return s ? (
-                  <div className="w-20 h-20 flex-shrink-0">
-                    <UniversityCardRadar summary={s} />
-                  </div>
-                ) : null
-              })()}
             </div>
           </button>
         ))}
