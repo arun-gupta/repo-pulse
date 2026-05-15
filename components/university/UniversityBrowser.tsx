@@ -6,7 +6,7 @@ import { OrgInventorySummary } from '@/components/org-inventory/OrgInventorySumm
 import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import { UniversityChatPanel } from './UniversityChatPanel'
 import { UniversityScoreDistribution } from './UniversityScoreDistribution'
-import type { AnalysisResult, AnalyzeResponse } from '@/lib/analyzer/analysis-result'
+import type { AnalysisResult, AnalyzeResponse, RepositoryFetchFailure } from '@/lib/analyzer/analysis-result'
 import { buildUniversitySummary } from '@/lib/university/summary'
 
 const RAW_BASE = 'https://raw.githubusercontent.com/arun-gupta/repofinder/repo-pulse-integration/exports/universities'
@@ -15,6 +15,27 @@ const UNIVERSITY_LOGOS: Record<string, string> = {
   ucb: 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Seal_of_University_of_California%2C_Berkeley.svg',
   ucd: 'https://upload.wikimedia.org/wikipedia/commons/f/f3/The_University_of_California_Davis.svg',
   ucsc: 'https://upload.wikimedia.org/wikipedia/commons/5/53/The_University_of_California_1868_UCSC.svg',
+  stanford: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/Seal_of_Leland_Stanford_Junior_University.svg',
+  mit: 'https://upload.wikimedia.org/wikipedia/en/4/44/MIT_Seal.svg',
+}
+
+type SortOption = 'name' | 'repos' | 'updated'
+
+function sortKey(university: string): string {
+  return university
+    .replace(/^University of California,\s+/i, '')
+    .replace(/^University of\s+/i, '')
+    .replace(/^The\s+/i, '')
+    .toLowerCase()
+}
+
+function applySort(entries: ManifestEntry[], sort: SortOption): ManifestEntry[] {
+  return [...entries].sort((a, b) => {
+    if (sort === 'name') return sortKey(a.university).localeCompare(sortKey(b.university))
+    if (sort === 'repos') return b.analyzedRepos - a.analyzedRepos
+    if (sort === 'updated') return b.generatedAt.localeCompare(a.generatedAt)
+    return 0
+  })
 }
 
 interface ManifestEntry {
@@ -35,6 +56,7 @@ interface UniversityFixture extends AnalyzeResponse {
 interface Selected {
   entry: ManifestEntry
   results: AnalysisResult[]
+  unscoredRepos: RepositoryFetchFailure[]
   generatedAt: string
 }
 
@@ -45,12 +67,13 @@ export function UniversityBrowser() {
   const [selected, setSelected] = useState<Selected | null>(null)
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<SortOption>('name')
   const autoSelectDone = useRef(false)
 
   useEffect(() => {
     fetch(`${RAW_BASE}/manifest.json`)
       .then((r) => r.json())
-      .then((data: ManifestEntry[]) => setManifest([...data].sort((a, b) => a.university.localeCompare(b.university))))
+      .then((data: ManifestEntry[]) => setManifest(data))
       .catch(() => setManifestError(true))
   }, [])
 
@@ -78,7 +101,15 @@ export function UniversityBrowser() {
       const res = await fetch(`${RAW_BASE}/${entry.slug}-scored.json`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const fixture: UniversityFixture = await res.json()
-      setSelected({ entry, results: fixture.results, generatedAt: fixture.generatedAt })
+      // Deduplicate failures by repo name (keep last), then exclude repos that were
+      // successfully scored — earlier runs may have failed before a later run succeeded.
+      const scoredSet = new Set(fixture.results.map((r) => r.repo.toLowerCase()))
+      const dedupedFailures = new Map<string, RepositoryFetchFailure>()
+      for (const f of (fixture.failures ?? [])) {
+        dedupedFailures.set(f.repo.toLowerCase(), f)
+      }
+      const unscoredRepos = [...dedupedFailures.values()].filter((f) => !scoredSet.has(f.repo.toLowerCase()))
+      setSelected({ entry, results: fixture.results, unscoredRepos, generatedAt: fixture.generatedAt })
     } catch {
       setDetailError(`Failed to load data for ${entry.university}.`)
     } finally {
@@ -131,9 +162,9 @@ export function UniversityBrowser() {
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
-                {selected.results.length < selected.entry.totalRepos && (
+                {selected.unscoredRepos.length > 0 && (
                   <span className="ml-1 text-slate-400 dark:text-slate-500">
-                    · {(selected.entry.totalRepos - selected.results.length).toLocaleString()} could not be scored (empty, deleted, or private)
+                    · {selected.unscoredRepos.length.toLocaleString()} could not be scored
                   </span>
                 )}
               </p>
@@ -148,6 +179,41 @@ export function UniversityBrowser() {
         <UniversityScoreDistribution results={selected.results} />
         <OrgInventorySummary summary={summary} />
         <RepoSummaryTable results={selected.results} />
+        {selected.unscoredRepos.length > 0 && (
+          <details className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+            <summary className="cursor-pointer px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300 select-none list-none flex items-center justify-between">
+              <span>{selected.unscoredRepos.length.toLocaleString()} unscored repositories</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">click to expand</span>
+            </summary>
+            <div className="px-6 pb-4 overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800">
+                    <th className="py-2 pr-4 font-medium text-slate-500 dark:text-slate-400">Repository</th>
+                    <th className="py-2 font-medium text-slate-500 dark:text-slate-400">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selected.unscoredRepos.map((f) => (
+                    <tr key={f.repo} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                      <td className="py-1.5 pr-4 font-mono">
+                        <a
+                          href={`https://github.com/${f.repo}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sky-700 hover:underline dark:text-sky-400"
+                        >
+                          {f.repo}
+                        </a>
+                      </td>
+                      <td className="py-1.5 text-slate-500 dark:text-slate-400">{f.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
         <UniversityChatPanel university={selected.entry.university} results={selected.results} />
       </div>
     )
@@ -167,11 +233,6 @@ export function UniversityBrowser() {
             repofinder
           </a>
           . Data is pre-scored and refreshed periodically.
-          {manifest.length > 0 && (() => {
-            const latest = manifest.reduce((a, b) => a.generatedAt > b.generatedAt ? a : b)
-            const date = new Date(latest.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-            return <span className="text-slate-400 dark:text-slate-500"> Last refreshed: {date}.</span>
-          })()}
         </p>
         <p className="mt-1">
           <a
@@ -187,8 +248,21 @@ export function UniversityBrowser() {
       {detailError && (
         <p className="text-sm text-red-600 dark:text-red-400">{detailError}</p>
       )}
+      <div className="flex items-center justify-end gap-2">
+        <label htmlFor="uni-sort" className="text-xs text-slate-500 dark:text-slate-400">Sort by</label>
+        <select
+          id="uni-sort"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortOption)}
+          className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-400"
+        >
+          <option value="name">Name (A–Z)</option>
+          <option value="repos">Repos scored</option>
+          <option value="updated">Last updated</option>
+        </select>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {manifest.map((u) => (
+        {applySort(manifest, sortBy).map((u) => (
           <button
             key={u.slug}
             type="button"
@@ -217,11 +291,10 @@ export function UniversityBrowser() {
                 </span>
               )}
             </p>
-            {u.discoveryThreshold !== undefined && (
-              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                Affiliation threshold: {u.discoveryThreshold}
-              </p>
-            )}
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {u.discoveryThreshold !== undefined && <>Affiliation threshold: {u.discoveryThreshold} · </>}
+              Data from {new Date(u.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </p>
           </button>
         ))}
       </div>

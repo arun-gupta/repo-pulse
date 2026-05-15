@@ -101,13 +101,20 @@ async function fetchRepoList(slug: string): Promise<UniversityRepo[]> {
 }
 
 async function analyzeBatch(repos: string[], token: string): Promise<AnalyzeResponse> {
-  const res = await fetch(`${BASE_URL}/api/analyze`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ repos, token }),
-  })
-  if (!res.ok) throw new Error(`/api/analyze failed: HTTP ${res.status}`)
-  return res.json() as Promise<AnalyzeResponse>
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 300_000) // 5 min per batch
+  try {
+    const res = await fetch(`${BASE_URL}/api/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repos, token }),
+      signal: controller.signal,
+    })
+    if (!res.ok) throw new Error(`/api/analyze failed: HTTP ${res.status}`)
+    return res.json() as Promise<AnalyzeResponse>
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 async function main() {
@@ -135,10 +142,19 @@ async function main() {
     const totalBatches = Math.ceil(repos.length / batchSize)
     process.stdout.write(`  Batch ${batchNum}/${totalBatches} (${batch.length} repos)...`)
 
-    const response = await analyzeBatch(batch, TOKEN)
-    results.push(...response.results)
-    failures.push(...(response.failures ?? []))
-    console.log(` done (${response.results.length} ok, ${response.failures?.length ?? 0} failed)`)
+    try {
+      const response = await analyzeBatch(batch, TOKEN)
+      results.push(...response.results)
+      failures.push(...(response.failures ?? []))
+      console.log(` done (${response.results.length} ok, ${response.failures?.length ?? 0} failed)`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.log(` batch error: ${msg}`)
+      failures.push(...batch.map((repo) => ({ repo, reason: msg, code: 'BATCH_ERROR' })))
+      // Give the server time to finish the in-flight GitHub API calls so its
+      // connection pool drains before we send the next batch.
+      await new Promise((resolve) => setTimeout(resolve, 90_000))
+    }
   }
 
   const generatedAt = new Date().toISOString()
