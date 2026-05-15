@@ -82,42 +82,38 @@ export function UniversityComparison({ summaries }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* University-level callouts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Callout stats — two compact rows */}
+      <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'Most active', uni: mostActive, value: `${mostActive.metrics.activity}% repos active`, color: 'text-emerald-600 dark:text-emerald-400' },
-          { label: 'Best documented', uni: bestDocs, value: `${bestDocs.metrics.documentation} median score`, color: 'text-sky-600 dark:text-sky-400' },
-          { label: 'Most community', uni: mostCommunity, value: `${mostCommunity.metrics.community}% multi-author`, color: 'text-violet-600 dark:text-violet-400' },
-          { label: 'Most stars', uni: mostStars, value: `${mostStars.highlights.totalStars.toLocaleString()} total ★`, color: 'text-amber-600 dark:text-amber-400' },
-        ].map(({ label, uni, value, color }) => (
-          <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
-            <p className={`text-sm font-semibold mt-0.5 ${color}`}>{shortName(uni.university)}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{value}</p>
+          { label: 'Most active', name: shortName(mostActive.university), value: `${mostActive.metrics.activity}% active`, color: 'text-emerald-600 dark:text-emerald-400' },
+          { label: 'Best documented', name: shortName(bestDocs.university), value: `${bestDocs.metrics.documentation} doc score`, color: 'text-sky-600 dark:text-sky-400' },
+          { label: 'Most community', name: shortName(mostCommunity.university), value: `${mostCommunity.metrics.community}% multi-author`, color: 'text-violet-600 dark:text-violet-400' },
+          { label: 'Most stars', name: shortName(mostStars.university), value: `${mostStars.highlights.totalStars.toLocaleString()} ★`, color: 'text-amber-600 dark:text-amber-400' },
+        ].map(({ label, name, value, color }) => (
+          <div key={label} className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 min-w-0">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{label}</p>
+            <p className={`text-xs font-semibold mt-0.5 truncate ${color}`}>{name}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">{value}</p>
           </div>
         ))}
-      </div>
-
-      {/* Top repos across all universities */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Most starred repo', h: topStarredRepo.highlights.mostStarred, uni: topStarredRepo, fmt: (v: number) => `${v.toLocaleString()} ★`, color: 'text-amber-600 dark:text-amber-400' },
-          { label: 'Most contributors', h: topContribRepo.highlights.mostContributors, uni: topContribRepo, fmt: (v: number) => `${v.toLocaleString()} contributors`, color: 'text-violet-600 dark:text-violet-400' },
-          { label: 'Most PRs (90d)', h: topPRsRepo.highlights.mostPRs, uni: topPRsRepo, fmt: (v: number) => `${v.toLocaleString()} PRs opened`, color: 'text-sky-600 dark:text-sky-400' },
-          { label: 'Most issues closed (90d)', h: topIssuesRepo.highlights.mostIssues, uni: topIssuesRepo, fmt: (v: number) => `${v.toLocaleString()} issues closed`, color: 'text-emerald-600 dark:text-emerald-400' },
-        ].map(({ label, h, uni, fmt, color }) => (
-          <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
-            <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+          { label: 'Top starred repo', name: topStarredRepo.highlights.mostStarred.repo.split('/')[1], href: `https://github.com/${topStarredRepo.highlights.mostStarred.repo}`, sub: `${topStarredRepo.highlights.mostStarred.value.toLocaleString()} ★ · ${shortName(topStarredRepo.university)}`, color: 'text-amber-600 dark:text-amber-400' },
+          { label: 'Most contributors', name: topContribRepo.highlights.mostContributors.repo.split('/')[1], href: `https://github.com/${topContribRepo.highlights.mostContributors.repo}`, sub: `${topContribRepo.highlights.mostContributors.value.toLocaleString()} contributors · ${shortName(topContribRepo.university)}`, color: 'text-violet-600 dark:text-violet-400' },
+          { label: 'Most PRs (90d)', name: topPRsRepo.highlights.mostPRs.repo.split('/')[1], href: `https://github.com/${topPRsRepo.highlights.mostPRs.repo}`, sub: `${topPRsRepo.highlights.mostPRs.value.toLocaleString()} PRs · ${shortName(topPRsRepo.university)}`, color: 'text-sky-600 dark:text-sky-400' },
+          { label: 'Most issues closed (90d)', name: topIssuesRepo.highlights.mostIssues.repo.split('/')[1], href: `https://github.com/${topIssuesRepo.highlights.mostIssues.repo}`, sub: `${topIssuesRepo.highlights.mostIssues.value.toLocaleString()} closed · ${shortName(topIssuesRepo.university)}`, color: 'text-emerald-600 dark:text-emerald-400' },
+        ].map(({ label, name, href, sub, color }) => (
+          <div key={label} className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 min-w-0">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{label}</p>
             <a
-              href={`https://github.com/${h.repo}`}
+              href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`text-sm font-semibold mt-0.5 block truncate hover:underline ${color}`}
+              className={`text-xs font-semibold mt-0.5 block truncate hover:underline ${color}`}
               onClick={(e) => e.stopPropagation()}
             >
-              {h.repo.split('/')[1]}
+              {name}
             </a>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{fmt(h.value)} · {shortName(uni.university)}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight truncate">{sub}</p>
           </div>
         ))}
       </div>
