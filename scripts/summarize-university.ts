@@ -77,6 +77,18 @@ function computeSummary(
   const low = scores.filter((s) => s < 34).length
   const total = scores.length || 1
 
+  function topBy(field: (r: AnalysisResult) => number | 'unavailable') {
+    let best: AnalysisResult | null = null
+    let bestVal = -1
+    for (const r of results) {
+      const v = field(r)
+      if (typeof v === 'number' && v > bestVal) { bestVal = v; best = r }
+    }
+    return best ? { repo: best.repo, value: bestVal } : { repo: '', value: 0 }
+  }
+
+  const totalStars = results.reduce((sum, r) => sum + (typeof r.stars === 'number' ? r.stars : 0), 0)
+
   return {
     slug,
     university,
@@ -96,6 +108,13 @@ function computeSummary(
       community: Math.round((communityRepos / (scores.length || 1)) * 100),
       documentation: median(documentation),
       security: median(security),
+    },
+    highlights: {
+      totalStars,
+      mostStarred: topBy((r) => r.stars),
+      mostContributors: topBy((r) => r.totalContributors),
+      mostPRs: topBy((r) => r.prsOpened90d),
+      mostIssues: topBy((r) => r.issuesClosed90d),
     },
   }
 }

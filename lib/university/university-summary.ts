@@ -1,3 +1,8 @@
+export interface RepoHighlight {
+  repo: string
+  value: number
+}
+
 export interface UniversitySummary {
   slug: string
   university: string
@@ -14,5 +19,12 @@ export interface UniversitySummary {
     community: number
     documentation: number
     security: number
+  }
+  highlights: {
+    totalStars: number
+    mostStarred: RepoHighlight
+    mostContributors: RepoHighlight
+    mostPRs: RepoHighlight
+    mostIssues: RepoHighlight
   }
 }

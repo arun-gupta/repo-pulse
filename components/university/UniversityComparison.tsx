@@ -64,24 +64,60 @@ export function UniversityComparison({ summaries }: Props) {
     else { setSortMetric(metric); setSortAsc(false) }
   }
 
-  // Standout callouts
+  // Standout callouts — university-level
   const mostActive = summaries.reduce((a, b) => a.metrics.activity > b.metrics.activity ? a : b)
   const bestDocs = summaries.reduce((a, b) => a.metrics.documentation > b.metrics.documentation ? a : b)
   const mostCommunity = summaries.reduce((a, b) => a.metrics.community > b.metrics.community ? a : b)
+  const mostStars = summaries.reduce((a, b) => a.highlights.totalStars > b.highlights.totalStars ? a : b)
+
+  // Cross-university top repos
+  const topStarredRepo = summaries.reduce((a, b) =>
+    a.highlights.mostStarred.value > b.highlights.mostStarred.value ? a : b)
+  const topContribRepo = summaries.reduce((a, b) =>
+    a.highlights.mostContributors.value > b.highlights.mostContributors.value ? a : b)
+  const topPRsRepo = summaries.reduce((a, b) =>
+    a.highlights.mostPRs.value > b.highlights.mostPRs.value ? a : b)
+  const topIssuesRepo = summaries.reduce((a, b) =>
+    a.highlights.mostIssues.value > b.highlights.mostIssues.value ? a : b)
 
   return (
     <div className="space-y-4">
-      {/* Standout callouts */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* University-level callouts */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Most active', uni: mostActive, value: `${mostActive.metrics.activity}% repos`, color: 'text-emerald-600 dark:text-emerald-400' },
+          { label: 'Most active', uni: mostActive, value: `${mostActive.metrics.activity}% repos active`, color: 'text-emerald-600 dark:text-emerald-400' },
           { label: 'Best documented', uni: bestDocs, value: `${bestDocs.metrics.documentation} median score`, color: 'text-sky-600 dark:text-sky-400' },
           { label: 'Most community', uni: mostCommunity, value: `${mostCommunity.metrics.community}% multi-author`, color: 'text-violet-600 dark:text-violet-400' },
+          { label: 'Most stars', uni: mostStars, value: `${mostStars.highlights.totalStars.toLocaleString()} total ★`, color: 'text-amber-600 dark:text-amber-400' },
         ].map(({ label, uni, value, color }) => (
           <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
             <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
             <p className={`text-sm font-semibold mt-0.5 ${color}`}>{shortName(uni.university)}</p>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Top repos across all universities */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Most starred repo', h: topStarredRepo.highlights.mostStarred, uni: topStarredRepo, fmt: (v: number) => `${v.toLocaleString()} ★`, color: 'text-amber-600 dark:text-amber-400' },
+          { label: 'Most contributors', h: topContribRepo.highlights.mostContributors, uni: topContribRepo, fmt: (v: number) => `${v.toLocaleString()} contributors`, color: 'text-violet-600 dark:text-violet-400' },
+          { label: 'Most PRs (90d)', h: topPRsRepo.highlights.mostPRs, uni: topPRsRepo, fmt: (v: number) => `${v.toLocaleString()} PRs opened`, color: 'text-sky-600 dark:text-sky-400' },
+          { label: 'Most issues closed (90d)', h: topIssuesRepo.highlights.mostIssues, uni: topIssuesRepo, fmt: (v: number) => `${v.toLocaleString()} issues closed`, color: 'text-emerald-600 dark:text-emerald-400' },
+        ].map(({ label, h, uni, fmt, color }) => (
+          <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+            <a
+              href={`https://github.com/${h.repo}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`text-sm font-semibold mt-0.5 block truncate hover:underline ${color}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {h.repo.split('/')[1]}
+            </a>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{fmt(h.value)} · {shortName(uni.university)}</p>
           </div>
         ))}
       </div>
