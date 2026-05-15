@@ -252,11 +252,10 @@ export function UniversityBrowser() {
                 </span>
               )}
             </p>
-            {u.discoveryThreshold !== undefined && (
-              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                Affiliation threshold: {u.discoveryThreshold}
-              </p>
-            )}
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {u.discoveryThreshold !== undefined && <>Affiliation threshold: {u.discoveryThreshold} · </>}
+              Data from {new Date(u.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            </p>
           </button>
         ))}
       </div>
