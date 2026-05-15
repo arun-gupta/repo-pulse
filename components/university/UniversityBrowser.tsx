@@ -345,19 +345,39 @@ export function UniversityBrowser() {
                   const s = summaries.find((s) => s.slug === u.slug)
                   if (!s) return null
                   const { high, medium, low } = s.scoreBands
+                  const lowPct = Math.round(low * 100)
+                  const medPct = Math.round(medium * 100)
+                  const highPct = Math.round(high * 100)
                   return (
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className={`text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded ${
-                        s.medianScore >= 50 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                        s.medianScore >= 33 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
-                        'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
-                      }`}>{s.medianScore}</span>
-                      <div className="flex-1 h-1.5 rounded-full overflow-hidden flex gap-px">
-                        <div className="bg-red-300 dark:bg-red-700 rounded-l-full" style={{ width: `${low * 100}%` }} />
-                        <div className="bg-amber-300 dark:bg-amber-600" style={{ width: `${medium * 100}%` }} />
-                        <div className="bg-emerald-400 dark:bg-emerald-600 rounded-r-full" style={{ width: `${high * 100}%` }} />
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded ${
+                          s.medianScore >= 50 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                          s.medianScore >= 33 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
+                          'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                        }`}>{s.medianScore}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">median health score</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">median score</span>
+                      <div
+                        title={`${lowPct}% low · ${medPct}% medium · ${highPct}% high health`}
+                        className="h-2 rounded-full overflow-hidden flex gap-px cursor-default"
+                      >
+                        <div className="bg-red-300 dark:bg-red-700 rounded-l-full" style={{ width: `${lowPct}%` }} />
+                        <div className="bg-amber-300 dark:bg-amber-600" style={{ width: `${medPct}%` }} />
+                        <div className="bg-emerald-400 dark:bg-emerald-600 rounded-r-full" style={{ width: `${highPct}%` }} />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {[
+                          { label: 'Low', color: 'bg-red-300 dark:bg-red-700' },
+                          { label: 'Medium', color: 'bg-amber-300 dark:bg-amber-600' },
+                          { label: 'High', color: 'bg-emerald-400 dark:bg-emerald-600' },
+                        ].map(({ label, color }) => (
+                          <span key={label} className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                            <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${color}`} />
+                            {label}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )
                 })()}
