@@ -8,6 +8,7 @@ import {
   LineElement,
   Filler,
   Tooltip,
+  type TooltipItem,
 } from 'chart.js'
 import type { UniversitySummary } from '@/lib/university/university-summary'
 
@@ -42,7 +43,16 @@ export function UniversityCardRadar({ summary }: Props) {
   const options = {
     responsive: true,
     maintainAspectRatio: true,
-    plugins: { tooltip: { enabled: false }, legend: { display: false } },
+    plugins: {
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: (ctx: TooltipItem<'radar'>) => ` ${LABELS[ctx.dataIndex]}: ${ctx.raw}`,
+          title: () => '',
+        },
+      },
+      legend: { display: false },
+    },
     scales: {
       r: {
         min: 0,
