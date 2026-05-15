@@ -1,7 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { Radar } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+} from 'chart.js'
 import type { UniversitySummary } from '@/lib/university/university-summary'
+
+ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
 
 type MetricKey = 'activity' | 'maintenance' | 'community' | 'documentation' | 'security'
 type SortMetric = 'medianScore' | MetricKey
@@ -48,7 +60,7 @@ interface Props {
 
 export function UniversityComparison({ summaries }: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(summaries.map((s) => s.slug)))
-  const [tab, setTab] = useState<'heatmap' | 'metrics'>('heatmap')
+  const [tab, setTab] = useState<'heatmap' | 'metrics' | 'radar'>('heatmap')
   const [drillDown, setDrillDown] = useState<DrillDown | null>(null)
   const [sortMetric, setSortMetric] = useState<SortMetric>('medianScore')
   const [sortAsc, setSortAsc] = useState(false)
@@ -261,7 +273,7 @@ export function UniversityComparison({ summaries }: Props) {
 
       {/* Tab toggle */}
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
-        {(['heatmap', 'metrics'] as const).map((t) => (
+        {(['heatmap', 'metrics', 'radar'] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -272,7 +284,7 @@ export function UniversityComparison({ summaries }: Props) {
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
             }`}
           >
-            {t === 'heatmap' ? 'Score distribution' : 'Health metrics'}
+            {t === 'heatmap' ? 'Score distribution' : t === 'metrics' ? 'Health metrics' : 'Radar'}
           </button>
         ))}
       </div>
@@ -362,6 +374,55 @@ export function UniversityComparison({ summaries }: Props) {
           </p>
         </div>
       )}
+
+      {tab === 'radar' && (() => {
+        const COLORS = [
+          { bg: 'rgba(14,165,233,0.12)',  border: 'rgba(14,165,233,0.85)'  },  // sky
+          { bg: 'rgba(168,85,247,0.12)',  border: 'rgba(168,85,247,0.85)'  },  // violet
+          { bg: 'rgba(34,197,94,0.12)',   border: 'rgba(34,197,94,0.85)'   },  // emerald
+          { bg: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.85)'  },  // orange
+          { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.85)'   },  // red
+        ]
+        const allValues = visible.flatMap((s) => Object.values(s.metrics))
+        const max = Math.max(10, Math.ceil(Math.max(...allValues) / 10) * 10)
+        const data = {
+          labels: ['Activity', 'Maintenance', 'Community', 'Docs', 'Security'],
+          datasets: visible.map((s, i) => ({
+            label: shortName(s.university),
+            data: [s.metrics.activity, s.metrics.maintenance, s.metrics.community, s.metrics.documentation, s.metrics.security],
+            backgroundColor: COLORS[i % COLORS.length].bg,
+            borderColor: COLORS[i % COLORS.length].border,
+            borderWidth: 1.5,
+            pointRadius: 3,
+            pointBackgroundColor: COLORS[i % COLORS.length].border,
+          })),
+        }
+        const options = {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: true, position: 'bottom' as const, labels: { boxWidth: 10, font: { size: 11 } } },
+            tooltip: { enabled: true },
+          },
+          scales: {
+            r: {
+              min: 0,
+              max,
+              ticks: { display: false },
+              pointLabels: { display: true, font: { size: 10 } },
+              grid: { color: 'rgba(148,163,184,0.2)' },
+              angleLines: { color: 'rgba(148,163,184,0.2)' },
+            },
+          },
+        }
+        return (
+          <div className="flex justify-center py-2">
+            <div className="w-full max-w-sm">
+              <Radar data={data} options={options} />
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
