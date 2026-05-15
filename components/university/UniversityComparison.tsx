@@ -18,21 +18,13 @@ const METRIC_KEYS = Object.keys(METRIC_LABELS) as MetricKey[]
 
 const BUCKET_LABELS = ['0–9', '10–19', '20–29', '30–39', '40–49', '50–59', '60–69', '70–79', '80–89', '90–100']
 
-function starRating(pct: number): number {
-  if (pct >= 30) return 5
-  if (pct >= 20) return 4
-  if (pct >= 12) return 3
-  if (pct >= 6) return 2
-  if (pct > 0) return 1
-  return 0
-}
-
-function Stars({ count }: { count: number }) {
-  return (
-    <span className="text-amber-400 text-xs tracking-tighter" title={`${count}/5`}>
-      {'★'.repeat(count)}{'☆'.repeat(5 - count)}
-    </span>
-  )
+function bucketCellClass(pct: number): string {
+  if (pct === 0) return 'text-slate-300 dark:text-slate-700'
+  if (pct < 5)  return 'bg-sky-50  text-sky-600  dark:bg-sky-950/60  dark:text-sky-400'
+  if (pct < 10) return 'bg-sky-100 text-sky-700  dark:bg-sky-900/60  dark:text-sky-300'
+  if (pct < 20) return 'bg-sky-200 text-sky-800  dark:bg-sky-800/70  dark:text-sky-200'
+  if (pct < 30) return 'bg-sky-300 text-sky-900  dark:bg-sky-700     dark:text-white'
+  return              'bg-sky-500 text-white     dark:bg-sky-500     dark:text-white'
 }
 
 function metricColor(value: number): string {
@@ -158,8 +150,10 @@ export function UniversityComparison({ summaries }: Props) {
                     {s.scoreBuckets.map((count, i) => {
                       const pct = (count / total) * 100
                       return (
-                        <td key={i} className="text-center py-1.5 px-1">
-                          <Stars count={starRating(pct)} />
+                        <td key={i} className="text-center py-1 px-0.5">
+                          <span className={`inline-block w-full rounded px-1 py-1 text-xs font-medium tabular-nums ${bucketCellClass(pct)}`}>
+                            {pct < 1 && pct > 0 ? '<1' : Math.round(pct)}%
+                          </span>
                         </td>
                       )
                     })}
@@ -168,7 +162,7 @@ export function UniversityComparison({ summaries }: Props) {
               })}
             </tbody>
           </table>
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">★ rating = % of repos in that score bucket (★★★★★ ≥ 30%)</p>
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Cell color = % of repos in that score bucket. Darker = higher concentration.</p>
         </div>
       )}
 

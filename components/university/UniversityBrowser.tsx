@@ -163,31 +163,44 @@ export function UniversityBrowser() {
           <span className="text-slate-900 dark:text-slate-100">{selected.entry.university}</span>
         </nav>
         <header>
-          <div className="flex items-center gap-3">
-            {UNIVERSITY_LOGOS[selected.entry.slug] && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={UNIVERSITY_LOGOS[selected.entry.slug]}
-                alt=""
-                className="h-12 w-12 rounded-full object-contain flex-shrink-0 bg-white"
-              />
-            )}
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
-                {selected.unscoredRepos.length > 0 && (
-                  <span className="ml-1 text-slate-400 dark:text-slate-500">
-                    · {selected.unscoredRepos.length.toLocaleString()} could not be scored
-                  </span>
-                )}
-              </p>
-              {selected.entry.discoveryThreshold !== undefined && (
-                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                  Affiliation threshold: {selected.entry.discoveryThreshold}
-                </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {UNIVERSITY_LOGOS[selected.entry.slug] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={UNIVERSITY_LOGOS[selected.entry.slug]}
+                  alt=""
+                  className="h-12 w-12 rounded-full object-contain flex-shrink-0 bg-white"
+                />
               )}
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
+                  {selected.unscoredRepos.length > 0 && (
+                    <span className="ml-1 text-slate-400 dark:text-slate-500">
+                      · {selected.unscoredRepos.length.toLocaleString()} could not be scored
+                    </span>
+                  )}
+                </p>
+                {selected.entry.discoveryThreshold !== undefined && (
+                  <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                    Affiliation threshold: {selected.entry.discoveryThreshold}
+                  </p>
+                )}
+              </div>
             </div>
+            {(() => {
+              const s = summaries.find((s) => s.slug === selected.entry.slug)
+              return s ? (
+                <div className="flex-shrink-0">
+                  <div className="w-28 h-28">
+                    <UniversityCardRadar summary={s} />
+                  </div>
+                  <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-1">Health profile</p>
+                </div>
+              ) : null
+            })()}
           </div>
         </header>
         <UniversityScoreDistribution results={selected.results} />
