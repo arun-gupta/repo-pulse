@@ -1,8 +1,7 @@
-import { MAX_REPOS_PER_REQUEST } from '@/app/api/analyze/route'
-
 interface Props {
   selectedCount: number
   totalCount: number
+  maxSelect?: number
   onSelectAll: () => void
   onClear: () => void
   onAnalyzeSelected: () => void
@@ -13,31 +12,25 @@ interface Props {
 export function RepoSelectionBar({
   selectedCount,
   totalCount,
+  maxSelect,
   onSelectAll,
   onClear,
   onAnalyzeSelected,
   analyzeAllCount,
   onAnalyzeAll,
 }: Props) {
-  const overLimit = selectedCount > MAX_REPOS_PER_REQUEST
-
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-slate-500 dark:text-slate-400">
-          {selectedCount} of {totalCount} selected
-          {overLimit && (
-            <span className="ml-1 text-amber-600 dark:text-amber-400">
-              · max {MAX_REPOS_PER_REQUEST} for analysis
-            </span>
-          )}
+          {selectedCount}{maxSelect ? `/${maxSelect}` : ` of ${totalCount}`} selected
         </span>
         <button
           type="button"
           onClick={onSelectAll}
           className="text-xs text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
         >
-          Select all
+          Select all{maxSelect && totalCount > maxSelect ? ` (first ${maxSelect})` : ''}
         </button>
         {selectedCount > 0 && (
           <button
@@ -62,7 +55,7 @@ export function RepoSelectionBar({
         )}
         <button
           type="button"
-          disabled={selectedCount === 0 || overLimit}
+          disabled={selectedCount === 0}
           onClick={onAnalyzeSelected}
           className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition enabled:hover:border-slate-400 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"
         >

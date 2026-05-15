@@ -103,11 +103,13 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
   const [activeWindow, setActiveWindow] = useState<ContributorWindowDays>(90)
   const [selectedRepos, setSelectedRepos] = useState<Set<string>>(new Set())
 
+  const MAX_SELECT = 25
+
   function toggleRepo(repo: string) {
     setSelectedRepos((prev) => {
       const next = new Set(prev)
       if (next.has(repo)) next.delete(repo)
-      else next.add(repo)
+      else if (next.size < MAX_SELECT) next.add(repo)
       return next
     })
   }
@@ -266,7 +268,8 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
       <RepoSelectionBar
         selectedCount={selectedRepos.size}
         totalCount={sorted.length}
-        onSelectAll={() => setSelectedRepos(new Set(sorted.map((r) => r.result.repo)))}
+        maxSelect={MAX_SELECT}
+        onSelectAll={() => setSelectedRepos(new Set(sorted.slice(0, MAX_SELECT).map((r) => r.result.repo)))}
         onClear={() => setSelectedRepos(new Set())}
         onAnalyzeSelected={() => router.push(encodeRepos([...selectedRepos]))}
       />
@@ -340,8 +343,9 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
                     type="checkbox"
                     aria-label={`Select ${row.result.repo}`}
                     checked={selectedRepos.has(row.result.repo)}
+                    disabled={!selectedRepos.has(row.result.repo) && selectedRepos.size >= MAX_SELECT}
                     onChange={() => toggleRepo(row.result.repo)}
-                    className="accent-sky-600"
+                    className="accent-sky-600 disabled:opacity-30"
                   />
                 </td>
                 <td className="max-w-xs truncate px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-300">
