@@ -358,10 +358,7 @@ export function UniversityBrowser() {
                         }`}>{s.medianScore}</span>
                         <span className="text-[10px] text-slate-400 dark:text-slate-500">median health score</span>
                       </div>
-                      <div
-                        title={`${lowPct}% low · ${medPct}% medium · ${highPct}% high health`}
-                        className="h-2 rounded-full overflow-hidden flex gap-px cursor-default"
-                      >
+                      <div className="h-2 rounded-full overflow-hidden flex gap-px">
                         <div className="bg-red-300 dark:bg-red-700 rounded-l-full" style={{ width: `${lowPct}%` }} />
                         <div className="bg-amber-300 dark:bg-amber-600" style={{ width: `${medPct}%` }} />
                         <div className="bg-emerald-400 dark:bg-emerald-600 rounded-r-full" style={{ width: `${highPct}%` }} />
