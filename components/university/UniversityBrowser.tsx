@@ -366,17 +366,10 @@ export function UniversityBrowser() {
                         <div className="bg-amber-300 dark:bg-amber-600" style={{ width: `${medPct}%` }} />
                         <div className="bg-emerald-400 dark:bg-emerald-600 rounded-r-full" style={{ width: `${highPct}%` }} />
                       </div>
-                      <div className="flex items-center gap-3">
-                        {[
-                          { label: 'Low', color: 'bg-red-300 dark:bg-red-700' },
-                          { label: 'Medium', color: 'bg-amber-300 dark:bg-amber-600' },
-                          { label: 'High', color: 'bg-emerald-400 dark:bg-emerald-600' },
-                        ].map(({ label, color }) => (
-                          <span key={label} className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
-                            <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${color}`} />
-                            {label}
-                          </span>
-                        ))}
+                      <div className="flex items-center gap-2 text-[10px] tabular-nums">
+                        <span className="text-red-400 dark:text-red-500">{lowPct}% low</span>
+                        <span className="text-amber-400 dark:text-amber-500">{medPct}% medium</span>
+                        <span className="text-emerald-500 dark:text-emerald-400">{highPct}% high</span>
                       </div>
                     </div>
                   )
