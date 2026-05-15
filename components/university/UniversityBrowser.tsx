@@ -7,6 +7,7 @@ import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import { UniversityChatPanel } from './UniversityChatPanel'
 import { UniversityScoreDistribution } from './UniversityScoreDistribution'
 import { UniversityComparison } from './UniversityComparison'
+import { UniversityCardRadar } from './UniversityCardRadar'
 import type { AnalysisResult, AnalyzeResponse, RepositoryFetchFailure } from '@/lib/analyzer/analysis-result'
 import { buildUniversitySummary } from '@/lib/university/summary'
 import type { UniversitySummary } from '@/lib/university/university-summary'
@@ -201,33 +202,11 @@ export function UniversityBrowser() {
             </div>
             {(() => {
               const s = summaries.find((s) => s.slug === selected.entry.slug)
-              if (!s) return null
-              return (
-                <div className="flex-shrink-0 w-44 space-y-1.5">
-                  {([
-                    ['Activity', s.metrics.activity],
-                    ['Maintenance', s.metrics.maintenance],
-                    ['Community', s.metrics.community],
-                    ['Docs', s.metrics.documentation],
-                    ['Security', s.metrics.security],
-                  ] as [string, number][]).map(([label, value]) => (
-                    <div key={label} className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 w-16 shrink-0">{label}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            value >= 50 ? 'bg-emerald-400 dark:bg-emerald-500' :
-                            value >= 25 ? 'bg-amber-400 dark:bg-amber-500' :
-                            'bg-red-300 dark:bg-red-600'
-                          }`}
-                          style={{ width: `${value}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 tabular-nums w-6 text-right">{value}</span>
-                    </div>
-                  ))}
+              return s ? (
+                <div className="flex-shrink-0 w-44 h-44">
+                  <UniversityCardRadar summary={s} />
                 </div>
-              )
+              ) : null
             })()}
           </div>
         </header>

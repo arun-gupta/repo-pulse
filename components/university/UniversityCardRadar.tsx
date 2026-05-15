@@ -48,7 +48,11 @@ export function UniversityCardRadar({ summary }: Props) {
         min: 0,
         max,
         ticks: { display: false },
-        pointLabels: { display: false },
+        pointLabels: {
+          display: true,
+          font: { size: 9 },
+          color: 'rgba(100,116,139,0.9)',
+        },
         grid: { color: 'rgba(148,163,184,0.2)' },
         angleLines: { color: 'rgba(148,163,184,0.2)' },
       },
