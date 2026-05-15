@@ -133,9 +133,15 @@ export function UniversityComparison({ summaries }: Props) {
           <table className="w-full text-xs">
             <thead>
               <tr>
-                <th className="text-left py-2 pr-4 font-medium text-slate-500 dark:text-slate-400 min-w-[120px]">University</th>
+                <th className="text-left py-2 pr-4 font-medium text-slate-500 dark:text-slate-400 min-w-[120px]"></th>
+                <th colSpan={10} className="text-center pb-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                  ← Health score (0–100) →
+                </th>
+              </tr>
+              <tr>
+                <th className="text-left py-1 pr-4 font-medium text-slate-500 dark:text-slate-400">University</th>
                 {BUCKET_LABELS.map((l) => (
-                  <th key={l} className="text-center py-2 px-1 font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">{l}</th>
+                  <th key={l} className="text-center py-1 px-1 font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">{l}</th>
                 ))}
               </tr>
             </thead>
