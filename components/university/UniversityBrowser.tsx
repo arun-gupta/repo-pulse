@@ -19,6 +19,25 @@ const UNIVERSITY_LOGOS: Record<string, string> = {
   mit: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/MIT_logo.svg',
 }
 
+type SortOption = 'name' | 'repos' | 'updated'
+
+function sortKey(university: string): string {
+  return university
+    .replace(/^University of California,\s+/i, '')
+    .replace(/^University of\s+/i, '')
+    .replace(/^The\s+/i, '')
+    .toLowerCase()
+}
+
+function applySort(entries: ManifestEntry[], sort: SortOption): ManifestEntry[] {
+  return [...entries].sort((a, b) => {
+    if (sort === 'name') return sortKey(a.university).localeCompare(sortKey(b.university))
+    if (sort === 'repos') return b.analyzedRepos - a.analyzedRepos
+    if (sort === 'updated') return b.generatedAt.localeCompare(a.generatedAt)
+    return 0
+  })
+}
+
 interface ManifestEntry {
   slug: string
   university: string
@@ -47,12 +66,13 @@ export function UniversityBrowser() {
   const [selected, setSelected] = useState<Selected | null>(null)
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<SortOption>('name')
   const autoSelectDone = useRef(false)
 
   useEffect(() => {
     fetch(`${RAW_BASE}/manifest.json`)
       .then((r) => r.json())
-      .then((data: ManifestEntry[]) => setManifest([...data].sort((a, b) => a.university.localeCompare(b.university))))
+      .then((data: ManifestEntry[]) => setManifest(data))
       .catch(() => setManifestError(true))
   }, [])
 
@@ -189,8 +209,21 @@ export function UniversityBrowser() {
       {detailError && (
         <p className="text-sm text-red-600 dark:text-red-400">{detailError}</p>
       )}
+      <div className="flex items-center justify-end gap-2">
+        <label htmlFor="uni-sort" className="text-xs text-slate-500 dark:text-slate-400">Sort by</label>
+        <select
+          id="uni-sort"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortOption)}
+          className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-400"
+        >
+          <option value="name">Name (A–Z)</option>
+          <option value="repos">Repos scored</option>
+          <option value="updated">Last updated</option>
+        </select>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {manifest.map((u) => (
+        {applySort(manifest, sortBy).map((u) => (
           <button
             key={u.slug}
             type="button"

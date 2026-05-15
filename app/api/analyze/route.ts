@@ -149,8 +149,16 @@ export async function POST(request: Request) {
     }
 
     // Run GitHub analysis only for repos that need it.
+    // 120s hard timeout guards against repos that cause GitHub API calls to hang indefinitely,
+    // which otherwise exhausts the server's connection pool across successive batch requests.
+    const ANALYSIS_TIMEOUT_MS = 300_000
     const response: AnalyzeResponse = reposToAnalyze.length > 0
-      ? await analyze({ repos: reposToAnalyze, token })
+      ? await Promise.race([
+          analyze({ repos: reposToAnalyze, token }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Analysis timed out after ${ANALYSIS_TIMEOUT_MS / 1000}s`)), ANALYSIS_TIMEOUT_MS)
+          ),
+        ])
       : { results: [], failures: [], rateLimit: null }
 
     // Attach aspirant evaluation results to analyzed repos.
