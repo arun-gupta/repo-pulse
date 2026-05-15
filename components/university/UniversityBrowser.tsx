@@ -275,7 +275,7 @@ export function UniversityBrowser() {
       {summaries.length > 1 && (
         <details open className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-300 select-none list-none flex items-center justify-between">
-            <span>OSS Pulse</span>
+            <span>OSS Insights</span>
             <span className="text-xs font-normal text-slate-400 dark:text-slate-500">click to collapse</span>
           </summary>
           <div className="px-6 pb-6">
