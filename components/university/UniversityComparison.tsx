@@ -135,7 +135,7 @@ export function UniversityComparison({ summaries }: Props) {
               <tr>
                 <th className="text-left py-2 pr-4 font-medium text-slate-500 dark:text-slate-400 min-w-[120px]"></th>
                 <th colSpan={10} className="text-center pb-1 text-xs font-medium text-slate-400 dark:text-slate-500">
-                  ← Health score (0–100) →
+                  ← Health score percentile (0–100) →
                 </th>
               </tr>
               <tr>
@@ -168,7 +168,7 @@ export function UniversityComparison({ summaries }: Props) {
               })}
             </tbody>
           </table>
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Cell color = % of repos in that score bucket. Darker = higher concentration.</p>
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Each cell = % of repos in that health score percentile bucket. Darker = higher concentration.</p>
         </div>
       )}
 
