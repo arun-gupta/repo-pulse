@@ -6,8 +6,11 @@ import { OrgInventorySummary } from '@/components/org-inventory/OrgInventorySumm
 import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import { UniversityChatPanel } from './UniversityChatPanel'
 import { UniversityScoreDistribution } from './UniversityScoreDistribution'
+import { UniversityComparison } from './UniversityComparison'
+import { UniversityCardRadar } from './UniversityCardRadar'
 import type { AnalysisResult, AnalyzeResponse, RepositoryFetchFailure } from '@/lib/analyzer/analysis-result'
 import { buildUniversitySummary } from '@/lib/university/summary'
+import type { UniversitySummary } from '@/lib/university/university-summary'
 
 const RAW_BASE = 'https://raw.githubusercontent.com/arun-gupta/repofinder/repo-pulse-integration/exports/universities'
 
@@ -64,16 +67,28 @@ export function UniversityBrowser() {
   const searchParams = useSearchParams()
   const [manifest, setManifest] = useState<ManifestEntry[] | null>(null)
   const [manifestError, setManifestError] = useState(false)
+  const [summaries, setSummaries] = useState<UniversitySummary[]>([])
   const [selected, setSelected] = useState<Selected | null>(null)
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>('name')
   const autoSelectDone = useRef(false)
+  const unscoredRef = useRef<HTMLDetailsElement>(null)
 
   useEffect(() => {
     fetch(`${RAW_BASE}/manifest.json`)
       .then((r) => r.json())
-      .then((data: ManifestEntry[]) => setManifest(data))
+      .then((data: ManifestEntry[]) => {
+        setManifest(data)
+        // Fetch all summaries in parallel for the comparison view and card radars
+        Promise.all(
+          data.map((e) =>
+            fetch(`${RAW_BASE}/${e.slug}-summary.json`)
+              .then((r) => r.ok ? r.json() as Promise<UniversitySummary> : null)
+              .catch(() => null)
+          )
+        ).then((results) => setSummaries(results.filter((s): s is UniversitySummary => s !== null)))
+      })
       .catch(() => setManifestError(true))
   }, [])
 
@@ -149,38 +164,57 @@ export function UniversityBrowser() {
           <span className="text-slate-900 dark:text-slate-100">{selected.entry.university}</span>
         </nav>
         <header>
-          <div className="flex items-center gap-3">
-            {UNIVERSITY_LOGOS[selected.entry.slug] && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={UNIVERSITY_LOGOS[selected.entry.slug]}
-                alt=""
-                className="h-12 w-12 rounded-full object-contain flex-shrink-0 bg-white"
-              />
-            )}
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
-                {selected.unscoredRepos.length > 0 && (
-                  <span className="ml-1 text-slate-400 dark:text-slate-500">
-                    · {selected.unscoredRepos.length.toLocaleString()} could not be scored
-                  </span>
-                )}
-              </p>
-              {selected.entry.discoveryThreshold !== undefined && (
-                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-                  Affiliation threshold: {selected.entry.discoveryThreshold}
-                </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {UNIVERSITY_LOGOS[selected.entry.slug] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={UNIVERSITY_LOGOS[selected.entry.slug]}
+                  alt=""
+                  className="h-12 w-12 rounded-full object-contain flex-shrink-0 bg-white"
+                />
               )}
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selected.entry.university}</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
+                  {selected.unscoredRepos.length > 0 && (
+                    <button
+                      type="button"
+                      className="ml-1 text-sky-600 dark:text-sky-400 hover:underline"
+                      onClick={() => {
+                        if (unscoredRef.current) {
+                          unscoredRef.current.open = true
+                          unscoredRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                    >
+                      · {selected.unscoredRepos.length.toLocaleString()} could not be scored ↓
+                    </button>
+                  )}
+                </p>
+                {selected.entry.discoveryThreshold !== undefined && (
+                  <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                    Affiliation threshold: {selected.entry.discoveryThreshold}
+                  </p>
+                )}
+              </div>
             </div>
+            {(() => {
+              const s = summaries.find((s) => s.slug === selected.entry.slug)
+              return s ? (
+                <div className="flex-shrink-0 w-44 h-44">
+                  <UniversityCardRadar summary={s} />
+                </div>
+              ) : null
+            })()}
           </div>
         </header>
         <UniversityScoreDistribution results={selected.results} />
         <OrgInventorySummary summary={summary} />
         <RepoSummaryTable results={selected.results} />
         {selected.unscoredRepos.length > 0 && (
-          <details className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <details ref={unscoredRef} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <summary className="cursor-pointer px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300 select-none list-none flex items-center justify-between">
               <span>{selected.unscoredRepos.length.toLocaleString()} unscored repositories</span>
               <span className="text-xs text-slate-400 dark:text-slate-500">click to expand</span>
@@ -245,6 +279,17 @@ export function UniversityBrowser() {
           </a>
         </p>
       </div>
+      {summaries.length > 1 && (
+        <details open className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-slate-700 dark:text-slate-300 select-none list-none flex items-center justify-between">
+            <span>OSS Health Overview</span>
+            <span className="text-xs font-normal text-slate-400 dark:text-slate-500">click to collapse</span>
+          </summary>
+          <div className="px-6 pb-6">
+            <UniversityComparison summaries={summaries} />
+          </div>
+        </details>
+      )}
       {detailError && (
         <p className="text-sm text-red-600 dark:text-red-400">{detailError}</p>
       )}
@@ -270,31 +315,53 @@ export function UniversityBrowser() {
             disabled={loadingSlug !== null}
             className="group block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm text-left transition hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-500"
           >
-            <div className="flex items-center gap-3 mb-3">
-              {UNIVERSITY_LOGOS[u.slug] && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={UNIVERSITY_LOGOS[u.slug]}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-contain flex-shrink-0 bg-white"
-                />
-              )}
-              <h3 className="text-lg font-semibold text-slate-900 group-hover:text-sky-700 dark:text-slate-100 dark:group-hover:text-sky-300">
-                {loadingSlug === u.slug ? 'Loading…' : u.university}
-              </h3>
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                  {UNIVERSITY_LOGOS[u.slug] && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={UNIVERSITY_LOGOS[u.slug]}
+                      alt=""
+                      className="h-10 w-10 rounded-full object-contain flex-shrink-0 bg-white"
+                    />
+                  )}
+                  <h3 className="text-lg font-semibold text-slate-900 group-hover:text-sky-700 dark:text-slate-100 dark:group-hover:text-sky-300">
+                    {loadingSlug === u.slug ? 'Loading…' : u.university}
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {u.analyzedRepos.toLocaleString()} of {u.totalRepos.toLocaleString()} repositories scored
+                  {u.analyzedRepos < u.totalRepos && (
+                    <span className="ml-1 text-slate-400 dark:text-slate-500">
+                      · {(u.totalRepos - u.analyzedRepos).toLocaleString()} could not be scored (empty, deleted, or private)
+                    </span>
+                  )}
+                </p>
+                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                  {u.discoveryThreshold !== undefined && <>Affiliation threshold: {u.discoveryThreshold} · </>}
+                  Data from {new Date(u.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </p>
+                {(() => {
+                  const s = summaries.find((s) => s.slug === u.slug)
+                  if (!s) return null
+                  const { high, medium, low } = s.scoreBands
+                  return (
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className={`text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded ${
+                        s.medianScore >= 50 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                        s.medianScore >= 33 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
+                        'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                      }`}>{s.medianScore}</span>
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden flex gap-px">
+                        <div className="bg-red-300 dark:bg-red-700 rounded-l-full" style={{ width: `${low * 100}%` }} />
+                        <div className="bg-amber-300 dark:bg-amber-600" style={{ width: `${medium * 100}%` }} />
+                        <div className="bg-emerald-400 dark:bg-emerald-600 rounded-r-full" style={{ width: `${high * 100}%` }} />
+                      </div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">median score</span>
+                    </div>
+                  )
+                })()}
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {u.analyzedRepos.toLocaleString()} of {u.totalRepos.toLocaleString()} repositories scored
-              {u.analyzedRepos < u.totalRepos && (
-                <span className="ml-1 text-slate-400 dark:text-slate-500">
-                  · {(u.totalRepos - u.analyzedRepos).toLocaleString()} could not be scored (empty, deleted, or private)
-                </span>
-              )}
-            </p>
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-              {u.discoveryThreshold !== undefined && <>Affiliation threshold: {u.discoveryThreshold} · </>}
-              Data from {new Date(u.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-            </p>
           </button>
         ))}
       </div>

@@ -1,0 +1,73 @@
+'use client'
+
+import { Radar } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  type TooltipItem,
+} from 'chart.js'
+import type { UniversitySummary } from '@/lib/university/university-summary'
+
+ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip)
+
+const LABELS = ['Activity', 'Maintenance', 'Community', 'Docs', 'Security']
+
+interface Props {
+  summary: UniversitySummary
+}
+
+export function UniversityCardRadar({ summary }: Props) {
+  const { activity, maintenance, community, documentation, security } = summary.metrics
+  const values = [activity, maintenance, community, documentation, security]
+  // Scale to the highest metric value so the shape fills the chart meaningfully
+  const max = Math.max(10, Math.ceil(Math.max(...values) / 10) * 10)
+
+  const data = {
+    labels: LABELS,
+    datasets: [
+      {
+        data: values,
+        backgroundColor: 'rgba(14, 165, 233, 0.15)',
+        borderColor: 'rgba(14, 165, 233, 0.8)',
+        borderWidth: 1.5,
+        pointRadius: 2,
+        pointBackgroundColor: 'rgba(14, 165, 233, 0.8)',
+      },
+    ],
+  }
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: (ctx: TooltipItem<'radar'>) => ` ${LABELS[ctx.dataIndex]}: ${ctx.raw}`,
+          title: () => '',
+        },
+      },
+      legend: { display: false },
+    },
+    scales: {
+      r: {
+        min: 0,
+        max,
+        ticks: { display: false },
+        pointLabels: {
+          display: true,
+          font: { size: 9 },
+          color: 'rgba(100,116,139,0.9)',
+        },
+        grid: { color: 'rgba(148,163,184,0.2)' },
+        angleLines: { color: 'rgba(148,163,184,0.2)' },
+      },
+    },
+  }
+
+  return <Radar data={data} options={options} />
+}
