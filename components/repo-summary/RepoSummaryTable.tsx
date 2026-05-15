@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import type { AnalysisResult } from '@/lib/analyzer/analysis-result'
 import { CONTRIBUTOR_WINDOW_DAYS, type ContributorWindowDays } from '@/lib/analyzer/analysis-result'
 import { getHealthScore } from '@/lib/scoring/health-score'
+import { encodeRepos } from '@/lib/export/shareable-url'
+import { RepoSelectionBar } from './RepoSelectionBar'
 
 type SortKey = 'repo' | 'stars' | 'forks' | 'issuesOpen' | 'prsOpened90d' | 'authors' | 'totalContributors' | 'percentile'
 type SortDir = 'asc' | 'desc'
@@ -90,6 +93,7 @@ interface RepoSummaryTableProps {
 }
 
 export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
+  const router = useRouter()
   const [sortKey, setSortKey] = useState<SortKey>('percentile')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [nameFilter, setNameFilter] = useState('')
@@ -97,6 +101,18 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
   const [minStars, setMinStars] = useState(0)
   const [activeOnly, setActiveOnly] = useState(false)
   const [activeWindow, setActiveWindow] = useState<ContributorWindowDays>(90)
+  const [selectedRepos, setSelectedRepos] = useState<Set<string>>(new Set())
+
+  const MAX_SELECT = 25
+
+  function toggleRepo(repo: string) {
+    setSelectedRepos((prev) => {
+      const next = new Set(prev)
+      if (next.has(repo)) next.delete(repo)
+      else if (next.size < MAX_SELECT) next.add(repo)
+      return next
+    })
+  }
 
   const rows = useMemo(() => buildRows(results), [results])
   const maxStars = useMemo(() => Math.max(0, ...rows.map((r) => r.stars).filter((s): s is number => s !== null)), [rows])
@@ -248,11 +264,22 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
         )}
       </div>
 
+      {/* Selection bar */}
+      <RepoSelectionBar
+        selectedCount={selectedRepos.size}
+        totalCount={sorted.length}
+        maxSelect={MAX_SELECT}
+        onSelectAll={() => setSelectedRepos(new Set(sorted.slice(0, MAX_SELECT).map((r) => r.result.repo)))}
+        onClear={() => setSelectedRepos(new Set())}
+        onAnalyzeSelected={() => router.push(encodeRepos([...selectedRepos]))}
+      />
+
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 dark:border-slate-700">
+              <th className="w-8" />
               {groups.map((g, i) => (
                 <th
                   key={i}
@@ -264,6 +291,18 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
               ))}
             </tr>
             <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
+              <th className="w-8 px-3 py-2">
+                <input
+                  type="checkbox"
+                  aria-label="Select all visible"
+                  checked={sorted.length > 0 && sorted.every((r) => selectedRepos.has(r.result.repo))}
+                  onChange={(e) => e.target.checked
+                    ? setSelectedRepos(new Set(sorted.map((r) => r.result.repo)))
+                    : setSelectedRepos(new Set())
+                  }
+                  className="accent-sky-600"
+                />
+              </th>
               {COLUMNS.map((col) => (
                 <th
                   key={col.key}
@@ -296,9 +335,19 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
               <tr
                 key={row.result.repo}
                 className={`border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/40 ${
-                  i % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-900/30'
+                  selectedRepos.has(row.result.repo) ? 'bg-sky-50/60 dark:bg-sky-950/20' : i % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-900/30'
                 }`}
               >
+                <td className="px-3 py-2">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${row.result.repo}`}
+                    checked={selectedRepos.has(row.result.repo)}
+                    disabled={!selectedRepos.has(row.result.repo) && selectedRepos.size >= MAX_SELECT}
+                    onChange={() => toggleRepo(row.result.repo)}
+                    className="accent-sky-600 disabled:opacity-30"
+                  />
+                </td>
                 <td className="max-w-xs truncate px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-300">
                   <a
                     href={`https://github.com/${row.result.repo}`}
@@ -322,7 +371,7 @@ export function RepoSummaryTable({ results }: RepoSummaryTableProps) {
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={COLUMNS.length} className="px-3 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                <td colSpan={COLUMNS.length + 1} className="px-3 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                   No repositories match the current filters.
                 </td>
               </tr>

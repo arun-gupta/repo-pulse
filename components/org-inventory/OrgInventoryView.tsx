@@ -18,6 +18,7 @@ import {
 import { parseStructuredSearchQuery } from '@/lib/org-inventory/structured-search'
 import { OrgInventorySummary } from './OrgInventorySummary'
 import { OrgInventoryTable } from './OrgInventoryTable'
+import { RepoSelectionBar } from '@/components/repo-summary/RepoSelectionBar'
 
 interface OrgInventoryViewProps {
   org: string
@@ -181,47 +182,15 @@ export function OrgInventoryView({
                   </>
                 )}
 
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">{selectedRepos.length} selected · {activeRunRepos.length} ready for Analyze all</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRepos(sortedRows.map((r) => r.repo))}
-                      className="text-xs text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
-                    >
-                      Select all
-                    </button>
-                    {selectedRepos.length > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedRepos([])}
-                        className="text-xs text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
-                      >
-                        Clear
-                      </button>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {onAnalyzeAllActive ? (
-                      <button
-                        type="button"
-                        disabled={activeRunRepos.length === 0}
-                        className="rounded border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800 transition enabled:hover:border-sky-400 enabled:hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-300 dark:bg-sky-900/20 dark:border-sky-700/70 dark:text-sky-200"
-                        onClick={() => onAnalyzeAllActive(activeRunRepos)}
-                      >
-                        Analyze all ({activeRunRepos.length})
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      disabled={selectedRepos.length === 0}
-                      className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700 transition enabled:hover:border-slate-400 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"
-                      onClick={() => onAnalyzeSelected(selectedRepos)}
-                    >
-                      Analyze selected ({selectedRepos.length})
-                    </button>
-                  </div>
-                </div>
+                <RepoSelectionBar
+                  selectedCount={selectedRepos.length}
+                  totalCount={sortedRows.length}
+                  onSelectAll={() => setSelectedRepos(sortedRows.map((r) => r.repo))}
+                  onClear={() => setSelectedRepos([])}
+                  onAnalyzeSelected={() => onAnalyzeSelected(selectedRepos)}
+                  analyzeAllCount={onAnalyzeAllActive ? activeRunRepos.length : undefined}
+                  onAnalyzeAll={onAnalyzeAllActive ? () => onAnalyzeAllActive(activeRunRepos) : undefined}
+                />
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2 dark:border-slate-700">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Showing {visibleRangeStart}–{visibleRangeEnd} of {sortedRows.length}
