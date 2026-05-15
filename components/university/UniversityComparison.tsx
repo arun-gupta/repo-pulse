@@ -60,7 +60,7 @@ interface Props {
 
 export function UniversityComparison({ summaries }: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(summaries.map((s) => s.slug)))
-  const [tab, setTab] = useState<'heatmap' | 'metrics' | 'radar'>('radar')
+  const [tab, setTab] = useState<'heatmap' | 'metrics' | 'radar' | 'highlights'>('radar')
   const [drillDown, setDrillDown] = useState<DrillDown | null>(null)
   const [sortMetric, setSortMetric] = useState<SortMetric>('medianScore')
   const [sortAsc, setSortAsc] = useState(false)
@@ -96,8 +96,50 @@ export function UniversityComparison({ summaries }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Callout stats — two compact rows, all clickable */}
-      <div className="grid grid-cols-4 gap-2">
+      {/* University selector */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs text-slate-500 dark:text-slate-400">Show:</span>
+        {summaries.map((s) => (
+          <button
+            key={s.slug}
+            type="button"
+            onClick={() => setSelected((prev) => {
+              const next = new Set(prev)
+              if (next.has(s.slug)) { if (next.size > 1) next.delete(s.slug) }
+              else next.add(s.slug)
+              return next
+            })}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+              selected.has(s.slug)
+                ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300'
+                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+            }`}
+          >
+            {shortName(s.university)}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab toggle */}
+      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+        {(['radar', 'metrics', 'heatmap', 'highlights'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 text-xs font-medium transition border-b-2 -mb-px ${
+              tab === t
+                ? 'border-sky-500 text-sky-600 dark:text-sky-400'
+                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+            }`}
+          >
+            {t === 'radar' ? 'Radar' : t === 'metrics' ? 'Health metrics' : t === 'heatmap' ? 'Score distribution' : 'Highlights'}
+          </button>
+        ))}
+      </div>
+
+      {/* Highlights tab — callout stats cards */}
+      {tab === 'highlights' && <div className="grid grid-cols-4 gap-2">
         {([
           { key: 'active' as DrillDown, label: 'Most active', name: shortName(mostActive.university), value: `${mostActive.metrics.activity}% active`, color: 'text-emerald-600 dark:text-emerald-400' },
           { key: 'documentation' as DrillDown, label: 'Best documented', name: shortName(bestDocs.university), value: `${bestDocs.metrics.documentation} doc score`, color: 'text-sky-600 dark:text-sky-400' },
@@ -148,10 +190,10 @@ export function UniversityComparison({ summaries }: Props) {
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight truncate">{sub}</p>
           </button>
         ))}
-      </div>
+      </div>}
 
-      {/* Drill-down panel */}
-      {drillDown && (
+      {/* Highlights tab — drill-down panel */}
+      {tab === 'highlights' && drillDown && (
         <div className="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/20 px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -246,48 +288,6 @@ export function UniversityComparison({ summaries }: Props) {
           </table>
         </div>
       )}
-
-      {/* University selector */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs text-slate-500 dark:text-slate-400">Show:</span>
-        {summaries.map((s) => (
-          <button
-            key={s.slug}
-            type="button"
-            onClick={() => setSelected((prev) => {
-              const next = new Set(prev)
-              if (next.has(s.slug)) { if (next.size > 1) next.delete(s.slug) }
-              else next.add(s.slug)
-              return next
-            })}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-              selected.has(s.slug)
-                ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300'
-                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-            }`}
-          >
-            {shortName(s.university)}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab toggle */}
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
-        {(['radar', 'metrics', 'heatmap'] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 text-xs font-medium transition border-b-2 -mb-px ${
-              tab === t
-                ? 'border-sky-500 text-sky-600 dark:text-sky-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
-            }`}
-          >
-            {t === 'radar' ? 'Radar' : t === 'metrics' ? 'Health metrics' : 'Score distribution'}
-          </button>
-        ))}
-      </div>
 
       {tab === 'heatmap' && (
         <div className="overflow-x-auto">
