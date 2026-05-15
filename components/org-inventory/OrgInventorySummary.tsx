@@ -21,7 +21,7 @@ export function OrgInventorySummary({ summary }: OrgInventorySummaryProps) {
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        High-level stats from GitHub metadata. Run <strong>Analyze all active repos</strong> for deeper org-level insights — contributor diversity, maintainers, security rollup, and more.
+        High-level stats from GitHub metadata. Deeper insights — contributor diversity, maintainers, security rollup — are available in the health score table below.
       </p>
 
       <div className="grid gap-2 lg:grid-cols-3">

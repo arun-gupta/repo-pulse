@@ -7,7 +7,6 @@ import { RepoSummaryTable } from '@/components/repo-summary/RepoSummaryTable'
 import { UniversityChatPanel } from './UniversityChatPanel'
 import { UniversityScoreDistribution } from './UniversityScoreDistribution'
 import { UniversityComparison } from './UniversityComparison'
-import { UniversityCardRadar } from './UniversityCardRadar'
 import type { AnalysisResult, AnalyzeResponse, RepositoryFetchFailure } from '@/lib/analyzer/analysis-result'
 import { buildUniversitySummary } from '@/lib/university/summary'
 import type { UniversitySummary } from '@/lib/university/university-summary'
@@ -73,6 +72,7 @@ export function UniversityBrowser() {
   const [detailError, setDetailError] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>('name')
   const autoSelectDone = useRef(false)
+  const unscoredRef = useRef<HTMLDetailsElement>(null)
 
   useEffect(() => {
     fetch(`${RAW_BASE}/manifest.json`)
@@ -178,9 +178,18 @@ export function UniversityBrowser() {
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {selected.results.length} of {selected.entry.totalRepos} repositories scored · scored {scored}
                   {selected.unscoredRepos.length > 0 && (
-                    <span className="ml-1 text-slate-400 dark:text-slate-500">
-                      · {selected.unscoredRepos.length.toLocaleString()} could not be scored
-                    </span>
+                    <button
+                      type="button"
+                      className="ml-1 text-sky-600 dark:text-sky-400 hover:underline"
+                      onClick={() => {
+                        if (unscoredRef.current) {
+                          unscoredRef.current.open = true
+                          unscoredRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                    >
+                      · {selected.unscoredRepos.length.toLocaleString()} could not be scored ↓
+                    </button>
                   )}
                 </p>
                 {selected.entry.discoveryThreshold !== undefined && (
@@ -192,14 +201,33 @@ export function UniversityBrowser() {
             </div>
             {(() => {
               const s = summaries.find((s) => s.slug === selected.entry.slug)
-              return s ? (
-                <div className="flex-shrink-0">
-                  <div className="w-28 h-28">
-                    <UniversityCardRadar summary={s} />
-                  </div>
-                  <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-1">Health profile</p>
+              if (!s) return null
+              return (
+                <div className="flex-shrink-0 w-44 space-y-1.5">
+                  {([
+                    ['Activity', s.metrics.activity],
+                    ['Maintenance', s.metrics.maintenance],
+                    ['Community', s.metrics.community],
+                    ['Docs', s.metrics.documentation],
+                    ['Security', s.metrics.security],
+                  ] as [string, number][]).map(([label, value]) => (
+                    <div key={label} className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 w-16 shrink-0">{label}</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            value >= 50 ? 'bg-emerald-400 dark:bg-emerald-500' :
+                            value >= 25 ? 'bg-amber-400 dark:bg-amber-500' :
+                            'bg-red-300 dark:bg-red-600'
+                          }`}
+                          style={{ width: `${value}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 tabular-nums w-6 text-right">{value}</span>
+                    </div>
+                  ))}
                 </div>
-              ) : null
+              )
             })()}
           </div>
         </header>
@@ -207,7 +235,7 @@ export function UniversityBrowser() {
         <OrgInventorySummary summary={summary} />
         <RepoSummaryTable results={selected.results} />
         {selected.unscoredRepos.length > 0 && (
-          <details className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <details ref={unscoredRef} className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <summary className="cursor-pointer px-6 py-4 text-sm font-medium text-slate-700 dark:text-slate-300 select-none list-none flex items-center justify-between">
               <span>{selected.unscoredRepos.length.toLocaleString()} unscored repositories</span>
               <span className="text-xs text-slate-400 dark:text-slate-500">click to expand</span>
