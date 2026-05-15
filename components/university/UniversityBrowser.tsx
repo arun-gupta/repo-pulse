@@ -189,11 +189,6 @@ export function UniversityBrowser() {
             repofinder
           </a>
           . Data is pre-scored and refreshed periodically.
-          {manifest.length > 0 && (() => {
-            const latest = manifest.reduce((a, b) => a.generatedAt > b.generatedAt ? a : b)
-            const date = new Date(latest.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-            return <span className="text-slate-400 dark:text-slate-500"> Last refreshed: {date}.</span>
-          })()}
         </p>
         <p className="mt-1">
           <a
