@@ -60,7 +60,7 @@ interface Props {
 
 export function UniversityComparison({ summaries }: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(summaries.map((s) => s.slug)))
-  const [tab, setTab] = useState<'heatmap' | 'metrics' | 'radar'>('heatmap')
+  const [tab, setTab] = useState<'heatmap' | 'metrics' | 'radar'>('radar')
   const [drillDown, setDrillDown] = useState<DrillDown | null>(null)
   const [sortMetric, setSortMetric] = useState<SortMetric>('medianScore')
   const [sortAsc, setSortAsc] = useState(false)
@@ -273,7 +273,7 @@ export function UniversityComparison({ summaries }: Props) {
 
       {/* Tab toggle */}
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
-        {(['heatmap', 'metrics', 'radar'] as const).map((t) => (
+        {(['radar', 'metrics', 'heatmap'] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -284,7 +284,7 @@ export function UniversityComparison({ summaries }: Props) {
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
             }`}
           >
-            {t === 'heatmap' ? 'Score distribution' : t === 'metrics' ? 'Health metrics' : 'Radar'}
+            {t === 'radar' ? 'Radar' : t === 'metrics' ? 'Health metrics' : 'Score distribution'}
           </button>
         ))}
       </div>
