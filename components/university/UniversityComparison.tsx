@@ -60,7 +60,7 @@ interface Props {
 
 export function UniversityComparison({ summaries }: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(summaries.map((s) => s.slug)))
-  const [tab, setTab] = useState<'heatmap' | 'metrics' | 'radar' | 'highlights'>('radar')
+  const [tab, setTab] = useState<'heatmap' | 'metrics' | 'radar' | 'highlights'>('highlights')
   const [drillDown, setDrillDown] = useState<DrillDown | null>(null)
   const [sortMetric, setSortMetric] = useState<SortMetric>('medianScore')
   const [sortAsc, setSortAsc] = useState(false)
@@ -122,7 +122,7 @@ export function UniversityComparison({ summaries }: Props) {
 
       {/* Tab toggle */}
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
-        {(['radar', 'metrics', 'heatmap', 'highlights'] as const).map((t) => (
+        {(['highlights', 'radar', 'metrics', 'heatmap'] as const).map((t) => (
           <button
             key={t}
             type="button"
