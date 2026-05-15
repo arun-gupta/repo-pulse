@@ -5,6 +5,7 @@ import type { UniversitySummary } from '@/lib/university/university-summary'
 
 type MetricKey = 'activity' | 'maintenance' | 'community' | 'documentation' | 'security'
 type SortMetric = 'medianScore' | MetricKey
+type DrillDown = 'active' | 'documentation' | 'community' | 'stars' | 'starred' | 'contributors' | 'prs' | 'issues'
 
 const METRIC_LABELS: Record<MetricKey, string> = {
   activity: 'Activity',
@@ -48,6 +49,7 @@ interface Props {
 export function UniversityComparison({ summaries }: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set(summaries.map((s) => s.slug)))
   const [tab, setTab] = useState<'heatmap' | 'metrics'>('heatmap')
+  const [drillDown, setDrillDown] = useState<DrillDown | null>(null)
   const [sortMetric, setSortMetric] = useState<SortMetric>('medianScore')
   const [sortAsc, setSortAsc] = useState(false)
 
@@ -82,27 +84,45 @@ export function UniversityComparison({ summaries }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Callout stats — two compact rows */}
+      {/* Callout stats — two compact rows, all clickable */}
       <div className="grid grid-cols-4 gap-2">
-        {[
-          { label: 'Most active', name: shortName(mostActive.university), value: `${mostActive.metrics.activity}% active`, color: 'text-emerald-600 dark:text-emerald-400' },
-          { label: 'Best documented', name: shortName(bestDocs.university), value: `${bestDocs.metrics.documentation} doc score`, color: 'text-sky-600 dark:text-sky-400' },
-          { label: 'Most community', name: shortName(mostCommunity.university), value: `${mostCommunity.metrics.community}% multi-author`, color: 'text-violet-600 dark:text-violet-400' },
-          { label: 'Most stars', name: shortName(mostStars.university), value: `${mostStars.highlights.totalStars.toLocaleString()} ★`, color: 'text-amber-600 dark:text-amber-400' },
-        ].map(({ label, name, value, color }) => (
-          <div key={label} className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 min-w-0">
+        {([
+          { key: 'active' as DrillDown, label: 'Most active', name: shortName(mostActive.university), value: `${mostActive.metrics.activity}% active`, color: 'text-emerald-600 dark:text-emerald-400' },
+          { key: 'documentation' as DrillDown, label: 'Best documented', name: shortName(bestDocs.university), value: `${bestDocs.metrics.documentation} doc score`, color: 'text-sky-600 dark:text-sky-400' },
+          { key: 'community' as DrillDown, label: 'Most community', name: shortName(mostCommunity.university), value: `${mostCommunity.metrics.community}% multi-author`, color: 'text-violet-600 dark:text-violet-400' },
+          { key: 'stars' as DrillDown, label: 'Most stars', name: shortName(mostStars.university), value: `${mostStars.highlights.totalStars.toLocaleString()} ★`, color: 'text-amber-600 dark:text-amber-400' },
+        ] as const).map(({ key, label, name, value, color }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setDrillDown((d) => d === key ? null : key)}
+            className={`rounded-lg border px-3 py-2 min-w-0 text-left transition hover:border-sky-400 dark:hover:border-sky-500 ${
+              drillDown === key
+                ? 'border-sky-400 bg-sky-50 dark:border-sky-500 dark:bg-sky-950/30'
+                : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
+            }`}
+          >
             <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{label}</p>
             <p className={`text-xs font-semibold mt-0.5 truncate ${color}`}>{name}</p>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">{value}</p>
-          </div>
+          </button>
         ))}
-        {[
-          { label: 'Top starred repo', name: topStarredRepo.highlights.mostStarred.repo.split('/')[1], href: `https://github.com/${topStarredRepo.highlights.mostStarred.repo}`, sub: `${topStarredRepo.highlights.mostStarred.value.toLocaleString()} ★ · ${shortName(topStarredRepo.university)}`, color: 'text-amber-600 dark:text-amber-400' },
-          { label: 'Most contributors', name: topContribRepo.highlights.mostContributors.repo.split('/')[1], href: `https://github.com/${topContribRepo.highlights.mostContributors.repo}`, sub: `${topContribRepo.highlights.mostContributors.value.toLocaleString()} contributors · ${shortName(topContribRepo.university)}`, color: 'text-violet-600 dark:text-violet-400' },
-          { label: 'Most PRs (90d)', name: topPRsRepo.highlights.mostPRs.repo.split('/')[1], href: `https://github.com/${topPRsRepo.highlights.mostPRs.repo}`, sub: `${topPRsRepo.highlights.mostPRs.value.toLocaleString()} PRs · ${shortName(topPRsRepo.university)}`, color: 'text-sky-600 dark:text-sky-400' },
-          { label: 'Most issues closed (90d)', name: topIssuesRepo.highlights.mostIssues.repo.split('/')[1], href: `https://github.com/${topIssuesRepo.highlights.mostIssues.repo}`, sub: `${topIssuesRepo.highlights.mostIssues.value.toLocaleString()} closed · ${shortName(topIssuesRepo.university)}`, color: 'text-emerald-600 dark:text-emerald-400' },
-        ].map(({ label, name, href, sub, color }) => (
-          <div key={label} className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 min-w-0">
+        {([
+          { key: 'starred' as DrillDown, label: 'Top starred repo', name: topStarredRepo.highlights.mostStarred.repo.split('/')[1], href: `https://github.com/${topStarredRepo.highlights.mostStarred.repo}`, sub: `${topStarredRepo.highlights.mostStarred.value.toLocaleString()} ★ · ${shortName(topStarredRepo.university)}`, color: 'text-amber-600 dark:text-amber-400' },
+          { key: 'contributors' as DrillDown, label: 'Most contributors', name: topContribRepo.highlights.mostContributors.repo.split('/')[1], href: `https://github.com/${topContribRepo.highlights.mostContributors.repo}`, sub: `${topContribRepo.highlights.mostContributors.value.toLocaleString()} contributors · ${shortName(topContribRepo.university)}`, color: 'text-violet-600 dark:text-violet-400' },
+          { key: 'prs' as DrillDown, label: 'Most PRs (90d)', name: topPRsRepo.highlights.mostPRs.repo.split('/')[1], href: `https://github.com/${topPRsRepo.highlights.mostPRs.repo}`, sub: `${topPRsRepo.highlights.mostPRs.value.toLocaleString()} PRs · ${shortName(topPRsRepo.university)}`, color: 'text-sky-600 dark:text-sky-400' },
+          { key: 'issues' as DrillDown, label: 'Most issues closed (90d)', name: topIssuesRepo.highlights.mostIssues.repo.split('/')[1], href: `https://github.com/${topIssuesRepo.highlights.mostIssues.repo}`, sub: `${topIssuesRepo.highlights.mostIssues.value.toLocaleString()} closed · ${shortName(topIssuesRepo.university)}`, color: 'text-emerald-600 dark:text-emerald-400' },
+        ] as const).map(({ key, label, name, href, sub, color }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setDrillDown((d) => d === key ? null : key)}
+            className={`rounded-lg border px-3 py-2 min-w-0 text-left transition hover:border-sky-400 dark:hover:border-sky-500 ${
+              drillDown === key
+                ? 'border-sky-400 bg-sky-50 dark:border-sky-500 dark:bg-sky-950/30'
+                : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
+            }`}
+          >
             <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{label}</p>
             <a
               href={href}
@@ -114,9 +134,106 @@ export function UniversityComparison({ summaries }: Props) {
               {name}
             </a>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight truncate">{sub}</p>
-          </div>
+          </button>
         ))}
       </div>
+
+      {/* Drill-down panel */}
+      {drillDown && (
+        <div className="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/20 px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {drillDown === 'active' && 'Activity ranking — % of repos with commits in last 90 days'}
+              {drillDown === 'documentation' && 'Documentation ranking — median doc score (0–100)'}
+              {drillDown === 'community' && 'Community ranking — % of repos with multiple commit authors'}
+              {drillDown === 'stars' && 'Stars ranking — total GitHub stars across all repos'}
+              {drillDown === 'starred' && 'Most starred repo per university'}
+              {drillDown === 'contributors' && 'Most contributors in a single repo per university'}
+              {drillDown === 'prs' && 'Most PRs opened (90d) in a single repo per university'}
+              {drillDown === 'issues' && 'Most issues closed (90d) in a single repo per university'}
+            </p>
+            <button type="button" onClick={() => setDrillDown(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-sm leading-none">✕</button>
+          </div>
+          <table className="w-full text-xs">
+            <tbody>
+              {drillDown === 'active' && [...summaries].sort((a, b) => b.metrics.activity - a.metrics.activity).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-4 font-medium text-slate-700 dark:text-slate-300">{shortName(s.university)}</td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.metrics.activity}% active</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">{s.metrics.maintenance}% maintained · {s.metrics.community}% multi-author</td>
+                </tr>
+              ))}
+              {drillDown === 'documentation' && [...summaries].sort((a, b) => b.metrics.documentation - a.metrics.documentation).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-4 font-medium text-slate-700 dark:text-slate-300">{shortName(s.university)}</td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.metrics.documentation} doc score</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">{s.metrics.security} security score</td>
+                </tr>
+              ))}
+              {drillDown === 'community' && [...summaries].sort((a, b) => b.metrics.community - a.metrics.community).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-4 font-medium text-slate-700 dark:text-slate-300">{shortName(s.university)}</td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.metrics.community}% multi-author</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">{s.metrics.activity}% active · {s.scoredRepos} repos</td>
+                </tr>
+              ))}
+              {drillDown === 'stars' && [...summaries].sort((a, b) => b.highlights.totalStars - a.highlights.totalStars).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-4 font-medium text-slate-700 dark:text-slate-300">{shortName(s.university)}</td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.highlights.totalStars.toLocaleString()} ★</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">
+                    top: <a href={`https://github.com/${s.highlights.mostStarred.repo}`} target="_blank" rel="noopener noreferrer" className="text-sky-600 dark:text-sky-400 hover:underline">{s.highlights.mostStarred.repo.split('/')[1]}</a> ({s.highlights.mostStarred.value.toLocaleString()} ★)
+                  </td>
+                </tr>
+              ))}
+              {drillDown === 'starred' && [...summaries].sort((a, b) => b.highlights.mostStarred.value - a.highlights.mostStarred.value).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-3">
+                    <a href={`https://github.com/${s.highlights.mostStarred.repo}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-600 dark:text-sky-400 hover:underline">{s.highlights.mostStarred.repo.split('/')[1]}</a>
+                  </td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.highlights.mostStarred.value.toLocaleString()} ★</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">{shortName(s.university)}</td>
+                </tr>
+              ))}
+              {drillDown === 'contributors' && [...summaries].sort((a, b) => b.highlights.mostContributors.value - a.highlights.mostContributors.value).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-3">
+                    <a href={`https://github.com/${s.highlights.mostContributors.repo}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-600 dark:text-sky-400 hover:underline">{s.highlights.mostContributors.repo.split('/')[1]}</a>
+                  </td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.highlights.mostContributors.value.toLocaleString()} contributors</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">{shortName(s.university)}</td>
+                </tr>
+              ))}
+              {drillDown === 'prs' && [...summaries].sort((a, b) => b.highlights.mostPRs.value - a.highlights.mostPRs.value).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-3">
+                    <a href={`https://github.com/${s.highlights.mostPRs.repo}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-600 dark:text-sky-400 hover:underline">{s.highlights.mostPRs.repo.split('/')[1]}</a>
+                  </td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.highlights.mostPRs.value.toLocaleString()} PRs opened</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">{shortName(s.university)}</td>
+                </tr>
+              ))}
+              {drillDown === 'issues' && [...summaries].sort((a, b) => b.highlights.mostIssues.value - a.highlights.mostIssues.value).map((s, i) => (
+                <tr key={s.slug} className="border-t border-sky-100 dark:border-sky-900/50">
+                  <td className="py-1 pr-3 text-slate-400 tabular-nums w-5">{i + 1}</td>
+                  <td className="py-1 pr-3">
+                    <a href={`https://github.com/${s.highlights.mostIssues.repo}`} target="_blank" rel="noopener noreferrer" className="font-medium text-sky-600 dark:text-sky-400 hover:underline">{s.highlights.mostIssues.repo.split('/')[1]}</a>
+                  </td>
+                  <td className="py-1 pr-3 tabular-nums text-slate-600 dark:text-slate-400">{s.highlights.mostIssues.value.toLocaleString()} issues closed</td>
+                  <td className="py-1 text-slate-400 dark:text-slate-500">{shortName(s.university)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* University selector */}
       <div className="flex flex-wrap gap-2 items-center">

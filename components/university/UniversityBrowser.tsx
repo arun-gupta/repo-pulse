@@ -334,6 +334,26 @@ export function UniversityBrowser() {
                   {u.discoveryThreshold !== undefined && <>Affiliation threshold: {u.discoveryThreshold} · </>}
                   Data from {new Date(u.generatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </p>
+                {(() => {
+                  const s = summaries.find((s) => s.slug === u.slug)
+                  if (!s) return null
+                  const { high, medium, low } = s.scoreBands
+                  return (
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className={`text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded ${
+                        s.medianScore >= 50 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                        s.medianScore >= 33 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
+                        'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                      }`}>{s.medianScore}</span>
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden flex gap-px">
+                        <div className="bg-red-300 dark:bg-red-700 rounded-l-full" style={{ width: `${low * 100}%` }} />
+                        <div className="bg-amber-300 dark:bg-amber-600" style={{ width: `${medium * 100}%` }} />
+                        <div className="bg-emerald-400 dark:bg-emerald-600 rounded-r-full" style={{ width: `${high * 100}%` }} />
+                      </div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">median score</span>
+                    </div>
+                  )
+                })()}
             </div>
           </button>
         ))}
