@@ -31,7 +31,7 @@ import type { AspirantReadinessResult, CNCFFieldBadge, FoundationTarget } from '
 import type { OrgInventoryResponse } from '@/lib/analyzer/org-inventory'
 import type { ResultTabDefinition, ResultTabId } from '@/specs/006-results-shell/contracts/results-shell-props'
 import { resultTabs } from '@/lib/results-shell/tabs'
-import { decodeFoundationUrl, isValidRepoSlug } from '@/lib/export/shareable-url'
+import { decodeFoundationUrl, isValidRepoSlug, reposReplaceStatePath } from '@/lib/export/shareable-url'
 import { parseRepos } from '@/lib/parse-repos'
 import { parseFoundationInput } from '@/lib/foundation/parse-foundation-input'
 import { fetchBoardRepos, type SkippedIssue } from '@/lib/foundation/fetch-board-repos'
@@ -81,6 +81,9 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
   const [loadingRepos, setLoadingRepos] = useState<string[]>([])
   const [loadingOrg, setLoadingOrg] = useState<string | null>(null)
   const [resultsResetKey, setResultsResetKey] = useState(0)
+  // Bumped on full reset (logo click) to remount RepoInputForm so its internal
+  // input state re-seeds from the now-cleared URL.
+  const [inputResetKey, setInputResetKey] = useState(0)
   const [inputMode, setInputMode] = useState<'repos' | 'org' | 'foundation' | 'university'>(initialInputMode)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [emptyQuoteIndex, setEmptyQuoteIndex] = useState(() => getRandomQuoteIndex(null))
@@ -318,8 +321,11 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
       setFoundationTarget(target)
       params.set('foundation', target)
       if (foundationInput) params.set('input', foundationInput)
+    } else if (analyzedRepos.length > 0) {
+      // repos is the default — no mode param needed, but keep the analyzed repos
+      // in the URL so a shared link survives switching tabs.
+      params.set('repos', analyzedRepos.join(','))
     }
-    // repos is the default — no mode param needed
     const qs = params.toString()
     window.history.replaceState(null, '', qs ? `/?${qs}` : '/')
   }
@@ -358,6 +364,10 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     setFoundationLoadingItems([])
     setPendingBoardScan(null)
     previousFoundationResultRef.current = null
+    // Clear the shareable URL and remount the input so the repos don't linger
+    // after returning to the home/empty state.
+    window.history.replaceState(null, '', '/')
+    setInputResetKey((k) => k + 1)
   }
 
   async function handleFoundationSubmit(input: string) {
@@ -491,6 +501,12 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
     setInputMode('repos')
     setLoadingRepos(repos)
     setLoadingOrg(null)
+
+    // Reflect the selected repos in the URL immediately so Copy Link is shareable
+    // right away — even while the analysis runs. Done synchronously here in the
+    // submit handler (like handleModeChange) so the write isn't lost to the
+    // re-render that the post-await completion setState would trigger.
+    window.history.replaceState(null, '', reposReplaceStatePath(repos))
 
     try {
       const response = onAnalyze
@@ -656,6 +672,7 @@ export function RepoInputClient({ onAnalyze, onAnalyzeOrg }: RepoInputClientProp
 
   const analysisPanel = (
     <RepoInputForm
+      key={inputResetKey}
       mode={inputMode}
       onModeChange={handleModeChange}
       onSubmitRepos={handleSubmit}
