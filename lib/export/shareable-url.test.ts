@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { encodeRepos, decodeRepos, encodeFoundationUrl, decodeFoundationUrl, isValidRepoSlug } from './shareable-url'
+import { encodeRepos, decodeRepos, encodeFoundationUrl, decodeFoundationUrl, isValidRepoSlug, reposReplaceStatePath } from './shareable-url'
 
 describe('isValidRepoSlug', () => {
   it.each([
@@ -107,6 +107,33 @@ describe('decodeRepos', () => {
     expect(
       decodeRepos('?repos=facebook%2Freact,%2Fbad,bare,vercel%2Fnext.js,owner%2F')
     ).toEqual(['facebook/react', 'vercel/next.js'])
+  })
+})
+
+describe('reposReplaceStatePath', () => {
+  it('builds a relative path with a single repo', () => {
+    expect(reposReplaceStatePath(['facebook/react'])).toBe('/?repos=facebook%2Freact')
+  })
+
+  it('builds a relative path with multiple comma-separated repos', () => {
+    const path = reposReplaceStatePath(['facebook/react', 'vercel/next.js'])
+    const params = new URLSearchParams(path.split('?')[1])
+    expect(params.get('repos')).toBe('facebook/react,vercel/next.js')
+  })
+
+  it('returns "/" for an empty list', () => {
+    expect(reposReplaceStatePath([])).toBe('/')
+  })
+
+  it('emits no mode param (Repositories is the default)', () => {
+    const path = reposReplaceStatePath(['facebook/react'])
+    expect(path).not.toContain('mode=')
+  })
+
+  it('round-trips reposReplaceStatePath → decodeRepos', () => {
+    const repos = ['facebook/react', 'vercel/next.js']
+    const search = '?' + reposReplaceStatePath(repos).split('?')[1]
+    expect(decodeRepos(search)).toEqual(repos)
   })
 })
 

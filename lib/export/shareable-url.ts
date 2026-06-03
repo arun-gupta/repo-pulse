@@ -10,6 +10,18 @@ export function encodeRepos(repos: string[]): string {
 }
 
 /**
+ * Builds the relative path (no origin) for `history.replaceState` so the
+ * selected repos are reflected in the address bar and Copy Link is shareable.
+ * Repositories is the default mode, so no `mode` param is emitted — only
+ * `?repos=`. Returns `/` for an empty list.
+ */
+export function reposReplaceStatePath(repos: string[]): string {
+  if (repos.length === 0) return '/'
+  const params = new URLSearchParams({ repos: repos.join(',') })
+  return `/?${params.toString()}`
+}
+
+/**
  * Returns true for valid `owner/repo` slugs — exactly one `/` with non-empty
  * owner and repo segments. Silently rejects leading slashes, bare names, and
  * deeply-nested paths that would otherwise reach the analysis flow.
