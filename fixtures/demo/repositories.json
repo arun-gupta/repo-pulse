@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-11T10:11:56.120Z",
+  "generatedAt": "2026-06-08T10:32:03.580Z",
   "results": [
     {
       "repo": "simonw/llm-echo",
@@ -10,9 +10,9 @@
       "stars": 8,
       "forks": 1,
       "watchers": 1,
-      "commits30d": 2,
-      "commits90d": 9,
-      "releases12mo": 7,
+      "commits30d": 1,
+      "commits90d": 10,
+      "releases12mo": 3,
       "prsOpened90d": 0,
       "prsMerged90d": 0,
       "issuesOpen": 1,
@@ -23,10 +23,10 @@
       "maintainerCount": "unavailable",
       "maintainerTokens": "unavailable",
       "commitCountsByAuthor": {
-        "login:simonw": 9
+        "login:simonw": 10
       },
       "commitCountsByExperimentalOrg": {
-        "Unaffiliated": 9
+        "Unaffiliated": 10
       },
       "experimentalAttributedAuthors90d": 0,
       "experimentalUnattributedAuthors90d": 1,
@@ -34,18 +34,18 @@
         "30": {
           "uniqueCommitAuthors": 1,
           "commitCountsByAuthor": {
-            "login:simonw": 2
+            "login:simonw": 1
           },
-          "repeatContributors": 1,
+          "repeatContributors": 0,
           "newContributors": 0,
           "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 2
+            "Unaffiliated": 1
           },
           "experimentalAttributedAuthors": 0,
           "experimentalUnattributedAuthors": 1,
           "commitAuthorsByExperimentalOrg": {},
           "commitCountsByEmailDomain": {
-            "gmail.com": 2
+            "gmail.com": 1
           },
           "commitAuthorsByEmailDomain": {
             "gmail.com": [
@@ -56,18 +56,18 @@
         "60": {
           "uniqueCommitAuthors": 1,
           "commitCountsByAuthor": {
-            "login:simonw": 9
+            "login:simonw": 3
           },
           "repeatContributors": 1,
           "newContributors": 0,
           "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 9
+            "Unaffiliated": 3
           },
           "experimentalAttributedAuthors": 0,
           "experimentalUnattributedAuthors": 1,
           "commitAuthorsByExperimentalOrg": {},
           "commitCountsByEmailDomain": {
-            "gmail.com": 9
+            "gmail.com": 3
           },
           "commitAuthorsByEmailDomain": {
             "gmail.com": [
@@ -78,18 +78,18 @@
         "90": {
           "uniqueCommitAuthors": 1,
           "commitCountsByAuthor": {
-            "login:simonw": 9
+            "login:simonw": 10
           },
           "repeatContributors": 1,
-          "newContributors": 0,
+          "newContributors": 1,
           "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 9
+            "Unaffiliated": 10
           },
           "experimentalAttributedAuthors": 0,
           "experimentalUnattributedAuthors": 1,
           "commitAuthorsByExperimentalOrg": {},
           "commitCountsByEmailDomain": {
-            "gmail.com": 9
+            "gmail.com": 10
           },
           "commitAuthorsByEmailDomain": {
             "gmail.com": [
@@ -100,18 +100,18 @@
         "180": {
           "uniqueCommitAuthors": 1,
           "commitCountsByAuthor": {
-            "login:simonw": 9
+            "login:simonw": 10
           },
           "repeatContributors": 1,
-          "newContributors": 0,
+          "newContributors": 1,
           "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 9
+            "Unaffiliated": 10
           },
           "experimentalAttributedAuthors": 0,
           "experimentalUnattributedAuthors": 1,
           "commitAuthorsByExperimentalOrg": {},
           "commitCountsByEmailDomain": {
-            "gmail.com": 9
+            "gmail.com": 10
           },
           "commitAuthorsByEmailDomain": {
             "gmail.com": [
@@ -122,18 +122,18 @@
         "365": {
           "uniqueCommitAuthors": 1,
           "commitCountsByAuthor": {
-            "login:simonw": 19
+            "login:simonw": 10
           },
           "repeatContributors": 1,
           "newContributors": 1,
           "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 19
+            "Unaffiliated": 10
           },
           "experimentalAttributedAuthors": 0,
           "experimentalUnattributedAuthors": 1,
           "commitAuthorsByExperimentalOrg": {},
           "commitCountsByEmailDomain": {
-            "gmail.com": 19
+            "gmail.com": 10
           },
           "commitAuthorsByEmailDomain": {
             "gmail.com": [
@@ -144,7 +144,18 @@
       },
       "activityMetricsByWindow": {
         "30": {
-          "commits": 2,
+          "commits": 1,
+          "prsOpened": 0,
+          "prsMerged": 0,
+          "issuesOpened": 0,
+          "issuesClosed": 0,
+          "releases": 0,
+          "staleIssueRatio": 0,
+          "medianTimeToMergeHours": "unavailable",
+          "medianTimeToCloseHours": "unavailable"
+        },
+        "60": {
+          "commits": 3,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -154,19 +165,8 @@
           "medianTimeToMergeHours": "unavailable",
           "medianTimeToCloseHours": "unavailable"
         },
-        "60": {
-          "commits": 9,
-          "prsOpened": 0,
-          "prsMerged": 0,
-          "issuesOpened": 0,
-          "issuesClosed": 0,
-          "releases": 3,
-          "staleIssueRatio": 0,
-          "medianTimeToMergeHours": "unavailable",
-          "medianTimeToCloseHours": "unavailable"
-        },
         "90": {
-          "commits": 9,
+          "commits": 10,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -177,7 +177,7 @@
           "medianTimeToCloseHours": "unavailable"
         },
         "180": {
-          "commits": 9,
+          "commits": 10,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -188,12 +188,12 @@
           "medianTimeToCloseHours": "unavailable"
         },
         "365": {
-          "commits": 19,
+          "commits": 10,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
           "issuesClosed": 0,
-          "releases": 7,
+          "releases": 3,
           "staleIssueRatio": 0,
           "medianTimeToMergeHours": "unavailable",
           "medianTimeToCloseHours": "unavailable"
@@ -203,30 +203,30 @@
         "30": {
           "totalWeeks": 5,
           "weeklyCommitCounts": [
+            1,
             0,
             0,
             0,
-            2,
             0
           ],
           "activeWeeksRatio": 0.2,
-          "commitRegularity": 2,
-          "longestGapDays": 0,
+          "commitRegularity": 2.0000000000000004,
+          "longestGapDays": "unavailable",
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 2,
+          "weekdayCommitCount": 1,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
+              "currentPeriodCommitCount": 1,
+              "previousPeriodCommitCount": 2,
+              "delta": -0.5,
               "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 2,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -241,32 +241,32 @@
           "weeklyCommitCounts": [
             0,
             0,
-            7,
-            0,
-            0,
-            0,
             0,
             2,
+            1,
+            0,
+            0,
+            0,
             0
           ],
           "activeWeeksRatio": 0.2222222222222222,
-          "commitRegularity": 2.211083193570267,
-          "longestGapDays": 34,
+          "commitRegularity": 2.0000000000000004,
+          "longestGapDays": 8,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 9,
+          "weekdayCommitCount": 3,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
+              "currentPeriodCommitCount": 1,
+              "previousPeriodCommitCount": 2,
+              "delta": -0.5,
               "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 2,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -282,35 +282,35 @@
             0,
             0,
             0,
-            0,
-            0,
-            0,
-            0,
             7,
             0,
             0,
             0,
             2,
+            0,
+            1,
+            0,
+            0,
             0
           ],
-          "activeWeeksRatio": 0.15384615384615385,
-          "commitRegularity": 2.739739556875101,
+          "activeWeeksRatio": 0.23076923076923078,
+          "commitRegularity": 2.4535688292770588,
           "longestGapDays": 34,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 9,
+          "weekdayCommitCount": 10,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
+              "currentPeriodCommitCount": 1,
+              "previousPeriodCommitCount": 2,
+              "delta": -0.5,
               "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 2,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -338,36 +338,36 @@
             0,
             0,
             0,
-            0,
-            0,
-            0,
-            0,
             7,
             0,
             0,
             0,
             0,
             2,
+            1,
+            0,
+            0,
+            0,
             0
           ],
-          "activeWeeksRatio": 0.07692307692307693,
-          "commitRegularity": 4.001542912304247,
+          "activeWeeksRatio": 0.11538461538461539,
+          "commitRegularity": 3.6110940170535573,
           "longestGapDays": 34,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 9,
+          "weekdayCommitCount": 10,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
+              "currentPeriodCommitCount": 1,
+              "previousPeriodCommitCount": 2,
+              "delta": -0.5,
               "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 2,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -380,10 +380,6 @@
         "365": {
           "totalWeeks": 53,
           "weeklyCommitCounts": [
-            6,
-            4,
-            0,
-            0,
             0,
             0,
             0,
@@ -432,26 +428,30 @@
             0,
             0,
             2,
+            1,
+            0,
+            0,
+            0,
             0
           ],
-          "activeWeeksRatio": 0.07547169811320754,
-          "commitRegularity": 3.7967765888150415,
-          "longestGapDays": 314,
+          "activeWeeksRatio": 0.05660377358490566,
+          "commitRegularity": 5.255473337388363,
+          "longestGapDays": 34,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 19,
+          "weekdayCommitCount": 10,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
+              "currentPeriodCommitCount": 1,
+              "previousPeriodCommitCount": 2,
+              "delta": -0.5,
               "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 2,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -463,6 +463,7 @@
         }
       },
       "commitTimestamps365d": [
+        "2026-05-12T17:48:03Z",
         "2026-05-05T01:31:04Z",
         "2026-05-05T01:30:10Z",
         "2026-03-31T16:48:02Z",
@@ -471,17 +472,7 @@
         "2026-03-31T15:38:17Z",
         "2026-03-31T15:36:23Z",
         "2026-03-31T15:34:08Z",
-        "2026-03-31T15:31:32Z",
-        "2025-05-21T05:13:01Z",
-        "2025-05-21T05:12:31Z",
-        "2025-05-21T04:52:33Z",
-        "2025-05-21T04:52:08Z",
-        "2025-05-16T15:42:53Z",
-        "2025-05-16T15:40:09Z",
-        "2025-05-16T15:39:55Z",
-        "2025-05-16T15:33:32Z",
-        "2025-05-16T00:15:43Z",
-        "2025-05-16T00:14:50Z"
+        "2026-03-31T15:31:32Z"
       ],
       "responsivenessMetricsByWindow": {
         "30": {
@@ -753,8 +744,8 @@
       "releaseHealthResult": {
         "totalReleasesAnalyzed": 9,
         "totalTags": 9,
-        "releaseFrequency": 7,
-        "daysSinceLastRelease": 6,
+        "releaseFrequency": 3,
+        "daysSinceLastRelease": 34,
         "semverComplianceRatio": 0,
         "releaseNotesQualityRatio": 0.6666666666666666,
         "tagToReleaseRatio": 0,
@@ -765,12 +756,12 @@
       "devEnvironmentSetup": false,
       "gitpodPresent": false,
       "newContributorPRAcceptanceRate": "unavailable",
-      "ageInDays": 386.2198651041667,
-      "lifetimeCommits": 23,
-      "starsPerYear": 7.5656388083816255,
-      "contributorsPerYear": 0.9457048510477032,
-      "commitsPerMonthLifetime": 1.812600964508098,
-      "commitsPerMonthRecent12mo": 1.5844178082191782,
+      "ageInDays": 414.2338269097222,
+      "lifetimeCommits": 24,
+      "starsPerYear": 7.053986927621965,
+      "contributorsPerYear": 0.8817483659527456,
+      "commitsPerMonthLifetime": 1.763496731905491,
+      "commitsPerMonthRecent12mo": 0.8339041095890412,
       "growthTrajectory": "unavailable",
       "missingFields": [
         "maintainerCount",
@@ -786,11 +777,11 @@
       "description": "Machine-readable specification for the attestation of security-relevant data.",
       "createdAt": "2022-01-16T23:19:12Z",
       "primaryLanguage": "Go",
-      "stars": 74,
+      "stars": 75,
       "forks": 17,
       "watchers": 14,
-      "commits30d": 7,
-      "commits90d": 11,
+      "commits30d": 2,
+      "commits90d": 10,
       "releases12mo": 1,
       "prsOpened90d": 0,
       "prsMerged90d": 0,
@@ -807,13 +798,13 @@
         }
       ],
       "commitCountsByAuthor": {
-        "login:eddie-knight": 7,
+        "login:eddie-knight": 6,
         "login:jmeridth": 2,
         "login:dependabot[bot]": 2
       },
       "commitCountsByExperimentalOrg": {
-        "probr": 7,
-        "composr": 7,
+        "probr": 6,
+        "composr": 6,
         "lostechies": 2,
         "alamocoders": 2,
         "meridth": 2,
@@ -834,6 +825,36 @@
       "experimentalUnattributedAuthors90d": 1,
       "contributorMetricsByWindow": {
         "30": {
+          "uniqueCommitAuthors": 1,
+          "commitCountsByAuthor": {
+            "login:eddie-knight": 2
+          },
+          "repeatContributors": 1,
+          "newContributors": 0,
+          "commitCountsByExperimentalOrg": {
+            "probr": 2,
+            "composr": 2
+          },
+          "experimentalAttributedAuthors": 1,
+          "experimentalUnattributedAuthors": 0,
+          "commitAuthorsByExperimentalOrg": {
+            "probr": [
+              "login:eddie-knight"
+            ],
+            "composr": [
+              "login:eddie-knight"
+            ]
+          },
+          "commitCountsByEmailDomain": {
+            "linux.com": 2
+          },
+          "commitAuthorsByEmailDomain": {
+            "linux.com": [
+              "login:eddie-knight"
+            ]
+          }
+        },
+        "60": {
           "uniqueCommitAuthors": 2,
           "commitCountsByAuthor": {
             "login:eddie-knight": 6,
@@ -924,7 +945,7 @@
             ]
           }
         },
-        "60": {
+        "90": {
           "uniqueCommitAuthors": 3,
           "commitCountsByAuthor": {
             "login:eddie-knight": 6,
@@ -1006,99 +1027,6 @@
           },
           "commitCountsByEmailDomain": {
             "linux.com": 6,
-            "gmail.com": 2
-          },
-          "commitAuthorsByEmailDomain": {
-            "linux.com": [
-              "login:eddie-knight"
-            ],
-            "gmail.com": [
-              "login:jmeridth"
-            ]
-          }
-        },
-        "90": {
-          "uniqueCommitAuthors": 3,
-          "commitCountsByAuthor": {
-            "login:eddie-knight": 7,
-            "login:jmeridth": 2,
-            "login:dependabot[bot]": 2
-          },
-          "repeatContributors": 3,
-          "newContributors": 0,
-          "commitCountsByExperimentalOrg": {
-            "probr": 7,
-            "composr": 7,
-            "lostechies": 2,
-            "alamocoders": 2,
-            "meridth": 2,
-            "argoproj": 2,
-            "ossf": 2,
-            "chainguard-dev": 2,
-            "wolfi-dev": 2,
-            "chainguard-images": 2,
-            "privateerproj": 2,
-            "devsanantonio": 2,
-            "octo-sts": 2,
-            "revanite-io": 2,
-            "cncf-maintainers": 2,
-            "driftlessaf": 2,
-            "Unaffiliated": 2
-          },
-          "experimentalAttributedAuthors": 2,
-          "experimentalUnattributedAuthors": 1,
-          "commitAuthorsByExperimentalOrg": {
-            "probr": [
-              "login:eddie-knight"
-            ],
-            "composr": [
-              "login:eddie-knight"
-            ],
-            "lostechies": [
-              "login:jmeridth"
-            ],
-            "alamocoders": [
-              "login:jmeridth"
-            ],
-            "meridth": [
-              "login:jmeridth"
-            ],
-            "argoproj": [
-              "login:jmeridth"
-            ],
-            "ossf": [
-              "login:jmeridth"
-            ],
-            "chainguard-dev": [
-              "login:jmeridth"
-            ],
-            "wolfi-dev": [
-              "login:jmeridth"
-            ],
-            "chainguard-images": [
-              "login:jmeridth"
-            ],
-            "privateerproj": [
-              "login:jmeridth"
-            ],
-            "devsanantonio": [
-              "login:jmeridth"
-            ],
-            "octo-sts": [
-              "login:jmeridth"
-            ],
-            "revanite-io": [
-              "login:jmeridth"
-            ],
-            "cncf-maintainers": [
-              "login:jmeridth"
-            ],
-            "driftlessaf": [
-              "login:jmeridth"
-            ]
-          },
-          "commitCountsByEmailDomain": {
-            "linux.com": 7,
             "gmail.com": 2
           },
           "commitAuthorsByEmailDomain": {
@@ -1362,7 +1290,7 @@
       },
       "activityMetricsByWindow": {
         "30": {
-          "commits": 7,
+          "commits": 2,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -1373,7 +1301,7 @@
           "medianTimeToCloseHours": "unavailable"
         },
         "60": {
-          "commits": 10,
+          "commits": 7,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -1384,7 +1312,7 @@
           "medianTimeToCloseHours": "unavailable"
         },
         "90": {
-          "commits": 11,
+          "commits": 10,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -1421,30 +1349,30 @@
         "30": {
           "totalWeeks": 5,
           "weeklyCommitCounts": [
-            1,
+            2,
             0,
             0,
-            4,
-            2
+            0,
+            0
           ],
-          "activeWeeksRatio": 0.6,
-          "commitRegularity": 1.0690449676496976,
-          "longestGapDays": 21,
+          "activeWeeksRatio": 0.2,
+          "commitRegularity": 2.0000000000000004,
+          "longestGapDays": 0,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 7,
+          "weekdayCommitCount": 2,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 2,
+              "previousPeriodCommitCount": 5,
+              "delta": -0.6,
+              "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1458,33 +1386,33 @@
           "totalWeeks": 9,
           "weeklyCommitCounts": [
             0,
-            2,
-            0,
-            1,
-            0,
             1,
             0,
             0,
-            6
+            6,
+            0,
+            0,
+            0,
+            0
           ],
-          "activeWeeksRatio": 0.4444444444444444,
-          "commitRegularity": 1.6673332000533068,
+          "activeWeeksRatio": 0.2222222222222222,
+          "commitRegularity": 2.4074713637646736,
           "longestGapDays": 21,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 10,
+          "weekdayCommitCount": 7,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 2,
+              "previousPeriodCommitCount": 5,
+              "delta": -0.6,
+              "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1498,10 +1426,6 @@
           "totalWeeks": 13,
           "weeklyCommitCounts": [
             0,
-            0,
-            1,
-            0,
-            0,
             2,
             0,
             0,
@@ -1509,26 +1433,30 @@
             1,
             0,
             0,
-            6
+            6,
+            0,
+            0,
+            0,
+            0
           ],
-          "activeWeeksRatio": 0.38461538461538464,
-          "commitRegularity": 1.902586321496032,
-          "longestGapDays": 23,
+          "activeWeeksRatio": 0.3076923076923077,
+          "commitRegularity": 2.111871208194287,
+          "longestGapDays": 21,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 11,
+          "weekdayCommitCount": 10,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 2,
+              "previousPeriodCommitCount": 5,
+              "delta": -0.6,
+              "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1541,10 +1469,6 @@
         "180": {
           "totalWeeks": 26,
           "weeklyCommitCounts": [
-            0,
-            0,
-            0,
-            0,
             0,
             0,
             6,
@@ -1566,7 +1490,11 @@
             1,
             0,
             0,
-            6
+            6,
+            0,
+            0,
+            0,
+            0
           ],
           "activeWeeksRatio": 0.3076923076923077,
           "commitRegularity": 1.9019989484749982,
@@ -1576,16 +1504,16 @@
           "weekdayCommitCount": 13,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 2,
+              "previousPeriodCommitCount": 5,
+              "delta": -0.6,
+              "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1598,10 +1526,6 @@
         "365": {
           "totalWeeks": 53,
           "weeklyCommitCounts": [
-            0,
-            0,
-            0,
-            0,
             0,
             1,
             0,
@@ -1650,26 +1574,30 @@
             0,
             0,
             4,
-            2
+            2,
+            0,
+            0,
+            0,
+            0
           ],
           "activeWeeksRatio": 0.2830188679245283,
-          "commitRegularity": 1.9660199325032293,
+          "commitRegularity": 1.9660199325032297,
           "longestGapDays": 101,
           "weekendToWeekdayRatio": 0.7777777777777778,
           "weekendCommitCount": 14,
           "weekdayCommitCount": 18,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 2,
+              "previousPeriodCommitCount": 5,
+              "delta": -0.6,
+              "direction": "decelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
+              "currentPeriodCommitCount": 0,
               "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "delta": "unavailable",
+              "direction": "unavailable"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1992,7 +1920,7 @@
         "totalReleasesAnalyzed": 4,
         "totalTags": 4,
         "releaseFrequency": 1,
-        "daysSinceLastRelease": 99,
+        "daysSinceLastRelease": 127,
         "semverComplianceRatio": 1,
         "releaseNotesQualityRatio": 1,
         "tagToReleaseRatio": 0,
@@ -2003,11 +1931,11 @@
       "devEnvironmentSetup": false,
       "gitpodPresent": false,
       "newContributorPRAcceptanceRate": "unavailable",
-      "ageInDays": 1575.4534399421295,
+      "ageInDays": 1603.467395324074,
       "lifetimeCommits": 144,
-      "starsPerYear": 17.15601319261636,
-      "contributorsPerYear": 3.013894209513685,
-      "commitsPerMonthLifetime": 2.782056193397248,
+      "starsPerYear": 17.08407048368046,
+      "contributorsPerYear": 2.961238883837946,
+      "commitsPerMonthLifetime": 2.7334512773888737,
       "commitsPerMonthRecent12mo": 2.668493150684932,
       "growthTrajectory": "stable",
       "missingFields": [
@@ -2042,8 +1970,8 @@
   ],
   "rateLimit": {
     "limit": 5000,
-    "remaining": 4952,
-    "resetAt": "2026-05-11T10:22:37Z",
+    "remaining": 4951,
+    "resetAt": "2026-06-08T10:49:52Z",
     "retryAfter": "unavailable"
   },
   "diagnostics": [
