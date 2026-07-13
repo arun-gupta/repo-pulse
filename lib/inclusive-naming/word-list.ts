@@ -93,23 +93,9 @@ export const INI_WORD_LIST: readonly INITermEntry[] = [
     replacements: ['confidence check', 'coherence check', 'test', 'verification'],
     termPage: 'https://inclusivenaming.org/word-lists/tier-2/sanity-check/index.html',
   },
-  {
-    term: 'sanity check',
-    tier: 2,
-    recommendation: 'Replace.',
-    replacements: ['confidence check', 'coherence check', 'test', 'verification'],
-    termPage: 'https://inclusivenaming.org/word-lists/tier-2/sanity-check/index.html',
-  },
   // Tier 3 — "Consider replacing"
   {
     term: 'blast-radius',
-    tier: 3,
-    recommendation: 'Recommended to replace.',
-    replacements: ['extent', 'affected components'],
-    termPage: 'https://inclusivenaming.org/word-lists/tier-3/blast-radius/index.html',
-  },
-  {
-    term: 'blast radius',
     tier: 3,
     recommendation: 'Recommended to replace.',
     replacements: ['extent', 'affected components'],
