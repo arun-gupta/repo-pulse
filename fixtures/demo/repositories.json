@@ -1,803 +1,24 @@
 {
-  "generatedAt": "2026-05-11T10:11:56.120Z",
+  "generatedAt": "2026-10-19T09:07:31.278Z",
   "results": [
-    {
-      "repo": "simonw/llm-echo",
-      "name": "llm-echo",
-      "description": "Debug plugin for LLM providing an echo model",
-      "createdAt": "2025-04-20T04:55:23Z",
-      "primaryLanguage": "Python",
-      "stars": 8,
-      "forks": 1,
-      "watchers": 1,
-      "commits30d": 2,
-      "commits90d": 9,
-      "releases12mo": 7,
-      "prsOpened90d": 0,
-      "prsMerged90d": 0,
-      "issuesOpen": 1,
-      "issuesClosed90d": 0,
-      "uniqueCommitAuthors90d": 1,
-      "totalContributors": 1,
-      "totalContributorsSource": "api",
-      "maintainerCount": "unavailable",
-      "maintainerTokens": "unavailable",
-      "commitCountsByAuthor": {
-        "login:simonw": 9
-      },
-      "commitCountsByExperimentalOrg": {
-        "Unaffiliated": 9
-      },
-      "experimentalAttributedAuthors90d": 0,
-      "experimentalUnattributedAuthors90d": 1,
-      "contributorMetricsByWindow": {
-        "30": {
-          "uniqueCommitAuthors": 1,
-          "commitCountsByAuthor": {
-            "login:simonw": 2
-          },
-          "repeatContributors": 1,
-          "newContributors": 0,
-          "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 2
-          },
-          "experimentalAttributedAuthors": 0,
-          "experimentalUnattributedAuthors": 1,
-          "commitAuthorsByExperimentalOrg": {},
-          "commitCountsByEmailDomain": {
-            "gmail.com": 2
-          },
-          "commitAuthorsByEmailDomain": {
-            "gmail.com": [
-              "login:simonw"
-            ]
-          }
-        },
-        "60": {
-          "uniqueCommitAuthors": 1,
-          "commitCountsByAuthor": {
-            "login:simonw": 9
-          },
-          "repeatContributors": 1,
-          "newContributors": 0,
-          "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 9
-          },
-          "experimentalAttributedAuthors": 0,
-          "experimentalUnattributedAuthors": 1,
-          "commitAuthorsByExperimentalOrg": {},
-          "commitCountsByEmailDomain": {
-            "gmail.com": 9
-          },
-          "commitAuthorsByEmailDomain": {
-            "gmail.com": [
-              "login:simonw"
-            ]
-          }
-        },
-        "90": {
-          "uniqueCommitAuthors": 1,
-          "commitCountsByAuthor": {
-            "login:simonw": 9
-          },
-          "repeatContributors": 1,
-          "newContributors": 0,
-          "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 9
-          },
-          "experimentalAttributedAuthors": 0,
-          "experimentalUnattributedAuthors": 1,
-          "commitAuthorsByExperimentalOrg": {},
-          "commitCountsByEmailDomain": {
-            "gmail.com": 9
-          },
-          "commitAuthorsByEmailDomain": {
-            "gmail.com": [
-              "login:simonw"
-            ]
-          }
-        },
-        "180": {
-          "uniqueCommitAuthors": 1,
-          "commitCountsByAuthor": {
-            "login:simonw": 9
-          },
-          "repeatContributors": 1,
-          "newContributors": 0,
-          "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 9
-          },
-          "experimentalAttributedAuthors": 0,
-          "experimentalUnattributedAuthors": 1,
-          "commitAuthorsByExperimentalOrg": {},
-          "commitCountsByEmailDomain": {
-            "gmail.com": 9
-          },
-          "commitAuthorsByEmailDomain": {
-            "gmail.com": [
-              "login:simonw"
-            ]
-          }
-        },
-        "365": {
-          "uniqueCommitAuthors": 1,
-          "commitCountsByAuthor": {
-            "login:simonw": 19
-          },
-          "repeatContributors": 1,
-          "newContributors": 1,
-          "commitCountsByExperimentalOrg": {
-            "Unaffiliated": 19
-          },
-          "experimentalAttributedAuthors": 0,
-          "experimentalUnattributedAuthors": 1,
-          "commitAuthorsByExperimentalOrg": {},
-          "commitCountsByEmailDomain": {
-            "gmail.com": 19
-          },
-          "commitAuthorsByEmailDomain": {
-            "gmail.com": [
-              "login:simonw"
-            ]
-          }
-        }
-      },
-      "activityMetricsByWindow": {
-        "30": {
-          "commits": 2,
-          "prsOpened": 0,
-          "prsMerged": 0,
-          "issuesOpened": 0,
-          "issuesClosed": 0,
-          "releases": 1,
-          "staleIssueRatio": 0,
-          "medianTimeToMergeHours": "unavailable",
-          "medianTimeToCloseHours": "unavailable"
-        },
-        "60": {
-          "commits": 9,
-          "prsOpened": 0,
-          "prsMerged": 0,
-          "issuesOpened": 0,
-          "issuesClosed": 0,
-          "releases": 3,
-          "staleIssueRatio": 0,
-          "medianTimeToMergeHours": "unavailable",
-          "medianTimeToCloseHours": "unavailable"
-        },
-        "90": {
-          "commits": 9,
-          "prsOpened": 0,
-          "prsMerged": 0,
-          "issuesOpened": 0,
-          "issuesClosed": 0,
-          "releases": 3,
-          "staleIssueRatio": 0,
-          "medianTimeToMergeHours": "unavailable",
-          "medianTimeToCloseHours": "unavailable"
-        },
-        "180": {
-          "commits": 9,
-          "prsOpened": 0,
-          "prsMerged": 0,
-          "issuesOpened": 0,
-          "issuesClosed": 0,
-          "releases": 3,
-          "staleIssueRatio": 0,
-          "medianTimeToMergeHours": "unavailable",
-          "medianTimeToCloseHours": "unavailable"
-        },
-        "365": {
-          "commits": 19,
-          "prsOpened": 0,
-          "prsMerged": 0,
-          "issuesOpened": 0,
-          "issuesClosed": 0,
-          "releases": 7,
-          "staleIssueRatio": 0,
-          "medianTimeToMergeHours": "unavailable",
-          "medianTimeToCloseHours": "unavailable"
-        }
-      },
-      "activityCadenceByWindow": {
-        "30": {
-          "totalWeeks": 5,
-          "weeklyCommitCounts": [
-            0,
-            0,
-            0,
-            2,
-            0
-          ],
-          "activeWeeksRatio": 0.2,
-          "commitRegularity": 2,
-          "longestGapDays": 0,
-          "weekendToWeekdayRatio": 0,
-          "weekendCommitCount": 0,
-          "weekdayCommitCount": 2,
-          "trendComparisons": {
-            "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
-              "direction": "decelerating"
-            },
-            "week": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
-            },
-            "day": {
-              "currentPeriodCommitCount": 0,
-              "previousPeriodCommitCount": 0,
-              "delta": "unavailable",
-              "direction": "unavailable"
-            }
-          }
-        },
-        "60": {
-          "totalWeeks": 9,
-          "weeklyCommitCounts": [
-            0,
-            0,
-            7,
-            0,
-            0,
-            0,
-            0,
-            2,
-            0
-          ],
-          "activeWeeksRatio": 0.2222222222222222,
-          "commitRegularity": 2.211083193570267,
-          "longestGapDays": 34,
-          "weekendToWeekdayRatio": 0,
-          "weekendCommitCount": 0,
-          "weekdayCommitCount": 9,
-          "trendComparisons": {
-            "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
-              "direction": "decelerating"
-            },
-            "week": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
-            },
-            "day": {
-              "currentPeriodCommitCount": 0,
-              "previousPeriodCommitCount": 0,
-              "delta": "unavailable",
-              "direction": "unavailable"
-            }
-          }
-        },
-        "90": {
-          "totalWeeks": 13,
-          "weeklyCommitCounts": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            7,
-            0,
-            0,
-            0,
-            2,
-            0
-          ],
-          "activeWeeksRatio": 0.15384615384615385,
-          "commitRegularity": 2.739739556875101,
-          "longestGapDays": 34,
-          "weekendToWeekdayRatio": 0,
-          "weekendCommitCount": 0,
-          "weekdayCommitCount": 9,
-          "trendComparisons": {
-            "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
-              "direction": "decelerating"
-            },
-            "week": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
-            },
-            "day": {
-              "currentPeriodCommitCount": 0,
-              "previousPeriodCommitCount": 0,
-              "delta": "unavailable",
-              "direction": "unavailable"
-            }
-          }
-        },
-        "180": {
-          "totalWeeks": 26,
-          "weeklyCommitCounts": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            7,
-            0,
-            0,
-            0,
-            0,
-            2,
-            0
-          ],
-          "activeWeeksRatio": 0.07692307692307693,
-          "commitRegularity": 4.001542912304247,
-          "longestGapDays": 34,
-          "weekendToWeekdayRatio": 0,
-          "weekendCommitCount": 0,
-          "weekdayCommitCount": 9,
-          "trendComparisons": {
-            "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
-              "direction": "decelerating"
-            },
-            "week": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
-            },
-            "day": {
-              "currentPeriodCommitCount": 0,
-              "previousPeriodCommitCount": 0,
-              "delta": "unavailable",
-              "direction": "unavailable"
-            }
-          }
-        },
-        "365": {
-          "totalWeeks": 53,
-          "weeklyCommitCounts": [
-            6,
-            4,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            7,
-            0,
-            0,
-            0,
-            0,
-            2,
-            0
-          ],
-          "activeWeeksRatio": 0.07547169811320754,
-          "commitRegularity": 3.7967765888150415,
-          "longestGapDays": 314,
-          "weekendToWeekdayRatio": 0,
-          "weekendCommitCount": 0,
-          "weekdayCommitCount": 19,
-          "trendComparisons": {
-            "month": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 7,
-              "delta": -0.7142857142857143,
-              "direction": "decelerating"
-            },
-            "week": {
-              "currentPeriodCommitCount": 2,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
-            },
-            "day": {
-              "currentPeriodCommitCount": 0,
-              "previousPeriodCommitCount": 0,
-              "delta": "unavailable",
-              "direction": "unavailable"
-            }
-          }
-        }
-      },
-      "commitTimestamps365d": [
-        "2026-05-05T01:31:04Z",
-        "2026-05-05T01:30:10Z",
-        "2026-03-31T16:48:02Z",
-        "2026-03-31T16:47:31Z",
-        "2026-03-31T15:46:35Z",
-        "2026-03-31T15:38:17Z",
-        "2026-03-31T15:36:23Z",
-        "2026-03-31T15:34:08Z",
-        "2026-03-31T15:31:32Z",
-        "2025-05-21T05:13:01Z",
-        "2025-05-21T05:12:31Z",
-        "2025-05-21T04:52:33Z",
-        "2025-05-21T04:52:08Z",
-        "2025-05-16T15:42:53Z",
-        "2025-05-16T15:40:09Z",
-        "2025-05-16T15:39:55Z",
-        "2025-05-16T15:33:32Z",
-        "2025-05-16T00:15:43Z",
-        "2025-05-16T00:14:50Z"
-      ],
-      "responsivenessMetricsByWindow": {
-        "30": {
-          "issueFirstResponseMedianHours": "unavailable",
-          "issueFirstResponseP90Hours": "unavailable",
-          "prFirstReviewMedianHours": "unavailable",
-          "prFirstReviewP90Hours": "unavailable",
-          "issueResolutionMedianHours": "unavailable",
-          "issueResolutionP90Hours": "unavailable",
-          "prMergeMedianHours": "unavailable",
-          "prMergeP90Hours": "unavailable",
-          "issueResolutionRate": "unavailable",
-          "contributorResponseRate": "unavailable",
-          "botResponseRatio": "unavailable",
-          "humanResponseRatio": "unavailable",
-          "staleIssueRatio": 0,
-          "stalePrRatio": "unavailable",
-          "prReviewDepth": "unavailable",
-          "issuesClosedWithoutCommentRatio": "unavailable",
-          "openIssueCount": 1,
-          "openPullRequestCount": 0
-        },
-        "60": {
-          "issueFirstResponseMedianHours": "unavailable",
-          "issueFirstResponseP90Hours": "unavailable",
-          "prFirstReviewMedianHours": "unavailable",
-          "prFirstReviewP90Hours": "unavailable",
-          "issueResolutionMedianHours": "unavailable",
-          "issueResolutionP90Hours": "unavailable",
-          "prMergeMedianHours": "unavailable",
-          "prMergeP90Hours": "unavailable",
-          "issueResolutionRate": "unavailable",
-          "contributorResponseRate": "unavailable",
-          "botResponseRatio": "unavailable",
-          "humanResponseRatio": "unavailable",
-          "staleIssueRatio": 0,
-          "stalePrRatio": "unavailable",
-          "prReviewDepth": "unavailable",
-          "issuesClosedWithoutCommentRatio": "unavailable",
-          "openIssueCount": 1,
-          "openPullRequestCount": 0
-        },
-        "90": {
-          "issueFirstResponseMedianHours": "unavailable",
-          "issueFirstResponseP90Hours": "unavailable",
-          "prFirstReviewMedianHours": "unavailable",
-          "prFirstReviewP90Hours": "unavailable",
-          "issueResolutionMedianHours": "unavailable",
-          "issueResolutionP90Hours": "unavailable",
-          "prMergeMedianHours": "unavailable",
-          "prMergeP90Hours": "unavailable",
-          "issueResolutionRate": "unavailable",
-          "contributorResponseRate": "unavailable",
-          "botResponseRatio": "unavailable",
-          "humanResponseRatio": "unavailable",
-          "staleIssueRatio": 0,
-          "stalePrRatio": "unavailable",
-          "prReviewDepth": "unavailable",
-          "issuesClosedWithoutCommentRatio": "unavailable",
-          "openIssueCount": 1,
-          "openPullRequestCount": 0
-        },
-        "180": {
-          "issueFirstResponseMedianHours": "unavailable",
-          "issueFirstResponseP90Hours": "unavailable",
-          "prFirstReviewMedianHours": "unavailable",
-          "prFirstReviewP90Hours": "unavailable",
-          "issueResolutionMedianHours": "unavailable",
-          "issueResolutionP90Hours": "unavailable",
-          "prMergeMedianHours": "unavailable",
-          "prMergeP90Hours": "unavailable",
-          "issueResolutionRate": "unavailable",
-          "contributorResponseRate": "unavailable",
-          "botResponseRatio": "unavailable",
-          "humanResponseRatio": "unavailable",
-          "staleIssueRatio": 0,
-          "stalePrRatio": "unavailable",
-          "prReviewDepth": "unavailable",
-          "issuesClosedWithoutCommentRatio": "unavailable",
-          "openIssueCount": 1,
-          "openPullRequestCount": 0
-        },
-        "365": {
-          "issueFirstResponseMedianHours": "unavailable",
-          "issueFirstResponseP90Hours": "unavailable",
-          "prFirstReviewMedianHours": "unavailable",
-          "prFirstReviewP90Hours": "unavailable",
-          "issueResolutionMedianHours": "unavailable",
-          "issueResolutionP90Hours": "unavailable",
-          "prMergeMedianHours": "unavailable",
-          "prMergeP90Hours": "unavailable",
-          "issueResolutionRate": "unavailable",
-          "contributorResponseRate": "unavailable",
-          "botResponseRatio": "unavailable",
-          "humanResponseRatio": "unavailable",
-          "staleIssueRatio": 0,
-          "stalePrRatio": "unavailable",
-          "prReviewDepth": "unavailable",
-          "issuesClosedWithoutCommentRatio": "unavailable",
-          "openIssueCount": 1,
-          "openPullRequestCount": 0
-        }
-      },
-      "responsivenessMetrics": {
-        "issueFirstResponseMedianHours": "unavailable",
-        "issueFirstResponseP90Hours": "unavailable",
-        "prFirstReviewMedianHours": "unavailable",
-        "prFirstReviewP90Hours": "unavailable",
-        "issueResolutionMedianHours": "unavailable",
-        "issueResolutionP90Hours": "unavailable",
-        "prMergeMedianHours": "unavailable",
-        "prMergeP90Hours": "unavailable",
-        "issueResolutionRate": "unavailable",
-        "contributorResponseRate": "unavailable",
-        "botResponseRatio": "unavailable",
-        "humanResponseRatio": "unavailable",
-        "staleIssueRatio": 0,
-        "stalePrRatio": "unavailable",
-        "prReviewDepth": "unavailable",
-        "issuesClosedWithoutCommentRatio": "unavailable",
-        "openIssueCount": 1,
-        "openPullRequestCount": 0
-      },
-      "staleIssueRatio": 0,
-      "medianTimeToMergeHours": "unavailable",
-      "medianTimeToCloseHours": "unavailable",
-      "documentationResult": {
-        "fileChecks": [
-          {
-            "name": "readme",
-            "found": true,
-            "path": "README.md"
-          },
-          {
-            "name": "license",
-            "found": true,
-            "path": "LICENSE"
-          },
-          {
-            "name": "contributing",
-            "found": false,
-            "path": null
-          },
-          {
-            "name": "code_of_conduct",
-            "found": false,
-            "path": null
-          },
-          {
-            "name": "security",
-            "found": false,
-            "path": null
-          },
-          {
-            "name": "changelog",
-            "found": false,
-            "path": null
-          },
-          {
-            "name": "issue_templates",
-            "found": false,
-            "path": null
-          },
-          {
-            "name": "pull_request_template",
-            "found": false,
-            "path": null
-          },
-          {
-            "name": "governance",
-            "found": false,
-            "path": null
-          }
-        ],
-        "readmeSections": [
-          {
-            "name": "description",
-            "detected": true
-          },
-          {
-            "name": "installation",
-            "detected": true
-          },
-          {
-            "name": "usage",
-            "detected": true
-          },
-          {
-            "name": "contributing",
-            "detected": false
-          },
-          {
-            "name": "license",
-            "detected": false
-          }
-        ],
-        "readmeContent": "# llm-echo\n\n[![PyPI](https://img.shields.io/pypi/v/llm-echo.svg)](https://pypi.org/project/llm-echo/)\n[![Changelog](https://img.shields.io/github/v/release/simonw/llm-echo?include_prereleases&label=changelog)](https://github.com/simonw/llm-echo/releases)\n[![Tests](https://github.com/simonw/llm-echo/actions/workflows/test.yml/badge.svg)](https://github.com/simonw/llm-echo/actions/workflows/test.yml)\n[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/simonw/llm-echo/blob/main/LICENSE)\n\nDebug plugin for LLM. Adds a model which echos its input without hitting an API or executing a local LLM.\n\n## Installation\n\nInstall this plugin in the same environment as [LLM](https://llm.datasette.io/).\n```bash\nllm install llm-echo\n```\n## Usage\n\nThe plugin adds a `echo` model which simply echos the prompt details back to you as JSON.\n\n```bash\nllm -m echo prompt -s 'system prompt'\n```\nOutput:\n```json\n{\n  \"prompt\": \"prompt\",\n  \"system\": \"system prompt\",\n  \"attachments\": [],\n  \"stream\": true,\n  \"previous\": []\n}\n```\nYou can also add one example option like this:\n```bash\nllm -m echo prompt -o example_bool 1\n```\nOutput:\n```json\n{\n  \"prompt\": \"prompt\",\n  \"system\": \"\",\n  \"attachments\": [],\n  \"stream\": true,\n  \"previous\": [],\n  \"options\": {\n    \"example_bool\": true\n  }\n}\n```\n\n## Reasoning chunks\n\nPass `-o thinking 1` to make the model emit two canned reasoning chunks before its normal JSON output. Useful for testing code that handles streaming reasoning tokens or persists `ReasoningPart`s.\n\n```bash\nllm -m echo 'hello' -o thinking 1\n```\n\nThe two reasoning chunks are `\"First I consider the prompt, \"` and `\"then I decide what to say.\"`, followed by the usual echo JSON as a text part.\n\n## Tool calling\n\nYou can use `llm-echo` to test tool calling without needing to run prompts through an actual LLM. In your prompt, send something like this:\n\n```json\n{\n  \"prompt\": \"This will be treated as the prompt\",\n  \"tool_calls\": [\n    {\n      \"name\": \"example\",\n      \"arguments\": {\n        \"input\": \"Hello, world!\"\n      }\n    }\n  ]\n}\n```\nYou can assemble a test that looks like this:\n```python\ndef example(input: str) -> str:\n    return f\"Example output for {input}\"\n\nmodel = llm.get_model(\"echo\")\nchain_response = model.chain(\n    json.dumps(\n        {\n            \"tool_calls\": [\n                {\n                    \"name\": \"example\",\n                    \"arguments\": {\"input\": \"test\"},\n                }\n            ],\n            \"prompt\": \"prompt\",\n        }\n    ),\n    system=\"system\",\n    tools=[example],\n)\nresponses = list(chain_response.responses())\ntool_calls = responses[0].tool_calls()\nassert tool_calls == [\n    llm.ToolCall(name=\"example\", arguments={\"input\": \"test\"}, tool_call_id=None)\n]\nassert responses[1].prompt.tool_results == [\n    llm.models.ToolResult(\n        name=\"example\", output=\"Example output for test\", tool_call_id=None\n    )\n]\n```\nOr you can read the JSON from the last response in the chain:\n```python\nresponse_info = json.loads(responses[-1].text())\n```\nAnd run assertions against the `\"tool_results\"` key, which should look something like this:\n```python\n{\n  \"prompt\": \"\",\n  \"system\": \"\",\n  \"...\": \"...\",\n  \"tool_results\": [\n    {\n      \"name\": \"example\",\n      \"output\": \"Example output for test\",\n      \"tool_call_id\": null\n    }\n  ]\n}\n```\nTake a look at the [test suite for llm-tools-simpleeval](https://github.com/simonw/llm-tools-simpleeval/blob/main/tests/test_tools_simpleeval.py) for an example of how to write tests against tools.\n\n## echo-needs-key model\n\nThe plugin also provides an `echo-needs-key` model which behaves identically to `echo` but requires an API key. This is useful for testing key resolution logic in plugins like [datasette-llm](https://github.com/datasette/datasette-llm).\n\nThe resolved key is included in the JSON output:\n\n```bash\nLLM_ECHO_NEEDS_KEY_KEY=sk-test-123 llm -m echo-needs-key 'hello'\n```\nOutput:\n```json\n{\n  \"prompt\": \"hello\",\n  \"system\": \"\",\n  \"attachments\": [],\n  \"stream\": true,\n  \"previous\": [],\n  \"key\": \"sk-test-123\"\n}\n```\n\nThe model's `needs_key` is `\"echo-needs-key\"` and its `key_env_var` is `LLM_ECHO_NEEDS_KEY_KEY`.\n\n## Raw responses\n\nSometimes it can be useful to output an exact string, for example if you are testing the `--extract` option in LLM.\n\nIf your prompt is JSON with a `\"raw\"` key that string is the only thing that will be returned. For example:\n```json\n{\n  \"raw\": \"This is the raw response\"\n}\n```\nWill return:\n```\nThis is the raw response\n```\n\n## Development\n\nTo set up this plugin locally, first checkout the code. Then run the tests:\n```bash\ncd llm-echo\nuv run pytest\n```\n",
-        "adoptersFile": false,
-        "roadmapFile": false,
-        "maintainersFile": false,
-        "cocContent": null
-      },
-      "licensingResult": {
-        "license": {
-          "spdxId": "Apache-2.0",
-          "name": "Apache License 2.0",
-          "osiApproved": true,
-          "permissivenessTier": "Permissive"
-        },
-        "additionalLicenses": [],
-        "contributorAgreement": {
-          "signedOffByRatio": 0,
-          "dcoOrClaBot": false,
-          "enforced": false
-        }
-      },
-      "defaultBranchName": "main",
-      "topics": [],
-      "inclusiveNamingResult": {
-        "defaultBranchName": "main",
-        "branchCheck": {
-          "checkType": "branch",
-          "term": "main",
-          "passed": true,
-          "tier": null,
-          "severity": null,
-          "replacements": [],
-          "context": null
-        },
-        "metadataChecks": []
-      },
-      "issueFirstResponseTimestamps": "unavailable",
-      "issueCloseTimestamps": "unavailable",
-      "prMergeTimestamps": "unavailable",
-      "securityResult": {
-        "scorecard": "unavailable",
-        "directChecks": [
-          {
-            "name": "security_policy",
-            "detected": false,
-            "details": null
-          },
-          {
-            "name": "dependabot",
-            "detected": false,
-            "details": null
-          },
-          {
-            "name": "ci_cd",
-            "detected": true,
-            "details": "2 workflow file(s) detected"
-          },
-          {
-            "name": "branch_protection",
-            "detected": "unavailable",
-            "details": null
-          }
-        ],
-        "branchProtectionEnabled": "unavailable"
-      },
-      "hasIssueTemplates": false,
-      "hasPullRequestTemplate": false,
-      "hasFundingConfig": false,
-      "hasDiscussionsEnabled": false,
-      "discussionsCountWindow": "unavailable",
-      "discussionsWindowDays": "unavailable",
-      "discussionsRecentCreatedAt": "unavailable",
-      "discussionsRecentTruncated": false,
-      "releaseHealthResult": {
-        "totalReleasesAnalyzed": 9,
-        "totalTags": 9,
-        "releaseFrequency": 7,
-        "daysSinceLastRelease": 6,
-        "semverComplianceRatio": 0,
-        "releaseNotesQualityRatio": 0.6666666666666666,
-        "tagToReleaseRatio": 0,
-        "preReleaseRatio": 0.5555555555555556,
-        "versioningScheme": "unrecognized"
-      },
-      "goodFirstIssueCount": 0,
-      "devEnvironmentSetup": false,
-      "gitpodPresent": false,
-      "newContributorPRAcceptanceRate": "unavailable",
-      "ageInDays": 386.2198651041667,
-      "lifetimeCommits": 23,
-      "starsPerYear": 7.5656388083816255,
-      "contributorsPerYear": 0.9457048510477032,
-      "commitsPerMonthLifetime": 1.812600964508098,
-      "commitsPerMonthRecent12mo": 1.5844178082191782,
-      "growthTrajectory": "unavailable",
-      "missingFields": [
-        "maintainerCount",
-        "issueFirstResponseTimestamps",
-        "issueCloseTimestamps",
-        "prMergeTimestamps",
-        "newContributorPRAcceptanceRate"
-      ]
-    },
     {
       "repo": "ossf/security-insights-spec",
       "name": "security-insights",
       "description": "Machine-readable specification for the attestation of security-relevant data.",
       "createdAt": "2022-01-16T23:19:12Z",
-      "primaryLanguage": "Go",
-      "stars": 74,
-      "forks": 17,
+      "primaryLanguage": "JavaScript",
+      "stars": 82,
+      "forks": 22,
       "watchers": 14,
-      "commits30d": 7,
-      "commits90d": 11,
+      "commits30d": 10,
+      "commits90d": 26,
       "releases12mo": 1,
       "prsOpened90d": 0,
       "prsMerged90d": 0,
       "issuesOpen": 8,
       "issuesClosed90d": 0,
-      "uniqueCommitAuthors90d": 3,
-      "totalContributors": 13,
+      "uniqueCommitAuthors90d": 6,
+      "totalContributors": 17,
       "totalContributorsSource": "api",
       "maintainerCount": 1,
       "maintainerTokens": [
@@ -807,67 +28,71 @@
         }
       ],
       "commitCountsByAuthor": {
-        "login:eddie-knight": 7,
-        "login:jmeridth": 2,
-        "login:dependabot[bot]": 2
+        "login:vinayada1": 1,
+        "login:dependabot[bot]": 15,
+        "login:jmeridth": 7,
+        "login:mohammedmessaoudene-cmd": 1,
+        "login:milos-plavsic": 1,
+        "login:scovetta": 1
       },
       "commitCountsByExperimentalOrg": {
-        "probr": 7,
-        "composr": 7,
-        "lostechies": 2,
-        "alamocoders": 2,
-        "meridth": 2,
-        "argoproj": 2,
-        "ossf": 2,
-        "chainguard-dev": 2,
-        "wolfi-dev": 2,
-        "chainguard-images": 2,
-        "privateerproj": 2,
-        "devsanantonio": 2,
-        "octo-sts": 2,
-        "revanite-io": 2,
-        "cncf-maintainers": 2,
-        "driftlessaf": 2,
-        "Unaffiliated": 2
+        "lostechies": 7,
+        "alamocoders": 7,
+        "meridth": 7,
+        "argoproj": 7,
+        "finos": 7,
+        "ossf": 7,
+        "chainguard-dev": 7,
+        "wolfi-dev": 7,
+        "chainguard-images": 7,
+        "privateerproj": 7,
+        "devsanantonio": 7,
+        "security-slam": 7,
+        "octo-sts": 7,
+        "revanite-io": 7,
+        "cncf-maintainers": 7,
+        "driftlessaf": 7,
+        "gemaraproj": 7,
+        "carenavigationadvocates": 7,
+        "microsoft": 1,
+        "Unaffiliated": 18
       },
       "experimentalAttributedAuthors90d": 2,
-      "experimentalUnattributedAuthors90d": 1,
+      "experimentalUnattributedAuthors90d": 4,
       "contributorMetricsByWindow": {
         "30": {
-          "uniqueCommitAuthors": 2,
+          "uniqueCommitAuthors": 3,
           "commitCountsByAuthor": {
-            "login:eddie-knight": 6,
-            "login:jmeridth": 1
+            "login:vinayada1": 1,
+            "login:dependabot[bot]": 7,
+            "login:jmeridth": 2
           },
-          "repeatContributors": 1,
-          "newContributors": 0,
+          "repeatContributors": 2,
+          "newContributors": 1,
           "commitCountsByExperimentalOrg": {
-            "probr": 6,
-            "composr": 6,
-            "lostechies": 1,
-            "alamocoders": 1,
-            "meridth": 1,
-            "argoproj": 1,
-            "ossf": 1,
-            "chainguard-dev": 1,
-            "wolfi-dev": 1,
-            "chainguard-images": 1,
-            "privateerproj": 1,
-            "devsanantonio": 1,
-            "octo-sts": 1,
-            "revanite-io": 1,
-            "cncf-maintainers": 1,
-            "driftlessaf": 1
+            "lostechies": 2,
+            "alamocoders": 2,
+            "meridth": 2,
+            "argoproj": 2,
+            "finos": 2,
+            "ossf": 2,
+            "chainguard-dev": 2,
+            "wolfi-dev": 2,
+            "chainguard-images": 2,
+            "privateerproj": 2,
+            "devsanantonio": 2,
+            "security-slam": 2,
+            "octo-sts": 2,
+            "revanite-io": 2,
+            "cncf-maintainers": 2,
+            "driftlessaf": 2,
+            "gemaraproj": 2,
+            "carenavigationadvocates": 2,
+            "Unaffiliated": 8
           },
-          "experimentalAttributedAuthors": 2,
-          "experimentalUnattributedAuthors": 0,
+          "experimentalAttributedAuthors": 1,
+          "experimentalUnattributedAuthors": 2,
           "commitAuthorsByExperimentalOrg": {
-            "probr": [
-              "login:eddie-knight"
-            ],
-            "composr": [
-              "login:eddie-knight"
-            ],
             "lostechies": [
               "login:jmeridth"
             ],
@@ -878,6 +103,9 @@
               "login:jmeridth"
             ],
             "argoproj": [
+              "login:jmeridth"
+            ],
+            "finos": [
               "login:jmeridth"
             ],
             "ossf": [
@@ -898,6 +126,9 @@
             "devsanantonio": [
               "login:jmeridth"
             ],
+            "security-slam": [
+              "login:jmeridth"
+            ],
             "octo-sts": [
               "login:jmeridth"
             ],
@@ -909,58 +140,58 @@
             ],
             "driftlessaf": [
               "login:jmeridth"
+            ],
+            "gemaraproj": [
+              "login:jmeridth"
+            ],
+            "carenavigationadvocates": [
+              "login:jmeridth"
             ]
           },
           "commitCountsByEmailDomain": {
-            "linux.com": 6,
-            "gmail.com": 1
+            "gmail.com": 2
           },
           "commitAuthorsByEmailDomain": {
-            "linux.com": [
-              "login:eddie-knight"
-            ],
             "gmail.com": [
               "login:jmeridth"
             ]
           }
         },
         "60": {
-          "uniqueCommitAuthors": 3,
+          "uniqueCommitAuthors": 5,
           "commitCountsByAuthor": {
-            "login:eddie-knight": 6,
-            "login:jmeridth": 2,
-            "login:dependabot[bot]": 2
+            "login:vinayada1": 1,
+            "login:dependabot[bot]": 11,
+            "login:jmeridth": 4,
+            "login:mohammedmessaoudene-cmd": 1,
+            "login:milos-plavsic": 1
           },
-          "repeatContributors": 3,
-          "newContributors": 0,
+          "repeatContributors": 2,
+          "newContributors": 3,
           "commitCountsByExperimentalOrg": {
-            "probr": 6,
-            "composr": 6,
-            "lostechies": 2,
-            "alamocoders": 2,
-            "meridth": 2,
-            "argoproj": 2,
-            "ossf": 2,
-            "chainguard-dev": 2,
-            "wolfi-dev": 2,
-            "chainguard-images": 2,
-            "privateerproj": 2,
-            "devsanantonio": 2,
-            "octo-sts": 2,
-            "revanite-io": 2,
-            "cncf-maintainers": 2,
-            "driftlessaf": 2,
-            "Unaffiliated": 2
+            "lostechies": 4,
+            "alamocoders": 4,
+            "meridth": 4,
+            "argoproj": 4,
+            "finos": 4,
+            "ossf": 4,
+            "chainguard-dev": 4,
+            "wolfi-dev": 4,
+            "chainguard-images": 4,
+            "privateerproj": 4,
+            "devsanantonio": 4,
+            "security-slam": 4,
+            "octo-sts": 4,
+            "revanite-io": 4,
+            "cncf-maintainers": 4,
+            "driftlessaf": 4,
+            "gemaraproj": 4,
+            "carenavigationadvocates": 4,
+            "Unaffiliated": 14
           },
-          "experimentalAttributedAuthors": 2,
-          "experimentalUnattributedAuthors": 1,
+          "experimentalAttributedAuthors": 1,
+          "experimentalUnattributedAuthors": 4,
           "commitAuthorsByExperimentalOrg": {
-            "probr": [
-              "login:eddie-knight"
-            ],
-            "composr": [
-              "login:eddie-knight"
-            ],
             "lostechies": [
               "login:jmeridth"
             ],
@@ -971,6 +202,9 @@
               "login:jmeridth"
             ],
             "argoproj": [
+              "login:jmeridth"
+            ],
+            "finos": [
               "login:jmeridth"
             ],
             "ossf": [
@@ -991,6 +225,9 @@
             "devsanantonio": [
               "login:jmeridth"
             ],
+            "security-slam": [
+              "login:jmeridth"
+            ],
             "octo-sts": [
               "login:jmeridth"
             ],
@@ -1002,58 +239,64 @@
             ],
             "driftlessaf": [
               "login:jmeridth"
+            ],
+            "gemaraproj": [
+              "login:jmeridth"
+            ],
+            "carenavigationadvocates": [
+              "login:jmeridth"
             ]
           },
           "commitCountsByEmailDomain": {
-            "linux.com": 6,
-            "gmail.com": 2
+            "gmail.com": 4,
+            "googlemail.com": 1
           },
           "commitAuthorsByEmailDomain": {
-            "linux.com": [
-              "login:eddie-knight"
-            ],
             "gmail.com": [
               "login:jmeridth"
+            ],
+            "googlemail.com": [
+              "login:milos-plavsic"
             ]
           }
         },
         "90": {
-          "uniqueCommitAuthors": 3,
+          "uniqueCommitAuthors": 6,
           "commitCountsByAuthor": {
-            "login:eddie-knight": 7,
-            "login:jmeridth": 2,
-            "login:dependabot[bot]": 2
+            "login:vinayada1": 1,
+            "login:dependabot[bot]": 15,
+            "login:jmeridth": 7,
+            "login:mohammedmessaoudene-cmd": 1,
+            "login:milos-plavsic": 1,
+            "login:scovetta": 1
           },
-          "repeatContributors": 3,
-          "newContributors": 0,
+          "repeatContributors": 2,
+          "newContributors": 3,
           "commitCountsByExperimentalOrg": {
-            "probr": 7,
-            "composr": 7,
-            "lostechies": 2,
-            "alamocoders": 2,
-            "meridth": 2,
-            "argoproj": 2,
-            "ossf": 2,
-            "chainguard-dev": 2,
-            "wolfi-dev": 2,
-            "chainguard-images": 2,
-            "privateerproj": 2,
-            "devsanantonio": 2,
-            "octo-sts": 2,
-            "revanite-io": 2,
-            "cncf-maintainers": 2,
-            "driftlessaf": 2,
-            "Unaffiliated": 2
+            "lostechies": 7,
+            "alamocoders": 7,
+            "meridth": 7,
+            "argoproj": 7,
+            "finos": 7,
+            "ossf": 7,
+            "chainguard-dev": 7,
+            "wolfi-dev": 7,
+            "chainguard-images": 7,
+            "privateerproj": 7,
+            "devsanantonio": 7,
+            "security-slam": 7,
+            "octo-sts": 7,
+            "revanite-io": 7,
+            "cncf-maintainers": 7,
+            "driftlessaf": 7,
+            "gemaraproj": 7,
+            "carenavigationadvocates": 7,
+            "microsoft": 1,
+            "Unaffiliated": 18
           },
           "experimentalAttributedAuthors": 2,
-          "experimentalUnattributedAuthors": 1,
+          "experimentalUnattributedAuthors": 4,
           "commitAuthorsByExperimentalOrg": {
-            "probr": [
-              "login:eddie-knight"
-            ],
-            "composr": [
-              "login:eddie-knight"
-            ],
             "lostechies": [
               "login:jmeridth"
             ],
@@ -1064,6 +307,9 @@
               "login:jmeridth"
             ],
             "argoproj": [
+              "login:jmeridth"
+            ],
+            "finos": [
               "login:jmeridth"
             ],
             "ossf": [
@@ -1084,6 +330,9 @@
             "devsanantonio": [
               "login:jmeridth"
             ],
+            "security-slam": [
+              "login:jmeridth"
+            ],
             "octo-sts": [
               "login:jmeridth"
             ],
@@ -1095,60 +344,71 @@
             ],
             "driftlessaf": [
               "login:jmeridth"
+            ],
+            "gemaraproj": [
+              "login:jmeridth"
+            ],
+            "carenavigationadvocates": [
+              "login:jmeridth"
+            ],
+            "microsoft": [
+              "login:scovetta"
             ]
           },
           "commitCountsByEmailDomain": {
-            "linux.com": 7,
-            "gmail.com": 2
+            "gmail.com": 8,
+            "googlemail.com": 1
           },
           "commitAuthorsByEmailDomain": {
-            "linux.com": [
-              "login:eddie-knight"
-            ],
             "gmail.com": [
-              "login:jmeridth"
+              "login:jmeridth",
+              "login:scovetta"
+            ],
+            "googlemail.com": [
+              "login:milos-plavsic"
             ]
           }
         },
         "180": {
-          "uniqueCommitAuthors": 4,
+          "uniqueCommitAuthors": 7,
           "commitCountsByAuthor": {
-            "login:eddie-knight": 19,
-            "login:jmeridth": 2,
-            "login:dependabot[bot]": 3,
-            "login:scovetta": 1
+            "login:vinayada1": 1,
+            "login:dependabot[bot]": 17,
+            "login:jmeridth": 7,
+            "login:mohammedmessaoudene-cmd": 1,
+            "login:milos-plavsic": 1,
+            "login:scovetta": 1,
+            "login:eddie-knight": 7
           },
           "repeatContributors": 3,
-          "newContributors": 2,
+          "newContributors": 3,
           "commitCountsByExperimentalOrg": {
-            "probr": 19,
-            "composr": 19,
-            "lostechies": 2,
-            "alamocoders": 2,
-            "meridth": 2,
-            "argoproj": 2,
-            "ossf": 2,
-            "chainguard-dev": 2,
-            "wolfi-dev": 2,
-            "chainguard-images": 2,
-            "privateerproj": 2,
-            "devsanantonio": 2,
-            "octo-sts": 2,
-            "revanite-io": 2,
-            "cncf-maintainers": 2,
-            "driftlessaf": 2,
+            "lostechies": 7,
+            "alamocoders": 7,
+            "meridth": 7,
+            "argoproj": 7,
+            "finos": 7,
+            "ossf": 7,
+            "chainguard-dev": 7,
+            "wolfi-dev": 7,
+            "chainguard-images": 7,
+            "privateerproj": 7,
+            "devsanantonio": 7,
+            "security-slam": 7,
+            "octo-sts": 7,
+            "revanite-io": 7,
+            "cncf-maintainers": 7,
+            "driftlessaf": 7,
+            "gemaraproj": 7,
+            "carenavigationadvocates": 7,
             "microsoft": 1,
-            "Unaffiliated": 3
+            "probr": 7,
+            "composr": 7,
+            "Unaffiliated": 20
           },
           "experimentalAttributedAuthors": 3,
-          "experimentalUnattributedAuthors": 1,
+          "experimentalUnattributedAuthors": 4,
           "commitAuthorsByExperimentalOrg": {
-            "probr": [
-              "login:eddie-knight"
-            ],
-            "composr": [
-              "login:eddie-knight"
-            ],
             "lostechies": [
               "login:jmeridth"
             ],
@@ -1159,6 +419,9 @@
               "login:jmeridth"
             ],
             "argoproj": [
+              "login:jmeridth"
+            ],
+            "finos": [
               "login:jmeridth"
             ],
             "ossf": [
@@ -1179,6 +442,9 @@
             "devsanantonio": [
               "login:jmeridth"
             ],
+            "security-slam": [
+              "login:jmeridth"
+            ],
             "octo-sts": [
               "login:jmeridth"
             ],
@@ -1191,76 +457,80 @@
             "driftlessaf": [
               "login:jmeridth"
             ],
+            "gemaraproj": [
+              "login:jmeridth"
+            ],
+            "carenavigationadvocates": [
+              "login:jmeridth"
+            ],
             "microsoft": [
               "login:scovetta"
+            ],
+            "probr": [
+              "login:eddie-knight"
+            ],
+            "composr": [
+              "login:eddie-knight"
             ]
           },
           "commitCountsByEmailDomain": {
-            "linux.com": 19,
-            "gmail.com": 3
+            "gmail.com": 8,
+            "googlemail.com": 1,
+            "linux.com": 7
           },
           "commitAuthorsByEmailDomain": {
-            "linux.com": [
-              "login:eddie-knight"
-            ],
             "gmail.com": [
               "login:jmeridth",
               "login:scovetta"
+            ],
+            "googlemail.com": [
+              "login:milos-plavsic"
+            ],
+            "linux.com": [
+              "login:eddie-knight"
             ]
           }
         },
         "365": {
-          "uniqueCommitAuthors": 6,
+          "uniqueCommitAuthors": 7,
           "commitCountsByAuthor": {
-            "login:eddie-knight": 21,
-            "login:jmeridth": 3,
-            "login:dependabot[bot]": 3,
-            "login:scovetta": 1,
-            "login:trumant": 3,
-            "login:myitcv": 1
+            "login:vinayada1": 1,
+            "login:dependabot[bot]": 20,
+            "login:jmeridth": 9,
+            "login:mohammedmessaoudene-cmd": 1,
+            "login:milos-plavsic": 1,
+            "login:scovetta": 2,
+            "login:eddie-knight": 20
           },
           "repeatContributors": 4,
-          "newContributors": 6,
+          "newContributors": 7,
           "commitCountsByExperimentalOrg": {
-            "probr": 21,
-            "composr": 21,
-            "lostechies": 3,
-            "alamocoders": 3,
-            "meridth": 3,
-            "argoproj": 3,
-            "ossf": 3,
-            "chainguard-dev": 3,
-            "wolfi-dev": 3,
-            "chainguard-images": 3,
-            "privateerproj": 3,
-            "devsanantonio": 3,
-            "octo-sts": 3,
-            "revanite-io": 3,
-            "cncf-maintainers": 3,
-            "driftlessaf": 3,
-            "microsoft": 1,
-            "golang": 1,
-            "modelogiq": 1,
-            "gopherjs": 1,
-            "plan9-for-vimspace": 1,
-            "go-modules-by-example": 1,
-            "govim": 1,
-            "cue-sh": 1,
-            "cue-lang": 1,
-            "cue-labs": 1,
-            "cue-exp": 1,
-            "cue-mv": 1,
-            "Unaffiliated": 6
+            "lostechies": 9,
+            "alamocoders": 9,
+            "meridth": 9,
+            "argoproj": 9,
+            "finos": 9,
+            "ossf": 9,
+            "chainguard-dev": 9,
+            "wolfi-dev": 9,
+            "chainguard-images": 9,
+            "privateerproj": 9,
+            "devsanantonio": 9,
+            "security-slam": 9,
+            "octo-sts": 9,
+            "revanite-io": 9,
+            "cncf-maintainers": 9,
+            "driftlessaf": 9,
+            "gemaraproj": 9,
+            "carenavigationadvocates": 9,
+            "microsoft": 2,
+            "probr": 20,
+            "composr": 20,
+            "Unaffiliated": 23
           },
-          "experimentalAttributedAuthors": 4,
-          "experimentalUnattributedAuthors": 2,
+          "experimentalAttributedAuthors": 3,
+          "experimentalUnattributedAuthors": 4,
           "commitAuthorsByExperimentalOrg": {
-            "probr": [
-              "login:eddie-knight"
-            ],
-            "composr": [
-              "login:eddie-knight"
-            ],
             "lostechies": [
               "login:jmeridth"
             ],
@@ -1271,6 +541,9 @@
               "login:jmeridth"
             ],
             "argoproj": [
+              "login:jmeridth"
+            ],
+            "finos": [
               "login:jmeridth"
             ],
             "ossf": [
@@ -1291,6 +564,9 @@
             "devsanantonio": [
               "login:jmeridth"
             ],
+            "security-slam": [
+              "login:jmeridth"
+            ],
             "octo-sts": [
               "login:jmeridth"
             ],
@@ -1303,76 +579,43 @@
             "driftlessaf": [
               "login:jmeridth"
             ],
+            "gemaraproj": [
+              "login:jmeridth"
+            ],
+            "carenavigationadvocates": [
+              "login:jmeridth"
+            ],
             "microsoft": [
               "login:scovetta"
             ],
-            "golang": [
-              "login:myitcv"
+            "probr": [
+              "login:eddie-knight"
             ],
-            "modelogiq": [
-              "login:myitcv"
-            ],
-            "gopherjs": [
-              "login:myitcv"
-            ],
-            "plan9-for-vimspace": [
-              "login:myitcv"
-            ],
-            "go-modules-by-example": [
-              "login:myitcv"
-            ],
-            "govim": [
-              "login:myitcv"
-            ],
-            "cue-sh": [
-              "login:myitcv"
-            ],
-            "cue-lang": [
-              "login:myitcv"
-            ],
-            "cue-labs": [
-              "login:myitcv"
-            ],
-            "cue-exp": [
-              "login:myitcv"
-            ],
-            "cue-mv": [
-              "login:myitcv"
+            "composr": [
+              "login:eddie-knight"
             ]
           },
           "commitCountsByEmailDomain": {
-            "linux.com": 21,
-            "gmail.com": 7,
-            "myitcv.org.uk": 1
+            "gmail.com": 11,
+            "googlemail.com": 1,
+            "linux.com": 20
           },
           "commitAuthorsByEmailDomain": {
-            "linux.com": [
-              "login:eddie-knight"
-            ],
             "gmail.com": [
               "login:jmeridth",
-              "login:scovetta",
-              "login:trumant"
+              "login:scovetta"
             ],
-            "myitcv.org.uk": [
-              "login:myitcv"
+            "googlemail.com": [
+              "login:milos-plavsic"
+            ],
+            "linux.com": [
+              "login:eddie-knight"
             ]
           }
         }
       },
       "activityMetricsByWindow": {
         "30": {
-          "commits": 7,
-          "prsOpened": 0,
-          "prsMerged": 0,
-          "issuesOpened": 0,
-          "issuesClosed": 0,
-          "releases": 0,
-          "staleIssueRatio": 0,
-          "medianTimeToMergeHours": "unavailable",
-          "medianTimeToCloseHours": "unavailable"
-        },
-        "60": {
           "commits": 10,
           "prsOpened": 0,
           "prsMerged": 0,
@@ -1383,8 +626,19 @@
           "medianTimeToMergeHours": "unavailable",
           "medianTimeToCloseHours": "unavailable"
         },
+        "60": {
+          "commits": 18,
+          "prsOpened": 0,
+          "prsMerged": 0,
+          "issuesOpened": 0,
+          "issuesClosed": 0,
+          "releases": 0,
+          "staleIssueRatio": 0,
+          "medianTimeToMergeHours": "unavailable",
+          "medianTimeToCloseHours": "unavailable"
+        },
         "90": {
-          "commits": 11,
+          "commits": 26,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -1395,18 +649,18 @@
           "medianTimeToCloseHours": "unavailable"
         },
         "180": {
-          "commits": 25,
+          "commits": 35,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
           "issuesClosed": 0,
-          "releases": 1,
+          "releases": 0,
           "staleIssueRatio": 0,
           "medianTimeToMergeHours": "unavailable",
           "medianTimeToCloseHours": "unavailable"
         },
         "365": {
-          "commits": 32,
+          "commits": 54,
           "prsOpened": 0,
           "prsMerged": 0,
           "issuesOpened": 0,
@@ -1422,29 +676,29 @@
           "totalWeeks": 5,
           "weeklyCommitCounts": [
             1,
-            0,
-            0,
+            2,
             4,
-            2
+            3,
+            0
           ],
-          "activeWeeksRatio": 0.6,
-          "commitRegularity": 1.0690449676496976,
-          "longestGapDays": 21,
+          "activeWeeksRatio": 0.8,
+          "commitRegularity": 0.7071067811865476,
+          "longestGapDays": 7,
           "weekendToWeekdayRatio": 0,
           "weekendCommitCount": 0,
-          "weekdayCommitCount": 7,
+          "weekdayCommitCount": 10,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
+              "currentPeriodCommitCount": 10,
+              "previousPeriodCommitCount": 8,
+              "delta": 0.25,
               "direction": "accelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 3,
+              "previousPeriodCommitCount": 4,
+              "delta": -0.25,
+              "direction": "decelerating"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1457,34 +711,34 @@
         "60": {
           "totalWeeks": 9,
           "weeklyCommitCounts": [
-            0,
             2,
-            0,
+            2,
+            2,
+            2,
             1,
-            0,
-            1,
-            0,
-            0,
-            6
+            2,
+            2,
+            4,
+            1
           ],
-          "activeWeeksRatio": 0.4444444444444444,
-          "commitRegularity": 1.6673332000533068,
-          "longestGapDays": 21,
-          "weekendToWeekdayRatio": 0,
-          "weekendCommitCount": 0,
-          "weekdayCommitCount": 10,
+          "activeWeeksRatio": 1,
+          "commitRegularity": 0.408248290463863,
+          "longestGapDays": 11,
+          "weekendToWeekdayRatio": 0.058823529411764705,
+          "weekendCommitCount": 1,
+          "weekdayCommitCount": 17,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
+              "currentPeriodCommitCount": 10,
+              "previousPeriodCommitCount": 8,
+              "delta": 0.25,
               "direction": "accelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 3,
+              "previousPeriodCommitCount": 4,
+              "delta": -0.25,
+              "direction": "decelerating"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1497,38 +751,38 @@
         "90": {
           "totalWeeks": 13,
           "weeklyCommitCounts": [
-            0,
-            0,
             1,
             0,
             0,
+            4,
+            3,
+            4,
+            0,
+            4,
+            0,
+            1,
             2,
-            0,
-            0,
-            1,
-            1,
-            0,
-            0,
-            6
+            4,
+            3
           ],
-          "activeWeeksRatio": 0.38461538461538464,
-          "commitRegularity": 1.902586321496032,
-          "longestGapDays": 23,
-          "weekendToWeekdayRatio": 0,
-          "weekendCommitCount": 0,
-          "weekdayCommitCount": 11,
+          "activeWeeksRatio": 0.6923076923076923,
+          "commitRegularity": 0.8320502943378437,
+          "longestGapDays": 15,
+          "weekendToWeekdayRatio": 0.04,
+          "weekendCommitCount": 1,
+          "weekdayCommitCount": 25,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
+              "currentPeriodCommitCount": 10,
+              "previousPeriodCommitCount": 8,
+              "delta": 0.25,
               "direction": "accelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 3,
+              "previousPeriodCommitCount": 4,
+              "delta": -0.25,
+              "direction": "decelerating"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1543,49 +797,49 @@
           "weeklyCommitCounts": [
             0,
             0,
-            0,
-            0,
-            0,
-            0,
             6,
-            4,
             0,
             0,
             0,
-            4,
+            0,
             0,
             0,
             1,
+            1,
+            1,
             0,
+            1,
             0,
-            0,
+            4,
+            3,
+            2,
+            2,
+            2,
             2,
             0,
-            0,
-            1,
-            1,
-            0,
-            0,
-            6
+            3,
+            2,
+            2,
+            3
           ],
-          "activeWeeksRatio": 0.3076923076923077,
-          "commitRegularity": 1.9019989484749982,
-          "longestGapDays": 26,
-          "weekendToWeekdayRatio": 0.9230769230769231,
-          "weekendCommitCount": 12,
-          "weekdayCommitCount": 13,
+          "activeWeeksRatio": 0.5769230769230769,
+          "commitRegularity": 1.1273954089685063,
+          "longestGapDays": 44,
+          "weekendToWeekdayRatio": 0.029411764705882353,
+          "weekendCommitCount": 1,
+          "weekdayCommitCount": 34,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
+              "currentPeriodCommitCount": 10,
+              "previousPeriodCommitCount": 8,
+              "delta": 0.25,
               "direction": "accelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 3,
+              "previousPeriodCommitCount": 4,
+              "delta": -0.25,
+              "direction": "decelerating"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1598,29 +852,6 @@
         "365": {
           "totalWeeks": 53,
           "weeklyCommitCounts": [
-            0,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0,
-            3,
-            0,
-            2,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
             0,
             0,
             0,
@@ -1650,26 +881,49 @@
             0,
             0,
             4,
-            2
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            4,
+            3,
+            4,
+            0,
+            4,
+            0,
+            1,
+            2,
+            4,
+            3,
+            0
           ],
-          "activeWeeksRatio": 0.2830188679245283,
-          "commitRegularity": 1.9660199325032293,
-          "longestGapDays": 101,
-          "weekendToWeekdayRatio": 0.7777777777777778,
-          "weekendCommitCount": 14,
-          "weekdayCommitCount": 18,
+          "activeWeeksRatio": 0.4339622641509434,
+          "commitRegularity": 1.4456310415758327,
+          "longestGapDays": 44,
+          "weekendToWeekdayRatio": 0.3170731707317073,
+          "weekendCommitCount": 13,
+          "weekdayCommitCount": 41,
           "trendComparisons": {
             "month": {
-              "currentPeriodCommitCount": 7,
-              "previousPeriodCommitCount": 3,
-              "delta": 1.3333333333333333,
+              "currentPeriodCommitCount": 10,
+              "previousPeriodCommitCount": 8,
+              "delta": 0.25,
               "direction": "accelerating"
             },
             "week": {
-              "currentPeriodCommitCount": 6,
-              "previousPeriodCommitCount": 0,
-              "delta": 1,
-              "direction": "accelerating"
+              "currentPeriodCommitCount": 3,
+              "previousPeriodCommitCount": 4,
+              "delta": -0.25,
+              "direction": "decelerating"
             },
             "day": {
               "currentPeriodCommitCount": 0,
@@ -1681,6 +935,35 @@
         }
       },
       "commitTimestamps365d": [
+        "2026-10-15T14:59:44Z",
+        "2026-10-14T19:21:19Z",
+        "2026-10-14T19:20:53Z",
+        "2026-10-08T23:46:44Z",
+        "2026-10-08T23:42:14Z",
+        "2026-10-06T19:31:34Z",
+        "2026-10-06T19:31:14Z",
+        "2026-09-30T04:10:34Z",
+        "2026-09-30T04:10:11Z",
+        "2026-09-23T12:37:21Z",
+        "2026-09-12T04:23:46Z",
+        "2026-09-10T14:32:33Z",
+        "2026-09-09T02:32:50Z",
+        "2026-09-08T21:32:30Z",
+        "2026-08-28T23:29:02Z",
+        "2026-08-28T22:16:49Z",
+        "2026-08-25T18:09:41Z",
+        "2026-08-25T18:09:22Z",
+        "2026-08-19T02:17:10Z",
+        "2026-08-19T02:16:48Z",
+        "2026-08-18T22:02:52Z",
+        "2026-08-11T19:23:19Z",
+        "2026-08-11T19:22:36Z",
+        "2026-08-11T19:22:05Z",
+        "2026-08-11T16:38:07Z",
+        "2026-07-27T16:39:14Z",
+        "2026-07-15T01:51:13Z",
+        "2026-07-03T16:19:43Z",
+        "2026-06-24T15:38:12Z",
         "2026-05-11T07:55:25Z",
         "2026-05-11T07:55:07Z",
         "2026-05-08T20:46:18Z",
@@ -1705,14 +988,7 @@
         "2025-12-27T03:04:15Z",
         "2025-12-27T02:46:47Z",
         "2025-12-27T02:38:19Z",
-        "2025-12-27T02:27:15Z",
-        "2025-09-16T20:50:15Z",
-        "2025-07-19T16:36:31Z",
-        "2025-07-19T16:19:55Z",
-        "2025-07-04T15:21:47Z",
-        "2025-07-03T22:31:59Z",
-        "2025-07-02T01:35:16Z",
-        "2025-06-18T12:13:46Z"
+        "2025-12-27T02:27:15Z"
       ],
       "responsivenessMetricsByWindow": {
         "30": {
@@ -1733,7 +1009,7 @@
           "prReviewDepth": "unavailable",
           "issuesClosedWithoutCommentRatio": "unavailable",
           "openIssueCount": 8,
-          "openPullRequestCount": 2
+          "openPullRequestCount": 1
         },
         "60": {
           "issueFirstResponseMedianHours": "unavailable",
@@ -1753,7 +1029,7 @@
           "prReviewDepth": "unavailable",
           "issuesClosedWithoutCommentRatio": "unavailable",
           "openIssueCount": 8,
-          "openPullRequestCount": 2
+          "openPullRequestCount": 1
         },
         "90": {
           "issueFirstResponseMedianHours": "unavailable",
@@ -1773,7 +1049,7 @@
           "prReviewDepth": "unavailable",
           "issuesClosedWithoutCommentRatio": "unavailable",
           "openIssueCount": 8,
-          "openPullRequestCount": 2
+          "openPullRequestCount": 1
         },
         "180": {
           "issueFirstResponseMedianHours": "unavailable",
@@ -1793,7 +1069,7 @@
           "prReviewDepth": "unavailable",
           "issuesClosedWithoutCommentRatio": "unavailable",
           "openIssueCount": 8,
-          "openPullRequestCount": 2
+          "openPullRequestCount": 1
         },
         "365": {
           "issueFirstResponseMedianHours": "unavailable",
@@ -1813,7 +1089,7 @@
           "prReviewDepth": "unavailable",
           "issuesClosedWithoutCommentRatio": "unavailable",
           "openIssueCount": 8,
-          "openPullRequestCount": 2
+          "openPullRequestCount": 1
         }
       },
       "responsivenessMetrics": {
@@ -1834,7 +1110,7 @@
         "prReviewDepth": "unavailable",
         "issuesClosedWithoutCommentRatio": "unavailable",
         "openIssueCount": 8,
-        "openPullRequestCount": 2
+        "openPullRequestCount": 1
       },
       "staleIssueRatio": 0,
       "medianTimeToMergeHours": "unavailable",
@@ -1909,7 +1185,7 @@
             "detected": false
           }
         ],
-        "readmeContent": "# Security Insights Specification\n[<img src=\"https://img.shields.io/badge/slack-@openssf/security%20insights-green.svg?logo=slack\">](https://openssf.slack.com/messages/security_insights/)\n\n<img align=\"right\" src=\"docs/assets/security-insights-logo.png\" alt=\"Security Insights Logo\" width=\"200\">\n\nSecurity Insights is a standardized YAML format that lets open source projects self-report their security practices, policies, and processes in a machine-processable way. It fills the gap between simplified solutions like `SECURITY.md` and comprehensive automated solutions like SBOMs — recording elements that must be self-asserted by the project itself.\n\nIt's intended to be useful for:\n\n- **Project maintainers** communicating their security posture clearly\n- **Security researchers** finding how to report vulnerabilities\n- **End users and organizations** evaluating the security of dependencies\n- **Automated tools** parsing and analyzing security information consistently\n\n## Quick Start\n\n### For Project Maintainers\n\nThe [Get Started guide](https://security-insights.openssf.org/get-started.html) covers single-repo and multi-repo layouts, copyable examples, and the validation command. A single-repository project typically takes about 30 minutes from first read to a validated file.\n\n### For Consumers\n\nLook for `security-insights.yml` at the repository root or in the source-forge directory (`.github/`, `.gitlab/`, etc.). Treat the file as describing the project at the commit or release artifact it ships with. For multi-repository projects, a child file's `header.project-si-source` points at the raw URL of the parent file containing the `project:` section; consumers should fetch and merge that data.\n\n## Documentation\n\n- **[Get Started](https://security-insights.openssf.org/get-started.html)** - Step-by-step guide for producing a valid file\n- **[Schema Documentation](docs/schema.md)** - Complete reference for all fields in the specification\n- **[Examples](https://github.com/ossf/security-insights/tree/main/examples)** - Starting points for each layout:\n  - [example-minimum.yml](https://github.com/ossf/security-insights/blob/main/examples/example-minimum.yml) - Single repository, minimal required fields\n  - [example-full.yml](https://github.com/ossf/security-insights/blob/main/examples/example-full.yml) - Single repository, all possible fields\n  - [example-multi-repository-project.yml](https://github.com/ossf/security-insights/blob/main/examples/example-multi-repository-project.yml) - Multi-repo: parent file holding the `project:` section\n  - [example-multi-repository-project-reuse.yml](https://github.com/ossf/security-insights/blob/main/examples/example-multi-repository-project-reuse.yml) - Multi-repo: child file referencing the parent\n\n## Releases\n\nThe repository's `main` branch may diverge from the latest tagged release as work lands toward the next version; treat the difference as a non-authoritative preview. The current authoritative schema is published with the [latest release](https://github.com/ossf/security-insights/releases/latest).\n\n## Tooling Ecosystem\n\nAs the adoption of Security Insights grows, so does the opportunity to automatically ingest it:\n\n- **[si-tooling](https://github.com/ossf/si-tooling)** - Community-maintained tools for reading, validating and manipulating Security Insights data\n- **[CLOMonitor](https://clomonitor.io/)** - The Linux Foundation's tool that parses Security Insights files to determine whether projects have reported on select security factors\n- **[LFX Insights](https://insights.lfx.linuxfoundation.org/)** - The Linux Foundation's tool that reads a project's Security Insights file to evaluate security hygiene against the OSPS Baseline assessment requirements\n- **[OSPS Baseline Scanner](https://github.com/marketplace/actions/open-source-project-security-baseline-scanner)** - GitHub Action that runs OSPS Baseline assessments on individual repositories using the same scanner as LFX Insights\n\n## Contributing\n\nThe specification is maintained by [the Security Insights maintainers](https://github.com/ossf/security-insights/blob/main/docs/MAINTAINERS.md) per the [governance documentation](https://github.com/ossf/security-insights/blob/main/docs/GOVERNANCE.md). Discussion happens in [GitHub Issues](https://github.com/ossf/security-insights/issues) and the OpenSSF Slack [#security_insights](https://openssf.slack.com/messages/security_insights/) channel; spec changes follow the [Security Insights Enhancement Proposal](https://github.com/ossf/security-insights/blob/main/docs/GOVERNANCE.md#security-insights-enhancement-proposals) process.\n\n",
+        "readmeContent": "# Security Insights Specification\n[<img src=\"https://img.shields.io/badge/slack-@openssf/security%20insights-green.svg?logo=slack\">](https://openssf.slack.com/messages/security_insights/)\n\n<img align=\"right\" src=\"docs/assets/security-insights-logo.png\" alt=\"Security Insights Logo\" width=\"200\">\n\nSecurity Insights is a single YAML file where a project reports its security practices in a standard, machine-readable format.\n\nIt fills the gap between a plain-text `SECURITY.md` and an SBOM (a machine-readable list of everything inside your software). Some security facts can only be reported by maintainers themselves. This file is where they go.\n\n## Who is it for?\n\n- **Project maintainers** — communicate your security posture clearly\n- **Security researchers** — learn how to report vulnerabilities\n- **End users and organizations** — evaluate the security of dependencies\n- **Automated tools** — parse security information consistently\n\n## Quick Start\n\n### For Project Maintainers\n\nFollow the [Get Started guide](https://security-insights.openssf.org/get-started.html). It covers single-repo and multi-repo layouts, copyable examples, and the validation command. A single-repository project typically takes about 30 minutes from first read to a validated file.\n\n### For Consumers\n\nLook for `security-insights.yaml` or `security-insights.yml` at the repository root or in the source-forge directory (`.github/`, `.gitlab/`, etc.). Accept either extension. If both exist in the same location, report an error instead of choosing one.\n\nTreat the contents as a snapshot. It describes the commit or release it ships with, not necessarily the project's current state.\n\n## Documentation\n\n- **[Get Started](https://security-insights.openssf.org/get-started.html)** - Step-by-step guide for producing a valid file\n- **[Schema Documentation](docs/schema.md)** - Complete reference for all fields in the specification\n- **[Examples](https://github.com/ossf/security-insights/tree/main/examples)** - Starting points for each layout:\n  - [example-minimum.yml](https://github.com/ossf/security-insights/blob/main/examples/example-minimum.yml) - Single repository, minimal required fields\n  - [example-full.yml](https://github.com/ossf/security-insights/blob/main/examples/example-full.yml) - Single repository, all possible fields\n  - [example-multi-repository-project.yml](https://github.com/ossf/security-insights/blob/main/examples/example-multi-repository-project.yml) - Multi-repo: parent file holding the `project:` section\n  - [example-multi-repository-project-reuse.yml](https://github.com/ossf/security-insights/blob/main/examples/example-multi-repository-project-reuse.yml) - Multi-repo: child file referencing the parent\n\n## Releases\n\nDownload the official schema from the [latest release](https://github.com/ossf/security-insights/releases/latest).\n\nThe `main` branch may be slightly ahead of the latest release. Treat any differences as a preview of the next release, not as final.\n\n## Tooling Ecosystem\n\nAs the adoption of Security Insights grows, so does the opportunity to automatically ingest it:\n\n- **[si-tooling](https://github.com/ossf/si-tooling)** - Community-maintained tools for reading, validating and manipulating Security Insights data\n- **[CLOMonitor](https://clomonitor.io/)** - The Linux Foundation's tool that parses Security Insights files to determine whether projects have reported on select security factors\n- **[LFX Insights](https://insights.lfx.linuxfoundation.org/)** - The Linux Foundation's tool that reads a project's Security Insights file to evaluate security hygiene against the OSPS Baseline (a set of minimum security requirements for open source projects)\n- **[OSPS Baseline Scanner](https://github.com/marketplace/actions/open-source-project-security-baseline-scanner)** - GitHub Action that runs OSPS Baseline assessments on individual repositories using the same scanner as LFX Insights\n\n## Contributing\n\nThe specification is maintained by the [Security Insights maintainers](https://github.com/ossf/security-insights/blob/main/docs/MAINTAINERS.md) according to the [governance documentation](https://github.com/ossf/security-insights/blob/main/docs/GOVERNANCE.md).\n\nDiscussion and feedback should take place in [GitHub Issues](https://github.com/ossf/security-insights/issues). We ask that you follow the [Security Insights Enhancement Proposal](https://github.com/ossf/security-insights/blob/main/docs/GOVERNANCE.md#security-insights-enhancement-proposals) process to explore potential changes to the specification.\n\n## Get Involved\n\n- **Slack**: Join the [OpenSSF Security Insights channel](https://openssf.slack.com/messages/security_insights/)\n- **GitHub**: Contribute at [ossf/security-insights](https://github.com/ossf/security-insights)\n\n",
         "adoptersFile": false,
         "roadmapFile": false,
         "maintainersFile": true,
@@ -1931,7 +1207,7 @@
           }
         ],
         "contributorAgreement": {
-          "signedOffByRatio": 0.8125,
+          "signedOffByRatio": 0.8888888888888888,
           "dcoOrClaBot": false,
           "enforced": true
         }
@@ -1964,13 +1240,13 @@
           },
           {
             "name": "dependabot",
-            "detected": false,
-            "details": null
+            "detected": true,
+            "details": "Dependabot configuration detected"
           },
           {
             "name": "ci_cd",
             "detected": true,
-            "details": "2 workflow file(s) detected"
+            "details": "3 workflow file(s) detected"
           },
           {
             "name": "branch_protection",
@@ -1992,7 +1268,7 @@
         "totalReleasesAnalyzed": 4,
         "totalTags": 4,
         "releaseFrequency": 1,
-        "daysSinceLastRelease": 99,
+        "daysSinceLastRelease": 260,
         "semverComplianceRatio": 1,
         "releaseNotesQualityRatio": 1,
         "tagToReleaseRatio": 0,
@@ -2003,13 +1279,13 @@
       "devEnvironmentSetup": false,
       "gitpodPresent": false,
       "newContributorPRAcceptanceRate": "unavailable",
-      "ageInDays": 1575.4534399421295,
-      "lifetimeCommits": 144,
-      "starsPerYear": 17.15601319261636,
-      "contributorsPerYear": 3.013894209513685,
-      "commitsPerMonthLifetime": 2.782056193397248,
-      "commitsPerMonthRecent12mo": 2.668493150684932,
-      "growthTrajectory": "stable",
+      "ageInDays": 1736.4087986574075,
+      "lifetimeCommits": 173,
+      "starsPerYear": 17.24853042852452,
+      "contributorsPerYear": 3.5759148449380103,
+      "commitsPerMonthLifetime": 3.032516020462136,
+      "commitsPerMonthRecent12mo": 4.503082191780822,
+      "growthTrajectory": "accelerating",
       "missingFields": [
         "issueFirstResponseTimestamps",
         "issueCloseTimestamps",
@@ -2019,6 +1295,11 @@
     }
   ],
   "failures": [
+    {
+      "repo": "simonw/llm-echo",
+      "reason": "Repository could not be analyzed.",
+      "code": "FETCH_FAILED"
+    },
     {
       "repo": "333fred/compiler-developer-sdk",
       "reason": "Repository could not be analyzed.",
@@ -2042,11 +1323,17 @@
   ],
   "rateLimit": {
     "limit": 5000,
-    "remaining": 4952,
-    "resetAt": "2026-05-11T10:22:37Z",
+    "remaining": 4955,
+    "resetAt": "2026-10-19T10:07:31Z",
     "retryAfter": "unavailable"
   },
   "diagnostics": [
+    {
+      "level": "error",
+      "repo": "simonw/llm-echo",
+      "source": "analyze",
+      "message": "Cannot read properties of undefined (reading 'totalCount')"
+    },
     {
       "level": "error",
       "repo": "333fred/compiler-developer-sdk",
